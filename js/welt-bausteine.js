@@ -54,6 +54,16 @@ function neuTex(wi,v){ return hausTex('n'+wi+'-'+v,512,256,(g,F)=>{
     const dx=v%3===0?310:v%3===1?250:180; g.fillStyle='#ecebe7'; g.fillRect(dx-6,62,72,166); g.fillStyle=v%2?'#5a4030':'#3f4a52'; g.fillRect(dx,68,60,160); g.fillStyle='#a9b8c0'; g.fillRect(dx+22,84,16,110);
     g.fillStyle='rgba(0,0,0,.18)'; g.fillRect(dx-12,56,84,8); // Vordach
   }); }
+// Sandstein-Quader (Ranschbach): helle, gelbliche Quader, rote Gewände, weiße Rollläden, Blumenkästen
+function quaderTex(v){ return hausTex('q'+v,256,256,(g,F)=>{ g.fillStyle='#d8b588'; g.fillRect(0,0,256,256);
+    for(let y=0;y<214;y+=12) for(let x=(y/12%2)*14-14;x<256;x+=28){ const k=Math.random(); g.fillStyle=k<.3?'#d2a979':k<.6?'#dcbb8f':k<.85?'#e2c49a':'#c99d70'; g.fillRect(x+1,y+1,26,10); }
+    g.fillStyle='#9c5a46'; g.fillRect(0,214,256,42); g.fillStyle='rgba(0,0,0,.15)'; for(let x=0;x<256;x+=36) g.fillRect(x,214,2,42); g.fillRect(0,214,256,2);
+    const win=(x,y,bl)=>{ g.fillStyle='#a85d4a'; g.fillRect(x-6,y-6,44,62); if(v%2){ g.beginPath(); g.arc(x+16,y-2,24,Math.PI,0); g.fill(); }
+      g.fillStyle='#3a4250'; g.fillRect(x,y,32,50); F(x,y+18,32,32); g.fillStyle='#f1f0ec'; g.fillRect(x,y,32,18); g.fillStyle='#fff'; g.fillRect(x+15,y+18,2,32);
+      if(bl){ g.fillStyle='#3d6b2e'; g.fillRect(x-6,y+50,44,8); for(let i=0;i<8;i++){ g.fillStyle=i%3?'#d63d9a':'#f2f2f2'; g.beginPath(); g.arc(x-3+i*5.5,y+50+Math.random()*3,4.5,0,7); g.fill(); } } };
+    [36,112,188].forEach(x=>win(x,36,true)); win(36,136,true); win(188,136,true);
+    g.fillStyle='#a85d4a'; g.fillRect(100,128,56,86); g.fillStyle='#7a5638'; g.fillRect(106,134,44,80); g.fillStyle='rgba(0,0,0,.25)'; g.fillRect(127,134,2,80);
+  }); }
 // Dachziegel: Biberschwanz in Reihen, leicht fleckig (1 Kachel = 2 m)
 function dachTex(c){ return hausTex('d'+c,128,128,g=>{ const b=new THREE.Color(c); g.fillStyle=c; g.fillRect(0,0,128,128);
     for(let y=0;y<128;y+=8) for(let x=(y/8%2)*6-6;x<128;x+=12){ const k=.82+Math.random()*.3; g.fillStyle=`rgb(${b.r*255*k|0},${b.g*255*k|0},${b.b*255*k|0})`;
@@ -66,15 +76,18 @@ function dachGeo(w,d,W,D,h){ const ye=h*(1-D/d), FL=[-W/2,ye,D/2],FR=[W/2,ye,D/2
   tri.forEach((v,i)=>{ p.set(v,i*3); if(i<12) uv.set([v[0]/2, (v[1]-ye)/(h-ye)*sl/2],i*2); });
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('uv',new THREE.BufferAttribute(uv,2)); g.computeVertexNormals(); g.addGroup(0,12,0); g.addGroup(12,6,1); return g; }
 
-// Haus: o = {w, dep, hgt, stil:'alt'|'neu', wall, shut, roof, fw (Fachwerk), gw (Sandstein-Gewände), v (Neubau-Variante), flach (Bungalowdach), kam (Kaminlage 0–1), df (Dachfenster)}
-function haus(o){ const G=new THREE.Group(), neu=o.stil==='neu', wc=neu?NEU_WALLS[o.wall]:o.fw?'#f2ede2':WALLS[o.wall];
-  const fm=glowMat(o.fw?fachTex(1):neu?neuTex(o.wall,o.v||0):facadeTex(o.wall,o.shut,o.gw)), wm=o.fw?glowMat(fachTex(0)):hMat('w'+wc,()=>lam(wc)), gm=hMat('w'+wc,()=>lam(wc));
+// Haus: o = {w, dep, hgt, stil:'alt'|'neu', wall, shut, roof, fw (Fachwerk), gw (Sandstein-Gewände), qu (Sandstein-Quader), v (Neubau-Variante), flach (Bungalowdach),
+//   gs (giebelständig: First quer zur Straße), kam (Kaminlage 0–1), df (Dachfenster), pv (Solarmodule)}
+function haus(o){ const G=new THREE.Group(), neu=o.stil==='neu', wc=neu?NEU_WALLS[o.wall]:o.fw?'#f2ede2':o.qu?'#d6b286':WALLS[o.wall];
+  const fm=glowMat(o.fw?fachTex(1):neu?neuTex(o.wall,o.v||0):o.qu?quaderTex(o.shut):facadeTex(o.wall,o.shut,o.gw)), wm=o.fw?glowMat(fachTex(0)):hMat('w'+wc,()=>lam(wc)), gm=hMat('w'+wc,()=>lam(wc));
   const body=new THREE.Mesh(new THREE.BoxGeometry(o.w,o.hgt,o.dep),[wm,wm,wm,wm,fm,wm]); body.position.y=o.hgt/2; G.add(body);
-  const sc=neu?(o.v%2?'#6d5a4c':'#77746f'):o.gw?'#a8654f':'#b9936c', sock=new THREE.Mesh(new THREE.BoxGeometry(o.w+.02,8,o.dep+.02), hMat('s'+sc,()=>lam(sc))); sock.position.y=-4+.05; G.add(sock);
-  const D=o.dep+(neu?1.4:.9), rh=neu&&o.flach?1.2+o.dep*.1:2.6+o.dep*.18;
-  const roof=new THREE.Mesh(dachGeo(o.w,o.dep,o.w+(neu?1:.5),D,rh),[hMat('d'+o.roof,()=>new THREE.MeshLambertMaterial({map:dachTex(o.roof),side:THREE.DoubleSide})),gm]); roof.position.y=o.hgt; G.add(roof);
-  const k=o.kam??.5, km=new THREE.Mesh(new THREE.BoxGeometry(.5,1.6,.5), hMat('kam'+neu,()=>lam(neu?'#5b5d60':'#8b4b3b'))); km.position.set((k-.5)*o.w*.6, o.hgt+rh*.76+.3, -o.dep*.12); G.add(km);
-  if(neu&&o.df){ const a=Math.atan(2*rh/o.dep); for(let i=0;i<o.df;i++){ const f=new THREE.Mesh(new THREE.BoxGeometry(.8,.08,1), hMat('df',()=>lam('#2c3036'))); f.rotation.x=a; f.position.set((i-(o.df-1)/2)*o.w*.35, o.hgt+rh*.5+.06, o.dep/4); G.add(f); } }
+  const sc=neu?(o.v%2?'#6d5a4c':'#77746f'):o.gw||o.qu?'#a8654f':'#b9936c', sock=new THREE.Mesh(new THREE.BoxGeometry(o.w+.02,8,o.dep+.02), hMat('s'+sc,()=>lam(sc))); sock.position.y=-4+.05; G.add(sock);
+  const L=o.gs?o.dep:o.w, T=o.gs?o.w:o.dep, D=T+(neu?1.4:.9), rh=neu&&o.flach?1.2+T*.1:2.6+T*.18; // L = Firstlänge, T = Haustiefe quer zum First
+  const roof=new THREE.Mesh(dachGeo(L,T,L+(neu?1:.5),D,rh),[hMat('d'+o.roof,()=>new THREE.MeshLambertMaterial({map:dachTex(o.roof),side:THREE.DoubleSide})),gm]); roof.position.y=o.hgt; if(o.gs) roof.rotation.y=Math.PI/2; G.add(roof);
+  const k=o.kam??.5, km=new THREE.Mesh(new THREE.BoxGeometry(.5,1.6,.5), hMat('kam'+neu,()=>lam(neu?'#5b5d60':'#8b4b3b'))); km.position.set((k-.5)*L*.6, rh*.76+.3, -T*.12); roof.add(km);
+  const a=Math.atan(2*rh/T), aufs=(w,dd,x,col)=>{ const f=new THREE.Mesh(new THREE.BoxGeometry(w,.08,dd), hMat('auf'+col,()=>lam(col))); f.rotation.x=a; f.position.set(x, rh/2+.06, T/4); roof.add(f); }; // auf der vorderen Dachfläche
+  if(o.pv) aufs(L*.62, T*.42, (o.kam>.5?-1:1)*L*.12, '#1f2a44');
+  else if(neu&&o.df) for(let i=0;i<o.df;i++) aufs(.8, 1, (i-(o.df-1)/2)*L*.35, '#2c3036');
   return G; }
 // Hoftor bzw. Mauer zwischen zwei Häusern im Altort: v 0 = Holztor, 1 = Rundbogen mit Eisengitter, 2 = Bruchsteinmauer. Fläche 3,2 m hoch, unten 0,8 m Sockel unter Straßenhöhe
 function torTex(v){ return hausTex('t'+v,128,128,g=>{ const st=(x,y,w,h,c)=>{ g.fillStyle=c; g.fillRect(x,y,w,h); };

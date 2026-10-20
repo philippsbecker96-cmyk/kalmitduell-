@@ -201,6 +201,7 @@ function build3D(){
   // Leitplanken an den Kehren, auf der Talseite
   const rails=[], rposts=[];
   const railAt=new Uint8Array(Math.ceil(R.len/2)+1);
+  for(const [a,b] of R.def.planke||[]) for(let d=a; d<Math.min(b,R.len); d+=2) railAt[d/2|0]=1;
   R.kehren.forEach(kd=>{ for(let d=Math.max(0,kd-70); d<Math.min(R.fans,kd+70); d+=2) if(zoneAt(R,d)!=='ort') railAt[d/2|0]=1; });
   if(R.kalmit){ const rr=rng(17); let on=0; for(let d=Math.max(...R.zones.filter(z=>z[0]==='reben').map(z=>z[2]))-120; d<R.len-330; d+=2){ const [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd);
       const drop=Math.abs(terrainAt(x+nx*16,z+nz*16)-terrainAt(x-nx*16,z-nz*16)); if(on<=0 && drop>2.5 && rr()<.12) on=80+rr()*260; if(on>0){ railAt[d/2|0]=1; on-=2; } } }
@@ -225,8 +226,11 @@ function build3D(){
     const head=new THREE.Mesh(new THREE.BoxGeometry(.35,.3,.35), lam('#2f3338')); const nx=-Math.sin(o.h)*-o.side*.6, nz=Math.cos(o.h)*-o.side*.6; head.position.set(o.x+nx,gY+4.5,o.y+nz); world.add(head);
     const pl=new THREE.Mesh(new THREE.BoxGeometry(.3,.04,.3), lampM); pl.position.set(o.x+nx,gY+4.34,o.y+nz); world.add(pl); });
   hausLicht();
-  for(const d of R.def.bogen||(R.kalmit?[210]:[])){ // Weinlaub-Bogen über der Dorfstraße (Maikammer, Ortseingang Leinsweiler)
-    const [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d), hw=rw(d)+1.4;
+  for(const e of R.def.bogen||(R.kalmit?[210]:[])){ // Weinlaub-Bogen über der Dorfstraße (Maikammer, Leinsweiler), mit Schrifttafel (Ranschbach)
+    const [d,txt]=[].concat(e), [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d), hw=rw(d)+1.4;
+    if(txt){ const tt=canvasTex(512,128,g=>{ g.fillStyle='#f4f6f8'; g.fillRect(0,0,512,128); g.strokeStyle='#8a9aa8'; g.lineWidth=6; g.strokeRect(3,3,506,122); g.fillStyle='#2f5f9a'; g.textAlign='center';
+        g.font='italic 600 34px Georgia, serif'; g.fillText('Willkommen im',256,48); g.font='italic 700 46px Georgia, serif'; g.fillText(txt,256,100); });
+      const sg=new THREE.Mesh(new THREE.PlaneGeometry(4.2,1.05), new THREE.MeshLambertMaterial({map:tt, side:THREE.DoubleSide})); sg.position.set(x,y+3.7,z); sg.rotation.y=Math.atan2(-Math.cos(hd),-Math.sin(hd)); world.add(sg); }
     for(const s of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,4.4,5), lam('#4b3a2c')); p.position.set(x+nx*s*hw,y+2.2,z+nz*s*hw); world.add(p); }
     const leaf=lam('#4f8a35'), n=Math.round(hw*5); for(let i=0;i<n;i++){ const t=i/(n-1)*2-1, b=new THREE.Mesh(new THREE.IcosahedronGeometry(.75+Math.random()*.4,0), leaf);
       b.position.set(x+nx*t*(hw+.2)+Math.cos(hd)*(Math.random()-.5)*1.6, y+4.4+Math.random()*.5-(Math.abs(t)>.8?.6+Math.random()*.8:0), z+nz*t*(hw+.2)+Math.sin(hd)*(Math.random()-.5)*1.6); world.add(b); } }
@@ -261,10 +265,10 @@ function build3D(){
         g.strokeStyle='#111'; g.lineWidth=10; g.strokeRect(18,18,476,284); g.fillStyle='#111'; g.textAlign='center'; g.textBaseline='middle';
         g.font='800 118px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(zo.name,256,135,440); g.font='600 36px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(zo.kreis||'',256,240,440);
         if(ende){ g.strokeStyle='#c92a2a'; g.lineWidth=28; g.beginPath(); g.moveTo(40,290); g.lineTo(472,30); g.stroke(); } })); };
-    const sign=(d,ende)=>{ d=((d%R.len)+R.len)%R.len; const [x,z]=posAt(R,d), hd=headingAt(R,d), ex=-Math.sin(hd), ez=Math.cos(hd), o=roadW(R,d)/2+1.4, px=x+ex*o, pz=z+ez*o, gy=roadY(d), rot=Math.atan2(-Math.cos(hd),-Math.sin(hd));
-      for(const s of [-1,1]){ const pst=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,2.3,6), lam('#8d949b')); pst.position.set(px+ex*s*.6, gy+1.15, pz+ez*s*.6); world.add(pst); }
-      [[ende,0],[!ende,Math.PI]].forEach(([e,r2])=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(1.5,.94), new THREE.MeshBasicMaterial({map:tex(e)}));
-        m.position.set(px+Math.cos(hd)*(r2?.015:-.015), gy+1.85, pz+Math.sin(hd)*(r2?.015:-.015)); m.rotation.y=rot+r2; world.add(m); }); };
+    const sign=(d,ende)=>{ d=((d%R.len)+R.len)%R.len; const [x,z]=posAt(R,d), hd=headingAt(R,d), ex=-Math.sin(hd), ez=Math.cos(hd), o=roadW(R,d)/2+2, px=x+ex*o, pz=z+ez*o, gy=roadY(d), rot=Math.atan2(-Math.cos(hd),-Math.sin(hd));
+      for(const s of [-1,1]){ const pst=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,3.2,6), lam('#8d949b')); pst.position.set(px+ex*s*1.05, gy+1.6, pz+ez*s*1.05); world.add(pst); }
+      [[ende,0],[!ende,Math.PI]].forEach(([e,r2])=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(2.7,1.69), new THREE.MeshBasicMaterial({map:tex(e)})); // gut lesbar: 1,8-mal so groß wie ein echtes Schild
+        m.position.set(px+Math.cos(hd)*(r2?.015:-.015), gy+2.35, pz+Math.sin(hd)*(r2?.015:-.015)); m.rotation.y=rot+r2; world.add(m); }); };
     if(za>0) sign(za-4,false); else if(R.loop) sign(-90,false); // Godramstein: Ortseingang vor dem Ziel
     if(zb<R.len) sign(zb+4,true); }
   // Absperrgitter mit Bannern auf den letzten 300 m
