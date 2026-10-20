@@ -93,7 +93,7 @@ function build3D(){
   if(sp){ buildSpace(); return; }
   if(R.island){ buildIsland(); return; }
   if(R.stadium){ scene.fog.near=250; scene.fog.far=2200; buildStadium(); return; }
-  scene.fog.near=140; scene.fog.far=1500;
+  scene.fog.near=140; scene.fog.far=1500; camera.far=R.def.haardt?13000:6000; camera.updateProjectionMatrix();
   const S=R.S, plainY=(R.def.plainElev ?? (R.startElev-60))-R.startElev;
 
   // ---------- Gelände ----------
@@ -117,6 +117,7 @@ function build3D(){
   { const hr=new Float32Array(N), tq=new Float32Array(N); for(let k=0;k<N;k++) hr[k]=roadY(src[k]*STEP);
     for(let pass=0;pass<14;pass++){ tq.set(hr); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; hr[k]=(tq[k]*4+tq[k-1]+tq[k+1]+tq[k-n]+tq[k+n])/8; } }
     TER.hr=hr; }
+
   TER.h=h;
   const pos=new Float32Array(N*3), col=new Float32Array(N*3), idx=[];
   const C=s=>new THREE.Color(s), cForest=C('#355a2c'), cForest2=C('#4a6a33'), cNeedles=C('#6b5a38'), cVerge=C('#8a9a4e'), cSand=C('#9a8160'), cVine=C('#8f9a52'), cTown=C('#9aa77a'), cRock=C('#9b7f6c'), cPlain=C('#b9b36a'), cAcker=[C('#c2ad6a'),C('#7f9a45'),C('#8e6f50')], tc=new THREE.Color();
@@ -142,6 +143,7 @@ function build3D(){
     pt.wrapS=pt.wrapT=THREE.RepeatWrapping; pt.repeat.set(14,14);
     const pl=new THREE.Mesh(new THREE.PlaneGeometry(14000,14000), new THREE.MeshLambertMaterial({map:pt}));
     pl.rotation.x=-Math.PI/2; pl.position.set((x0+x1)/2, plainY-0.5, (z0+z1)/2); world.add(pl); }
+  if(R.def.haardt) buildHaardt(plainY);
 
   // ---------- Straße ----------
   const rtex=canvasTex(64,256,g=>{ g.fillStyle='#55575a'; g.fillRect(0,0,64,256); for(let t=0;t<600;t++){ const v=Math.random()<.5?0:255; g.fillStyle=`rgba(${v},${v},${v},.06)`; g.fillRect(Math.random()*64,Math.random()*256,2,2); }
@@ -242,8 +244,20 @@ function build3D(){
     poseFans(0, true);
   } else anim.fans=null;
 
+  // ---------- Ortsschilder (gelb, Rückseite Ortsende) ----------
+  if(!R.kalmit) for(const [zt,za,zb,zo={}] of R.zones) if(zt==='ort'&&zo.name){
+    const tex=ende=>{ const k='os'+zo.name+ende; return facadeCache[k]||(facadeCache[k]=canvasTex(512,320,g=>{ g.fillStyle='#f5c518'; g.fillRect(0,0,512,320);
+        g.strokeStyle='#111'; g.lineWidth=10; g.strokeRect(18,18,476,284); g.fillStyle='#111'; g.textAlign='center'; g.textBaseline='middle';
+        g.font='800 118px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(zo.name,256,135,440); g.font='600 36px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(zo.kreis||'',256,240,440);
+        if(ende){ g.strokeStyle='#c92a2a'; g.lineWidth=28; g.beginPath(); g.moveTo(40,290); g.lineTo(472,30); g.stroke(); } })); };
+    const sign=(d,ende)=>{ d=((d%R.len)+R.len)%R.len; const [x,z]=posAt(R,d), hd=headingAt(R,d), ex=-Math.sin(hd), ez=Math.cos(hd), o=roadW(R,d)/2+1.4, px=x+ex*o, pz=z+ez*o, gy=roadY(d), rot=Math.atan2(-Math.cos(hd),-Math.sin(hd));
+      for(const s of [-1,1]){ const pst=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,2.3,6), lam('#8d949b')); pst.position.set(px+ex*s*.6, gy+1.15, pz+ez*s*.6); world.add(pst); }
+      [[ende,0],[!ende,Math.PI]].forEach(([e,r2])=>{ const m=new THREE.Mesh(new THREE.PlaneGeometry(1.5,.94), new THREE.MeshBasicMaterial({map:tex(e)}));
+        m.position.set(px+Math.cos(hd)*(r2?.015:-.015), gy+1.85, pz+Math.sin(hd)*(r2?.015:-.015)); m.rotation.y=rot+r2; world.add(m); }); };
+    if(za>0) sign(za-4,false); else if(R.loop) sign(-90,false); // Godramstein: Ortseingang vor dem Ziel
+    if(zb<R.len) sign(zb+4,true); }
   // Absperrgitter mit Bannern auf den letzten 300 m
-  { const bl=[], texts=['BERGWERTUNG','KALMIT','HOPP HOPP!','PFALZ','ALLEZ!','673 m'], cols=['#1c7ed6','#2f9e44','#e8590c','#ae3ec9','#c92a2a','#0b7285'];
+  { const bl=[], texts=R.kalmit?['BERGWERTUNG','KALMIT','HOPP HOPP!','PFALZ','ALLEZ!','673 m']:['SÜDPFALZ','HOPP HOPP!','WEINSTRASSE','ALLEZ!','PFALZ','ZIEL'], cols=['#1c7ed6','#2f9e44','#e8590c','#ae3ec9','#c92a2a','#0b7285'];
     for(let d=R.len-320; d<R.len-6; d+=2.5) for(const s of [-1,1]){ const [x,z]=posAt(R,d+1.25), hd=headingAt(R,d+1.25), nx=-Math.sin(hd), nz=Math.cos(hd), off=ROAD_W/2+0.45;
       bl.push({x:x+nx*s*off, z:z+nz*s*off, bx:x+nx*s*(off-.05), bz:z+nz*s*(off-.05), y:roadY(d+1.25), g:gradeAt(d+1.25), h:hd, s, t:Math.floor((d/2.5+(s>0?3:0)))%texts.length}); }
     inst(new THREE.BoxGeometry(2.45,1.05,.04), lam('#c3c8cc'), bl, o=>{ ps.set(o.x,o.y+.62,o.z); slopeQ(o.h,o.g); sc.set(1,1,1); cc.set('#aab0b6'); });
@@ -259,14 +273,19 @@ function build3D(){
     const ph=4.4+bh; for(const s of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,ph,8), lam('#222')); p.position.set(x+nx*half*s, y+ph/2, z+nz*half*s); world.add(p); }
     const b=new THREE.Mesh(new THREE.PlaneGeometry(half*2+.4,bh), new THREE.MeshBasicMaterial({map:canvasTex(512,ch,draw), side:THREE.DoubleSide}));
     b.position.set(x, y+4.4+bh/2, z); b.rotation.y=Math.atan2(-Math.cos(hd), -Math.sin(hd)); world.add(b); };
-  arch(0.5,(g)=>{ g.fillStyle='#1c7ed6'; g.fillRect(0,0,512,80); g.fillStyle='#fff'; g.font='800 40px "Barlow Condensed", Arial Narrow, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(`START · ${R.start}`,256,42,490); });
+  if(!R.kalmit) arch(R.loop?0.5:R.len-0.5,(g)=>{ g.fillStyle='#fff'; g.fillRect(0,0,512,150); g.fillStyle='#111'; // Start/Ziel-Bogen mit Zielflaggen-Karos
+    for(let i=0;i<64;i++) for(let j=0;j<2;j++) if((i+j)%2){ g.fillRect(i*8,j*8,8,8); g.fillRect(i*8,134+j*8,8,8); }
+    g.fillStyle='#1c7ed6'; g.fillRect(0,16,512,118); g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle';
+    g.font='800 76px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText('START · ZIEL',256,66,490);
+    g.font='700 24px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(R.name.toUpperCase(),256,114,490); }, 150, 2.0);
+  else { arch(0.5,(g)=>{ g.fillStyle='#1c7ed6'; g.fillRect(0,0,512,80); g.fillStyle='#fff'; g.font='800 40px "Barlow Condensed", Arial Narrow, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(`START · ${R.start}`,256,42,490); });
   // Ziel: KOM-Banner im Bergtrikot-Look (weiß mit roten Punkten)
   arch(R.len-0.5,(g)=>{ g.fillStyle='#fff'; g.fillRect(0,0,512,150); g.fillStyle='#d62828';
     for(let y=12;y<150;y+=26) for(let x=(y/26%2)*13+8;x<512;x+=26){ g.beginPath(); g.arc(x,y,6.5,0,7); g.fill(); }
     g.fillStyle='rgba(255,255,255,.92)'; g.fillRect(120,18,272,114);
     g.textAlign='center'; g.textBaseline='middle'; g.fillStyle='#d62828'; g.font='800 92px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText('KOM',256,66);
     g.fillStyle='#1a1a1a'; g.font='700 22px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(`King of the Mountain · ${R.finish}`,256,116,260);
-    g.strokeStyle='#1a1a1a'; g.lineWidth=6; g.strokeRect(3,3,506,144); }, 150, 2.0);
+    g.strokeStyle='#1a1a1a'; g.lineWidth=6; g.strokeRect(3,3,506,144); }, 150, 2.0); }
   { const cc2=canvasTex(16,128,g=>{ for(let i=0;i<16;i++) for(let j=0;j<2;j++){ g.fillStyle=(i+j)%2?'#111':'#fff'; g.fillRect(j*8,i*8,8,8); } });
     const [x,z]=posAt(R,R.len-1), hd=headingAt(R,R.len-1), fl=new THREE.Mesh(new THREE.PlaneGeometry(1.4,ROAD_W), new THREE.MeshBasicMaterial({map:cc2}));
     fl.rotation.x=-Math.PI/2; fl.rotation.z=-hd; fl.position.set(x,roadY(R.len-1)+0.16,z); world.add(fl); }
@@ -329,3 +348,17 @@ function poseFans(t, all){
   for(const k of ['legs','body','head','cap','arm','phone','pole','flag']) if(A[k]){ A[k].instanceMatrix.needsUpdate=true; if(all&&A[k].instanceColor) A[k].instanceColor.needsUpdate=true; }
 }
 
+
+/* ================= Südpfalz: Haardt im Westen ================= */
+// Bergkette entlang einer Fußlinie (läuft leicht nach Nordnordost), Gipfel rund 300–400 m über der Ebene; ohne Nebel, dafür mit Dunst je Entfernung
+function buildHaardt(plainY){ const foot=z=>-4400+(2400-z)*.35, sm=v=>{ v=Math.min(1,Math.max(0,v)); return v*v*(3-2*v); };
+  const Z0=-7000, Z1=9000, dz=100, W0=-300, W1=6000, dw=100, nz=(Z1-Z0)/dz+1, nw=(W1-W0)/dw+1, pos=new Float32Array(nz*nw*3), col=new Float32Array(nz*nw*3), idx=[];
+  const cF=new THREE.Color('#34502e'), cF2=new THREE.Color('#47623a'), cH=new THREE.Color('#aab8c2'), c=new THREE.Color();
+  for(let j=0;j<nz;j++) for(let i=0;i<nw;i++){ const z=Z0+j*dz, w=W0+i*dw, k=j*nw+i;
+    let rise=w<0?-25:(420*sm(w/2200)*(.7+.5*vnoise(z/1500,3.1)) + 120*(vnoise(w/700+5,z/700)-.5)*sm(w/800) + 40*(vnoise(w/220,z/220)-.5)*sm(w/500));
+    rise*=(1-sm((w-4500)/1500))*sm((z-Z0)/2000)*sm((Z1-z)/2000);
+    pos.set([foot(z)-w, plainY+rise, z], k*3);
+    c.copy(cF).lerp(cF2, vnoise(w/300,z/300)).lerp(cH, .18+.45*sm(w/5000)); col.set([c.r,c.g,c.b], k*3);
+    if(i<nw-1&&j<nz-1) idx.push(k,k+1,k+nw, k+1,k+nw+1,k+nw); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3)); g.setIndex(idx); g.computeVertexNormals();
+  world.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({vertexColors:true, fog:false, side:THREE.DoubleSide}))); }
