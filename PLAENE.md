@@ -13,6 +13,9 @@ Ziel: Landschaft, Vegetation und Gebäude realistischer machen – Strecke für 
 - **Ortsteile** (`teile` in einer Ort-Zone): eigene Optionen pro Abschnitt (`seite`, `neu`, `obst`, `fach`, `gewaende`, `laden`, `ranken`). Leinsweiler nach Fotos: Eingang mit Weinlaub-Bogen (`bogen`), einseitig bebaut, Obstwiese; dichter Kern Hauptstraße/Weinstraße (Haarnadel bei 5,78 km) mit Fachwerk, grünen Läden, Ranken; Ausgang Weinstraße als Neubau mit Sandsteinmauern.
 - **Landstraße Arzheim–Ilbesheim**: Leitlinie (`mitte`), Gebüschsaum (`saum`), Radweg rechts hinter Grünstreifen (`radweg`), Baumreihe am Ortseingang Ilbesheim (`allee`), Leitpfosten in den Weinbergen.
 - **Ranschbach** nach Fotos: L508-Abfahrt mit Leitplanke (`planke`) und Leitlinie, Willkommensbogen „Seilmacher-Dorf“ (`bogen` mit Schrifttafel) vor der scharfen Rechtskurve bei 8,2 km, Weinstraße mit Sandstein-Quader-Fassaden, giebelständigen Häusern, Solardächern, Bäumchen im breiten Gehweg; Ausgang einseitig mit Reben.
+- **Ilbesheim** nach Fotos: kein Ort mehr, die K20 führt am Ortsrand vorbei (Zone `reben`, kein Ortsschild). Leitlinie, Baumreihe links vor der Rechtskurve, Gebüsch rechts, zwei Aussiedlerhöfe links (`hof`: Wohnhaus, Halle, Bäume).
+- **Übergang auf den Betonplattenweg** nach Ranschbach (`weiter`): die L508 läuft 220 m geradeaus weiter (24° links der Strecke), der Weg knickt rechts ab.
+- **Start/Ziel Südpfalz** 350 m hinter dem komoot-Start (`SP_V`, `rundeAb`): kein Dorf mehr am Ziel, sondern K9 mit Gehölz und Leitplanken beidseitig. **Alle Positionen in `suedpfalzDef` sind komoot-Meter ab dem alten Start** und werden umgerechnet (im Spiel also 350 m weniger). Letzter Abschnitt parallel zur B10 (`b10`): vierspurig mit fahrenden Autos/Lkw (`poseAutos`), Gehölz davor und dahinter (`gehoelz`), Gewerbehallen von Godramstein (`gewerbe`).
 - Fotos liegen lokal in `Arzheim-Ilbesheim/`, `Leinsweiler/` und `Ranschbach /` (nicht im Git).
 
 ## Wichtige Grenzen

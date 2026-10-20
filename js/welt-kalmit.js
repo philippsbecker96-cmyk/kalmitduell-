@@ -56,11 +56,19 @@ function gableGeo(w,d,h){ const FL=[-w/2,0,d/2],FR=[w/2,0,d/2],BL=[-w/2,0,-d/2],
   const tri=[FL,FR,RR, FL,RR,RL, BR,BL,RL, BR,RL,RR, BL,FL,RL, FR,BR,RR], p=new Float32Array(tri.length*3); tri.forEach((v,i)=>p.set(v,i*3));
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.computeVertexNormals(); return g; }
 
+// Autos auf der B10: fahren auf ihrer Spur, am Ende tauchen sie am Anfang wieder auf · Lkw: Kabine wird zum hohen Aufbau
+function poseAutos(dt){ const A=anim.autos; if(!A) return; const B=A.B, m=new THREE.Matrix4(), q=new THREE.Quaternion(), sc=new THREE.Vector3(), ps=new THREE.Vector3(), up=new THREE.Vector3(0,1,0), span=B.e1-B.e0;
+  A.cars.forEach((o,i)=>{ o.t+=o.dir*o.v*dt; if(o.t>B.e1) o.t-=span; if(o.t<B.e0) o.t+=span;
+    const x=B.ax+B.ux*o.t+A.px*o.ln, z=B.ay+B.uy*o.t+A.pz*o.ln, y=terrainAt(x,z)+.12; q.setFromAxisAngle(up,-Math.atan2(B.uy,B.ux)+(o.dir<0?Math.PI:0));
+    const k=o.lkw?[2.4,1.6,1.4]:[1,1,1]; sc.set(k[0],k[1]*(o.lkw?1.2:1),k[2]); ps.set(x,y+.6*k[1],z); m.compose(ps,q,sc); A.body.setMatrixAt(i,m);
+    const ox=o.lkw?-1.4:-.2; ps.set(x+Math.cos(-Math.atan2(B.uy,B.ux)+(o.dir<0?Math.PI:0))*ox, y+(o.lkw?2.6:1.3), z-Math.sin(-Math.atan2(B.uy,B.ux)+(o.dir<0?Math.PI:0))*ox); sc.set(o.lkw?2.6:1,o.lkw?4:1,o.lkw?1.6:1); m.compose(ps,q,sc); A.cab.setMatrixAt(i,m); });
+  A.body.instanceMatrix.needsUpdate=true; A.cab.instanceMatrix.needsUpdate=true; }
+
 function build3D(){
   if(world){ scene.remove(world); world.traverse(o=>{ o.geometry&&o.geometry.dispose&&o.geometry.dispose(); for(const mt of [].concat(o.material||[])){ mt.map&&mt.map.dispose&&mt.map.dispose(); mt.dispose&&mt.dispose(); } }); }
   hausReset();
   world=new THREE.Group(); scene.add(world);
-  anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
+  anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
   const sp=!!R.space; sky.visible=!sp; spaceSky.visible=sp; streaks.m.visible=false; scene.background.set(sp?SPACE_BG:HORIZON); scene.fog.color.set(sp?SPACE_BG:HORIZON);
   if(sp){ buildSpace(); return; }
   if(R.island){ buildIsland(); return; }
@@ -80,7 +88,8 @@ function build3D(){
     const side=Math.sign(Math.cos(hd)*(z-R.ys[s])-Math.sin(hd)*(x-R.xs[s]))||1, dd=dist[k], far=Math.min(1,Math.max(0,(dd-16)/110));
     let v=roadY(d) + far*(side*Math.min(45,(dd-16)*0.22) + (vnoise(x/90,z/90)-.5)*40 + (vnoise(x/25,z/25)-.5)*8) - 0.45;
     const edge=Math.min(i,j,n-1-i,TER.nz-1-j)*res, ef=Math.min(1,Math.max(0,(edge-20)/260)), e2=ef*ef*(3-2*ef);
-    h[k]=plainY+(v-plainY)*e2; }
+    h[k]=plainY+(v-plainY)*e2;
+    if(R.b10l){ const bd=R.b10Dist(x,z); if(bd<75) h[k]+=(roadY(d)-.45-h[k])*Math.min(1,(75-bd)/45); } } // B10 liegt eben
   const tmp=new Float32Array(N);
   for(let pass=0;pass<12;pass++){ tmp.set(h); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; if(dist[k]<12) continue;
       h[k]=(tmp[k]*2+tmp[k-1]+tmp[k+1]+tmp[k-n]+tmp[k+n])/6; } }
@@ -163,6 +172,15 @@ function build3D(){
         const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setIndex(id); geo.computeVertexNormals(); world.add(new THREE.Mesh(geo,mat)); };
       band(-K.w/2,K.w/2,-3,0,side2(Object.assign(lam('#55575a'),{polygonOffsetFactor:-4})));
       for(const s of [-1,1]){ const a0=K.al0[s]; band(s*K.w/2,s*(K.w/2+K.geh),a0,.09,pavM); band(s*(K.w/2-.05),s*(K.w/2+.2),a0,.13,curbM); } } }
+  // Weiterführende Landstraße an einer Abzweigung: Rand- und Leitlinie, nahe der Strecke auf deren Höhe (unter ihrem Belag), weiter weg aufs Gelände
+  for(const K of R.weiter||[]){ const vx=-K.uy, vy=K.ux, as=[]; for(let al=-4; al<K.len; al+=al<30?1:3) as.push(al); as.push(K.len);
+    const lt=canvasTex(64,64,g=>{ g.fillStyle='#55575a'; g.fillRect(0,0,64,64); for(let t=0;t<300;t++){ const v=Math.random()<.5?0:255; g.fillStyle=`rgba(${v},${v},${v},.06)`; g.fillRect(Math.random()*64,Math.random()*64,2,2); }
+      g.fillStyle='#ecebe4'; g.fillRect(3,0,3,64); g.fillRect(58,0,3,64); g.fillRect(31,0,2,21); }); lt.wrapT=THREE.RepeatWrapping; lt.anisotropy=8;
+    const p=new Float32Array(as.length*6), uv=new Float32Array(as.length*4), id=[];
+    as.forEach((al,i)=>{ [-1,1].forEach((q,j)=>{ const x=K.x+K.ux*al+vx*q*K.w/2, z=K.y+K.uy*al+vy*q*K.w/2; p.set([x,stY(Math.max(0,al),x,z)-(al<10?.04:0),z],i*6+j*3); uv.set([j,al/18],i*4+j*2); });
+      if(i<as.length-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); });
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setAttribute('uv',new THREE.BufferAttribute(uv,2)); geo.setIndex(id); geo.computeVertexNormals();
+    world.add(new THREE.Mesh(geo,side2(Object.assign(new THREE.MeshLambertMaterial({map:lt}),{polygonOffsetFactor:-1})))); }
   // Seitenstraße: quer weg vom Straßenrand, am Anfang auf Gehweghöhe, dann aufs Gelände
   const abY=(u,x,z,d)=>{ const A=R.abzweig, t=Math.min(1,Math.max(0,(u-A.geh-1)/12)), k=t*t*(3-2*t); return (roadY(d??A.d)+.29)*(1-k)+(terrainAt(x,z)+.06)*k; };
   if(R.abzweig){ const A=R.abzweig, [x0,z0]=posAt(R,A.d), hd=headingAt(R,A.d), nx=-Math.sin(hd)*A.side, nz=Math.cos(hd)*A.side, ax=Math.cos(hd), az=Math.sin(hd), r0=rw(A.d);
@@ -201,13 +219,13 @@ function build3D(){
   // Leitplanken an den Kehren, auf der Talseite
   const rails=[], rposts=[];
   const railAt=new Uint8Array(Math.ceil(R.len/2)+1);
-  for(const [a,b] of R.def.planke||[]) for(let d=a; d<Math.min(b,R.len); d+=2) railAt[d/2|0]=1;
+  for(const [a,b,bs] of R.def.planke||[]) for(let d=a; d<Math.min(b,R.len); d+=2) railAt[d/2|0]=bs===2?2:1;
   R.kehren.forEach(kd=>{ for(let d=Math.max(0,kd-70); d<Math.min(R.fans,kd+70); d+=2) if(zoneAt(R,d)!=='ort') railAt[d/2|0]=1; });
   if(R.kalmit){ const rr=rng(17); let on=0; for(let d=Math.max(...R.zones.filter(z=>z[0]==='reben').map(z=>z[2]))-120; d<R.len-330; d+=2){ const [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd);
       const drop=Math.abs(terrainAt(x+nx*16,z+nz*16)-terrainAt(x-nx*16,z-nz*16)); if(on<=0 && drop>2.5 && rr()<.12) on=80+rr()*260; if(on>0){ railAt[d/2|0]=1; on-=2; } } }
   for(let i=0;i<railAt.length;i++){ if(!railAt[i]) continue; const d=i*2, [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd);
-    const s=terrainAt(x+nx*14,z+nz*14)<terrainAt(x-nx*14,z-nz*14)?1:-1, off=ROAD_W/2+1.0;
-    rails.push({x:x+nx*s*off, z:z+nz*s*off, y:roadY(d), h:hd, g:gradeAt(d)}); if(d%4===0) rposts.push({x:x+nx*s*(off+.12), z:z+nz*s*(off+.12), y:roadY(d), h:hd}); }
+    const off=rw(d)+1.0; for(const s of railAt[i]===2?[-1,1]:[terrainAt(x+nx*14,z+nz*14)<terrainAt(x-nx*14,z-nz*14)?1:-1]){ // 2 = beide Seiten, sonst Talseite
+      rails.push({x:x+nx*s*off, z:z+nz*s*off, y:roadY(d), h:hd, g:gradeAt(d)}); if(d%4===0) rposts.push({x:x+nx*s*(off+.12), z:z+nz*s*(off+.12), y:roadY(d), h:hd}); } }
   const slopeQ=(h,g,flip)=>qq.setFromEuler(eu.set(0,-h+(flip?Math.PI:0),Math.atan(g/100)*(flip?-1:1),'YXZ'));
   inst(new THREE.BoxGeometry(2.1,.32,.06), lam('#c9ced3'), rails, o=>{ ps.set(o.x,o.y+.62,o.z); slopeQ(o.h,o.g); sc.set(1,1,1); cc.set('#c9ced3'); });
   inst(new THREE.BoxGeometry(.09,.8,.09), lam('#8d949b'), rposts, o=>{ ps.set(o.x,o.y+.4,o.z); qq.setFromAxisAngle(up,-o.h); sc.set(1,1,1); cc.set('#8d949b'); });
@@ -226,6 +244,22 @@ function build3D(){
     const head=new THREE.Mesh(new THREE.BoxGeometry(.35,.3,.35), lam('#2f3338')); const nx=-Math.sin(o.h)*-o.side*.6, nz=Math.cos(o.h)*-o.side*.6; head.position.set(o.x+nx,gY+4.5,o.y+nz); world.add(head);
     const pl=new THREE.Mesh(new THREE.BoxGeometry(.3,.04,.3), lampM); pl.position.set(o.x+nx,gY+4.34,o.y+nz); world.add(pl); });
   hausLicht();
+
+  // ---------- B10 (vierspurig, Grünstreifen in der Mitte) mit fahrenden Autos · Gewerbehallen ----------
+  anim.autos=null;
+  if(R.b10l){ const B=R.b10l, px=-B.uy, pz=B.ux, hw=11, ts=[]; for(let t=B.e0; t<B.e1; t+=10) ts.push(t); ts.push(B.e1);
+    const bt=canvasTex(128,64,g=>{ g.fillStyle='#5a5c5f'; g.fillRect(0,0,128,64); for(let i=0;i<500;i++){ const v=Math.random()<.5?0:255; g.fillStyle=`rgba(${v},${v},${v},.06)`; g.fillRect(Math.random()*128,Math.random()*64,1.5,1.5); }
+      g.fillStyle='#5d7a3e'; g.fillRect(56,0,16,64); g.fillStyle='#9aa0a6'; g.fillRect(63,0,2,64); g.fillStyle='#ecebe4'; [2,53,73,124].forEach(x=>g.fillRect(x,0,2,64)); [27,99].forEach(x=>g.fillRect(x,0,2,22)); });
+    bt.wrapT=THREE.RepeatWrapping; bt.anisotropy=8; const p=new Float32Array(ts.length*6), uv=new Float32Array(ts.length*4), id=[];
+    ts.forEach((t,i)=>{ [-1,1].forEach((q,j)=>{ const x=B.ax+B.ux*t+px*q*hw, z=B.ay+B.uy*t+pz*q*hw; p.set([x,terrainAt(x,z)+.12,z],i*6+j*3); uv.set([j,t/12],i*4+j*2); }); if(i<ts.length-1) id.push(i*2,i*2+2,i*2+1, i*2+1,i*2+2,i*2+3); });
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setAttribute('uv',new THREE.BufferAttribute(uv,2)); geo.setIndex(id); geo.computeVertexNormals();
+    world.add(new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:bt, side:THREE.DoubleSide})));
+    const rr=rng(10), FARB=['#e8e8e8','#1c1d20','#7d8288','#2b3f6b','#9a1f1f','#c9ccd0','#3a3d42','#f2f2f2'], cars=[];
+    for(let i=0;i<20;i++){ const ln=[3.25,6.75,-3.25,-6.75][i%4]; cars.push({ln, dir:ln>0?1:-1, t:B.e0+rr()*(B.e1-B.e0), v:(Math.abs(ln)<5?27:22)+rr()*7, lkw:Math.abs(ln)>5&&rr()<.35, c:FARB[rr()*FARB.length|0]}); }
+    const mk=(gw,gh,gd,auf)=>{ const im=new THREE.InstancedMesh(new THREE.BoxGeometry(gw,gh,gd), lam('#fff'), cars.length); im.frustumCulled=false; cars.forEach((o,i)=>im.setColorAt(i,cc.set(auf&&o.lkw?'#e9e6df':o.c))); world.add(im); return im; };
+    anim.autos={B, cars, px, pz, body:mk(4.3,.8,1.8), cab:mk(2.3,.65,1.6,1)}; poseAutos(0); }
+  inst(new THREE.BoxGeometry(1,1,1), lam('#fff'), S.halle, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.hg/2-1.5,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(o.w,o.hg+3,o.t); cc.set(['#d9d6cf','#b9bdc2','#e6e3dc','#8e959c','#c8b9a0'][o.c*5|0]); });
+  inst(new THREE.BoxGeometry(1,1,1), lam('#fff'), S.halle, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.hg-1.3,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(o.w+.6,.5,o.t+.6); cc.set(o.c<.5?'#5b5e62':'#7a7d80'); });
   for(const e of R.def.bogen||(R.kalmit?[210]:[])){ // Weinlaub-Bogen über der Dorfstraße (Maikammer, Leinsweiler), mit Schrifttafel (Ranschbach)
     const [d,txt]=[].concat(e), [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d), hw=rw(d)+1.4;
     if(txt){ const tt=canvasTex(512,128,g=>{ g.fillStyle='#f4f6f8'; g.fillRect(0,0,512,128); g.strokeStyle='#8a9aa8'; g.lineWidth=6; g.strokeRect(3,3,506,122); g.fillStyle='#2f5f9a'; g.textAlign='center';

@@ -18,6 +18,7 @@ function draw(dt){
   if(anim.stadium) poseStadium(performance.now()/1000);
   if(anim.space) poseSpace(dt, performance.now()/1000);
   if(anim.island) poseIsland(dt, performance.now()/1000);
+  if(anim.autos) poseAutos(dt);
   // Kamera: hinten oben, läuft den Anstieg mit
   const focusD=me.d; let tx,ty,tz,lx,ly,lz;
   let rollT=0; if(R.stadium){ const kc=clampN((bankAt(focusD)*180/Math.PI-ST.BANK0)/(ST.BANK1-ST.BANK0),0,1), u=mine.lane*0.8, pb=trackPt(focusD-(9-3*kc),u), pl=trackPt(focusD+12,u); [tx,ty,tz]=[pb[0],pb[1]+3.4-1.3*kc,pb[2]]; [lx,ly,lz]=[pl[0],pl[1]+1.0,pl[2]]; rollT=R.outSign*bankAt(focusD)*.5*kc; } // Steilkurve: Kamera tiefer, näher und mitgeneigt

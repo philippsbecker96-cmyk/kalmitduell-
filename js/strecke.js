@@ -47,12 +47,28 @@ function scharfeEcke(G,i,j,k,l){ const [p,q,a,b]=[G[i],G[j],G[k],G[l]], ux=q[0]-
 // Optionen Reben: baum (Anteil Obstbäume am Rand), weg (mittlerer Abstand kreuzender Wirtschaftswege in m)
 // breite: [von, bis, Straßenbreite m] · belag: [Art, von, bis, Zusatzsteigung % bei 75 kg] – Art 'pflaster' oder 'beton'
 function kalmitDef(){ return Object.assign(gpxDef(KALMIT_GPX), {name:'Kalmit-Ostrampe', start:'Maikammer', finish:'Kalmit · 673 m', plainElev:110, kalmit:true, gpx:'kalmit', zones:[['ort',0,800],['reben',800,2300]]}); }
-function suedpfalzDef(loop){ const E=scharfeEcke(hoeheSchliessen(SUEDPFALZ_GPX),24,31,33,36), g=gpxDef(E.G,10); g.poly.push(g.poly[0].slice()); // Runde schließen, sonst fehlen am Ziel 8 m Straße · Arzheim: scharf rechts auf die Hauptstraße, die links weiterläuft
-  return Object.assign(g, {name:'Südpfalz-Klassiker', start:'Godramstein', finish:'Ziel', gpx:'suedpfalz', loop:!!loop,
-  zones:[['ort',0,110,{luecke:.6,fach:.3,name:'Godramstein',kreis:'Stadt Landau in der Pfalz'}],['feld',110,700],['hain',700,1000],['ort',1000,2350,{fach:.2,gewaende:.6,ranken:.25,teile:[[1800,2350,{neu:1}]],geh:1,abzweig:-1,name:'Arzheim',kreis:'Stadt Landau in der Pfalz'}],['reben',2350,3500,{baum:.1,weg:300}],['ort',3500,3760,{seite:-1,luecke:.5,fach:.3,name:'Ilbesheim',kreis:'Kreis Südliche Weinstraße'}],
-    ['reben',3760,5400,{baum:.1,weg:350}],['ort',5400,6200,{fach:.5,geh:.6,teile:[[5400,5530,{seite:-1,neu:1,obst:1}],[5530,5630,{luecke:.6,fach:.2}],[5630,5960,{fach:.55,gewaende:.85,laden:2,ranken:.35}],[5960,6200,{neu:1}]],name:'Leinsweiler',kreis:'Kreis Südliche Weinstraße'}],['reben',6200,8000,{baum:.1,weg:220}],['ort',8000,9050,{luecke:.3,fach:.1,geh:2,teile:[[8000,8180,{seite:-1,neu:1,obst:1}],[8180,8900,{quader:.35,giebel:.4,solar:.25,gewaende:.5,ranken:.1,strbaum:1}],[8900,9050,{seite:1,neu:1,reben:1}]],name:'Ranschbach',kreis:'Kreis Südliche Weinstraße'}],['reben',9050,1e9,{baum:0,weg:260}]],
-  kreuz:E.kreuz, haardt:true, steil:true, mitte:[[2350,3500],[6200,8000]], planke:[[7700,7930]], saum:[[2350,2460,1],[2460,2800,0],[2800,3000,-1]], radweg:[[2800,3500,1]], allee:[[3400,3500,-1]], bogen:[5415,[8165,'Seilmacher-Dorf']], // Haardt als Bergkette im Westen · Überhöhung in deiner Nähe wie an der Kalmit
-  breite:[[1000,2350,5],[3500,3760,5.5],[5400,6200,4.2],[8000,9050,6.6],[9080,12990,3.2]], belag:[['pflaster',5400,6000,3.5],['beton',9080,12990,0]]}); }
+// Runde an der Stelle V (m) neu beginnen lassen: Punkt dort einfügen, das Stück davor hinten anhängen
+function rundeAb(G,V){ let c=0; const n=G.length, zu=Math.hypot(G[n-1][0]-G[0][0],G[n-1][1]-G[0][1])<1; // zu: GPX endet schon am Anfang
+  for(let i=1;i<n;i++){ const a=G[i-1], b=G[i], l=Math.hypot(b[0]-a[0],b[1]-a[1]); if(c+l>=V){ const t=(V-c)/l, P=a.map((v,k)=>v+(b[k]-v)*t); return [P,...G.slice(i),...G.slice(zu?1:0,i),P]; } c+=l; }
+  return G; }
+const SP_V=350; // Start/Ziel 350 m hinter dem komoot-Start (K9 an der B10, außerhalb von Godramstein)
+function suedpfalzDef(loop){ const V=SP_V, E=scharfeEcke(hoeheSchliessen(SUEDPFALZ_GPX),24,31,33,36), g=gpxDef(rundeAb(E.G,V),10); // Arzheim: scharf rechts auf die Hauptstraße, die links weiterläuft
+  let Lp=0; for(let i=1;i<g.poly.length;i++) Lp+=Math.hypot(g.poly[i][0]-g.poly[i-1][0],g.poly[i][1]-g.poly[i-1][1]);
+  // Alle Angaben unten in komoot-Metern ab dem alten Start, hier auf die neue Runde umgerechnet. Ein Bereich darf den neuen Start nicht überspannen; Ende null = bis zum alten Start
+  const um=d=>d>=V?d-V:d-V+Lp, ur=(a,b)=>[um(a), b==null?Lp-V:b<=V?b-V+Lp:b-V], Z=L=>L.map(([a,b,...x])=>[...ur(a,b),...x]);
+  const zones=[['hain',0,150],['feld',150,350],['feld',350,700],['hain',700,1000],['ort',1000,2350,{fach:.2,gewaende:.6,ranken:.25,teile:[[1800,2350,{neu:1}]],geh:1,abzweig:-1,name:'Arzheim',kreis:'Stadt Landau in der Pfalz'}],['reben',2350,3500,{baum:.1,weg:300}],['reben',3500,3760,{baum:.1,weg:300}],
+    ['reben',3760,5400,{baum:.1,weg:350}],['ort',5400,6200,{fach:.5,geh:.6,teile:[[5400,5530,{seite:-1,neu:1,obst:1}],[5530,5630,{luecke:.6,fach:.2}],[5630,5960,{fach:.55,gewaende:.85,laden:2,ranken:.35}],[5960,6200,{neu:1}]],name:'Leinsweiler',kreis:'Kreis Südliche Weinstraße'}],['reben',6200,8000,{baum:.1,weg:220}],['ort',8000,9050,{luecke:.3,fach:.1,geh:2,teile:[[8000,8180,{seite:-1,neu:1,obst:1}],[8180,8900,{quader:.35,giebel:.4,solar:.25,gewaende:.5,ranken:.1,strbaum:1}],[8900,9050,{seite:1,neu:1,reben:1}]],name:'Ranschbach',kreis:'Kreis Südliche Weinstraße'}],['reben',9050,12800,{baum:0,weg:260}],['hain',12800,null]]
+    .map(([t,a,b,o])=>{ const z=[t,...ur(a,b)]; if(o){ o=Object.assign({},o); if(o.teile) o.teile=Z(o.teile); z.push(o); } return z; }).sort((p,q)=>p[1]-q[1]);
+  if(Math.hypot(g.poly[g.poly.length-1][0]-g.poly[0][0],g.poly[g.poly.length-1][1]-g.poly[0][1])>.5) g.poly.push(g.poly[0].slice()); // Runde schließen
+  return Object.assign(g, {name:'Südpfalz-Klassiker', start:'Godramstein', finish:'Ziel', gpx:'suedpfalz', loop:!!loop, zones,
+  kreuz:E.kreuz, haardt:true, steil:true, // Haardt als Bergkette im Westen · Überhöhung in deiner Nähe wie an der Kalmit
+  mitte:Z([[2350,3800],[6200,8000]]), planke:Z([[7700,7930],[12990,null,2],[0,120,2]]), saum:Z([[2350,2460,1],[2460,2800,0],[2800,3000,-1],[3510,3630,1],[3660,3800,1]]), radweg:Z([[2800,3510,1]]), allee:Z([[3420,3620,-1]]),
+  weiter:[[9060,-24,220,6]].map(([d,...x])=>[um(d),...x]), // nach Ranschbach: die L508 läuft geradeaus weiter, der Betonplattenweg knickt rechts ab
+  hof:[[3590,-1,20],[3710,-1,14]].map(([d,...x])=>[um(d),...x]), // Ilbesheim: die K20 führt am Ortsrand vorbei, nur Aussiedlerhöfe mit Hallen links
+  bogen:[5415,[8165,'Seilmacher-Dorf']].map(e=>Array.isArray(e)?[um(e[0]),e[1]]:um(e)),
+  // B10 links parallel (Mitte 30 m neben dem Weg), dazwischen und dahinter Gehölz (Bahn, Queich), dahinter Gewerbe von Godramstein
+  b10:Z([[12140,12800,-1,30]]), gehoelz:Z([[12140,12800,-1,4,19],[12140,12800,-1,42,130],[12800,null,-1,4,60]]), gewerbe:Z([[12450,12800,-1,160]]),
+  breite:Z([[1000,2350,5],[5400,6200,4.2],[8000,9050,6.6],[9080,12990,3.2]]), belag:[['pflaster',5400,6000,3.5],['beton',9080,12990,0]].map(([t,a,b,x])=>[t,...ur(a,b),x])}); }
 const zoneOf=(r,d)=>{ for(const z of r.zones) if(d>=z[1]&&d<z[2]) return z; return null; };
 const zoneAt=(r,d)=>{ const z=zoneOf(r,d); return z?z[0]:'wald'; };
 const zOpt=(r,d)=>{ const z=zoneOf(r,d); return z&&z[3]||{}; };
@@ -122,9 +138,13 @@ function makeScenery(r){
   for(let i=0;i<r.xs.length;i+=2){ const k=key(r.xs[i],r.ys[i]); (rg.get(k)||rg.set(k,[]).get(k)).push(i); }
   const distRoad=(x,y)=>{ let m=1e9; const cx=Math.floor(x/CELL), cy=Math.floor(y/CELL);
     for(let a=-1;a<=1;a++) for(let b=-1;b<=1;b++){ const l=rg.get((cx+a)+','+(cy+b)); if(l) for(const i of l){ const dd=Math.hypot(r.xs[i]-x,r.ys[i]-y); if(dd<m) m=dd; } } return m; };
-  const S={tree:[],rock:[],vine:[],vpost:[],grass:[],house:[],block:[],post:[],lamp:[],fan:[],bush:[],weg:[],tor:[],zaun:[],konif:[],ranke:[],rad:[]}, R1=rng(42), R2=rng(7), R3=rng(5); // R2 nur für Neues, damit die Kalmit gleich bleibt · R3 für Hausdetails
+  const S={tree:[],rock:[],vine:[],vpost:[],grass:[],house:[],block:[],post:[],lamp:[],fan:[],bush:[],weg:[],tor:[],zaun:[],konif:[],ranke:[],halle:[]}, R1=rng(42), R2=rng(7), R3=rng(5); // R2 nur für Neues, damit die Kalmit gleich bleibt · R3 für Hausdetails
   const frame=d=>{ const [px,py]=posAt(r,d), h=headingAt(r,d); return {px,py,h,nx:-Math.sin(h),ny:Math.cos(h)}; };
   const inBand=(L,d,side)=>(L||[]).some(([a,b,s])=>d>=a&&d<b&&(!s||s===side)); // Abschnittslisten [von, bis, Seite (0 = beide)]
+  // B10: gerade Linie parallel zum Abschnitt, nach beiden Seiten verlängert (ext), so weit sie der Strecke nicht zu nahe kommt
+  r.b10l=null; for(const [a,b,sd,off] of r.def.b10||[]){ const fa=frame(a), fb=frame(b), ax=fa.px+fa.nx*sd*off, ay=fa.py+fa.ny*sd*off, bx=fb.px+fb.nx*sd*off, by=fb.py+fb.ny*sd*off, L=Math.hypot(bx-ax,by-ay), B={ax,ay,ux:(bx-ax)/L,uy:(by-ay)/L,L,a,b,sd,off,e0:0,e1:L};
+    const frei=t=>distRoad(ax+B.ux*t,ay+B.uy*t)>off-4; for(let t=0;t>-500&&frei(t-10);t-=10) B.e0=t-10; for(let t=L;t<L+500&&frei(t+10);t+=10) B.e1=t+10; r.b10l=B; }
+  const b10Dist=(x,y)=>{ const B=r.b10l; if(!B) return 1e9; const t=Math.max(B.e0,Math.min(B.e1,(x-B.ax)*B.ux+(y-B.ay)*B.uy)); return Math.hypot(x-B.ax-B.ux*t, y-B.ay-B.uy*t); }; r.b10Dist=b10Dist;
   // Neubaugebiet: freistehende Häuser hinter Vorgarten, an der Grenze Hecke oder Mauer mit Einfahrt, Büsche und Koniferen; gid verknüpft Garten und Haus
   const neubau=(d,side,geh,zb)=>{ const w=9+R3()*3.5, dep=8.5+R3()*2.5, vg=5+R3()*3.5, gap=4+R3()*7, dm=d+w/2, f=frame(dm), rh=roadW(r,dm)/2, off=rh+geh+vg+dep/2, gid=S.house.length+1;
     const cx=f.px+f.nx*side*off, cy=f.py+f.ny*side*off, ax=Math.cos(f.h), ay=Math.sin(f.h), at=(a,o)=>{ const g=frame(a); return [g.px+g.nx*side*o, g.py+g.ny*side*o, g]; };
@@ -204,18 +224,32 @@ function makeScenery(r){
   }
   // Rebzeilen quer zur Straße: jede Zeile läuft vom Straßenrand senkrecht weg, Zeilenabstand 2,4 m
   for(const [zt,za,zb,zo={}] of r.zones){ const s0=zt==='reben'||zt==='feld'?[-1,1]:zt==='ort'&&zo.seite?[-zo.seite]:null; if(!s0&&!(zo.teile||[]).some(t=>t[2].reben)) continue;
-  for(let d=za-(zt==='reben'?10:0); d<Math.min(zb,r.len); d+=2.4){ const f=frame(d), t=(zo.teile||[]).find(t=>d>=t[0]&&d<t[1]), sides=t&&t[2].reben?[-t[2].seite]:s0; if(!sides) continue;
+  for(let d=za-(zt==='reben'?10:0); d<Math.min(zb,r.len); d+=2.4){ const f=frame(d), t=(zo.teile||[]).find(t=>d>=t[0]&&d<t[1]), sides=(t&&t[2].reben?[-t[2].seite]:s0||[]).filter(sd=>!inBand(r.def.gehoelz,d,sd)); if(!sides.length) continue;
     if(zt==='feld'){ const p=parzAt(r,d); if(!p||p[2]!==0||d-p[0]<2||p[1]-d<2) continue; }
     if(r.wege.some(w=>Math.abs(w-d)<2.6)) continue; // Lücke für den Wirtschaftsweg
     for(const side of sides) for(let k=0; k<(r.kalmit?22:14); k++){ const off=side*(roadW(r,d)/2+3.5+(inBand(r.def.radweg,d,side)?4:inBand(r.def.saum,d,side)?4.5:0)+k*3.0), x=f.px+f.nx*off, y=f.py+f.ny*off;
       if(distRoad(x,y)<Math.abs(off)-1.2) break; S.vine.push({x,y,rot:f.h+Math.PI/2,c:R1()}); if(k%3===0) S.vpost.push({x,y,h:f.h}); } } }
   // Wirtschaftswege quer zur Straße, Hecken an Feldgrenzen
-  for(const w of r.wege){ const f=frame(w), rw=roadW(r,w)/2; for(const side of [-1,1]) for(let o=rw+1.6; o<rw+75; o+=3) S.weg.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h}); }
+  for(const w of r.wege){ const f=frame(w), rw=roadW(r,w)/2; for(const side of [-1,1]) if(!inBand(r.def.gehoelz,w,side)) for(let o=rw+1.6; o<rw+75; o+=3) S.weg.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h}); }
   // Landstraße: Gebüschsaum, Alleebäume, Leitpfosten in den Weinbergen (Südpfalz)
   for(const [a,b,sd] of r.def.saum||[]) for(let d=a; d<Math.min(b,r.len); d+=1.6+R3()*1.2){ const f=frame(d), rw=roadW(r,d)/2;
     for(const side of sd?[sd]:[-1,1]){ const o=rw+2.4+R3()*2.6; S.bush.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, s:1.1+R3()*1.1, c:R3(), tree:R3()<.14}); } }
   for(const [a,b,sd] of r.def.allee||[]) for(let d=a; d<Math.min(b,r.len); d+=8+R3()*3){ const f=frame(d), o=roadW(r,d)/2+3.5;
     for(const side of sd?[sd]:[-1,1]) S.tree.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, s:2.6+R3()*.8, c:R3(), pine:false, ht:4}); }
+  // Gehölzstreifen [von, bis, Seite, Abstand von, bis]: Laubbäume und Gebüsch · Gewerbe [von, bis, Seite, Abstand]: Hallen mit Flachdach
+  for(const [a,b,sd,o0,o1] of r.def.gehoelz||[]) for(let d=a; d<Math.min(b,r.len); d+=3){ const f=frame(d), ax=Math.cos(f.h), ay=Math.sin(f.h), n=Math.max(1,Math.round((o1-o0)/(o1>40?11:7)));
+    for(const side of sd?[sd]:[-1,1]) for(let k=0;k<n;k++){ const o=roadW(r,d)/2+o0+R3()*(o1-o0), al=(R3()-.5)*3, x=f.px+f.nx*side*o+ax*al, y=f.py+f.ny*side*o+ay*al;
+      if(R3()<.6) S.tree.push({x, y, s:2.2+R3()*1.8, c:R3(), pine:R3()<.1, ht:9+R3()*6}); else S.bush.push({x, y, s:1+R3()*1.2, c:R3(), tree:R3()<.3}); } }
+  for(const [a,b,sd,off] of r.def.gewerbe||[]) for(let d=a; d<Math.min(b,r.len); d+=40+R3()*30){ const f=frame(d), o=off+R3()*70, w=25+R3()*35, t=18+R3()*25;
+    S.halle.push({x:f.px+f.nx*sd*o, y:f.py+f.ny*sd*o, h:f.h+(R3()-.5)*.1, w, t, hg:6+R3()*5, c:R3()}); }
+  // Weiterführende Straße [d, Winkel ° (negativ = links), Länge, Breite]: die Strecke biegt ab, die Straße läuft in ihrer Richtung weiter
+  r.weiter=(r.def.weiter||[]).map(([d,wk,len,w])=>{ const f=frame(d), h=f.h+wk*Math.PI/180; return {x:f.px, y:f.py, ux:Math.cos(h), uy:Math.sin(h), len, w, d}; });
+  const aufWeiter=(x,y,m)=>r.weiter.some(K=>{ const al=(x-K.x)*K.ux+(y-K.y)*K.uy, la=-(x-K.x)*K.uy+(y-K.y)*K.ux; return al>-2&&al<K.len+2&&Math.abs(la)<K.w/2+m; });
+  // Aussiedlerhof [d, Seite, Abstand]: Wohnhaus und Halle mit Flachdach, ein paar Bäume; Platz drumherum frei von Reben
+  r.hofPl=[]; for(const [d,sd,off] of r.def.hof||[]){ const f=frame(d), rw=roadW(r,d)/2, at=(al,o)=>[f.px+f.nx*sd*(rw+o)+Math.cos(f.h)*al, f.py+f.ny*sd*(rw+o)+Math.sin(f.h)*al];
+    const [hx,hy]=at(-8,off+5); S.house.push({x:hx, y:hy, w:11, dep:9, hgt:5.8, h:f.h, side:sd, wall:R3()*6|0, shut:R3()*3|0, roof:DACH_ALT[R3()*3|0], kam:R3(), pv:R3()<.5, d});
+    const [gx,gy]=at(10,off+9); S.halle.push({x:gx, y:gy, h:f.h, w:18, t:16, hg:6, c:R3()}); r.hofPl.push({x:(hx+gx)/2, y:(hy+gy)/2, r:24});
+    for(let i=0;i<4;i++){ const [x,y]=at(-22+R3()*44, off+18+R3()*10); S.tree.push({x, y, s:2.4+R3()*1.2, c:R3(), pine:false, ht:4}); } }
   if(!r.kalmit) for(let d=0; d<r.len; d+=50) if(zoneAt(r,d)==='reben'){ const f=frame(d), o=roadW(r,d)/2+.7; for(const side of [-1,1]) S.post.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h}); }
   for(const hk of r.hecke){ const f=frame(hk), rw=roadW(r,hk)/2; for(const side of [-1,1]) for(let o=rw+4; o<rw+90; o+=1.6+R2()*1.6) if(R2()<.85) S.bush.push({x:f.px+f.nx*side*o+(R2()-.5), y:f.py+f.ny*side*o+(R2()-.5), s:1+R2()*.9, c:R2(), tree:R2()<.08}); }
   for(let d=0; d<r.len; d+=8){ const f=frame(d);
@@ -252,6 +286,9 @@ function makeScenery(r){
     fan(.55,-hw-1.1,{name:'Marion', paar:1, face:Math.atan2(-f.nx*s,-f.ny*s), tall:.93, jack:'#b5523b', legs:'#2a2f3a', cap:'#d8cfc0', arms:2, phone:false, ph:.4});
     fan(.55,-hw-2.8,{name:'Michel', paar:1, face:Math.atan2(-f.nx*s,-f.ny*s), tall:1.01, jack:'#4a6b8a', legs:'#6b6255', cap:'#b9b9b4', arms:2, phone:false, ph:.8});
     [[.55,-hw-4.6],[.6,-hw-5.5],[.55,hw+1],[.6,hw+1.9],[A.geh+2.5,-hw+.6,{flag:true}],[A.geh+2.2,hw-.6],[A.geh+4.6,hw-.7]].forEach(([u,al,o])=>fan(u,al,o)); }
+  for(const P of r.hofPl) for(const k of ['vine','vpost','tree','bush','weg']) S[k]=S[k].filter(o=>o.ht===4||Math.hypot(o.x-P.x,o.y-P.y)>P.r);
+  if(r.weiter.length) for(const k of ['vine','vpost','tree','bush','grass','weg','post','rock']) S[k]=S[k].filter(o=>!aufWeiter(o.x,o.y,k==='tree'?3:1.5));
+  if(r.b10l) for(const k of ['tree','bush','konif','vine','vpost','grass','weg','rock','halle']) S[k]=S[k].filter(o=>b10Dist(o.x,o.y)>(k==='halle'?40:14)); // nichts auf der B10
   r.S=S;
 }
 
