@@ -1,16 +1,25 @@
 /* ---------- Kamera & Zeichnen ---------- */
 const camS={x:0,y:0,z:0,lx:0,ly:0,lz:0,init:false};
+// Kehren der Strecke: Scheitel (größte Krümmung), Kurvenrichtung und wie weit nach außen (nach mittlerer Steigung ±50 m) – einmal pro Strecke berechnet
+function kehrenLinie(){ if(R.kehrL) return R.kehrL; R.kehrL=[];
+  for(const k of R.kehren||[]){ let best=0, ad=k; for(let d=k-40; d<=k+40; d+=2){ const c=Math.abs(curv(d)); if(c>best){ best=c; ad=d; } }
+    let g=0; for(let d=ad-50; d<=ad+50; d+=2) g+=gradeAt(d); g/=51; const m=g>=8?1:g>=5?.5:g>=4?0:null;
+    if(m!=null) R.kehrL.push({d:ad, sg:Math.sign(curv(ad))||1, m}); }
+  return R.kehrL; }
 function draw(dt){
   const inRace=race.state!=='setup';
   if(!inRace){ speedFx(dt,0); drawPreviews(dt); return; }
   const mine=riders3d[myKey], theirs=riders3d[oppKey];
   mine.g.visible=true; theirs.g.visible=opp.active; RKEYS.forEach(k=>{ if(k!==myKey&&k!==oppKey&&riders3d[k]) riders3d[k].g.visible=false; }); if(riders3d.devil&&oppKey!=='devil') riders3d.devil.g.visible=false;
   // Spur: wer im Windschatten fährt, schert hinter dem Vordermann ein · sonst Ideallinie über die ganze Straße (bis 0,6 m vor den Rand):
-  // 25 m vor der Kurve nach außen, am Scheitel innen, danach wieder raustragen lassen. Voll bis 80 m Radius und ab 20 km/h. Steile Kehre bergauf (ab 8 %): außen herum, innen ist es zu steil
+  // 25 m vor der Kurve nach außen, am Scheitel innen, danach wieder raustragen lassen. Voll bis 80 m Radius und ab 20 km/h.
+  // Kehren bergauf: einmal pro Kehre nach der mittleren Steigung ±50 m eingestuft – ab 4 % Mitte, ab 5 % halb außen, ab 8 % ganz außen (innen ist es zu steil).
+  // Dann ohne Umweg nach innen: ab 60 m vorher zur Mitte bzw. nach außen gleiten, bis kurz nach dem Scheitel dort bleiben, danach zurück auf die normale Linie
   const lineAt=(k,o)=>{ const base=ownLane(k), d=o.d, hw=roadW(R,R.loop?d%R.len:d)/2-.6, H=R.island?Math.min(1.2,hw):hw; if(R.stadium||camOverride) return {t:base,H};
-    const F=x=>{ const c=curv(x), w=clampN((gradeAt(x)-6)/2,0,1)*clampN((Math.abs(c)-.02)/.015,0,1); return clampN(c*80,-1,1)*(1-2*w); };
-    const a=F(d+5), b=F(d+25), x=clampN(a-.6*Math.sign(b)*Math.max(0,Math.abs(b)-Math.abs(a)),-1,1), s=Math.min(1,o.v/5.56)*Math.abs(x);
-    return {t:clampN(base+(Math.sign(x)*H-base)*s,-H,H),H}; };
+    const F=x=>clampN(curv(x)*80,-1,1), a=F(d+5), b=F(d+25), x=clampN(a-.6*Math.sign(b)*Math.max(0,Math.abs(b)-Math.abs(a)),-1,1), s=Math.min(1,o.v/5.56)*Math.abs(x);
+    let t=clampN(base+(Math.sign(x)*H-base)*s,-H,H);
+    for(const K of kehrenLinie()){ const w=clampN((d-K.d+60)/30,0,1)*clampN((K.d+40-d)/25,0,1); if(w>0) t+=(-K.sg*K.m*H-t)*w; }
+    return {t,H}; };
   const tm=lineAt(myKey,me), to=opp.active?lineAt(oppKey,opp):tm;
   if(opp.active&&Math.abs(opp.d-me.d)<2.2&&!R.stadium&&!camOverride){ // nebeneinander: beide fahren die Linie gemeinsam mit 1,2 m Abstand, Reihenfolge wie die Grundspuren
     const up=ownLane(myKey)>=ownLane(oppKey)?1:-1; let a=tm.t, b=to.t; if((a-b)*up<1.2){ const m=(a+b)/2; a=m+.6*up; b=m-.6*up; }
