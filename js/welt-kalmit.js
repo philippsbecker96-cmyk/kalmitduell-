@@ -124,7 +124,7 @@ function build3D(){
   for(let k=0;k<N;k++){ const i=k%n, j=(k/n)|0, x=i*res+TER.x0, z=j*res+TER.z0; pos[k*3]=x; pos[k*3+1]=h[k]; pos[k*3+2]=z;
     const d=src[k]*STEP; tc.copy(cForest).lerp(cForest2, vnoise(x/40,z/40)); tc.lerp(cNeedles, Math.max(0,vnoise(x/18,z/18)-.45)*1.2);
     const zt=zoneAt(R,d);
-    if(zt!=='wald' && dist[k]<160) tc.copy(cVine).lerp(cForest, Math.max(0,(dist[k]-90)/70));
+    if(zt!=='wald' && zt!=='hain' && dist[k]<160) tc.copy(cVine).lerp(cForest, Math.max(0,(dist[k]-90)/70));
     if(zt==='feld' && dist[k]<200){ const p=parzAt(R,d); if(p&&p[2]) tc.copy(cAcker[p[2]-1]).lerp(cPlain, vnoise(x/9,z/9)*.25); }
     if(zt==='ort' && dist[k]<120) tc.copy(cTown);
     if(dist[k]<16) tc.lerp(zt!=='ort'&&zoneAt(R,d+200)==='wald' ? cSand : cVerge, 1-dist[k]/16);
@@ -167,13 +167,22 @@ function build3D(){
     tx.wrapT=THREE.RepeatWrapping; tx.anisotropy=8;
     strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{polygonOffsetFactor:-2})),t==='pflaster'?1.6:3.5,[1]); }
   strip(d0,R.len,d=>-rw(d),rw,0.12,asph,9,[1]);
+  const stY=(al,x,z)=>{ const t=Math.min(1,Math.max(0,(al-15)/20)), k=t*t*(3-2*t); return (terrainAt(x,z,TER.hr)+.13)*(1-k)+(terrainAt(x,z)+.06)*k; }; // Höhe der Stichstraße
   const orte=R.zones.filter(z=>z[0]==='ort');
   if(orte.length){ const pav=canvasTex(64,64,g=>{ g.fillStyle='#9d6b5a'; g.fillRect(0,0,64,64); g.strokeStyle='rgba(50,25,18,.35)'; g.lineWidth=1.5;
       for(let y=0;y<64;y+=8){ g.beginPath(); g.moveTo(0,y); g.lineTo(64,y); g.stroke(); for(let x=(y/8%2)*8;x<64;x+=16){ g.beginPath(); g.moveTo(x,y); g.lineTo(x,y+8); g.stroke(); } } });
     pav.wrapT=THREE.RepeatWrapping;
+    const pavM=side2(Object.assign(new THREE.MeshLambertMaterial({map:pav}),{polygonOffsetFactor:-3})), curbM=side2(lam('#d8d4ca')), cut=(s,d)=>R.gehCut&&R.gehCut.some(c=>c[0]===s&&d>=c[1]&&d<=c[2]); // an Einmündungen kein Gehweg
     for(const [,za,zb,zo={}] of orte){ const geh=zo.geh??SIDEWALK, sd=zo.seite?[zo.seite]:[-1,1];
-      strip(za,Math.min(zb,R.len),rw,d=>rw(d)+geh,0.22,side2(Object.assign(new THREE.MeshLambertMaterial({map:pav}),{polygonOffsetFactor:-3})),3,sd);
-      strip(za,Math.min(zb,R.len),d=>rw(d)-0.05,d=>rw(d)+0.2,0.26,side2(lam('#d8d4ca')),3,sd); } }
+      for(const s of sd){ strip(za,Math.min(zb,R.len),rw,d=>rw(d)+(cut(s,d)?0:geh),0.22,pavM,3,[s]);
+        strip(za,Math.min(zb,R.len),d=>rw(d)-0.05,d=>cut(s,d)?rw(d)-0.05:rw(d)+0.2,0.26,curbM,3,[s]); } }
+    // Stichstraße an der Einmündung: Asphalt, Gehwege, Bordsteine; nahe der Hauptstraße auf deren Höhe, weiter weg aufs Gelände
+    if(R.stich){ const K=R.stich, at=(al,la)=>[K.x+K.ux*al+K.vx*la, K.y+K.uy*al+K.vy*la];
+      const band=(la0,la1,a0,lift,mat)=>{ const as=[]; for(let al=a0;al<K.len;al+=al<30?1:2.5) as.push(al); as.push(K.len); const p=new Float32Array(as.length*6), id=[];
+        as.forEach((al,i)=>{ [la0,la1].forEach((la,j)=>{ const [x,z]=at(al,la); p.set([x,stY(al,x,z)+lift,z],i*6+j*3); }); if(i<as.length-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); });
+        const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setIndex(id); geo.computeVertexNormals(); world.add(new THREE.Mesh(geo,mat)); };
+      band(-K.w/2,K.w/2,-3,0,side2(Object.assign(lam('#55575a'),{polygonOffsetFactor:-4})));
+      for(const s of [-1,1]){ const a0=K.al0[s]; band(s*K.w/2,s*(K.w/2+K.geh),a0,.09,pavM); band(s*(K.w/2-.05),s*(K.w/2+.2),a0,.13,curbM); } } }
   // Seitenstraße: quer weg vom Straßenrand, am Anfang auf Gehweghöhe, dann aufs Gelände
   const abY=(u,x,z,d)=>{ const A=R.abzweig, t=Math.min(1,Math.max(0,(u-A.geh-1)/12)), k=t*t*(3-2*t); return (roadY(d??A.d)+.29)*(1-k)+(terrainAt(x,z)+.06)*k; };
   if(R.abzweig){ const A=R.abzweig, [x0,z0]=posAt(R,A.d), hd=headingAt(R,A.d), nx=-Math.sin(hd)*A.side, nz=Math.cos(hd)*A.side, ax=Math.cos(hd), az=Math.sin(hd), r0=rw(A.d);
@@ -223,7 +232,7 @@ function build3D(){
   inst(new THREE.BoxGeometry(.09,.8,.09), lam('#8d949b'), rposts, o=>{ ps.set(o.x,o.y+.4,o.z); qq.setFromAxisAngle(up,-o.h); sc.set(1,1,1); cc.set('#8d949b'); });
 
   // ---------- Dorf ----------
-  S.house.forEach(o=>{ const gY=roadY(o.d)+0.15, grp=new THREE.Group();
+  S.house.forEach(o=>{ const gY=o.su!=null?stY(o.su,o.x,o.y)+.02:roadY(o.d)+0.15, grp=new THREE.Group();
     const fm=new THREE.MeshLambertMaterial({map:o.fw?fachTex(1):facadeTex(o.wall,o.shut)}), wm=o.fw?new THREE.MeshLambertMaterial({map:fachTex(0)}):lam(WALLS[o.wall]);
     const body=new THREE.Mesh(new THREE.BoxGeometry(o.w,o.hgt,o.dep), [wm,wm,wm,wm,fm,wm]); body.position.y=o.hgt/2; grp.add(body);
     const sock=new THREE.Mesh(new THREE.BoxGeometry(o.w+.02,8,o.dep+.02), lam('#b9936c')); sock.position.y=-4+0.05; grp.add(sock);
@@ -254,7 +263,7 @@ function build3D(){
       const tex=canvasTex(512,128,g=>{ g.fillStyle='#fffdf5'; g.fillRect(0,0,512,128); g.strokeStyle='#c92a2a'; g.lineWidth=10; g.strokeRect(5,5,502,118);
         g.fillStyle='#1a1a1a'; g.textAlign='center'; g.textBaseline='middle'; g.font='800 78px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText("Auf geht's Sebbi",256,68,480); });
       const banner=new THREE.Mesh(new THREE.PlaneGeometry(2.3,.55), new THREE.MeshLambertMaterial({map:tex, side:THREE.DoubleSide})), [a,b]=PA, fc=a.face*.5+b.face*.5;
-      const L=Math.hypot(a.x-b.x,a.y-b.y), tx=(a.x-b.x)/L, tz=(a.y-b.y)/L, TW=.52, vx=Math.sin(fc)*Math.cos(TW)-tx*Math.sin(TW), vz=Math.cos(fc)*Math.cos(TW)-tz*Math.sin(TW), fv=Math.atan2(vx,vz); // 30° den Fahrern entgegen gedreht
+      const L=Math.hypot(a.x-b.x,a.y-b.y), tx=(a.x-b.x)/L, tz=(a.y-b.y)/L, TW=.7, vx=Math.sin(fc)*Math.cos(TW)-tx*Math.sin(TW), vz=Math.cos(fc)*Math.cos(TW)-tz*Math.sin(TW), fv=Math.atan2(vx,vz); // 30° den Fahrern entgegen gedreht
       PA.forEach(o=>o.face=fv);
       banner.position.set((a.x+b.x)/2+Math.sin(fc)*.22, Math.min(a.gy+1.9*a.tall,b.gy+1.9*b.tall)+.27, (a.y+b.y)/2+Math.cos(fc)*.22); banner.rotation.y=fv; world.add(banner);
       paar={banner,names}; }

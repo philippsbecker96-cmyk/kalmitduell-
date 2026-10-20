@@ -569,7 +569,7 @@ function sbLap(A){ const S=A.sb; if(race.state!=='run'){ S.lap=0; S.t0=0; S.last
   const lap=Math.floor(me.d/R.len+1e-6); if(lap>S.lap){ S.last=(me.done&&race.mode!=='train'?me.time:race.t)-S.t0; S.t0=race.t; S.lap=lap; } }
 function drawBoard(A){ const S=A.sb, g=S.g, W=1024, H=360, F=s=>`800 ${s}px "Barlow Condensed", Arial Narrow, sans-serif`;
   g.fillStyle='#050608'; g.fillRect(0,0,W,H); g.fillStyle='#b3121f'; g.fillRect(0,0,W,64);
-  g.font=F(44); g.textBaseline='middle'; g.fillStyle='#fff'; g.textAlign='left'; g.fillText('KALMIT-DUELL · STADIONRUNDE',22,34);
+  g.font=F(44); g.textBaseline='middle'; g.fillStyle='#fff'; g.textAlign='left'; g.fillText('KALMIT-DUELL · BETZENBERG',22,34);
   g.textAlign='right'; g.fillText(race.state==='run'?fmtT(race.t):'--:--',W-22,34);
   const line=(y,l,r,c='#ffd66b',s=52)=>{ g.font=F(s); g.fillStyle=c; g.textAlign='left'; g.fillText(l,30,y); if(r){ g.textAlign='right'; g.fillText(r,W-30,y); } };
   const mk=RIDERS[myKey].name.toUpperCase(), on=String(opp.name).toUpperCase();

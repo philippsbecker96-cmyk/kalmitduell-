@@ -194,7 +194,7 @@ function quitToLobby(){
   if(anim.stadium&&anim.stadium.confetti){ anim.stadium.confetti.t0=null; anim.stadium.confetti.pts.visible=false; anim.stadium.replay=null; anim.stadium.bell.t0=-1e9; anim.stadium.choreo.t0=-1e9; }
   if(anim.stadium&&anim.stadium.pyro){ const Y=anim.stadium.pyro; Y.t0=null; Y.list.forEach(P=>{ P.glow.visible=P.core.visible=false; P.smoke.forEach(sm=>sm.visible=false); }); Y.sparks.visible=false; Y.lights.forEach(l=>l.intensity=0); }
   // Gast-Sperren der Lobby wieder aufheben
-  document.querySelectorAll('.hostonly').forEach(t=>t.style.display='none'); $('modeTag').style.display='none'; $('btnBack').style.display='';
+  document.querySelectorAll('.hostonly').forEach(t=>t.style.display='none'); $('modeTag').style.display='none'; $('btnBack').textContent='← Modus wechseln'; $('btnBack2').textContent='← Zurück';
   for(const id of ['formsOn','draftOn','lapMinus','lapPlus','botOn','botRider','botWkg','botKg','botStyle','botAgg','btnHost','btnStart']) $(id).disabled=false; $('botOn').checked=true;
   document.querySelectorAll('.rcard').forEach(c=>c.classList.remove('taken')); setConn('');
   if(Object.keys(remoteLooks).length){ for(const k in remoteLooks) delete remoteLooks[k]; rebuildRiders(); } oppKey=botKey; opp.name=RIDERS[oppKey].name; $('joinState').textContent='';

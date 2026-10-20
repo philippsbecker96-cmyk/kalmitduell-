@@ -44,7 +44,8 @@ function openMode(m){
   $('modeScreen').style.display='none'; $('cfgScreen').style.display=''; renderRouteList(); sendCfg();
 }
 document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>openMode(b.dataset.m));
-$('btnBack').onclick=()=>{ if(race.role==='guest') return; $('cfgScreen').style.display='none'; $('modeScreen').style.display=''; };
+// Zurück zur Modus-Auswahl (oben und unten); als Gast verlässt man damit den Raum
+$('btnBack').onclick=$('btnBack2').onclick=()=>{ if(race.role==='guest'){ quitToLobby(); return; } $('cfgScreen').style.display='none'; $('modeScreen').style.display=''; scrollTo(0,0); };
 const setLaps=n=>{ race.laps=Math.max(1,Math.min(30,n)); $('lapsV').textContent=race.laps; renderRouteList(); sendCfg(); };
 $('lapMinus').onclick=()=>setLaps(race.laps-1); $('lapPlus').onclick=()=>setLaps(race.laps+1);
 $('draftOn').onchange=()=>{ race.draft=$('draftOn').checked; draftLabel(); sendCfg(); };
