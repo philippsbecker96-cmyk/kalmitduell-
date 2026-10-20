@@ -23,7 +23,7 @@ const $=id=>document.getElementById(id);
 const live={power:0,cadence:null,hr:null,src:'sim'};
 const me={d:0,v:0,crank:0,done:false,time:0,wkgSum:0,maxWkg:0};
 const opp={active:false,bot:false,name:RIDERS.dengel.name,d:0,v:0,target:0,crank:0,wkg:0,done:false,time:0,lastAt:0,wkgSum:0};
-const race={state:'setup',t:0,last:0,role:null,hrMax:0,forms:true,draft:true,mode:'climb',laps:5,tod:'tag',rain:false,wind:0,windDir:0,frozen:false,resultShown:false};
+const race={state:'setup',t:0,last:0,role:null,hrMax:0,forms:true,draft:true,mode:'climb',laps:5,tod:'tag',season:'sommer',rain:false,wind:0,windDir:0,frozen:false,resultShown:false};
 let peer=null, conn=null, ftmsCtrl=null, fecWr=null, writeQ=Promise.resolve(), lastSlopeSent=null, lastSlopeAt=0, camOverride=null;
 const weight=()=>Math.max(35,+$('weight').value||72), botKg=()=>Math.min(130,Math.max(40,+$('botKg').value||75));
 const fmtT=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s/60)%60,x=String(s%60).padStart(2,'0');return h?`${h}:${String(m).padStart(2,'0')}:${x}`:`${m}:${x}`;};
@@ -88,7 +88,9 @@ function applyEnv(){ if(!R||R.space) return; if(R.stadium){ applyStadiumEnv(); r
   dayLights(); const dusk=race.tod!=='tag', rain=!!race.rain, bg=dusk?(rain?0x9a8478:DUSK_BG):rain?0xb6bbbf:HORIZON; scene.background.set(bg); scene.fog.color.set(bg);
   hausLicht(); if(dusk){ setSky(rain?'duskGrey':'dusk'); hemi.color.set(0x9c9ccc); hemi.groundColor.set(0x40302a); hemi.intensity=rain?.6:.76; sun.color.set(0xff9452); sun.intensity=rain?.4:1.45; SUN_DIR.set(-1,.2,.42).normalize(); sunDisc(!rain); }
   else if(rain){ setSky('grey'); hemi.color.set(0xc4ccd4); hemi.intensity=.7; sun.color.set(0xeef2f6); sun.intensity=.5; }
-  scene.fog.near=rain?60:R.fog0[0]; scene.fog.far=rain?Math.min(R.fog0[1],900):R.fog0[1]; wetRoads(rain); }
+  const hz=race.season==='herbst'&&!R.island&&!rain; // Herbst am Tag: tiefere, wärmere Sonne und leichter Dunst
+  if(hz&&!dusk){ SUN_DIR.set(-1,.72,.62).normalize(); sun.color.set(0xffcf96); sun.intensity=1.1; hemi.color.set(0xd8dccc); hemi.groundColor.set(0x6a5a3a); scene.background.set(0xe4dccb); scene.fog.color.set(0xe4dccb); }
+  scene.fog.near=rain?60:hz?90:R.fog0[0]; scene.fog.far=rain?Math.min(R.fog0[1],900):hz?R.fog0[1]*.75:R.fog0[1]; wetRoads(rain); }
 // Nasse Straße: Phong statt Lambert, dunkler, mit kräftigem Glanzlicht und leichter Spiegelung des Himmels (Materialien mit userData.wet)
 let WET_ENV=null; const wetEnv=()=>WET_ENV||(WET_ENV=Object.assign(canvasTex(8,128,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'#eef1f3'); gr.addColorStop(.5,'#c4c9cd'); gr.addColorStop(1,'#6d7176'); g.fillStyle=gr; g.fillRect(0,0,w,h); }),{mapping:THREE.EquirectangularReflectionMapping}));
 function wetRoads(on){ if(!world) return; world.traverse(o=>{ if(!o.isMesh) return; const d=o.userData.dry||o.material; if(!d.userData||!d.userData.wet) return; o.userData.dry=d;

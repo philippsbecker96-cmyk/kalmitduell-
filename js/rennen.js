@@ -29,8 +29,9 @@ function partsFx(dt,list){ const on=!race.paused&&!camOverride, t=performance.no
     if(race.rain&&!R.space) for(let n=rate(parts.spray,key,o.v*6,dt);n>0;n--){ const s=(Math.random()-.5)*.8; partSpawn(parts.spray,x,y,z,cx*o.v*.55-cz*s,1.5+Math.random()*1.2,cz*o.v*.55+cx*s,.45,Math.random()<.5?'#dfe6ec':'#c4ccd3'); }
     const b=!race.rain&&R.belag&&R.belag.length?belagOf(R,o.d):null;
     if(b&&b[0]==='beton') for(let n=rate(parts.dust,key,o.v*3,dt);n>0;n--){ const s=(Math.random()-.5)*1.6; partSpawn(parts.dust,x,y,z,cx*o.v*.3-cz*s,.3+Math.random()*.4,cz*o.v*.3+cx*s,1.4,'#c2b08f'); } }
-  if(on&&R.gpx&&!race.rain&&zoneAt(R,R.loop?me.d%R.len:me.d)==='wald') for(let n=rate(parts.leaf,'w',1.2,dt);n>0;n--){ const hd=headingAt(R,me.d), f=6+Math.random()*20, s=(Math.random()-.5)*12, c=camera.position;
-    partSpawn(parts.leaf,c.x+Math.cos(hd)*f-Math.sin(hd)*s,c.y+1+Math.random()*4,c.z+Math.sin(hd)*f+Math.cos(hd)*s,(Math.random()-.5)+Math.cos(race.windDir)*windNow()*.3,-.2,(Math.random()-.5)+Math.sin(race.windDir)*windNow()*.3,5,['#c8892e','#a5652a','#d9b04c','#7d8a3a'][Math.random()*4|0]); }
+  const zl=R.gpx&&!race.rain?zoneAt(R,R.loop?me.d%R.len:me.d):null, hb=race.season==='herbst', lr=zl==='wald'?(hb?3.6:.5):zl==='reben'&&hb?2:0; // Herbst: viel mehr Blätter, auch in den Weinbergen (gelb)
+  if(on&&lr) for(let n=rate(parts.leaf,'w',lr,dt);n>0;n--){ const hd=headingAt(R,me.d), f=6+Math.random()*20, s=(Math.random()-.5)*12, c=camera.position;
+    partSpawn(parts.leaf,c.x+Math.cos(hd)*f-Math.sin(hd)*s,c.y+1+Math.random()*4,c.z+Math.sin(hd)*f+Math.cos(hd)*s,(Math.random()-.5)+Math.cos(race.windDir)*windNow()*.3,-.2,(Math.random()-.5)+Math.sin(race.windDir)*windNow()*.3,5,(zl==='reben'?['#d9b03c','#e0c24a','#c99a34']:hb?['#c9572a','#d9822e','#e0b33c','#a8452a','#9a6a32']:['#7d8a3a','#8f8a3a','#9a7a3a'])[Math.random()*(zl==='reben'||!hb?3:5)|0]); }
   for(const k of ['spray','dust','leaf']) partStep(parts[k],dt,t); }
 // Windschatten sichtbar: feine Luftlinien hinter dem Vordermann, die sich hinter ihm zusammenziehen – je mehr Windschatten, desto deutlicher
 const luft=(()=>{ const N=28, q=rng(321), s=[]; for(let i=0;i<N;i++) s.push({y:.35+q()*1.3, z:(q()-.5)*.9, u:q()});
@@ -318,7 +319,7 @@ function startRace(){
   resetRiders(); race.forms=$('formsOn').checked; race.draft=$('draftOn').checked; race.wind=+$('windLvl').value; race.windDir=Math.random()*Math.PI*2; // Windrichtung zufällig pro Rennen
   if(race.mode==='chase'){ oppKey='devil'; Object.assign(opp,{active:true,bot:true,watt:null,wkg:0,name:'Teufel',d:0,v:0,done:false,wkgSum:0,avg:0});
     const C=chaseCfg(); race.chase={...C,lvl:C.wkg,started:false,caught:false}; race.draft=false; riders3d.devil.lane=null; }
-  else if(conn && conn.open){ Object.assign(opp,{active:true,bot:false,watt:null,name:RIDERS[oppKey].name,d:0,target:0,v:0,done:false}); sendRoute(); send({t:'start',forms:race.forms,draft:race.draft,tod:race.tod,rain:race.rain,wind:race.wind,wd:race.windDir,mode:race.mode,laps:race.laps,wo:race.mode==='train'?WO:null}); }
+  else if(conn && conn.open){ Object.assign(opp,{active:true,bot:false,watt:null,name:RIDERS[oppKey].name,d:0,target:0,v:0,done:false}); sendRoute(); send({t:'start',forms:race.forms,draft:race.draft,tod:race.tod,season:race.season,rain:race.rain,wind:race.wind,wd:race.windDir,mode:race.mode,laps:race.laps,wo:race.mode==='train'?WO:null}); }
   else if($('botOn').checked && race.mode!=='train'){ oppKey=botKey; Object.assign(opp,{active:true,bot:true,watt:null,name:RIDERS[oppKey].name,d:0,v:0,done:false,wkgSum:0,avg:0}); opp.plan=botPlan(); }
   else opp.active=false;
   countdown();

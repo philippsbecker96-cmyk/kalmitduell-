@@ -101,7 +101,8 @@ function build3D(){
 
   TER.h=h;
   const pos=new Float32Array(N*3), col=new Float32Array(N*3), idx=[];
-  const C=s=>new THREE.Color(s), cForest=C('#355a2c'), cForest2=C('#4a6a33'), cNeedles=C('#6b5a38'), cVerge=C('#8a9a4e'), cSand=C('#9a8160'), cVine=C('#8f9a52'), cTown=C('#9aa77a'), cRock=C('#9b7f6c'), cPlain=C('#b9b36a'), cAcker=[C('#c2ad6a'),C('#7f9a45'),C('#8e6f50')], tc=new THREE.Color();
+  const HB=race.season==='herbst', C=(s,h)=>new THREE.Color(HB&&h?h:s); // Herbst: Waldboden mit Laub, Wiesen und Weinberge strohiger
+  const cForest=C('#355a2c','#55502e'), cForest2=C('#4a6a33','#6e5530'), cNeedles=C('#6b5a38','#7d5a34'), cVerge=C('#8a9a4e','#a49a5a'), cSand=C('#9a8160'), cVine=C('#8f9a52','#aa9a58'), cTown=C('#9aa77a','#a8a67e'), cRock=C('#9b7f6c'), cPlain=C('#b9b36a','#c4b070'), cAcker=[C('#c2ad6a'),C('#7f9a45','#9a8f50'),C('#8e6f50')], tc=new THREE.Color();
   for(let k=0;k<N;k++){ const i=k%n, j=(k/n)|0, x=i*res+TER.x0, z=j*res+TER.z0; pos[k*3]=x; pos[k*3+1]=h[k]; pos[k*3+2]=z;
     const d=src[k]*STEP; tc.copy(cForest).lerp(cForest2, vnoise(x/40,z/40)); tc.lerp(cNeedles, Math.max(0,vnoise(x/18,z/18)-.45)*1.2);
     const zt=zoneAt(R,d);
@@ -148,6 +149,9 @@ function build3D(){
     tx.wrapT=THREE.RepeatWrapping; tx.anisotropy=8;
     strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{userData:{wet:1},polygonOffsetFactor:-2})),t==='pflaster'?1.6:3.5,[1]); }
   strip(d0,R.len,d=>-rw(d),rw,0.12,asph,9,[1]);
+  if(race.season==='herbst'){ // Laub am Straßenrand: zum Rand hin dichter
+    const lt=canvasTex(64,128,(g,w,h)=>{ g.clearRect(0,0,w,h); for(let i=0;i<420;i++){ const u=Math.pow(Math.random(),.55); g.fillStyle=['#c9572a','#d9822e','#e0b33c','#a8452a','#9a6a32','#b88a3a'][Math.random()*6|0]; g.save(); g.translate(u*w,Math.random()*h); g.rotate(Math.random()*6); g.fillRect(-2.5,-1.5,5,3); g.restore(); } });
+    lt.wrapT=THREE.RepeatWrapping; strip(0,R.len,d=>rw(d)-.7,d=>rw(d)+.35,0.125,side2(Object.assign(new THREE.MeshLambertMaterial({map:lt,transparent:true,alphaTest:.5}),{polygonOffsetFactor:-3})),3); }
   // Landstraße: Leitlinie in der Mitte (6 m Strich, 12 m Lücke) · Radweg neben der Straße, hinter einem Grünstreifen
   if(R.def.mitte){ const dt=canvasTex(8,48,g=>{ g.fillStyle='#ecebe4'; g.fillRect(0,0,8,16); }); dt.wrapT=THREE.RepeatWrapping;
     const dm=side2(Object.assign(new THREE.MeshLambertMaterial({map:dt, transparent:true, alphaTest:.5}),{polygonOffsetFactor:-3}));
@@ -196,22 +200,24 @@ function build3D(){
     list.forEach((o,i)=>{ cc.set('#ffffff'); fn(o,i); m4.compose(ps,qq,sc); im.setMatrixAt(i,m4); im.setColorAt(i,cc); });
     im.instanceMatrix.needsUpdate=true; if(im.instanceColor) im.instanceColor.needsUpdate=true; world.add(im); return im; };
 
+  // Herbst: Laubbäume rot, orange, gelb, braun (einige noch grünlich), Reben goldgelb bis rostorange; Kiefern bleiben grün
+  const AUT=['#7f8a3a','#c9572a','#d9822e','#e0b33c','#a8452a','#d99a34','#9a6a32','#e8c24a'], au=(c,l=1)=>cc.set(AUT[Math.floor(c*AUT.length)%AUT.length]).multiplyScalar(l);
   // Bäume: Kiefern mit hohen, rötlichen Stämmen, dazwischen Laubbäume
   const pines=S.tree.filter(o=>o.pine), leafy=S.tree.filter(o=>!o.pine);
   inst(new THREE.CylinderGeometry(.16,.3,1,6), lam('#fff'), pines, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.ht/2,o.y); qq.identity(); sc.set(1+o.s*.05,o.ht,1+o.s*.05); cc.set(o.c<.5?'#a0583a':'#8f5136'); });
   inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), pines, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.ht+o.s*.2,o.y); qq.setFromAxisAngle(up,o.c*6); sc.set(o.s*1.05,o.s*.55,o.s*.95); cc.set(o.c<.33?'#2c4a28':o.c<.66?'#36552d':'#2f4d32'); });
   inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), pines.filter(o=>o.c>.35), o=>{ ps.set(o.x+o.s*.5,terrainAt(o.x,o.y)+o.ht-o.s*.55,o.y-o.s*.3); qq.setFromAxisAngle(up,o.c*9); sc.set(o.s*.7,o.s*.4,o.s*.65); cc.set('#3a5a30'); });
   inst(new THREE.CylinderGeometry(.18,.25,1,5), lam('#5b4636'), leafy, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+1,o.y); qq.identity(); sc.set(1,2,1); cc.set('#5b4636'); });
-  inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), leafy, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*1.1+1.4,o.y); qq.setFromAxisAngle(up,o.c*6); sc.set(o.s,o.s*1.15,o.s); cc.set(o.c<.33?'#4a7a3a':o.c<.66?'#5a8a45':'#6b9a4c'); });
-  inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), leafy.filter(o=>!o.fruit), o=>{ ps.set(o.x+o.s*.45,terrainAt(o.x,o.y)+o.s*1.6+1.4,o.y-o.s*.3); qq.setFromAxisAngle(up,o.c*4); sc.set(o.s*.7,o.s*.75,o.s*.7); cc.set(o.c<.5?'#6e9e4f':'#7aa957'); });
-  inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), leafy.filter(o=>!o.fruit), o=>{ ps.set(o.x-o.s*.4,terrainAt(o.x,o.y)+o.s*.8+1.4,o.y+o.s*.35); qq.setFromAxisAngle(up,o.c*7); sc.set(o.s*.65,o.s*.6,o.s*.65); cc.set(o.c<.5?'#3f6e33':'#4a7a3a'); });
+  inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), leafy, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*1.1+1.4,o.y); qq.setFromAxisAngle(up,o.c*6); sc.set(o.s,o.s*1.15,o.s); HB?au(o.c):cc.set(o.c<.33?'#4a7a3a':o.c<.66?'#5a8a45':'#6b9a4c'); });
+  inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), leafy.filter(o=>!o.fruit), o=>{ ps.set(o.x+o.s*.45,terrainAt(o.x,o.y)+o.s*1.6+1.4,o.y-o.s*.3); qq.setFromAxisAngle(up,o.c*4); sc.set(o.s*.7,o.s*.75,o.s*.7); HB?au(o.c,1.12):cc.set(o.c<.5?'#6e9e4f':'#7aa957'); });
+  inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), leafy.filter(o=>!o.fruit), o=>{ ps.set(o.x-o.s*.4,terrainAt(o.x,o.y)+o.s*.8+1.4,o.y+o.s*.35); qq.setFromAxisAngle(up,o.c*7); sc.set(o.s*.65,o.s*.6,o.s*.65); HB?au(o.c,.82):cc.set(o.c<.5?'#3f6e33':'#4a7a3a'); });
   inst(new THREE.DodecahedronGeometry(1,0), lam('#fff'), S.rock, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*.3,o.y); qq.setFromAxisAngle(up,o.rot); sc.set(o.s,o.s*.7,o.s*.9); cc.set(o.rot<3?'#ad8c78':'#9c7b69'); });
   inst(new THREE.IcosahedronGeometry(1,S.vine.length>40000?0:1), lam('#fff'), S.vine, // lange Weinstrecken: gröber, sonst zu viele Dreiecke
-    o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.85,o.y); qq.setFromAxisAngle(up,-o.rot); sc.set(1.55,.6,.42); cc.set(o.c<.55?'#5f8a34':o.c<.85?'#749838':'#a89838'); });
+    o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.85,o.y); qq.setFromAxisAngle(up,-o.rot); sc.set(1.55,.6,.42); cc.set(HB?(o.c<.4?'#c9a73a':o.c<.7?'#d49a38':o.c<.86?'#c47a34':'#93953e'):o.c<.55?'#5f8a34':o.c<.85?'#749838':'#a89838'); });
   inst(new THREE.BoxGeometry(1,.12,1), lam('#fff'), S.weg, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.03,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(3,1,3.3); cc.set('#c9bc98'); });
-  inst(new THREE.IcosahedronGeometry(1,0), lam('#fff'), S.bush, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*(o.tree?2.4:.7),o.y); qq.setFromAxisAngle(up,o.c*6); const k=o.tree?2.2:1; sc.set(o.s*k,o.s*.9*k,o.s*k); cc.set(o.c<.4?'#3f6b32':o.c<.75?'#4d7a3a':'#5d8a45'); });
+  inst(new THREE.IcosahedronGeometry(1,0), lam('#fff'), S.bush, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*(o.tree?2.4:.7),o.y); qq.setFromAxisAngle(up,o.c*6); const k=o.tree?2.2:1; sc.set(o.s*k,o.s*.9*k,o.s*k); cc.set(HB?(o.c<.4?'#8a7a3a':o.c<.75?'#a0763a':'#7a7a3a'):o.c<.4?'#3f6b32':o.c<.75?'#4d7a3a':'#5d8a45'); });
   inst(new THREE.CylinderGeometry(.045,.05,1.5,5), lam('#6b5a48'), S.vpost, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.7,o.y); qq.identity(); sc.set(1,1,1); cc.set('#6b5a48'); });
-  inst(new THREE.IcosahedronGeometry(.5,0), lam('#fff'), S.grass, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*.12,o.y); qq.setFromAxisAngle(up,o.r); sc.set(o.s*1.3,o.s*.55,o.s*1.1); cc.set(o.wood?(o.c<.5?'#4f6a34':o.c<.8?'#5d7a3c':'#7a7046'):(o.c<.4?'#7f9a45':o.c<.8?'#94a852':'#b8b067')); });
+  inst(new THREE.IcosahedronGeometry(.5,0), lam('#fff'), S.grass, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*.12,o.y); qq.setFromAxisAngle(up,o.r); sc.set(o.s*1.3,o.s*.55,o.s*1.1); cc.set(HB?(o.wood?(o.c<.5?'#7a5a30':o.c<.8?'#8f6a34':'#a07a3c'):(o.c<.4?'#9a9a4a':o.c<.8?'#b0a85a':'#c4b46a')):o.wood?(o.c<.5?'#4f6a34':o.c<.8?'#5d7a3c':'#7a7046'):(o.c<.4?'#7f9a45':o.c<.8?'#94a852':'#b8b067')); });
   inst(new THREE.BoxGeometry(1,1,1), lam('#fff'), S.block, o=>{ ps.set(o.x,roadY(0)+0,o.y); ps.y=terrainAt(o.x,o.y)+.32*o.s; qq.setFromAxisAngle(up,-o.h); sc.set(1.3*o.s,.62*o.s,.62*o.s); cc.set(o.s<1?'#b5866b':'#a5785f'); });
   inst(new THREE.BoxGeometry(.11,1,.11), lam('#fff'), S.post, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.5,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(1,1,1); cc.set('#f2f2ee'); });
   inst(new THREE.BoxGeometry(.115,.2,.115), lam('#fff'), S.post, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.82,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(1,1,1); cc.set('#111'); });
@@ -236,7 +242,7 @@ function build3D(){
   S.tor.forEach(o=>{ const t=hoftor(o); t.rotation.y=zurStr(o); t.position.set(o.x,roadY(o.d)+.15+.8,o.y); world.add(t); });
   // Neubau: Hecken, Klinker- und Betonmauern an der Grundstücksgrenze, Koniferen in den Gärten
   inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), S.ranke, o=>{ ps.set(o.x,roadY(o.d)+.15+o.hg*.55,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(o.w/2,o.hg/2,.3); cc.set(o.c<.4?'#4f7d35':o.c<.8?'#5e8a3c':'#7a9a3e'); }); // Weinranken an den Fassaden
-  for(const [typ,b,t,hh,col] of [['hecke',.8,.9,1.9,'#4a7438'],['klinker',.3,.5,1.5,'#7b3f33'],['beton',.28,.4,1.1,'#bdb8ac'],['sandstein',.4,.5,1.6,'#a8654f']])
+  for(const [typ,b,t,hh,col] of [['hecke',.8,.9,1.9,HB?'#7a7a38':'#4a7438'],['klinker',.3,.5,1.5,'#7b3f33'],['beton',.28,.4,1.1,'#bdb8ac'],['sandstein',.4,.5,1.6,'#a8654f']])
     inst(new THREE.BoxGeometry(1,1,1), lam('#fff'), S.zaun.filter(o=>o.typ===typ), o=>{ ps.set(o.x,roadY(o.d)+.29-t+hh/2,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(o.len,hh,b); cc.set(col); if(typ==='hecke') cc.offsetHSL(0,0,(o.c-.5)*.08); });
   inst(new THREE.ConeGeometry(1,1,7), lam('#fff'), S.konif, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*1.4,o.y); qq.setFromAxisAngle(up,o.c*6); sc.set(o.s*.55,o.s*3,o.s*.55); cc.set(o.c<.5?'#2f4d2c':'#3a5a34'); });
   const lampM=lampGlowMat();
@@ -266,7 +272,7 @@ function build3D(){
         g.font='italic 600 34px Georgia, serif'; g.fillText('Willkommen im',256,48); g.font='italic 700 46px Georgia, serif'; g.fillText(txt,256,100); });
       const sg=new THREE.Mesh(new THREE.PlaneGeometry(4.2,1.05), new THREE.MeshLambertMaterial({map:tt, side:THREE.DoubleSide})); sg.position.set(x,y+3.7,z); sg.rotation.y=Math.atan2(-Math.cos(hd),-Math.sin(hd)); world.add(sg); }
     for(const s of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,4.4,5), lam('#4b3a2c')); p.position.set(x+nx*s*hw,y+2.2,z+nz*s*hw); world.add(p); }
-    const leaf=lam('#4f8a35'), n=Math.round(hw*5); for(let i=0;i<n;i++){ const t=i/(n-1)*2-1, b=new THREE.Mesh(new THREE.IcosahedronGeometry(.75+Math.random()*.4,0), leaf);
+    const leaf=lam(race.season==='herbst'?'#c99a3a':'#4f8a35'), n=Math.round(hw*5); for(let i=0;i<n;i++){ const t=i/(n-1)*2-1, b=new THREE.Mesh(new THREE.IcosahedronGeometry(.75+Math.random()*.4,0), leaf);
       b.position.set(x+nx*t*(hw+.2)+Math.cos(hd)*(Math.random()-.5)*1.6, y+4.4+Math.random()*.5-(Math.abs(t)>.8?.6+Math.random()*.8:0), z+nz*t*(hw+.2)+Math.sin(hd)*(Math.random()-.5)*1.6); world.add(b); } }
 
   // ---------- Fans ----------

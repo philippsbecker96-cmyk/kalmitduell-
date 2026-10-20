@@ -82,8 +82,8 @@ input[type=text],input[type=number]{font:600 16px Barlow,sans-serif;padding:8px 
 .laps button{width:40px;height:40px;padding:0;font-size:22px;border-radius:10px}
 .laps b{font:800 34px/1 "Barlow Condensed",sans-serif;min-width:34px;text-align:center}
 .todrow{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:15px;flex-wrap:wrap}
-.tod{background:#14241c;border:3px solid transparent;padding:7px 14px;font-size:15px}
-.tod.sel{border-color:var(--sky1);background:#1f3a2c}
+.tod,.sea{background:#14241c;border:3px solid transparent;padding:7px 14px;font-size:15px}
+.tod.sel,.sea.sel{border-color:var(--sky1);background:#1f3a2c}
 .route.soon{border:3px dashed #3d6a52;opacity:.85;cursor:default}
 .route.soon canvas{display:none}
 .route .ph{width:150px;height:46px;flex:none;border-radius:8px;background:repeating-linear-gradient(45deg,#1f3a2c 0 8px,#18301f 8px 16px);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
@@ -189,8 +189,8 @@ input[type=checkbox]{accent-color:var(--acc)}
 .mode:hover{background:var(--g-hover);border-color:rgba(255,255,255,.34);transform:translateY(-2px)}
 .mode svg{background:rgba(0,0,0,.26);border-radius:12px}
 .mode em{background:rgba(255,255,255,.1);border:1px solid var(--g-line)}
-.rcard,.route,.tod{background:var(--g-soft);border:1px solid var(--g-line);border-radius:14px}
-.rcard.sel,.route.sel,.tod.sel{background:rgba(255,122,69,.12);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.rcard,.route,.tod,.sea{background:var(--g-soft);border:1px solid var(--g-line);border-radius:14px}
+.rcard.sel,.route.sel,.tod.sel,.sea.sel{background:rgba(255,122,69,.12);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
 .route.soon{border:1px dashed rgba(255,255,255,.22)}
 .route .ph{background:repeating-linear-gradient(45deg,rgba(255,255,255,.06) 0 8px,rgba(255,255,255,.02) 8px 16px)}
 .redit{background:var(--g-soft);border:1px solid var(--g-line)}
