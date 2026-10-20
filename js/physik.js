@@ -7,9 +7,14 @@ const phys=()=>R&&R.stadium?PH_TRACK:PH_ROAD;
 const cdaOf=(kg,c0=phys().cda)=>c0*(0.15+0.85*Math.pow(kg/75,2/3));
 // Windschatten: bis 1 m hinter dem Vordermann 35 % weniger Luftwiderstand, bei 10 m nichts mehr
 function draftOf(gapAhead){ if(!race.draft || !(gapAhead>0.3) || gapAhead>10) return 0; return 0.35*(1-(Math.max(gapAhead,1)-1)/9); }
+// Aero-Haltung: wer in der Abfahrt rollt (unter 15 W, ab 4 % Gefälle, über 45 km/h), duckt sich – 18 % weniger Luftwiderstand
+const AERO=0.82;
+function aeroOf(o,P,g){ o.aero=o.aero?P<25&&g<-3.5&&o.v>12:P<15&&g<=-4&&o.v>12.5; return o.aero; }
+// Übersetzung: zwischen 62 und 72 km/h tritt man zunehmend ins Leere
+const gearOf=v=>clampN((20-v)/2.78,0,1);
 function step(o, P, kg, dt, draft=0){ // P = echte Watt, kg = Fahrergewicht
-  const M=kg+BIKE_KG, th=Math.atan((gradeAt(o.d)+belagAt(o.d,kg))/100);
-  const Fg=M*G*Math.sin(th), Fr=phys().crr*M*G*Math.cos(th), Fa=0.5*RHO*cdaOf(kg)*(1-draft)*o.v*o.v, Fp=Math.min(P/Math.max(o.v,0.8),450); // 450 N: Grenze beim Anfahren aus dem Stand
+  const M=kg+BIKE_KG, g0=gradeAt(o.d), th=Math.atan((g0+belagAt(o.d,kg))/100), cda=cdaOf(kg)*(aeroOf(o,P,g0)?AERO:1);
+  const Fg=M*G*Math.sin(th), Fr=phys().crr*M*G*Math.cos(th), Fa=0.5*RHO*cda*(1-draft)*o.v*o.v, Fp=Math.min(P/Math.max(o.v,0.8),450)*gearOf(o.v); // 450 N: Grenze beim Anfahren aus dem Stand
   o.v=Math.max(0,o.v+(Fp-Fg-Fr-Fa)/(M+1.5)*dt); o.d+=o.v*dt;
 }
 
@@ -41,7 +46,9 @@ function botPlan(){
 }
 function botWkgNow(dt){
   const P=opp.plan||{style:'even',A:+$('botWkg').value};
-  if(P.style!=='attack') return P.A*(1+0.06*Math.sin(race.t/23)+0.03*Math.sin(race.t/7));
+  // steile Abfahrt (ab 6 %, über 50 km/h): Beine still und ducken – die verlorenen Watt holt er danach wieder auf
+  if(gradeAt(opp.d)<=-6&&opp.v>13.9&&!P.sprint){ P.co=(P.co||0)+dt; return 0; }
+  if(P.style!=='attack') return P.A*clampN(race.t/Math.max(1,race.t-(P.co||0)),1,1.1)*(1+0.06*Math.sin(race.t/23)+0.03*Math.sin(race.t/7));
   const L=raceLen(), d=opp.d, gap=opp.d-me.d, A=P.A, now=race.t;
   if(P.ph && P.ph.kind==='rec' && now>=P.ph.end) P.ph=null;
   if(P.ph && P.ph.kind==='att' && (now>=P.ph.end || P.R<=.1)) P.ph={kind:'rec',f:.85,end:now+P.ph.a.rec,a:P.ph.a};

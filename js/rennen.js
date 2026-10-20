@@ -18,12 +18,14 @@ function draw(dt){
   if(!inRace){ speedFx(dt,0); drawPreviews(dt); return; }
   const mine=riders3d[myKey], theirs=riders3d[oppKey];
   mine.g.visible=true; theirs.g.visible=opp.active; RKEYS.forEach(k=>{ if(k!==myKey&&k!==oppKey&&riders3d[k]) riders3d[k].g.visible=false; }); if(riders3d.devil&&oppKey!=='devil') riders3d.devil.g.visible=false;
-  // Spur: wer im Windschatten fährt, schert hinter dem Vordermann ein
-  const lanes=(r,k,gapAhead,leader)=>{ const tgt=(race.draft&&opp.active&&gapAhead>2&&gapAhead<10&&leader.lane!=null)?leader.lane:ownLane(k);
+  // Spur: wer im Windschatten fährt, schert hinter dem Vordermann ein · sonst Ideallinie: in Kurven zur Innenseite (Scheitel kurz vor der Kurvenmitte), nebeneinander bleibt jeder auf seiner Spur
+  const ideal=(k,d,v)=>{ const base=ownLane(k); if(R.stadium||camOverride) return base; const hw=roadW(R,R.loop?d%R.len:d)/2-.6, side=opp.active&&Math.abs(opp.d-me.d)<4;
+    return clampN(base+(side?0:clampN(curv(d+8)*45,-1,1)*Math.min(1,v/8)*Math.min(R.island?.8:1.6,hw)),-hw,hw); };
+  const lanes=(r,k,gapAhead,leader,o)=>{ const tgt=(race.draft&&opp.active&&gapAhead>2&&gapAhead<10&&leader.lane!=null)?leader.lane:ideal(k,o.d,o.v);
     if(r.lane==null||camOverride) r.lane=tgt; else r.lane+=(tgt-r.lane)*Math.min(1,dt*1.5); };
   if(mine.lane==null||!opp.active) mine.lane=ownLane(myKey);
   if(theirs.lane==null) theirs.lane=ownLane(oppKey);
-  lanes(mine,myKey,opp.d-me.d,theirs); lanes(theirs,oppKey,me.d-opp.d,mine);
+  lanes(mine,myKey,opp.d-me.d,theirs,me); lanes(theirs,oppKey,me.d-opp.d,mine,opp); leanStep(mine,me.d,me.v,dt); if(opp.active) leanStep(theirs,opp.d,opp.v,dt);
   kxFrame();
   updateForm(mine, race.state==='run'?curPower()/weight():0, dt, true, me.done&&!me.free); putRider(mine, me.d, me.crank);
   if(opp.active){ updateForm(theirs, race.state==='run'?(opp.wkg||0):0, dt, false, opp.done); putRider(theirs, opp.d, opp.crank); }
@@ -126,9 +128,10 @@ function loop(now){
   }
   if(race.state==='run' && !race.paused) wertStep();
   if(opp.active && !opp.bot && !race.frozen && !race.paused){ const age=(now-opp.lastAt)/1000, tgt=opp.done?opp.target:opp.target+opp.v*Math.min(age,1); if(Math.abs(tgt-opp.d)>R.len/2) opp.d=tgt; else opp.d+=(tgt-opp.d)*Math.min(1,dt*6); }
-  const cad = live.cadence ?? (me.v>0.3||race.frozen? 70+me.v*4 : 0);
-  if(!race.paused){ me.crank += (me.done&&!me.free?0:cad)/60*2*Math.PI*dt;
-  opp.crank += (opp.done||(opp.v<0.3&&!race.frozen)?0:75)/60*2*Math.PI*dt; }
+  if(!race.paused&&race.state!=='setup'){ const run=race.state==='run'||race.frozen; // Kurbeln, Wiegetritt und Aero-Haltung beider Figuren
+    rideState(riders3d[myKey],me,run&&!(me.done&&!me.free)?P:0,ftp(),dt,live.src!=='sim'?live.cadence:null);
+    if(opp.active){ const kg=opp.bot?botKg():weight(), oP=opp.done||!run?0:opp.watt??(opp.wkg||0)*kg; if(!opp.bot) opp.aero=!!opp.ra;
+      rideState(riders3d[oppKey],opp,oP,opp.bot?((opp.plan&&opp.plan.A)||(race.chase&&race.chase.lvl)||3)*kg:1e9,dt,opp.bot?null:opp.rc??null,opp.bot?null:opp.rst); } }
   if(live.hr) race.hrMax=Math.max(race.hrMax,live.hr);
   hud(P,wkg); draw(dt); requestAnimationFrame(loop);
 }
@@ -146,7 +149,7 @@ function hud(P,wkg){
   if(race.mode==='chase') $('hRest').textContent=fmtT(Math.max(0,((race.chase||{}).dur||0)-race.t));
   else if(race.mode!=='train') $('hRest').textContent=de(Math.max(0,raceLen()-me.d)/1000,2)+' km';
   const dr=me.draftR||0, chip=$('draftChip'); chip.style.display=race.draft&&dr>0.02&&!me.done?'flex':'none'; $('draftBar').style.width=Math.round(dr/0.35*100)+'%'; $('draftPct').textContent='−'+Math.round(dr*100)+' %'; $('hT').textContent=fmtT(me.time);
-  $('hHr').textContent=live.hr??'–';
+  $('hHr').textContent=live.hr??'–'; $('hCad').textContent=live.src!=='sim'&&live.cadence!=null?Math.round(live.cadence):'–';
   if(opp.active && race.mode==='chase'){ const C=race.chase||{}, gap=me.d-opp.d; $('gapName').textContent='Vorsprung auf den Teufel';
     $('gapV').textContent=Math.round(Math.max(0,gap))+' m'; $('gapV').style.color=!C.started||gap>60?'#9cc46b':gap>20?'#f0b860':'#ff6b6b';
     $('gapSub').textContent=me.done&&C.caught?'erwischt!':!C.started?`Teufel startet in ${Math.max(0,Math.ceil(C.delay-race.t))} s`:`≈ ${Math.round(Math.max(0,gap)/Math.max(1,opp.v))} s Vorsprung`; }
