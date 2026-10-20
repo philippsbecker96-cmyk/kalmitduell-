@@ -22,7 +22,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 ## Regeln
 - Klassische `<script>`-Tags, keine ES-Module: alle Dateien teilen sich globale Variablen. Reihenfolge in `index.html` ist wichtig – Code, der beim Laden läuft, darf nur Funktionen aus derselben oder früheren Dateien aufrufen.
 - Code und Kommentare auf Deutsch, kompakter Stil (viele Anweisungen pro Zeile) beibehalten.
-- localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`.
+- localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`, `kd-chase`, `kd-shake`.
 
 ## Arbeitsweise
 - Sparsam mit Tokens: nur die betroffene Datei/den Abschnitt lesen (Abschnitte sind mit `/* ===== … */`- bzw. `// ---- … ----`-Kommentaren markiert, per grep finden), keine ganzen Dateien ohne Grund.

@@ -13,6 +13,18 @@ function speedFx(dt,v){ const f=clampN((v-10.42)/5.56,0,1), W=wind; // 0 bei 37,
       const L=i<n?o.l*(0.8+f*1.0):0; W.p.set([o.x,o.y,o.z, o.x,o.y,o.z-L], i*6); }); W.m.geometry.attributes.position.needsUpdate=true; }
   const el=speedFx.el||(speedFx.el=document.getElementById('speedfx')), op=camOverride?0:Math.round(f*50)/50;
   if(el&&el._op!==op){ el._op=op; el.style.opacity=op; el.style.display=op>0?'block':'none'; } }
+// Kamerawackeln je nach Belag und Tempo: Asphalt fein, Betonweg mit Fugen-Schlag alle 5 m, Pflaster grob; beim Belagwechsel ein Stoß
+function camShake(dt,v){ const S=camS.sh||(camS.sh={n:0,r:0,a:0,j:0,b:null,f:0}); if(!$('shakeOn').checked||race.paused||!(dt>0)){ S.a=S.j=0; return; }
+  const b=R.belag&&R.belag.length?belagOf(R,me.d):null, t=R.stadium?'holz':R.space?'space':b?b[0]:'asph', kv=clampN(v/12,0,1);
+  S.a={asph:.003,beton:.006,pflaster:.025,holz:.0008,space:.001}[t]*kv;
+  if(S.b!==null&&S.b!==t&&v>2) S.j=.04*clampN(v/10,.3,1); S.b=t;
+  const fu=t==='beton'?Math.floor(me.d/5):0; if(fu!==S.f){ S.f=fu; if(v>2) S.j=Math.max(S.j,.018*clampN(v/10,.3,1)); } // Betonfuge: ta-dong
+  S.n+=((Math.random()*2-1)-S.n)*Math.min(1,dt*25); S.r+=((Math.random()*2-1)-S.r)*Math.min(1,dt*18); S.j*=Math.exp(-dt*14); // geglättetes Rauschen wie eine Federung, Stoß klingt ab
+  camera.position.y+=S.n*S.a-S.j; camera.rotateX(S.n*S.a*.25); if(t==='pflaster') camera.rotateZ(S.r*.007*kv); }
+// Antritt-Kick: springen die Watt deutlich über den Schnitt der letzten Sekunden, fällt die Kamera kurz zurück, das Sichtfeld weitet sich, die Kette klackt
+function kickStep(dt){ const P=race.state==='run'&&!me.done?curPower():0; camS.pf=(camS.pf??P)+(P-(camS.pf??P))*Math.min(1,dt/.5); camS.ps=(camS.ps??P)+(P-(camS.ps??P))*Math.min(1,dt/4);
+  const now=performance.now()/1000; if(camS.pf>camS.ps*1.4&&camS.pf>1.3*ftp()&&now-(camS.kT||0)>3&&!race.paused){ camS.kT=now; camS.kv=14; klack(); }
+  const w=6; camS.kv=(camS.kv||0)+(-w*w*(camS.kx||0)-2*w*(camS.kv||0))*dt; camS.kx=(camS.kx||0)+camS.kv*dt; } // gedämpfte Feder, schwingt in etwa 0,8 s zurück
 function draw(dt){
   const inRace=race.state!=='setup';
   if(!inRace){ speedFx(dt,0); drawPreviews(dt); return; }
@@ -28,6 +40,7 @@ function draw(dt){
   lanes(mine,myKey,opp.d-me.d,theirs,me); lanes(theirs,oppKey,me.d-opp.d,mine,opp); leanStep(mine,me.d,me.v,dt); if(opp.active) leanStep(theirs,opp.d,opp.v,dt);
   kxFrame();
   updateForm(mine, race.state==='run'?curPower()/weight():0, dt, true, me.done&&!me.free); putRider(mine, me.d, me.crank);
+  { const S=camS.sh; mine.body.position.y=S&&!camOverride?S.n*S.a*.5-S.j*.4:0; } // eigener Fahrer rüttelt mit
   if(opp.active){ updateForm(theirs, race.state==='run'?(opp.wkg||0):0, dt, false, opp.done); putRider(theirs, opp.d, opp.crank); }
   if(anim.fans && (me.d>R.fans-300 || R.loop || R.abzweig)) poseFans(performance.now()/1000, false);
   if(anim.stadium) poseStadium(performance.now()/1000);
@@ -38,7 +51,7 @@ function draw(dt){
   const focusD=me.d; let tx,ty,tz,lx,ly,lz;
   // Tempo-Gefühl: sp 0 (≤25 km/h) … 1 (≥54 km/h), acc = geglättete Beschleunigung
   const vC=race.state==='run'&&(!me.done||me.free)?me.v:0; if(dt>0&&!race.paused){ camS.acc=(camS.acc||0)+(((vC-(camS.vp??vC))/dt)-(camS.acc||0))*Math.min(1,dt*2); camS.vp=vC; }
-  camS.sp=(camS.sp||0)+(clampN((vC-7)/8,0,1)-(camS.sp||0))*Math.min(1,dt*1.5); const sp=camS.sp, ext=sp*1.5+clampN(camS.acc||0,0,2)*0.8; // ext: Kamera fällt bei Tempo und Antritt zurück
+  camS.sp=(camS.sp||0)+(clampN((vC-7)/8,0,1)-(camS.sp||0))*Math.min(1,dt*1.5); if(!race.paused) kickStep(dt); const sp=camS.sp, ext=sp*1.5+clampN(camS.acc||0,0,2)*0.8+(camS.kx||0); // ext: Kamera fällt bei Tempo und Antritt zurück
   let rollT=0; if(R.stadium){ const kc=clampN((bankAt(focusD)*180/Math.PI-ST.BANK0)/(ST.BANK1-ST.BANK0),0,1), u=mine.lane*0.8, pb=trackPt(focusD-(9-3*kc)-ext,u), pl=trackPt(focusD+12,u); [tx,ty,tz]=[pb[0],pb[1]+3.4-1.3*kc-sp*0.8,pb[2]]; [lx,ly,lz]=[pl[0],pl[1]+1.0,pl[2]]; rollT=R.outSign*bankAt(focusD)*.5*kc; } // Steilkurve: Kamera tiefer, näher und mitgeneigt
   else if(R.gpx){ const back=Math.max(0,focusD-6-ext), [bx,bz]=posAt(R,back), [ax,az]=posAt(R,R.loop?focusD+10:Math.min(R.len,focusD+10)); // auf der Straße 6 m hinter dir, knapp 2 m über der Straße, Blick waagerecht
     tx=bx; tz=bz; ty=visRoadY(back)+1.9-sp*0.5; lx=ax; lz=az; ly=ty-0.33+sp*0.15; }
@@ -46,12 +59,13 @@ function draw(dt){
     const la=R.ring?focusD+10:Math.min(R.len,focusD+10); [lx,lz]=posAt(R,la); ly=roadY(la)+1.0;
     if(R.space){ const yr=roadY(focusD); ty=Math.max(roadY(back)+1.5, yr+3.6-sp*0.8); ly=yr+1.6+0.25*(roadY(focusD+14)-yr); } } // Space: Kamera bleibt eher waagerecht, Anstiege bauen sich vor dir auf
   if(!R.stadium&&vC>1){ const a=smoothHeading(focusD+6), b=smoothHeading(focusD-6), dh=Math.atan2(Math.sin(a-b),Math.cos(a-b)); rollT=clampN(-dh/12*vC*vC*0.012,-0.07,0.07); } // Kurvenlage: Querbeschleunigung v²·κ, max ≈ 4°
-  { const fovT=camOverride?60:60+15*sp+clampN(camS.acc||0,0,2)*1.5; if(Math.abs(fovT-camera.fov)>0.02){ camera.fov+=(fovT-camera.fov)*Math.min(1,dt*2); camera.updateProjectionMatrix(); } } // Sichtfeld weitet sich mit dem Tempo
+  { const fovT=camOverride?60:60+15*sp+clampN(camS.acc||0,0,2)*1.5; camS.fovB=camS.fovB==null?camera.fov:camS.fovB+(fovT-camS.fovB)*Math.min(1,dt*2);
+    const f=camS.fovB+(camOverride?0:clampN((camS.kx||0)/.85,0,1)*5); if(Math.abs(f-camera.fov)>0.02){ camera.fov=f; camera.updateProjectionMatrix(); } } // Sichtfeld weitet sich mit dem Tempo und beim Antritt
   if(!camS.init){ Object.assign(camS,{x:tx,y:ty,z:tz,lx,ly,lz,init:true}); }
   const sk=race.paused?1:simSpeed(), k=Math.min(1,dt*3.5*sk), kl=Math.min(1,dt*5*sk); // Testmodus: Kamera folgt im gleichen Tempo
   camS.x+=(tx-camS.x)*k; camS.y+=(ty-camS.y)*k; camS.z+=(tz-camS.z)*k; camS.lx+=(lx-camS.lx)*kl; camS.ly+=(ly-camS.ly)*kl; camS.lz+=(lz-camS.lz)*kl;
   if(camOverride){ camera.position.set(...camOverride.pos); camera.lookAt(...camOverride.look); }
-  else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); camS.roll=(camS.roll||0)+(rollT-(camS.roll||0))*Math.min(1,dt*3); if(Math.abs(camS.roll)>1e-4) camera.rotateZ(camS.roll); }
+  else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); camS.roll=(camS.roll||0)+(rollT-(camS.roll||0))*Math.min(1,dt*3); if(Math.abs(camS.roll)>1e-4) camera.rotateZ(camS.roll); camShake(dt,vC); }
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
   sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vC);
   for(const r of [mine,theirs]){ const dist=camera.position.distanceTo(r.g.position), ds=Math.max(1,dist/14); r.tag.scale.set(1.9*ds,.475*ds,1); r.tag.visible=dist>6; } // Namensschild bleibt auch aus der Ferne lesbar
@@ -133,6 +147,7 @@ function loop(now){
     if(opp.active){ const kg=opp.bot?botKg():weight(), oP=opp.done||!run?0:opp.watt??(opp.wkg||0)*kg; if(!opp.bot) opp.aero=!!opp.ra;
       rideState(riders3d[oppKey],opp,oP,opp.bot?((opp.plan&&opp.plan.A)||(race.chase&&race.chase.lvl)||3)*kg:1e9,dt,opp.bot?null:opp.rc??null,opp.bot?null:opp.rst); } }
   if(live.hr) race.hrMax=Math.max(race.hrMax,live.hr);
+  { const S=(riders3d[myKey]||{}).rs; freewheel(dt, race.state==='run'&&!race.paused&&!race.frozen&&S&&S.cad<8&&me.v>2, me.v); } // Freilauf klickt beim Rollen
   hud(P,wkg); draw(dt); requestAnimationFrame(loop);
 }
 function hud(P,wkg){

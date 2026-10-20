@@ -2,8 +2,15 @@
 let actx=null;
 function beep(f=880,d=.12){ try{ actx=actx||new AudioContext(); const o=actx.createOscillator(),g=actx.createGain(); o.frequency.value=f;
   g.gain.setValueAtTime(.15,actx.currentTime); g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d); o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime+d);}catch(e){} }
+// Geräuschschnipsel aus Rauschen: Kette klackt beim Antritt, Freilauf klickt beim Rollen
+const noiseBuf=(dur,dec)=>{ const n=Math.floor(actx.sampleRate*dur), b=actx.createBuffer(1,n,actx.sampleRate), d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/n*dec); return b; };
+function snip(buf,f,q,vol,t0=0){ const s=actx.createBufferSource(); s.buffer=buf; const bp=actx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f; bp.Q.value=q; const g=actx.createGain(); g.gain.value=vol; s.connect(bp).connect(g).connect(actx.destination); s.start(actx.currentTime+t0); }
+let SNB=null; const snb=()=>SNB||(SNB={klack:noiseBuf(.05,6),tick:noiseBuf(.006,4)});
+function klack(){ try{ actx=actx||new AudioContext(); const B=snb(); snip(B.klack,2600,3,.5); snip(B.klack,1900,3,.35,.07); }catch(e){} }
+let fwPh=0; function freewheel(dt,on,v){ if(!on||!actx) return; fwPh+=dt*Math.min(55,v*4); if(fwPh<1) return; fwPh%=1; try{ snip(snb().tick,5200,2,.18); }catch(e){} }
 $('btnTrainer').onclick=connectTrainer; $('btnHr').onclick=connectHr;
 $('btnHost').onclick=host; $('btnJoin').onclick=join; $('btnStart').onclick=startRace;
+try{ if(localStorage.getItem('kd-shake')==='0') $('shakeOn').checked=false; }catch(e){} $('shakeOn').onchange=()=>{ try{ localStorage.setItem('kd-shake',$('shakeOn').checked?'1':'0'); }catch(e){} };
 $('slopeK').oninput=()=>$('slopeKv').textContent=$('slopeK').value+' %';
 $('simP').oninput=()=>$('simPv').textContent=$('simP').value;
 addEventListener('keydown',e=>{ if(live.src!=='sim'||race.state==='setup') return;
