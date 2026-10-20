@@ -149,9 +149,6 @@ function build3D(){
     tx.wrapT=THREE.RepeatWrapping; tx.anisotropy=8;
     strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{userData:{wet:1},polygonOffsetFactor:-2})),t==='pflaster'?1.6:3.5,[1]); }
   strip(d0,R.len,d=>-rw(d),rw,0.12,asph,9,[1]);
-  if(race.season==='herbst'){ // Laub am Straßenrand: zum Rand hin dichter
-    const lt=canvasTex(64,128,(g,w,h)=>{ g.clearRect(0,0,w,h); for(let i=0;i<420;i++){ const u=Math.pow(Math.random(),.55); g.fillStyle=['#c9572a','#d9822e','#e0b33c','#a8452a','#9a6a32','#b88a3a'][Math.random()*6|0]; g.save(); g.translate(u*w,Math.random()*h); g.rotate(Math.random()*6); g.fillRect(-2.5,-1.5,5,3); g.restore(); } });
-    lt.wrapT=THREE.RepeatWrapping; strip(0,R.len,d=>rw(d)-.7,d=>rw(d)+.35,0.125,side2(Object.assign(new THREE.MeshLambertMaterial({map:lt,transparent:true,alphaTest:.5}),{polygonOffsetFactor:-3})),3); }
   // Landstraße: Leitlinie in der Mitte (6 m Strich, 12 m Lücke) · Radweg neben der Straße, hinter einem Grünstreifen
   if(R.def.mitte){ const dt=canvasTex(8,48,g=>{ g.fillStyle='#ecebe4'; g.fillRect(0,0,8,16); }); dt.wrapT=THREE.RepeatWrapping;
     const dm=side2(Object.assign(new THREE.MeshLambertMaterial({map:dt, transparent:true, alphaTest:.5}),{polygonOffsetFactor:-3}));
@@ -219,6 +216,15 @@ function build3D(){
   inst(new THREE.CylinderGeometry(.045,.05,1.5,5), lam('#6b5a48'), S.vpost, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.7,o.y); qq.identity(); sc.set(1,1,1); cc.set('#6b5a48'); });
   inst(new THREE.IcosahedronGeometry(.5,0), lam('#fff'), S.grass, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*.12,o.y); qq.setFromAxisAngle(up,o.r); sc.set(o.s*1.3,o.s*.55,o.s*1.1); cc.set(HB?(o.wood?(o.c<.5?'#7a5a30':o.c<.8?'#8f6a34':'#a07a3c'):(o.c<.4?'#9a9a4a':o.c<.8?'#b0a85a':'#c4b46a')):o.wood?(o.c<.5?'#4f6a34':o.c<.8?'#5d7a3c':'#7a7046'):(o.c<.4?'#7f9a45':o.c<.8?'#94a852':'#b8b067')); });
   inst(new THREE.BoxGeometry(1,1,1), lam('#fff'), S.block, o=>{ ps.set(o.x,roadY(0)+0,o.y); ps.y=terrainAt(o.x,o.y)+.32*o.s; qq.setFromAxisAngle(up,-o.h); sc.set(1.3*o.s,.62*o.s,.62*o.s); cc.set(o.s<1?'#b5866b':'#a5785f'); });
+  // Herbst: einzelne Blätter auf und neben der Straße – fleckig verteilt: Laubhaufen am Rand, kahle Stücke, hier und da in die Fahrbahn geweht, im Wald stellenweise quer über die Straße
+  if(HB){ const q=rng(777), L=[], AL=['#c9572a','#d9822e','#e0b33c','#a8452a','#9a6a32','#b88a3a'], AY=['#d9b03c','#e0c24a','#c99a34','#d49a38'], dens={wald:1,hain:.8,reben:.6,feld:.35,ort:.15};
+    for(let d=0; d<R.len; d+=1){ const zt=zoneAt(R,d), base=dens[zt]??.5, [x0,z0]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), tx=Math.cos(hd), tz=Math.sin(hd), w=rw(d), y=roadY(d);
+      const put=(u,on)=>{ const t=q()-.5; L.push({x:x0+nx*u+tx*t, z:z0+nz*u+tz*t, y:y+(on?.135:.075), r:q()*6.3, c:(zt==='reben'?AY:AL)[q()*(zt==='reben'?4:6)|0], l:.75+q()*.4}); };
+      for(const sd of [-1,1]){ const n=vnoise(d/35,sd*7.3), heap=vnoise(d/9,sd*3.1)>.78?3:1, drift=vnoise(d/22,sd*5+2)>.62?4:1, k=base*(.1+1.8*Math.max(0,n-.3))*heap*3;
+        for(let i=Math.floor(k+q()); i>0; i--){ const inw=-Math.log(1-q()*.999)*.3*drift; if(q()<.3) put(sd*(w+q()*.8),false); else put(sd*Math.max(0,w-inw),true); } }
+      if(zt==='wald'&&vnoise(d/50,11)>.7&&q()<.9) for(let i=Math.floor(2*q()+1); i>0; i--) put((q()*2-1)*w,true); } // quer über die Straße
+    const keep=Math.min(1,32000/Math.max(1,L.length)), LL=L.filter(()=>q()<keep), lg=new THREE.PlaneGeometry(.13,.09); lg.rotateX(-Math.PI/2);
+    inst(lg, side2(Object.assign(lam('#fff'),{polygonOffsetFactor:-4})), LL, o=>{ ps.set(o.x,o.y,o.z); eu.set((q()-.5)*.3,o.r,(q()-.5)*.3); qq.setFromEuler(eu); sc.set(o.l,1,o.l); cc.set(o.c).multiplyScalar(.85+q()*.3); }); }
   inst(new THREE.BoxGeometry(.11,1,.11), lam('#fff'), S.post, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.5,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(1,1,1); cc.set('#f2f2ee'); });
   inst(new THREE.BoxGeometry(.115,.2,.115), lam('#fff'), S.post, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.82,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(1,1,1); cc.set('#111'); });
 
