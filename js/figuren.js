@@ -200,20 +200,22 @@ const armOf=(ua,fa,hd,hip,shp,el,hand)=>({ua,fa,hd,s:[shp[0]-hip[0],shp[1]-hip[1
 function rigUpper(r,ms,heads,neck,arms){ const H=new THREE.Vector3(...r.hip), N=new THREE.Vector3(...neck), up=new THREE.Group(), hg=new THREE.Group(), skip=new Set(arms.flatMap(A=>[A.ua,A.fa,A.hd]));
   up.position.copy(H); r.body.add(up); hg.position.copy(N).sub(H); up.add(hg);
   for(const m of ms) if(!skip.has(m)){ m.position.sub(H); up.add(m); } for(const m of heads){ m.position.sub(N); hg.add(m); } Object.assign(r,{up,headG:hg,arms,neckL:[N.x-H.x,N.y-H.y]}); }
-function poseArms(r,ae){ const U=r.up, c=Math.cos(U.rotation.z), s=Math.sin(U.rotation.z);
-  for(const A of r.arms){ const sx=U.position.x+A.s[0]*c-A.s[1]*s, sy=U.position.y+A.s[0]*s+A.s[1]*c, hx=A.h[0]+.04*ae, hy=A.h[1]-.07*ae; // Aero: Hände unten am Lenker
+function poseArms(r,ae){ const U=r.up, c=Math.cos(U.rotation.z), s=Math.sin(U.rotation.z), cr=Math.cos(U.rotation.x), sr=Math.sin(U.rotation.x);
+  for(const A of r.arms){ const py=A.s[0]*s+A.s[1]*c, sx=U.position.x+A.s[0]*c-A.s[1]*s, sy=U.position.y+py*cr-A.s[2]*sr, sz=U.position.z+py*sr+A.s[2]*cr, hx=A.h[0]+.04*ae, hy=A.h[1]-.07*ae; // Aero: Hände unten am Lenker
     const dx=hx-sx, dy=hy-sy, D0=Math.hypot(dx,dy), D=Math.min(A.l1+A.l2-.002,D0), ux=dx/D0, uy=dy/D0, a=(A.l1*A.l1-A.l2*A.l2+D*D)/(2*D), b=Math.sqrt(Math.max(0,A.l1*A.l1-a*a));
-    const E=[sx+ux*a+uy*b, sy+uy*a-ux*b, A.ez*(1+b*1.5)*(1-.35*ae)], Hd=[sx+ux*D, sy+uy*D, A.h[2]]; // Ellbogen knickt nach unten hinten und außen
-    place(A.ua,[sx,sy,A.s[2]],E); place(A.fa,E,Hd); A.hd.position.set(...Hd); } }
+    const E=[sx+ux*a+uy*b, sy+uy*a-ux*b, A.ez*(1+b*1.5)*(1-.35*ae)+(sz-A.s[2])*.5], Hd=[sx+ux*D, sy+uy*D, A.h[2]]; // Ellbogen knickt nach unten hinten und außen
+    place(A.ua,[sx,sy,sz],E); place(A.fa,E,Hd); A.hd.position.set(...Hd); } }
 function poseRider(r,crank){
   const st=r.st||0, ae=r.ae||0, hx=r.hip[0]+.18*st-.04*ae, hy=r.hip[1]+.12*st, l=.44+.06*st; // Wiegetritt: Hüfte deutlich vor und über den Sattel, Beine gestreckt · Aero: Rücken fast waagerecht, Hüfte etwas zurück
-  r.up.position.set(hx,hy,0); r.up.rotation.set(-Math.sin(crank)*.12*st,0,-.2*st-.6*ae); r.body.rotation.x=Math.sin(crank)*.12*st; poseArms(r,ae); // Rad pendelt im Tritt ±7°, Oberkörper leicht dagegen
+  // Wiegetritt: Rad und Beine pendeln unter dem ruhigen Oberkörper, ±7° (ab 90 U/min weniger, bis ±4°); der Oberkörper wird genau gegen das Pendeln verschoben und neigt sich kaum dagegen
+  const cad=r.rs?r.rs.cad:0, th=Math.sin(crank)*(r.sw||0)*clampN(.12-Math.max(0,cad-90)*.0025,.07,.12), zc=-hy*Math.tan(th);
+  r.body.rotation.x=th; r.up.position.set(hx,hy,zc); r.up.rotation.set(-th*1.2,0,-.2*st-.6*ae); poseArms(r,ae);
   r.headG.rotation.z=-.05*st+.45*ae; r.headG.position.set(r.neckL[0]-.03*ae,r.neckL[1]-.05*ae,0); // Aero: Kopf tief zwischen den Schultern, Blick nach vorn
   r.crankG.rotation.z=-crank;
   r.legs.forEach((L,i)=>{ const pa=-crank+(i?Math.PI:0), px=Math.cos(pa)*.17, py=.3+Math.sin(pa)*.17;
     const dx=px-hx, dy=py-hy, D=Math.min(2*l-.02,Math.hypot(dx,dy)), hh=Math.sqrt(Math.max(0,l*l-D*D/4));
-    const mx=hx+dx/2, my=hy+dy/2, ux=dx/Math.hypot(dx,dy), uy=dy/Math.hypot(dx,dy), kx=mx-uy*hh, ky=my+ux*hh, kz=L.z*(1-.3*ae); // Aero: Knie eng am Rahmen
-    place(L.th,[hx,hy,L.z],[kx,ky,kz]); place(L.sh,[kx,ky,kz],[px,py,L.z]);
+    const mx=hx+dx/2, my=hy+dy/2, ux=dx/Math.hypot(dx,dy), uy=dy/Math.hypot(dx,dy), kx=mx-uy*hh, ky=my+ux*hh, kz=L.z*(1-.3*ae)+zc*.5; // Aero: Knie eng am Rahmen
+    place(L.th,[hx,hy,L.z+zc],[kx,ky,kz]); place(L.sh,[kx,ky,kz],[px,py,L.z]);
     place(L.sk,[kx+(px-kx)*.5,ky+(py-ky)*.5,(kz+L.z)/2],[px,py+.02,L.z]); L.sho.position.set(px+.03,py-.02,L.z*1.25); });
   if(r.tail) animTail(r,performance.now()/1000);
 }
@@ -236,7 +238,7 @@ function rideState(r,o,P,ftpW,dt,cadReal,standRemote){ if(!r) return; const S=r.
   // Anstieg: ab 10 % im Wechsel (etwa 8 s stehen, 25 s sitzen), ab 14 % oder unter 12 km/h fast immer
   const steep=g>=14||v<3.3; S.t-=dt; if(S.t<=0){ S.up=!S.up; S.t=S.up?(steep?30+Math.random()*10:6+Math.random()*4):(steep?4+Math.random()*3:20+Math.random()*10); }
   S.stand=!o.aero&&P>=15&&(standRemote!=null?!!standRemote:S.sp||(g>=10&&S.up));
-  S.st+=((S.stand?1:0)-S.st)*Math.min(1,dt*4); S.ae+=((o.aero?1:0)-S.ae)*Math.min(1,dt*2.5); r.st=S.st; r.ae=S.ae;
+  S.st+=((S.stand?1:0)-S.st)*Math.min(1,dt*4); S.ae+=((o.aero?1:0)-S.ae)*Math.min(1,dt*2.5); S.sw=(S.sw||0)+((S.stand?1:0)-(S.sw||0))*Math.min(1,dt*1.2); r.st=S.st; r.ae=S.ae; r.sw=S.sw; // Pendeln setzt langsam ein und klingt langsam ab
   // Trittfrequenz: echte vom Sensor, sonst geschätzt; unter 15 W stehen die Kurbeln, die Pedale bleiben waagerecht stehen
   const est=P<15||v<.3?0:S.sp?105:S.stand?66:clampN(88-Math.max(0,g-3)*2.5,70,90);
   S.cad+=((cadReal??est)-S.cad)*Math.min(1,dt*2);
