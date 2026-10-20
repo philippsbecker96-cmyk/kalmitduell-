@@ -9,6 +9,10 @@ Ziel: Landschaft, Vegetation und Gebäude realistischer machen – Strecke für 
   - „Nacht“ und „Regen“ gibt es nur im Stadion. Das Stadion nutzt weiter `applyStadiumEnv()`, das über `applyEnv()` aufgerufen wird.
 - **Einmündungen**: `scharfeEcke` liefert ein Array `kreuz`, `r.stich` ist ein Array. In Arzheim gibt es an der Ecke bei 1,2 km eine Straße geradeaus und eine Stichstraße.
 - **Training**: Südpfalz nur als Runde, Markierung `noTrain` in `ROUTES`.
+- **Haus-Baukasten** (`js/welt-bausteine.js`, nach Street-View-Fotos Arzheimer Hauptstraße): Altort traufständig mit Ziegeldach-Textur, Kamin, Giebel in Wandfarbe, rote Sandstein-Gewände (`gewaende`), Hoftore/Mauern in Lücken (`S.tor`). Neubaugebiet (`neu:[von,bis]`): freistehend, Vorgarten, Hecke/Klinker/Beton an der Grenze (`S.zaun`), Koniferen (`S.konif`). Abendfenster und Laternen leuchten (`hausLicht()` aus `applyEnv`). Arzheim: Neubau ab 1800 m geschätzt.
+- **Ortsteile** (`teile` in einer Ort-Zone): eigene Optionen pro Abschnitt (`seite`, `neu`, `obst`, `fach`, `gewaende`, `laden`, `ranken`). Leinsweiler nach Fotos: Eingang mit Weinlaub-Bogen (`bogen`), einseitig bebaut, Obstwiese; dichter Kern Hauptstraße/Weinstraße (Haarnadel bei 5,78 km) mit Fachwerk, grünen Läden, Ranken; Ausgang Weinstraße als Neubau mit Sandsteinmauern.
+- **Landstraße Arzheim–Ilbesheim**: Leitlinie (`mitte`), Gebüschsaum (`saum`), Radweg rechts hinter Grünstreifen (`radweg`), Baumreihe am Ortseingang Ilbesheim (`allee`), Leitpfosten in den Weinbergen.
+- Fotos liegen lokal in `Arzheim-Ilbesheim/` und `Leinsweiler/` (nicht im Git).
 
 ## Wichtige Grenzen
 - **three.js r128**: keine automatische Farbumrechnung, `outputEncoding`/`ColorManagement` sind alt.

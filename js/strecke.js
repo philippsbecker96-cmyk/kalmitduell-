@@ -39,15 +39,18 @@ function scharfeEcke(G,i,j,k,l){ const [p,q,a,b]=[G[i],G[j],G[k],G[l]], ux=q[0]-
   const t=((a[0]-p[0])*vy-(a[1]-p[1])*vx)/(ux*vy-uy*vx), cx=p[0]+ux*t, cy=p[1]+uy*t, s1=Math.hypot(cx-p[0],cy-p[1]), s2=Math.hypot(a[0]-cx,a[1]-cy), e=p[2]+(a[2]-p[2])*s1/(s1+s2);
   return {G:[...G.slice(0,i+1), [cx-ux/lu*8,cy-uy/lu*8,e], [cx,cy,e], [cx+vx/lv*8,cy+vy/lv*8,e], ...G.slice(k)], kreuz:[{x:cx, y:cy, ux:-vx/lv, uy:-vy/lv}, {x:cx, y:cy, ux:ux/lu, uy:uy/lu}]}; } // Einmündungen: Gegenrichtung des Ausgangs und geradeaus weiter
 // Landschaftsabschnitte: [Art, von m, bis m, Optionen] – Art: 'ort', 'reben', 'feld', 'hain' (dichte Laubbäume und Büsche), 'wald' (außerhalb aller Abschnitte: Wald)
-// Optionen Ort: fach (Anteil Fachwerk), luecke (Anteil größerer Lücken), geh (Gehwegbreite), seite (-1 links/1 rechts: nur eine Seite bebaut), abzweig (-1 links/1 rechts: Seitenstraße vor dem letzten Haus)
+// Optionen Ort: fach (Anteil Fachwerk), luecke (Anteil größerer Lücken), geh (Gehwegbreite), seite (-1 links/1 rechts: nur eine Seite bebaut), abzweig (-1 links/1 rechts: Seitenstraße vor dem letzten Haus),
+//   gewaende (Anteil rote Sandstein-Gewände), laden (bevorzugte Ladenfarbe 0–2), ranken (Anteil Weinranken an der Fassade),
+//   teile: [[von, bis, {Optionen}]] Ortsteile mit eigenen Optionen, dazu neu (Neubaugebiet mit Vorgärten), obst (unbebaute Seite mit Obstbäumen)
+// Landstraße: mitte [[von, bis]] Leitlinie · saum / allee / radweg [[von, bis, Seite (0 = beide)]] Gebüsch, Baumreihe, Radweg hinter Grünstreifen · bogen [d] Weinlaub-Bogen
 // Optionen Reben: baum (Anteil Obstbäume am Rand), weg (mittlerer Abstand kreuzender Wirtschaftswege in m)
 // breite: [von, bis, Straßenbreite m] · belag: [Art, von, bis, Zusatzsteigung % bei 75 kg] – Art 'pflaster' oder 'beton'
 function kalmitDef(){ return Object.assign(gpxDef(KALMIT_GPX), {name:'Kalmit-Ostrampe', start:'Maikammer', finish:'Kalmit · 673 m', plainElev:110, kalmit:true, gpx:'kalmit', zones:[['ort',0,800],['reben',800,2300]]}); }
 function suedpfalzDef(loop){ const E=scharfeEcke(hoeheSchliessen(SUEDPFALZ_GPX),24,31,33,36), g=gpxDef(E.G,10); g.poly.push(g.poly[0].slice()); // Runde schließen, sonst fehlen am Ziel 8 m Straße · Arzheim: scharf rechts auf die Hauptstraße, die links weiterläuft
   return Object.assign(g, {name:'Südpfalz-Klassiker', start:'Godramstein', finish:'Ziel', gpx:'suedpfalz', loop:!!loop,
-  zones:[['ort',0,110,{luecke:.6,fach:.3,name:'Godramstein',kreis:'Stadt Landau in der Pfalz'}],['feld',110,700],['hain',700,1000],['ort',1000,2350,{fach:.7,geh:1,abzweig:-1,name:'Arzheim',kreis:'Stadt Landau in der Pfalz'}],['reben',2350,3500,{baum:.1,weg:300}],['ort',3500,3760,{seite:-1,luecke:.5,fach:.3,name:'Ilbesheim',kreis:'Kreis Südliche Weinstraße'}],
-    ['reben',3760,5400,{baum:.1,weg:350}],['ort',5400,6200,{fach:.5,geh:.6,name:'Leinsweiler',kreis:'Kreis Südliche Weinstraße'}],['reben',6200,8000,{baum:.1,weg:220}],['ort',8000,9050,{luecke:.55,fach:.35,name:'Ranschbach',kreis:'Kreis Südliche Weinstraße'}],['reben',9050,1e9,{baum:0,weg:260}]],
-  kreuz:E.kreuz, haardt:true, steil:true, // Haardt als Bergkette im Westen · Überhöhung in deiner Nähe wie an der Kalmit
+  zones:[['ort',0,110,{luecke:.6,fach:.3,name:'Godramstein',kreis:'Stadt Landau in der Pfalz'}],['feld',110,700],['hain',700,1000],['ort',1000,2350,{fach:.2,gewaende:.6,ranken:.25,teile:[[1800,2350,{neu:1}]],geh:1,abzweig:-1,name:'Arzheim',kreis:'Stadt Landau in der Pfalz'}],['reben',2350,3500,{baum:.1,weg:300}],['ort',3500,3760,{seite:-1,luecke:.5,fach:.3,name:'Ilbesheim',kreis:'Kreis Südliche Weinstraße'}],
+    ['reben',3760,5400,{baum:.1,weg:350}],['ort',5400,6200,{fach:.5,geh:.6,teile:[[5400,5530,{seite:-1,neu:1,obst:1}],[5530,5630,{luecke:.6,fach:.2}],[5630,5960,{fach:.55,gewaende:.85,laden:2,ranken:.35}],[5960,6200,{neu:1}]],name:'Leinsweiler',kreis:'Kreis Südliche Weinstraße'}],['reben',6200,8000,{baum:.1,weg:220}],['ort',8000,9050,{luecke:.55,fach:.35,name:'Ranschbach',kreis:'Kreis Südliche Weinstraße'}],['reben',9050,1e9,{baum:0,weg:260}]],
+  kreuz:E.kreuz, haardt:true, steil:true, mitte:[[2350,3500]], saum:[[2350,2460,1],[2460,2800,0],[2800,3000,-1]], radweg:[[2800,3500,1]], allee:[[3400,3500,-1]], bogen:[5415], // Haardt als Bergkette im Westen · Überhöhung in deiner Nähe wie an der Kalmit
   breite:[[1000,2350,5],[3500,3760,5.5],[5400,6200,4.2],[8000,9050,6.6],[9080,12990,3.2]], belag:[['pflaster',5400,6000,3.5],['beton',9080,12990,0]]}); }
 const zoneOf=(r,d)=>{ for(const z of r.zones) if(d>=z[1]&&d<z[2]) return z; return null; };
 const zoneAt=(r,d)=>{ const z=zoneOf(r,d); return z?z[0]:'wald'; };
@@ -118,25 +121,47 @@ function makeScenery(r){
   for(let i=0;i<r.xs.length;i+=2){ const k=key(r.xs[i],r.ys[i]); (rg.get(k)||rg.set(k,[]).get(k)).push(i); }
   const distRoad=(x,y)=>{ let m=1e9; const cx=Math.floor(x/CELL), cy=Math.floor(y/CELL);
     for(let a=-1;a<=1;a++) for(let b=-1;b<=1;b++){ const l=rg.get((cx+a)+','+(cy+b)); if(l) for(const i of l){ const dd=Math.hypot(r.xs[i]-x,r.ys[i]-y); if(dd<m) m=dd; } } return m; };
-  const S={tree:[],rock:[],vine:[],vpost:[],grass:[],house:[],block:[],post:[],lamp:[],fan:[],bush:[],weg:[]}, R1=rng(42), R2=rng(7); // R2 nur für Neues, damit die Kalmit gleich bleibt
+  const S={tree:[],rock:[],vine:[],vpost:[],grass:[],house:[],block:[],post:[],lamp:[],fan:[],bush:[],weg:[],tor:[],zaun:[],konif:[],ranke:[],rad:[]}, R1=rng(42), R2=rng(7), R3=rng(5); // R2 nur für Neues, damit die Kalmit gleich bleibt · R3 für Hausdetails
   const frame=d=>{ const [px,py]=posAt(r,d), h=headingAt(r,d); return {px,py,h,nx:-Math.sin(h),ny:Math.cos(h)}; };
+  const inBand=(L,d,side)=>(L||[]).some(([a,b,s])=>d>=a&&d<b&&(!s||s===side)); // Abschnittslisten [von, bis, Seite (0 = beide)]
+  // Neubaugebiet: freistehende Häuser hinter Vorgarten, an der Grenze Hecke oder Mauer mit Einfahrt, Büsche und Koniferen; gid verknüpft Garten und Haus
+  const neubau=(d,side,geh,zb)=>{ const w=9+R3()*3.5, dep=8.5+R3()*2.5, vg=5+R3()*3.5, gap=4+R3()*7, dm=d+w/2, f=frame(dm), rh=roadW(r,dm)/2, off=rh+geh+vg+dep/2, gid=S.house.length+1;
+    const cx=f.px+f.nx*side*off, cy=f.py+f.ny*side*off, ax=Math.cos(f.h), ay=Math.sin(f.h), at=(a,o)=>{ const g=frame(a); return [g.px+g.nx*side*o, g.py+g.ny*side*o, g]; };
+    if(d+w>zb-8 || ![[1,1],[1,-1],[-1,1],[-1,-1]].every(([u,v])=>distRoad(cx+ax*u*w/2+f.nx*v*dep/2, cy+ay*u*w/2+f.ny*v*dep/2)>rh+geh+2)) return d+w+gap;
+    S.house.push({x:cx, y:cy, w, dep, hgt:3+R3()*1.8, h:f.h, side, stil:'neu', wall:R3()*4|0, v:R3()*6|0, roof:DACH_NEU[R3()*4|0], flach:R3()<.3, kam:R3(), df:R3()<.5?0:R3()<.6?1:2, d:dm, gid});
+    const typ=['hecke','hecke','klinker','beton','sandstein'][R3()*5|0], lo=rh+geh+(typ==='hecke'?.55:.3), e=Math.min(d+w+gap-.5,zb-8);
+    for(let a=d-.5; a<e-3.2; a+=3){ const L=Math.min(3,e-3.2-a), [x,y,g]=at(a+L/2,lo); S.zaun.push({x, y, h:g.h, len:L+.06, typ, d:a+L/2, c:R3(), gid}); } // letzte 3 m: Einfahrt
+    for(let i=0,n=2+R3()*3|0;i<n;i++){ const [x,y]=at(d+R3()*w, lo+1.2+R3()*(vg-2)); S.bush.push({x, y, s:.5+R3()*.7, c:R3(), gid}); }
+    if(R3()<.6){ const [x,y]=at(d+(R3()<.5?.8:w-.8), lo+1.4+R3()*(vg-2.2)); S.konif.push({x, y, s:1.4+R3()*1.6, c:R3(), gid}); }
+    if(R3()<.3){ const [x,y]=at(d+w+gap*.5, off+R3()*4); S.tree.push({x, y, s:1.5+R3()*1.2, c:R3(), pine:false, ht:3, gid}); }
+    return d+w+gap; };
 
   // Dorf: geschlossene Häuserzeilen direkt am Gehweg
-  for(const [zt,za,zb,zo={}] of r.zones) if(zt==='ort'){ const geh=zo.geh??SIDEWALK;
+  for(const [zt,za,zb,zo={}] of r.zones) if(zt==='ort'){ const geh=zo.geh??SIDEWALK, teil=d=>(zo.teile||[]).find(t=>d>=t[0]&&d<t[1]);
   for(const side of (zo.seite?[zo.seite]:[-1,1])){ let d=za+6;
-    while(d<zb-8){ const w=7+R1()*4.5, dep=8+R1()*3, f=frame(d+w/2), off=roadW(r,d+w/2)/2+geh+dep/2, upper=r.kalmit&&d-za>550;
+    while(d<zb-8){ const t=teil(d), q=t?Object.assign({},zo,t[2]):zo; // Optionen dieses Ortsteils
+      if(q.seite && q.seite!==side){ d=t[1]; continue; } // hier nur die andere Seite bebaut
+      if(q.neu){ d=neubau(d,side,geh,zb); continue; }
+      const w=7+R1()*4.5, dep=8+R1()*3, f=frame(d+w/2), off=roadW(r,d+w/2)/2+geh+dep/2, upper=r.kalmit&&d-za>550;
       const cx=f.px+f.nx*side*off, cy=f.py+f.ny*side*off, ax=Math.cos(f.h), ay=Math.sin(f.h), rwh=roadW(r,d+w/2)/2+geh-.6;
-      if(distRoad(cx,cy)>off-1.5 && (r.kalmit || [[1,1],[1,-1],[-1,1],[-1,-1]].every(([u,v])=>distRoad(cx+ax*u*w/2+f.nx*v*dep/2, cy+ay*u*w/2+f.ny*v*dep/2)>rwh)))
-        S.house.push({x:f.px+f.nx*side*off, y:f.py+f.ny*side*off, w, dep, hgt:5.6+R1()*1.8, h:f.h, side, wall:upper&&R1()<.6?4:Math.floor(R1()*6), shut:Math.floor(R1()*3), roof:R1()<.5?'#b4472f':'#9e3a28', d:d+w/2, fw:!!zo.fach&&R2()<zo.fach});
-      d+=w+(R1()<(upper?.45:.25)?2+R1()*(upper?9:3):0.2); if(zo.luecke&&R2()<zo.luecke) d+=4+R2()*12; } }
-  for(let d=za+20; d<zb-10; d+=34){ const side=zo.seite||(((d-za)/34|0)%2?1:-1), f=frame(d), o=roadW(r,d)/2+geh-0.4; S.lamp.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h, side, d}); } }
+      const ok=distRoad(cx,cy)>off-1.5 && (r.kalmit || [[1,1],[1,-1],[-1,1],[-1,-1]].every(([u,v])=>distRoad(cx+ax*u*w/2+f.nx*v*dep/2, cy+ay*u*w/2+f.ny*v*dep/2)>rwh));
+      if(ok){ const o={x:f.px+f.nx*side*off, y:f.py+f.ny*side*off, w, dep, hgt:5.6+R1()*1.8, h:f.h, side, wall:upper&&R1()<.6?4:Math.floor(R1()*6), shut:Math.floor(R1()*3), roof:R1()<.5?'#b4472f':'#9e3a28', d:d+w/2, fw:!!q.fach&&R2()<q.fach};
+        o.kam=R3(); if(!r.kalmit){ if(R3()<.15) o.roof=DACH_ALT[3]; o.gw=R3()<(q.gewaende||0); if(q.laden!=null&&R3()<.7) o.shut=q.laden; } S.house.push(o);
+        if(R3()<(q.ranken||0)){ const k=off-dep/2-.2, al=(R3()-.5)*w*.6; S.ranke.push({x:f.px+f.nx*side*k+ax*al, y:f.py+f.ny*side*k+ay*al, h:f.h, w:2+R3()*3, hg:2.5+R3()*3, d:d+w/2+al, side, c:R3()}); } }
+      let gap=R1()<(upper?.45:.25)?2+R1()*(upper?9:3):0.2; if(q.luecke&&R2()<q.luecke) gap+=4+R2()*12;
+      if(ok && gap>1.5 && gap<9 && d+w+gap<zb-8){ const dm=d+w+gap/2, g=frame(dm), o2=roadW(r,dm)/2+geh+.2; // Hoftor oder Mauer in der Lücke
+        S.tor.push({x:g.px+g.nx*side*o2, y:g.py+g.ny*side*o2, h:g.h, side, w:gap+.3, d:dm, v:gap<2.6?2:R3()<.55?0:1}); }
+      d+=w+gap; } }
+  for(let d=za+20; d<zb-10; d+=34){ const side=zo.seite||(((d-za)/34|0)%2?1:-1), f=frame(d), o=roadW(r,d)/2+geh-0.4; S.lamp.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h, side, d}); }
+  for(const t of zo.teile||[]) if(t[2].seite&&t[2].obst) for(let d=t[0]; d<t[1]; d+=7+R3()*5){ const f=frame(d), s=-t[2].seite, o=roadW(r,d)/2+geh+3+R3()*12; // unbebaute Seite: Wiese mit Obstbäumen und Birken
+    S.tree.push({x:f.px+f.nx*s*o, y:f.py+f.ny*s*o, s:1.5+R3()*.9, c:R3(), pine:false, ht:3, fruit:R3()<.6}); } }
   // Einmündungen an der scharfen Ecke: Hauptstraße läuft weiter, dazu eine Straße geradeaus (al: längs ab der Ecke, la: quer), Häuser im Weg weichen, neue Häuser an der Stichstraße
   r.stich=[]; r.gehCut=[]; for(const K of [].concat(r.def.kreuz||[])){ const w=5, len=55, vx=-K.uy, vy=K.ux; let kd=0, bd=1e9; for(let i=0;i<r.xs.length;i++){ const dd=Math.hypot(r.xs[i]-K.x,r.ys[i]-K.y); if(dd<bd){ bd=dd; kd=i*STEP; } }
     const geh=zOpt(r,kd).geh??SIDEWALK, loc=(x,y)=>[(x-K.x)*K.ux+(y-K.y)*K.uy, (x-K.x)*vx+(y-K.y)*vy];
     const inStich=(x,y,m)=>{ const [al,la]=loc(x,y); return al>-4&&al<len+2&&Math.abs(la)<w/2+m; };
     const inHaus=(o,x,y)=>{ const dx=x-o.x, dy=y-o.y, c=Math.cos(o.h), sn=Math.sin(o.h); return Math.abs(dx*c+dy*sn)<o.w/2+.3 && Math.abs(-dx*sn+dy*c)<o.dep/2+.3; };
     const pts=o=>{ const ax=Math.cos(o.h), ay=Math.sin(o.h), out=[]; for(const u of [-.5,0,.5]) for(const v of [-.5,0,.5]) out.push([o.x+ax*u*o.w-ay*v*o.dep, o.y+ay*u*o.w+ax*v*o.dep]); return out; };
-    S.house=S.house.filter(o=>!pts(o).some(([x,y])=>inStich(x,y,geh+.3))); S.lamp=S.lamp.filter(o=>!inStich(o.x,o.y,geh+.5));
+    S.house=S.house.filter(o=>!pts(o).some(([x,y])=>inStich(x,y,geh+.3))); S.lamp=S.lamp.filter(o=>!inStich(o.x,o.y,geh+.5)); for(const k of ['tor','zaun','bush','konif','ranke']) S[k]=S[k].filter(o=>!inStich(o.x,o.y,geh+(o.w||o.len||2)/2+.3));
     const hdg=Math.atan2(K.uy,K.ux), rwk=roadW(r,kd)/2; let cut=null;
     for(const side of [-1,1]) for(let d=kd-30; d<kd+30; d+=1){ const f=frame(d), o=roadW(r,d)/2+geh/2, hit=inStich(f.px+f.nx*side*o, f.py+f.ny*side*o, 0); if(hit&&!cut) cut=[side,d-1.5,d+1.5]; else if(hit) cut[2]=d+1.5; else if(cut){ r.gehCut.push(cut); cut=null; } }
     for(const side of [-1,1]){ let al=rwk+geh+1; while(al<len-4){ const hw=7+R2()*4, dep=8+R2()*3, off=w/2+geh+dep/2, c={x:K.x+K.ux*(al+hw/2)+vx*side*off, y:K.y+K.uy*(al+hw/2)+vy*side*off, w:hw, dep, h:hdg};
@@ -147,7 +172,7 @@ function makeScenery(r){
     r.stich.push({x:K.x, y:K.y, ux:K.ux, uy:K.uy, vx, vy, w, len, geh, d:kd, al0:{'-1':al0(-1), '1':al0(1)}}); }
   // Seitenstraße kurz vor dem Ortsende: ersetzt das vorletzte Haus der Seite, danach steht nur noch ein Haus
   r.abzweig=null; for(const [zt,za,zb,zo={}] of r.zones) if(zt==='ort'&&zo.abzweig){ const side=zo.abzweig, L=S.house.filter(o=>o.side===side&&o.su==null&&o.d>za&&o.d<zb).sort((a,b)=>a.d-b.d), h=L[L.length-2], d=h?h.d:zb-25, w=5;
-    if(h) S.house.splice(S.house.indexOf(h),1); S.lamp=S.lamp.filter(o=>o.side!==side||Math.abs(o.d-d)>w/2+1.5); r.abzweig={d,side,w,len:70,geh:zo.geh??SIDEWALK}; }
+    if(h){ S.house.splice(S.house.indexOf(h),1); for(const k of ['zaun','bush','konif','tree']) if(h.gid) S[k]=S[k].filter(o=>o.gid!==h.gid); S.tor=S.tor.filter(o=>o.side!==side||Math.abs(o.d-h.d)>h.w/2+o.w/2+1); } S.lamp=S.lamp.filter(o=>o.side!==side||Math.abs(o.d-d)>w/2+1.5); r.abzweig={d,side,w,len:70,geh:zo.geh??SIDEWALK}; }
 
   for(let d=0; d<r.len; d+=5){
     const z=zoneAt(r,d); if(z==='ort'||z==='hain') continue;
@@ -164,8 +189,8 @@ function makeScenery(r){
       }
     }
     const rw=roadW(r,d)/2;
-    if(z==='reben' && d%30<5) for(const side of [-1,1]) if(R1()<(zOpt(r,d).baum??.55)) S.tree.push({x:f.px+f.nx*side*(rw+3.2+R1()*1.5), y:f.py+f.ny*side*(rw+3.2+R1()*1.5), s:1.6+R1()*.8, c:R1(), pine:false, ht:3, fruit:true});
-    for(const side of [-1,1]) for(let t=0;t<3;t++){ const off=side*(rw+1+R1()*4.5), al=(R1()-.5)*5; S.grass.push({x:f.px+f.nx*off+Math.cos(f.h)*al, y:f.py+f.ny*off+Math.sin(f.h)*al, s:.5+R1()*.6, c:R1(), r:R1()*6, wood:z==='wald'&&zoneAt(r,d-.01)==='wald'}); }
+    if(z==='reben' && d%30<5) for(const side of [-1,1]) if(R1()<(zOpt(r,d).baum??.55) && !inBand(r.def.radweg,d,side)) S.tree.push({x:f.px+f.nx*side*(rw+3.2+R1()*1.5), y:f.py+f.ny*side*(rw+3.2+R1()*1.5), s:1.6+R1()*.8, c:R1(), pine:false, ht:3, fruit:true});
+    for(const side of [-1,1]) for(let t=0;t<3;t++){ const off=side*(rw+1+R1()*(inBand(r.def.radweg,d,side)?1.3:4.5)), al=(R1()-.5)*5; S.grass.push({x:f.px+f.nx*off+Math.cos(f.h)*al, y:f.py+f.ny*off+Math.sin(f.h)*al, s:.5+R1()*.6, c:R1(), r:R1()*6, wood:z==='wald'&&zoneAt(r,d-.01)==='wald'}); }
     // Sandsteinblöcke und Leitpfosten am Straßenrand (Wald)
     if(z==='wald' || zoneAt(r,d+199)==='wald'){
       for(const side of [-1,1]){
@@ -179,10 +204,16 @@ function makeScenery(r){
   for(let d=za-(zt==='reben'?10:0); d<Math.min(zb,r.len); d+=2.4){ const f=frame(d);
     if(zt==='feld'){ const p=parzAt(r,d); if(!p||p[2]!==0||d-p[0]<2||p[1]-d<2) continue; }
     if(r.wege.some(w=>Math.abs(w-d)<2.6)) continue; // Lücke für den Wirtschaftsweg
-    for(const side of sides) for(let k=0; k<(r.kalmit?22:14); k++){ const off=side*(roadW(r,d)/2+3.5+k*3.0), x=f.px+f.nx*off, y=f.py+f.ny*off;
+    for(const side of sides) for(let k=0; k<(r.kalmit?22:14); k++){ const off=side*(roadW(r,d)/2+3.5+(inBand(r.def.radweg,d,side)?4:inBand(r.def.saum,d,side)?4.5:0)+k*3.0), x=f.px+f.nx*off, y=f.py+f.ny*off;
       if(distRoad(x,y)<Math.abs(off)-1.2) break; S.vine.push({x,y,rot:f.h+Math.PI/2,c:R1()}); if(k%3===0) S.vpost.push({x,y,h:f.h}); } } }
   // Wirtschaftswege quer zur Straße, Hecken an Feldgrenzen
   for(const w of r.wege){ const f=frame(w), rw=roadW(r,w)/2; for(const side of [-1,1]) for(let o=rw+1.6; o<rw+75; o+=3) S.weg.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h}); }
+  // Landstraße: Gebüschsaum, Alleebäume, Leitpfosten in den Weinbergen (Südpfalz)
+  for(const [a,b,sd] of r.def.saum||[]) for(let d=a; d<Math.min(b,r.len); d+=1.6+R3()*1.2){ const f=frame(d), rw=roadW(r,d)/2;
+    for(const side of sd?[sd]:[-1,1]){ const o=rw+2.4+R3()*2.6; S.bush.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, s:1.1+R3()*1.1, c:R3(), tree:R3()<.14}); } }
+  for(const [a,b,sd] of r.def.allee||[]) for(let d=a; d<Math.min(b,r.len); d+=8+R3()*3){ const f=frame(d), o=roadW(r,d)/2+3.5;
+    for(const side of sd?[sd]:[-1,1]) S.tree.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, s:2.6+R3()*.8, c:R3(), pine:false, ht:4}); }
+  if(!r.kalmit) for(let d=0; d<r.len; d+=50) if(zoneAt(r,d)==='reben'){ const f=frame(d), o=roadW(r,d)/2+.7; for(const side of [-1,1]) S.post.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h}); }
   for(const hk of r.hecke){ const f=frame(hk), rw=roadW(r,hk)/2; for(const side of [-1,1]) for(let o=rw+4; o<rw+90; o+=1.6+R2()*1.6) if(R2()<.85) S.bush.push({x:f.px+f.nx*side*o+(R2()-.5), y:f.py+f.ny*side*o+(R2()-.5), s:1+R2()*.9, c:R2(), tree:R2()<.08}); }
   for(let d=0; d<r.len; d+=8){ const f=frame(d);
     for(const side of [-1,1]) for(let t=0;t<3;t++){ const off=side*(50+R1()*170), x=f.px+f.nx*off+(R1()-.5)*8, y=f.py+f.ny*off+(R1()-.5)*8;

@@ -8,6 +8,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `js/welt-stadion.js` – 3D-Stadion: Tribünen, Fußballspiel, Choreo, Anzeigetafel, Flutlicht
 - `js/physik.js` – Physik (Watt, Gewicht, CdA) und Bot-Fahrweise
 - `js/zustand.js` – Fahrer-Aussehen (`LOOKS`), Spielzustand (`me`, `opp`, `race`), 3D-Grundgerüst (`scene`, `camera`, `renderer`), `setRoute`, `canvasTex`
+- `js/welt-bausteine.js` – Haus-Baukasten: `haus(o)` (Altort, Neubau, Fachwerk), Fassaden mit Leuchtkarte, Ziegeldach, `hoftor`, `hausLicht()` für Abendfenster
 - `js/welt-space.js`, `js/welt-insel.js`, `js/welt-kalmit.js` – die übrigen 3D-Welten
 - `js/figuren.js` – 3D-Fahrer (Becker, Dengel, eigener Fahrer, Teufel-Bot), Avatar-Vorschau
 - `js/rennen.js` – Kamera, Zeichnen, Rennlogik, Pause/Menü, Wake Lock

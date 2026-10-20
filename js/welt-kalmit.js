@@ -56,37 +56,9 @@ function gableGeo(w,d,h){ const FL=[-w/2,0,d/2],FR=[w/2,0,d/2],BL=[-w/2,0,-d/2],
   const tri=[FL,FR,RR, FL,RR,RL, BR,BL,RL, BR,RL,RR, BL,FL,RL, FR,BR,RR], p=new Float32Array(tri.length*3); tri.forEach((v,i)=>p.set(v,i*3));
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.computeVertexNormals(); return g; }
 
-/* Hausfassaden nach den Fotos aus Maikammer */
-const WALLS=['#f4f1ea','#efe2c0','#ecd28a','#cfdcbc','#d8b47e','#efd0c6'], SHUT=['#7a4a2c','#a8432f','#4d6b4a'];
-const facadeCache={};
-// Fachwerk: weißer Putz, dunkle Balken; mit Fenstern (Straßenseite) oder nur Balken (Seiten)
-function fachTex(win){ const k='fw'+win; if(facadeCache[k]) return facadeCache[k];
-  return facadeCache[k]=canvasTex(256,256,(g)=>{ g.fillStyle='#f2ede2'; g.fillRect(0,0,256,256);
-    g.fillStyle='#b9936c'; g.fillRect(0,214,256,42); g.fillStyle='rgba(0,0,0,.12)'; for(let x=0;x<256;x+=32) g.fillRect(x,214,2,42);
-    g.strokeStyle='#5a3b28'; g.lineCap='square'; const L=(a,b,c,d,w=7)=>{ g.lineWidth=w; g.beginPath(); g.moveTo(a,b); g.lineTo(c,d); g.stroke(); };
-    L(0,4,256,4,8); L(0,112,256,112,9); L(0,122,256,122,6); L(0,210,256,210,8);
-    const P=win?[5,90,166,251]:[5,69,128,187,251]; P.forEach(x=>{ L(x,4,x,112); L(x,122,x,210); });
-    if(win){ L(5,100,40,16); L(251,100,216,16); L(90,200,60,130); L(166,200,196,130);
-      [[128,30],[47,30],[209,30],[47,140],[209,140]].forEach(([x,y])=>{ g.fillStyle='#fff'; g.fillRect(x-19,y-3,38,58); g.fillStyle='#3a4250'; g.fillRect(x-15,y+1,30,50); g.fillStyle='#fff'; g.fillRect(x-1,y,2,52); g.fillRect(x-15,y+22,30,2);
-        g.fillStyle='#3d6b2e'; if(y<100) g.fillRect(x-19,y+54,38,7); });
-      g.fillStyle='#5a3a26'; g.fillRect(108,140,40,70); g.fillStyle='#d9c7a8'; g.fillRect(104,136,48,6); }
-    else for(let i=0;i<P.length-1;i++){ const a=P[i],b=P[i+1]; if(i%2) L(a,112,b,4); else L(a,4,b,112); if(i%2===0) L(a,210,b,122); }
-  }); }
-function facadeTex(wi,si){ const k=wi+'-'+si; if(facadeCache[k]) return facadeCache[k];
-  return facadeCache[k]=canvasTex(256,256,(g)=>{
-    g.fillStyle=WALLS[wi]; g.fillRect(0,0,256,256);
-    g.fillStyle='#b9936c'; g.fillRect(0,214,256,42); g.fillStyle='rgba(0,0,0,.12)'; for(let x=0;x<256;x+=32) g.fillRect(x,214,2,42); g.fillRect(0,214,256,2);
-    const win=(x,y,fl)=>{ g.fillStyle=SHUT[si]; g.fillRect(x-17,y,12,50); g.fillRect(x+37,y,12,50);
-      g.fillStyle='#fff'; g.fillRect(x-4,y-3,40,56); g.fillStyle='#3a4250'; g.fillRect(x,y+1,32,48); g.fillStyle='#fff'; g.fillRect(x+15,y,2,50); g.fillRect(x,y+20,32,2);
-      if(fl){ g.fillStyle='#3d6b2e'; g.fillRect(x-4,y+50,40,9); g.fillStyle=['#e03a3a','#e86aa0','#f2f2f2'][(x+y)%3]; for(let i=0;i<6;i++){ g.beginPath(); g.arc(x+i*6.5,y+50,4,0,7); g.fill(); } } };
-    [36,112,188].forEach((x,i)=>win(x,40,i!==1||si===1));
-    win(36,140,false); win(188,140,false);
-    g.fillStyle='#5a3a26'; g.fillRect(106,138,44,76); g.fillStyle='#d9c7a8'; g.fillRect(102,134,52,6);
-  }); }
-
 function build3D(){
   if(world){ scene.remove(world); world.traverse(o=>{ o.geometry&&o.geometry.dispose&&o.geometry.dispose(); for(const mt of [].concat(o.material||[])){ mt.map&&mt.map.dispose&&mt.map.dispose(); mt.dispose&&mt.dispose(); } }); }
-  for(const k in facadeCache) delete facadeCache[k];
+  hausReset();
   world=new THREE.Group(); scene.add(world);
   anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
   const sp=!!R.space; sky.visible=!sp; spaceSky.visible=sp; streaks.m.visible=false; scene.background.set(sp?SPACE_BG:HORIZON); scene.fog.color.set(sp?SPACE_BG:HORIZON);
@@ -167,6 +139,14 @@ function build3D(){
     tx.wrapT=THREE.RepeatWrapping; tx.anisotropy=8;
     strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{polygonOffsetFactor:-2})),t==='pflaster'?1.6:3.5,[1]); }
   strip(d0,R.len,d=>-rw(d),rw,0.12,asph,9,[1]);
+  // Landstraße: Leitlinie in der Mitte (6 m Strich, 12 m Lücke) · Radweg neben der Straße, hinter einem Grünstreifen
+  if(R.def.mitte){ const dt=canvasTex(8,48,g=>{ g.fillStyle='#ecebe4'; g.fillRect(0,0,8,16); }); dt.wrapT=THREE.RepeatWrapping;
+    const dm=side2(Object.assign(new THREE.MeshLambertMaterial({map:dt, transparent:true, alphaTest:.5}),{polygonOffsetFactor:-3}));
+    for(const [a,b] of R.def.mitte) strip(a,b,-.07,.07,.125,dm,18,[1]); }
+  for(const [a,b,sd] of R.def.radweg||[]){ const i0=Math.max(0,Math.floor(a/STEP)), i1=Math.min(R.xs.length-1,Math.ceil(b/STEP)), m=i1-i0+1, p=new Float32Array(m*6), id=[];
+    for(let k=0;k<m;k++){ const i=i0+k, d=i*STEP, hd=headingAt(R,d), nx=-Math.sin(hd)*sd, nz=Math.cos(hd)*sd;
+      [rw(d)+2.6, rw(d)+5].forEach((o,j)=>{ const x=R.xs[i]+nx*o, z=R.ys[i]+nz*o; p.set([x,terrainAt(x,z)+.08,z],k*6+j*3); }); if(k<m-1) id.push(k*2,k*2+1,k*2+2, k*2+1,k*2+3,k*2+2); }
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setIndex(id); geo.computeVertexNormals(); world.add(new THREE.Mesh(geo,side2(Object.assign(lam('#6a6b6c'),{polygonOffsetFactor:-2})))); }
   const stY=(al,x,z)=>{ const t=Math.min(1,Math.max(0,(al-15)/20)), k=t*t*(3-2*t); return (terrainAt(x,z,TER.hr)+.13)*(1-k)+(terrainAt(x,z)+.06)*k; }; // Höhe der Stichstraße
   const orte=R.zones.filter(z=>z[0]==='ort');
   if(orte.length){ const pav=canvasTex(64,64,g=>{ g.fillStyle='#9d6b5a'; g.fillRect(0,0,64,64); g.strokeStyle='rgba(50,25,18,.35)'; g.lineWidth=1.5;
@@ -232,20 +212,24 @@ function build3D(){
   inst(new THREE.BoxGeometry(.09,.8,.09), lam('#8d949b'), rposts, o=>{ ps.set(o.x,o.y+.4,o.z); qq.setFromAxisAngle(up,-o.h); sc.set(1,1,1); cc.set('#8d949b'); });
 
   // ---------- Dorf ----------
-  S.house.forEach(o=>{ const gY=o.su!=null?stY(o.su,o.x,o.y)+.02:roadY(o.d)+0.15, grp=new THREE.Group();
-    const fm=new THREE.MeshLambertMaterial({map:o.fw?fachTex(1):facadeTex(o.wall,o.shut)}), wm=o.fw?new THREE.MeshLambertMaterial({map:fachTex(0)}):lam(WALLS[o.wall]);
-    const body=new THREE.Mesh(new THREE.BoxGeometry(o.w,o.hgt,o.dep), [wm,wm,wm,wm,fm,wm]); body.position.y=o.hgt/2; grp.add(body);
-    const sock=new THREE.Mesh(new THREE.BoxGeometry(o.w+.02,8,o.dep+.02), lam('#b9936c')); sock.position.y=-4+0.05; grp.add(sock);
-    const roof=new THREE.Mesh(new THREE.BufferGeometry().copy(gableGeo(o.w+.5,o.dep+.9,2.6+o.dep*.18)), new THREE.MeshLambertMaterial({color:o.roof, side:THREE.DoubleSide})); roof.position.y=o.hgt; grp.add(roof);
-    const dx=-Math.sin(o.h)*-o.side, dz=Math.cos(o.h)*-o.side; grp.rotation.y=Math.atan2(dx,dz);
-    grp.position.set(o.x,gY,o.y); world.add(grp); });
+  const zurStr=o=>Math.atan2(-Math.sin(o.h)*-o.side, Math.cos(o.h)*-o.side); // Front (+z) zur Straße
+  S.house.forEach(o=>{ const grp=haus(o); grp.rotation.y=zurStr(o); grp.position.set(o.x,o.su!=null?stY(o.su,o.x,o.y)+.02:roadY(o.d)+0.15,o.y); world.add(grp); });
+  S.tor.forEach(o=>{ const t=hoftor(o); t.rotation.y=zurStr(o); t.position.set(o.x,roadY(o.d)+.15+.8,o.y); world.add(t); });
+  // Neubau: Hecken, Klinker- und Betonmauern an der Grundstücksgrenze, Koniferen in den Gärten
+  inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), S.ranke, o=>{ ps.set(o.x,roadY(o.d)+.15+o.hg*.55,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(o.w/2,o.hg/2,.3); cc.set(o.c<.4?'#4f7d35':o.c<.8?'#5e8a3c':'#7a9a3e'); }); // Weinranken an den Fassaden
+  for(const [typ,b,t,hh,col] of [['hecke',.8,.9,1.9,'#4a7438'],['klinker',.3,.5,1.5,'#7b3f33'],['beton',.28,.4,1.1,'#bdb8ac'],['sandstein',.4,.5,1.6,'#a8654f']])
+    inst(new THREE.BoxGeometry(1,1,1), lam('#fff'), S.zaun.filter(o=>o.typ===typ), o=>{ ps.set(o.x,roadY(o.d)+.29-t+hh/2,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(o.len,hh,b); cc.set(col); if(typ==='hecke') cc.offsetHSL(0,0,(o.c-.5)*.08); });
+  inst(new THREE.ConeGeometry(1,1,7), lam('#fff'), S.konif, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*1.4,o.y); qq.setFromAxisAngle(up,o.c*6); sc.set(o.s*.55,o.s*3,o.s*.55); cc.set(o.c<.5?'#2f4d2c':'#3a5a34'); });
+  const lampM=lampGlowMat();
   S.lamp.forEach(o=>{ const y=roadY(0)+0, gY=terrainAt(o.x,o.y)+0.85, p=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,4.6,6), lam('#3b3f45')); p.position.set(o.x,gY+2.3,o.y); world.add(p);
-    const head=new THREE.Mesh(new THREE.BoxGeometry(.35,.3,.35), lam('#2f3338')); const nx=-Math.sin(o.h)*-o.side*.6, nz=Math.cos(o.h)*-o.side*.6; head.position.set(o.x+nx,gY+4.5,o.y+nz); world.add(head); });
-  if(R.kalmit){ // Weinlaub-Bogen über der Dorfstraße in Maikammer
-    const d=210, [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d);
-    for(const s of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,4.4,5), lam('#4b3a2c')); p.position.set(x+nx*s*(ROAD_W/2+1.4),y+2.2,z+nz*s*(ROAD_W/2+1.4)); world.add(p); }
-    const leaf=lam('#4f8a35'); for(let i=0;i<26;i++){ const t=i/25*2-1, b=new THREE.Mesh(new THREE.IcosahedronGeometry(.75+Math.random()*.4,0), leaf);
-      b.position.set(x+nx*t*(ROAD_W/2+1.6)+Math.cos(hd)*(Math.random()-.5)*1.6, y+4.4+Math.random()*.5-(Math.abs(t)>.8?.6+Math.random()*.8:0), z+nz*t*(ROAD_W/2+1.6)+Math.sin(hd)*(Math.random()-.5)*1.6); world.add(b); } }
+    const head=new THREE.Mesh(new THREE.BoxGeometry(.35,.3,.35), lam('#2f3338')); const nx=-Math.sin(o.h)*-o.side*.6, nz=Math.cos(o.h)*-o.side*.6; head.position.set(o.x+nx,gY+4.5,o.y+nz); world.add(head);
+    const pl=new THREE.Mesh(new THREE.BoxGeometry(.3,.04,.3), lampM); pl.position.set(o.x+nx,gY+4.34,o.y+nz); world.add(pl); });
+  hausLicht();
+  for(const d of R.def.bogen||(R.kalmit?[210]:[])){ // Weinlaub-Bogen über der Dorfstraße (Maikammer, Ortseingang Leinsweiler)
+    const [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d), hw=rw(d)+1.4;
+    for(const s of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,4.4,5), lam('#4b3a2c')); p.position.set(x+nx*s*hw,y+2.2,z+nz*s*hw); world.add(p); }
+    const leaf=lam('#4f8a35'), n=Math.round(hw*5); for(let i=0;i<n;i++){ const t=i/(n-1)*2-1, b=new THREE.Mesh(new THREE.IcosahedronGeometry(.75+Math.random()*.4,0), leaf);
+      b.position.set(x+nx*t*(hw+.2)+Math.cos(hd)*(Math.random()-.5)*1.6, y+4.4+Math.random()*.5-(Math.abs(t)>.8?.6+Math.random()*.8:0), z+nz*t*(hw+.2)+Math.sin(hd)*(Math.random()-.5)*1.6); world.add(b); } }
 
   // ---------- Fans ----------
   if(S.fan.length){

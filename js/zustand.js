@@ -84,4 +84,4 @@ function sunDisc(on){ if(!SUNS){ const rad=(a,b)=>canvasTex(128,128,(g)=>{ const
 const DUSK_BG=0xf0a873;
 function applyEnv(){ if(!R||R.space) return; if(R.stadium){ applyStadiumEnv(); return; }
   dayLights(); const dusk=race.tod!=='tag', bg=dusk?DUSK_BG:HORIZON; scene.background.set(bg); scene.fog.color.set(bg);
-  if(dusk){ setSky('dusk'); hemi.color.set(0x9c9ccc); hemi.groundColor.set(0x40302a); hemi.intensity=.76; sun.color.set(0xff9452); sun.intensity=1.45; SUN_DIR.set(-1,.2,.42).normalize(); sunDisc(true); } }
+  hausLicht(); if(dusk){ setSky('dusk'); hemi.color.set(0x9c9ccc); hemi.groundColor.set(0x40302a); hemi.intensity=.76; sun.color.set(0xff9452); sun.intensity=1.45; SUN_DIR.set(-1,.2,.42).normalize(); sunDisc(true); } }
