@@ -322,19 +322,21 @@ function build3D(){
     const ph=4.4+bh; for(const s of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,ph,8), lam('#222')); p.position.set(x+nx*half*s, y+ph/2, z+nz*half*s); world.add(p); }
     const b=new THREE.Mesh(new THREE.PlaneGeometry(half*2+.4,bh), new THREE.MeshBasicMaterial({map:canvasTex(512,ch,draw), side:THREE.DoubleSide}));
     b.position.set(x, y+4.4+bh/2, z); b.rotation.y=Math.atan2(-Math.cos(hd), -Math.sin(hd)); world.add(b); };
+  // KOM-Banner im Bergtrikot-Look (weiß mit roten Punkten): Kalmit-Gipfel und Bergwertungen unterwegs
+  const komBanner=(top,sub,fs=92)=>g=>{ g.fillStyle='#fff'; g.fillRect(0,0,512,150); g.fillStyle='#d62828';
+    for(let y=12;y<150;y+=26) for(let x=(y/26%2)*13+8;x<512;x+=26){ g.beginPath(); g.arc(x,y,6.5,0,7); g.fill(); }
+    g.fillStyle='rgba(255,255,255,.92)'; g.fillRect(100,18,312,114);
+    g.textAlign='center'; g.textBaseline='middle'; g.fillStyle='#d62828'; g.font=`800 ${fs}px "Barlow Condensed", Arial Narrow, sans-serif`; g.fillText(top,256,66,296);
+    g.fillStyle='#1a1a1a'; g.font='700 22px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(sub,256,116,296);
+    g.strokeStyle='#1a1a1a'; g.lineWidth=6; g.strokeRect(3,3,506,144); };
+  for(const [,b,n] of R.kom) arch(b,komBanner('BERGWERTUNG',n,70),150,1.6);
   if(!R.kalmit) arch(R.loop?0.5:R.len-0.5,(g)=>{ g.fillStyle='#fff'; g.fillRect(0,0,512,150); g.fillStyle='#111'; // Start/Ziel-Bogen mit Zielflaggen-Karos
     for(let i=0;i<64;i++) for(let j=0;j<2;j++) if((i+j)%2){ g.fillRect(i*8,j*8,8,8); g.fillRect(i*8,134+j*8,8,8); }
     g.fillStyle='#1c7ed6'; g.fillRect(0,16,512,118); g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle';
     g.font='800 76px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText('START · ZIEL',256,66,490);
     g.font='700 24px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(R.name.toUpperCase(),256,114,490); }, 150, 2.0);
   else { arch(0.5,(g)=>{ g.fillStyle='#1c7ed6'; g.fillRect(0,0,512,80); g.fillStyle='#fff'; g.font='800 40px "Barlow Condensed", Arial Narrow, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(`START · ${R.start}`,256,42,490); });
-  // Ziel: KOM-Banner im Bergtrikot-Look (weiß mit roten Punkten)
-  arch(R.len-0.5,(g)=>{ g.fillStyle='#fff'; g.fillRect(0,0,512,150); g.fillStyle='#d62828';
-    for(let y=12;y<150;y+=26) for(let x=(y/26%2)*13+8;x<512;x+=26){ g.beginPath(); g.arc(x,y,6.5,0,7); g.fill(); }
-    g.fillStyle='rgba(255,255,255,.92)'; g.fillRect(120,18,272,114);
-    g.textAlign='center'; g.textBaseline='middle'; g.fillStyle='#d62828'; g.font='800 92px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText('KOM',256,66);
-    g.fillStyle='#1a1a1a'; g.font='700 22px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(`King of the Mountain · ${R.finish}`,256,116,260);
-    g.strokeStyle='#1a1a1a'; g.lineWidth=6; g.strokeRect(3,3,506,144); }, 150, 2.0); }
+  arch(R.len-0.5,komBanner('KOM',`King of the Mountain · ${R.finish}`), 150, 2.0); }
   { const cc2=canvasTex(16,128,g=>{ for(let i=0;i<16;i++) for(let j=0;j<2;j++){ g.fillStyle=(i+j)%2?'#111':'#fff'; g.fillRect(j*8,i*8,8,8); } });
     const [x,z]=posAt(R,R.len-1), hd=headingAt(R,R.len-1), fl=new THREE.Mesh(new THREE.PlaneGeometry(1.4,ROAD_W), new THREE.MeshBasicMaterial({map:cc2}));
     fl.rotation.x=-Math.PI/2; fl.rotation.z=-hd; fl.position.set(x,roadY(R.len-1)+0.16,z); world.add(fl); }

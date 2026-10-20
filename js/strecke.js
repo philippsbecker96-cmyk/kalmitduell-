@@ -45,7 +45,7 @@ function scharfeEcke(G,i,j,k,l){ const [p,q,a,b]=[G[i],G[j],G[k],G[l]], ux=q[0]-
 //   teile: [[von, bis, {Optionen}]] Ortsteile mit eigenen Optionen, dazu neu (Neubaugebiet mit Vorgärten), obst / reben (unbebaute Seite mit Obstbäumen bzw. Rebzeilen), strbaum (Bäumchen im Gehweg)
 // Landstraße: mitte [[von, bis]] Leitlinie · saum / allee / radweg [[von, bis, Seite (0 = beide)]] Gebüsch, Baumreihe, Radweg hinter Grünstreifen · bogen [d oder [d, Schrifttafel]] Weinlaub-Bogen · planke [[von, bis]] Leitplanke auf der Talseite
 // Optionen Reben: baum (Anteil Obstbäume am Rand), weg (mittlerer Abstand kreuzender Wirtschaftswege in m)
-// breite: [von, bis, Straßenbreite m] · belag: [Art, von, bis, Zusatzsteigung % bei 75 kg] – Art 'pflaster' oder 'beton'
+// kom: [Anstieg ab, Bergwertung bei, Name] · breite: [von, bis, Straßenbreite m] · belag: [Art, von, bis, Zusatzsteigung % bei 75 kg] – Art 'pflaster' oder 'beton'
 function kalmitDef(){ return Object.assign(gpxDef(KALMIT_GPX), {name:'Kalmit-Ostrampe', start:'Maikammer', finish:'Kalmit · 673 m', plainElev:110, kalmit:true, gpx:'kalmit', zones:[['ort',0,800],['reben',800,2300]]}); }
 // Runde an der Stelle V (m) neu beginnen lassen: Punkt dort einfügen, das Stück davor hinten anhängen
 function rundeAb(G,V){ let c=0; const n=G.length, zu=Math.hypot(G[n-1][0]-G[0][0],G[n-1][1]-G[0][1])<1; // zu: GPX endet schon am Anfang
@@ -68,7 +68,8 @@ function suedpfalzDef(loop){ const V=SP_V, E=scharfeEcke(hoeheSchliessen(SUEDPFA
   bogen:[5415,[8165,'Seilmacher-Dorf']].map(e=>Array.isArray(e)?[um(e[0]),e[1]]:um(e)),
   // B10 links parallel (Mitte 30 m neben dem Weg), dazwischen und dahinter Gehölz (Bahn, Queich), dahinter Gewerbe von Godramstein
   b10:Z([[12140,12800,-1,30]]), gehoelz:Z([[12140,12800,-1,4,19],[12140,12800,-1,42,130],[12800,null,-1,4,60]]), gewerbe:Z([[12450,12800,-1,160]]),
-  breite:Z([[1000,2350,5],[5400,6200,4.2],[8000,9050,6.6],[9080,12990,3.2]]), belag:[['pflaster',5400,6000,3.5],['beton',9080,12990,0]].map(([t,a,b,x])=>[t,...ur(a,b),x])}); }
+  kom:Z([[1220,2360,'Hauptstraße Arzheim'],[6150,7150,'Höchster Punkt · 271 m']]), // Bergwertungen: [Anstieg ab, Wertung oben, Name] – Arzheim bis kurz hinters Ortsausgangsschild
+  breite:Z([[1000,2350,5],[5400,6200,4.2],[8000,9050,6.6],[9080,12990,3.2]]), belag:[['pflaster',5400,6000,2.5],['beton',9080,12990,0]].map(([t,a,b,x])=>[t,...ur(a,b),x])}); }
 const zoneOf=(r,d)=>{ for(const z of r.zones) if(d>=z[1]&&d<z[2]) return z; return null; };
 const zoneAt=(r,d)=>{ const z=zoneOf(r,d); return z?z[0]:'wald'; };
 const zOpt=(r,d)=>{ const z=zoneOf(r,d); return z&&z[3]||{}; };
@@ -103,7 +104,7 @@ function buildRoute(def){
   const len=(xs.length-1)*STEP;
   const segLenSum=def.segs.reduce((a,s)=>a+s.len,0), kf=len/segLenSum;
   let d=0, e=def.startElev, gain=0; const segs=def.segs.map(s=>{ const o={d0:d,len:s.len*kf,g:s.g,e0:e,p:s.p,sg:s.sg}; d+=o.len; e+=o.len*s.g/100; gain+=Math.max(0,o.len*s.g/100); return o; });
-  const r={kf, name:def.name, start:def.start||'Start', finish:def.finish||'Ziel', kalmit:!!def.kalmit, gpx:!!def.gpx, loop:!!def.loop, zones:def.zones||[], breite:def.breite||[], belag:def.belag||[], parz:[], wege:[], hecke:[], xs, ys, len, segs, startElev:def.startElev, endElev:e, gain, def};
+  const r={kf, name:def.name, start:def.start||'Start', finish:def.finish||'Ziel', kalmit:!!def.kalmit, gpx:!!def.gpx, loop:!!def.loop, zones:def.zones||[], breite:def.breite||[], belag:def.belag||[], kom:def.kom||[], parz:[], wege:[], hecke:[], xs, ys, len, segs, startElev:def.startElev, endElev:e, gain, def};
   if(def.stadium){ prepStadium(r); return r; }
   if(def.space||def.island){ // Übergang Umlaufbahn → Anfang der Umlaufbahn genau treffen
     const Lw0=segLenSum*kf-def.ring*kf, ex=xs[xs.length-1], ey=ys[ys.length-1], tmp={xs,ys,len}; let best=Lw0, bd=1e9;

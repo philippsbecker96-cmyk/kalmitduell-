@@ -53,6 +53,13 @@ function showPhoto(){
     <table>${[first,second].map((x,i)=>`<tr><td><i style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${x.dot};margin-right:8px"></i>${esc(x.name)}</td><td class="r num">${fmtMs(x.t)}</td><td class="r num">${i?'+'+de(diff,3)+' s':''}</td></tr>`).join('')}</table>`;
   $('photo').style.display='flex';
 }
+// Bergwertung (gepunktetes Trikot) und Ortsschilder (grünes Trikot): je Fahrer gewonnene von allen Wertungen
+const trikotSvg=typ=>{ const P='M8 1L3 3L0 9L4 11L5 8L5 23L21 23L21 8L22 11L26 9L23 3L18 1Q13 5 8 1Z';
+  return `<svg width="26" height="24" viewBox="-1 -1 28 26" style="vertical-align:-6px;margin-right:6px">${typ==='berg'?`<defs><pattern id="tpkt" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.7" fill="#d62828"/></pattern></defs><path d="${P}" fill="#fff"/><path d="${P}" fill="url(#tpkt)" stroke="#222"/>`:`<path d="${P}" fill="#2f9e44" stroke="#222"/>`}</svg>`; };
+function wertHtml(){ const W=race.wert||[]; if(!W.length) return ''; const T=['berg','ort'].filter(t=>wertStand(t).n), S={}, J={}; T.forEach(t=>{ S[t]=wertStand(t); J[t]=trikotOf(t); });
+  const nm={berg:'Bergwertung',ort:'Ortsschilder'}, cell=(t,k)=>`<td class="r num">${J[t]===k?trikotSvg(t):''}${S[t][k]} / ${S[t].n}</td>`;
+  const det=W.length<=8?`<div class="sub" style="margin-top:6px;font-size:14px">${W.map(w=>`${w.typ==='berg'?'⛰️':'🪧'} ${esc(w.name)}: ${w.win?esc(w.win==='me'?RIDERS[myKey].name:opp.name):'offen'}`).join(' · ')}</div>`:'';
+  return `<table style="margin-top:14px"><tr><td></td>${T.map(t=>`<td class="r"><b>${nm[t]}</b></td>`).join('')}</tr>${[['me',RIDERS[myKey].name],['opp',opp.name]].map(([k,n])=>`<tr><td>${esc(n)}</td>${T.map(t=>cell(t,k)).join('')}</tr>`).join('')}</table>${det}`; }
 function showResult(){
   if(race.state==='setup') return;
   if(race.photoPending) return; // erst das Fotofinish
@@ -64,6 +71,7 @@ function showResult(){
   rows.sort((a,b)=>(a[1]==='noch unterwegs')-(b[1]==='noch unterwegs'));
   $('resultCard').innerHTML=`<h1 style="font-size:46px">${verdict}</h1><div class="sub">${esc(R.name)} · ${R.loop?race.laps+' Runden · ':''}${de(raceLen()/1000,1)} km${R.stadium?'':' · '+Math.round(R.gain*(R.loop?race.laps:1))+' Hm'}</div>
     <table>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="r num" style="font-size:22px">${r[1]}</td><td class="r">${r[2]}</td></tr>`).join('')}</table>
+    ${wertHtml()}
     ${statsHtml()}
     <div class="rowb" style="margin-top:18px"><button class="go" onclick="quitToLobby()">Neues Rennen</button>${tcxBtnHtml()}<button onclick="$('result').style.display='none'">Schließen</button></div>`;
   $('result').style.display='flex';

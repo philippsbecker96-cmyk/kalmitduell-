@@ -124,6 +124,7 @@ function loop(now){
     for(let i=0;i<n;i++){ simStep(tot/n,P,wkg); if(race.mode==='chase'&&me.done) break; }
     trainerCtl();
   }
+  if(race.state==='run' && !race.paused) wertStep();
   if(opp.active && !opp.bot && !race.frozen && !race.paused){ const age=(now-opp.lastAt)/1000, tgt=opp.done?opp.target:opp.target+opp.v*Math.min(age,1); if(Math.abs(tgt-opp.d)>R.len/2) opp.d=tgt; else opp.d+=(tgt-opp.d)*Math.min(1,dt*6); }
   const cad = live.cadence ?? (me.v>0.3||race.frozen? 70+me.v*4 : 0);
   if(!race.paused){ me.crank += (me.done&&!me.free?0:cad)/60*2*Math.PI*dt;
@@ -164,8 +165,25 @@ let wakeLock=null;
 async function wakeOn(){ try{ if('wakeLock' in navigator && !wakeLock && document.visibilityState==='visible'){ wakeLock=await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release',()=>{ wakeLock=null; }); } }catch(e){} }
 function wakeOff(){ try{ wakeLock&&wakeLock.release(); }catch(e){} wakeLock=null; }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && race.state!=='setup') wakeOn(); }); // nach Tab-Wechsel neu anfordern
+/* ---------- Bergwertungen und Ortsschilder: wer zuerst drüber ist, holt die Wertung ---------- */
+// Nur im Duell (Bot oder online). Online entscheidet der Ersteller und schickt das Ergebnis an den Gast
+function prepWert(){ race.wert=[]; if(race.mode==='train'||race.mode==='chase'||!opp.active||!R.kom) return; const L=[];
+  for(const [a,b,name] of R.kom) L.push({typ:'berg',a,d:b,name});
+  for(const [t,za,,zo] of R.zones) if(t==='ort'&&zo&&zo.name&&za>4) L.push({typ:'ort',d:za-4,name:zo.name}); // Ortseingangsschild
+  L.sort((p,q)=>p.d-q.d); for(let k=0;k<(R.loop?race.laps:1);k++) for(const w of L) race.wert.push({...w, a:w.a!=null?w.a+k*R.len:null, d:w.d+k*R.len, win:null, ann:false}); }
+const wertStand=typ=>{ const L=(race.wert||[]).filter(w=>w.typ===typ); return {me:L.filter(w=>w.win==='me').length, opp:L.filter(w=>w.win==='opp').length, n:L.length}; };
+// Trikot: mehr Wertungen gewinnt, bei Gleichstand die zuletzt entschiedene Wertung
+const trikotOf=typ=>{ const S=wertStand(typ); if(S.me!==S.opp) return S.me>S.opp?'me':'opp'; const L=race.wert.filter(w=>w.typ===typ&&w.win); return L.length?L[L.length-1].win:null; };
+function wertWin(i,who){ const w=race.wert[i], n=who==='me'?RIDERS[myKey].name:opp.name; w.win=who; const S=wertStand(w.typ), st=` (${RIDERS[myKey].name} ${S.me} : ${S.opp} ${opp.name})`;
+  if(race.role==='host') send({t:'w',i,h:who==='me'});
+  flash(w.typ==='berg'?`⛰️ ${n} holt die Bergwertung ${w.name}!${st}`:`🪧 ${w.name} gehört ${n}!${st}`); who==='me'?[0,140].forEach(t=>setTimeout(()=>beep(1175,.1),t)):beep(440,.15); }
+function wertStep(){ const W=race.wert; if(!W||!W.length) return; const auth=!(conn&&conn.open&&race.role==='guest');
+  W.forEach((w,i)=>{ if(w.a!=null&&!w.ann&&me.d>=w.a&&me.d<w.d){ w.ann=true; flash(`⛰️ Bergwertung ${w.name} – noch ${de((w.d-w.a)/1000,1)} km bis oben`); beep(988,.1); }
+    if(w.win||!auth) return; const a=me.d>=w.d, b=opp.active&&opp.d>=w.d; if(!a&&!b) return;
+    const ueber=x=>(x.d-w.d)/Math.max(x.v,.1); // wie lange schon drüber – im selben Schritt gewinnt, wer früher drüber war
+    wertWin(i, a&&(!b||ueber(me)>=ueber(opp))?'me':'opp'); }); }
 function countdown(){
-  race.state='count'; enterRaceView(); wakeOn(); recReset();
+  prepWert(); race.state='count'; enterRaceView(); wakeOn(); recReset();
   let n=5; const b=$('banner'); b.textContent=n; beep(660);
   const iv=setInterval(()=>{ n--; if(n>0){ b.textContent=n; beep(660); } else { clearInterval(iv); b.textContent='LOS!'; beep(1046,.35);
     race.state='run'; race.t=0; setTimeout(()=>b.textContent='',1200); } },1000);
