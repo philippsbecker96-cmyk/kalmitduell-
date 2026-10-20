@@ -1,8 +1,21 @@
 /* ---------- Kamera & Zeichnen ---------- */
 const camS={x:0,y:0,z:0,lx:0,ly:0,lz:0,init:false};
+// Tempo-Effekte ab 40 km/h: Fahrtwind-Linien am Bildrand (hängen an der Kamera) und Randunschärfe (CSS-Overlay #speedfx)
+const wind=(()=>{ const N=60, p=new Float32Array(N*6), q=rng(4711), seed=[];
+  const spawn=(o,first)=>{ const a=q()*Math.PI*2, z=-8-q()*14, k=0.35+q()*0.4; Object.assign(o,{x:Math.cos(a)*k*-z*1.4, y:Math.sin(a)*k*-z*0.8, z:first?z*q():z, l:1.5+q()*3}); };
+  for(let i=0;i<N;i++){ const o={}; spawn(o,true); seed.push(o); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  const m=new THREE.LineSegments(g, new THREE.LineBasicMaterial({color:0xf2f6fa, transparent:true, opacity:0, depthWrite:false, fog:false}));
+  m.frustumCulled=false; m.visible=false; m.renderOrder=10; camera.add(m); return {m,p,seed,spawn,N}; })();
+function speedFx(dt,v){ const f=clampN((v-10.42)/5.56,0,1), W=wind; // 0 bei 37,5 km/h, 1 bei 57,5 km/h
+  W.m.visible=f>0.01&&!R.space&&!camOverride; W.m.material.opacity=0.12+f*0.5;
+  if(W.m.visible){ const n=Math.round(20+40*f); W.seed.forEach((o,i)=>{ o.z+=v*1.3*dt; if(o.z>-0.5||Math.abs(o.x)>-o.z*1.3) W.spawn(o,false);
+      const L=i<n?o.l*(0.8+f*1.0):0; W.p.set([o.x,o.y,o.z, o.x,o.y,o.z-L], i*6); }); W.m.geometry.attributes.position.needsUpdate=true; }
+  const el=speedFx.el||(speedFx.el=document.getElementById('speedfx')), op=camOverride?0:Math.round(f*50)/50;
+  if(el&&el._op!==op){ el._op=op; el.style.opacity=op; el.style.display=op>0?'block':'none'; } }
 function draw(dt){
   const inRace=race.state!=='setup';
-  if(!inRace){ drawPreviews(dt); return; }
+  if(!inRace){ speedFx(dt,0); drawPreviews(dt); return; }
   const mine=riders3d[myKey], theirs=riders3d[oppKey];
   mine.g.visible=true; theirs.g.visible=opp.active; RKEYS.forEach(k=>{ if(k!==myKey&&k!==oppKey&&riders3d[k]) riders3d[k].g.visible=false; }); if(riders3d.devil&&oppKey!=='devil') riders3d.devil.g.visible=false;
   // Spur: wer im Windschatten fährt, schert hinter dem Vordermann ein
@@ -21,19 +34,24 @@ function draw(dt){
   if(anim.autos) poseAutos(dt);
   // Kamera: hinten oben, läuft den Anstieg mit
   const focusD=me.d; let tx,ty,tz,lx,ly,lz;
-  let rollT=0; if(R.stadium){ const kc=clampN((bankAt(focusD)*180/Math.PI-ST.BANK0)/(ST.BANK1-ST.BANK0),0,1), u=mine.lane*0.8, pb=trackPt(focusD-(9-3*kc),u), pl=trackPt(focusD+12,u); [tx,ty,tz]=[pb[0],pb[1]+3.4-1.3*kc,pb[2]]; [lx,ly,lz]=[pl[0],pl[1]+1.0,pl[2]]; rollT=R.outSign*bankAt(focusD)*.5*kc; } // Steilkurve: Kamera tiefer, näher und mitgeneigt
-  else if(R.gpx){ const back=Math.max(0,focusD-6), [bx,bz]=posAt(R,back), [ax,az]=posAt(R,R.loop?focusD+10:Math.min(R.len,focusD+10)); // auf der Straße 6 m hinter dir, knapp 2 m über der Straße, Blick waagerecht
-    tx=bx; tz=bz; ty=visRoadY(back)+1.9; lx=ax; lz=az; ly=ty-0.33; }
-  else { const back=Math.max(0,focusD-9), hd=smoothHeading(focusD), [fx,fz]=posAt(R,focusD); tx=fx-Math.cos(hd)*9; tz=fz-Math.sin(hd)*9; ty=(R.space?roadY(back):R.island?Math.max(roadY(back),roadY(focusD),0.3):Math.max(roadY(back), terrainAt(tx,tz)))+4.2;
+  // Tempo-Gefühl: sp 0 (≤25 km/h) … 1 (≥54 km/h), acc = geglättete Beschleunigung
+  const vC=race.state==='run'&&(!me.done||me.free)?me.v:0; if(dt>0&&!race.paused){ camS.acc=(camS.acc||0)+(((vC-(camS.vp??vC))/dt)-(camS.acc||0))*Math.min(1,dt*2); camS.vp=vC; }
+  camS.sp=(camS.sp||0)+(clampN((vC-7)/8,0,1)-(camS.sp||0))*Math.min(1,dt*1.5); const sp=camS.sp, ext=sp*1.5+clampN(camS.acc||0,0,2)*0.8; // ext: Kamera fällt bei Tempo und Antritt zurück
+  let rollT=0; if(R.stadium){ const kc=clampN((bankAt(focusD)*180/Math.PI-ST.BANK0)/(ST.BANK1-ST.BANK0),0,1), u=mine.lane*0.8, pb=trackPt(focusD-(9-3*kc)-ext,u), pl=trackPt(focusD+12,u); [tx,ty,tz]=[pb[0],pb[1]+3.4-1.3*kc-sp*0.8,pb[2]]; [lx,ly,lz]=[pl[0],pl[1]+1.0,pl[2]]; rollT=R.outSign*bankAt(focusD)*.5*kc; } // Steilkurve: Kamera tiefer, näher und mitgeneigt
+  else if(R.gpx){ const back=Math.max(0,focusD-6-ext), [bx,bz]=posAt(R,back), [ax,az]=posAt(R,R.loop?focusD+10:Math.min(R.len,focusD+10)); // auf der Straße 6 m hinter dir, knapp 2 m über der Straße, Blick waagerecht
+    tx=bx; tz=bz; ty=visRoadY(back)+1.9-sp*0.5; lx=ax; lz=az; ly=ty-0.33+sp*0.15; }
+  else { const bk=9+ext, back=Math.max(0,focusD-bk), hd=smoothHeading(focusD), [fx,fz]=posAt(R,focusD); tx=fx-Math.cos(hd)*bk; tz=fz-Math.sin(hd)*bk; ty=(R.space?roadY(back):R.island?Math.max(roadY(back),roadY(focusD),0.3):Math.max(roadY(back), terrainAt(tx,tz)))+4.2-sp*1.3;
     const la=R.ring?focusD+10:Math.min(R.len,focusD+10); [lx,lz]=posAt(R,la); ly=roadY(la)+1.0;
-    if(R.space){ const yr=roadY(focusD); ty=Math.max(roadY(back)+1.5, yr+3.6); ly=yr+1.6+0.25*(roadY(focusD+14)-yr); } } // Space: Kamera bleibt eher waagerecht, Anstiege bauen sich vor dir auf
+    if(R.space){ const yr=roadY(focusD); ty=Math.max(roadY(back)+1.5, yr+3.6-sp*0.8); ly=yr+1.6+0.25*(roadY(focusD+14)-yr); } } // Space: Kamera bleibt eher waagerecht, Anstiege bauen sich vor dir auf
+  if(!R.stadium&&vC>1){ const a=smoothHeading(focusD+6), b=smoothHeading(focusD-6), dh=Math.atan2(Math.sin(a-b),Math.cos(a-b)); rollT=clampN(-dh/12*vC*vC*0.012,-0.07,0.07); } // Kurvenlage: Querbeschleunigung v²·κ, max ≈ 4°
+  { const fovT=camOverride?60:60+15*sp+clampN(camS.acc||0,0,2)*1.5; if(Math.abs(fovT-camera.fov)>0.02){ camera.fov+=(fovT-camera.fov)*Math.min(1,dt*2); camera.updateProjectionMatrix(); } } // Sichtfeld weitet sich mit dem Tempo
   if(!camS.init){ Object.assign(camS,{x:tx,y:ty,z:tz,lx,ly,lz,init:true}); }
   const sk=race.paused?1:simSpeed(), k=Math.min(1,dt*3.5*sk), kl=Math.min(1,dt*5*sk); // Testmodus: Kamera folgt im gleichen Tempo
   camS.x+=(tx-camS.x)*k; camS.y+=(ty-camS.y)*k; camS.z+=(tz-camS.z)*k; camS.lx+=(lx-camS.lx)*kl; camS.ly+=(ly-camS.ly)*kl; camS.lz+=(lz-camS.lz)*kl;
   if(camOverride){ camera.position.set(...camOverride.pos); camera.lookAt(...camOverride.look); }
   else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); camS.roll=(camS.roll||0)+(rollT-(camS.roll||0))*Math.min(1,dt*3); if(Math.abs(camS.roll)>1e-4) camera.rotateZ(camS.roll); }
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
-  sky.position.copy(camera.position); spaceSky.position.copy(camera.position);
+  sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vC);
   for(const r of [mine,theirs]){ const dist=camera.position.distanceTo(r.g.position), ds=Math.max(1,dist/14); r.tag.scale.set(1.9*ds,.475*ds,1); r.tag.visible=dist>6; } // Namensschild bleibt auch aus der Ferne lesbar
   renderer.render(scene,camera);
   ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H); miniMap(); miniProfile();

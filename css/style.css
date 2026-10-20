@@ -3,6 +3,8 @@
 html,body{margin:0;height:100%;background:var(--forest);color:var(--paper);font-family:Barlow,system-ui,sans-serif;overflow:hidden}
 canvas#game,canvas#ov{position:fixed;inset:0;width:100%;height:100%;display:block}
 canvas#ov{pointer-events:none;z-index:1}
+#speedfx{position:fixed;inset:0;pointer-events:none;display:none;opacity:0;-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);background:radial-gradient(ellipse 75% 70% at 50% 55%,transparent 55%,rgba(0,0,0,.4) 100%);
+  -webkit-mask-image:radial-gradient(ellipse 75% 70% at 50% 55%,transparent 42%,#000 90%);mask-image:radial-gradient(ellipse 75% 70% at 50% 55%,transparent 42%,#000 90%)} /* Randunschärfe ab 37,5 km/h, Deckkraft setzt speedFx() */
 .num{font-family:"Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums}
 button{font:600 16px Barlow,sans-serif;border:0;border-radius:10px;padding:10px 16px;background:var(--pine);color:var(--paper);cursor:pointer}
 button:hover{filter:brightness(1.15)}
