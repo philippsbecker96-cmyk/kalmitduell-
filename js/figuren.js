@@ -207,7 +207,7 @@ function poseArms(r,ae){ const U=r.up, c=Math.cos(U.rotation.z), s=Math.sin(U.ro
     place(A.ua,[sx,sy,A.s[2]],E); place(A.fa,E,Hd); A.hd.position.set(...Hd); } }
 function poseRider(r,crank){
   const st=r.st||0, ae=r.ae||0, hx=r.hip[0]+.18*st-.04*ae, hy=r.hip[1]+.12*st, l=.44+.06*st; // Wiegetritt: Hüfte deutlich vor und über den Sattel, Beine gestreckt · Aero: Rücken fast waagerecht, Hüfte etwas zurück
-  r.up.position.set(hx,hy,0); r.up.rotation.set(-Math.sin(crank)*.12*st,0,-.2*st-.6*ae); r.body.rotation.x=Math.sin(crank)*.24*st; poseArms(r,ae); // Rad pendelt im Tritt ±14°, Oberkörper leicht dagegen
+  r.up.position.set(hx,hy,0); r.up.rotation.set(-Math.sin(crank)*.12*st,0,-.2*st-.6*ae); r.body.rotation.x=Math.sin(crank)*.12*st; poseArms(r,ae); // Rad pendelt im Tritt ±7°, Oberkörper leicht dagegen
   r.headG.rotation.z=-.05*st+.45*ae; r.headG.position.set(r.neckL[0]-.03*ae,r.neckL[1]-.05*ae,0); // Aero: Kopf tief zwischen den Schultern, Blick nach vorn
   r.crankG.rotation.z=-crank;
   r.legs.forEach((L,i)=>{ const pa=-crank+(i?Math.PI:0), px=Math.cos(pa)*.17, py=.3+Math.sin(pa)*.17;

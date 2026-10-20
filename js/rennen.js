@@ -63,14 +63,21 @@ function draw(dt){
   if(!inRace){ speedFx(dt,0); drawPreviews(dt); return; }
   const mine=riders3d[myKey], theirs=riders3d[oppKey];
   mine.g.visible=true; theirs.g.visible=opp.active; RKEYS.forEach(k=>{ if(k!==myKey&&k!==oppKey&&riders3d[k]) riders3d[k].g.visible=false; }); if(riders3d.devil&&oppKey!=='devil') riders3d.devil.g.visible=false;
-  // Spur: wer im Windschatten fährt, schert hinter dem Vordermann ein · sonst Ideallinie: in Kurven zur Innenseite (Scheitel kurz vor der Kurvenmitte), nebeneinander bleibt jeder auf seiner Spur
-  const ideal=(k,d,v)=>{ const base=ownLane(k); if(R.stadium||camOverride) return base; const hw=roadW(R,R.loop?d%R.len:d)/2-.6, side=opp.active&&Math.abs(opp.d-me.d)<4;
-    return clampN(base+(side?0:clampN(curv(d+8)*45,-1,1)*Math.min(1,v/8)*Math.min(R.island?.8:1.6,hw)),-hw,hw); };
-  const lanes=(r,k,gapAhead,leader,o)=>{ const tgt=(race.draft&&opp.active&&gapAhead>2&&gapAhead<10&&leader.lane!=null)?leader.lane:ideal(k,o.d,o.v);
+  // Spur: wer im Windschatten fährt, schert hinter dem Vordermann ein · sonst Ideallinie über die ganze Straße (bis 0,6 m vor den Rand):
+  // 25 m vor der Kurve nach außen, am Scheitel innen, danach wieder raustragen lassen. Voll bis 80 m Radius und ab 20 km/h. Steile Kehre bergauf (ab 8 %): außen herum, innen ist es zu steil
+  const lineAt=(k,o)=>{ const base=ownLane(k), d=o.d, hw=roadW(R,R.loop?d%R.len:d)/2-.6, H=R.island?Math.min(1.2,hw):hw; if(R.stadium||camOverride) return {t:base,H};
+    const F=x=>{ const c=curv(x), w=clampN((gradeAt(x)-6)/2,0,1)*clampN((Math.abs(c)-.02)/.015,0,1); return clampN(c*80,-1,1)*(1-2*w); };
+    const a=F(d+5), b=F(d+25), x=clampN(a-.6*Math.sign(b)*Math.max(0,Math.abs(b)-Math.abs(a)),-1,1), s=Math.min(1,o.v/5.56)*Math.abs(x);
+    return {t:clampN(base+(Math.sign(x)*H-base)*s,-H,H),H}; };
+  const tm=lineAt(myKey,me), to=opp.active?lineAt(oppKey,opp):tm;
+  if(opp.active&&Math.abs(opp.d-me.d)<2.2&&!R.stadium&&!camOverride){ // nebeneinander: beide fahren die Linie gemeinsam mit 1,2 m Abstand, Reihenfolge wie die Grundspuren
+    const up=ownLane(myKey)>=ownLane(oppKey)?1:-1; let a=tm.t, b=to.t; if((a-b)*up<1.2){ const m=(a+b)/2; a=m+.6*up; b=m-.6*up; }
+    const H=tm.H, sh=Math.max(0,Math.max(a,b)-H)-Math.max(0,-H-Math.min(a,b)); tm.t=a-sh; to.t=b-sh; }
+  const lanes=(r,gapAhead,leader,t)=>{ const tgt=(race.draft&&opp.active&&gapAhead>2&&gapAhead<10&&leader.lane!=null)?leader.lane:t;
     if(r.lane==null||camOverride) r.lane=tgt; else r.lane+=(tgt-r.lane)*Math.min(1,dt*1.5); };
-  if(mine.lane==null||!opp.active) mine.lane=ownLane(myKey);
+  if(mine.lane==null) mine.lane=ownLane(myKey);
   if(theirs.lane==null) theirs.lane=ownLane(oppKey);
-  lanes(mine,myKey,opp.d-me.d,theirs,me); lanes(theirs,oppKey,me.d-opp.d,mine,opp); leanStep(mine,me.d,me.v,dt); if(opp.active) leanStep(theirs,opp.d,opp.v,dt);
+  lanes(mine,opp.d-me.d,theirs,tm.t); lanes(theirs,me.d-opp.d,mine,to.t); leanStep(mine,me.d,me.v,dt); if(opp.active) leanStep(theirs,opp.d,opp.v,dt);
   kxFrame();
   updateForm(mine, race.state==='run'?curPower()/weight():0, dt, true, me.done&&!me.free); putRider(mine, me.d, me.crank);
   { const S=camS.sh; mine.body.position.y=S&&!camOverride?S.n*S.a*.5-S.j*.4:0; } // eigener Fahrer rüttelt mit
