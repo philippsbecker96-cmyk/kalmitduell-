@@ -25,7 +25,7 @@ function kxPatch(mat){ if(mat.userData.kx) return; mat.userData.kx=1;
 #endif`); };
   mat.customProgramCacheKey=()=>'kx'; mat.needsUpdate=true; }
 let kxDepth=null;
-function kxSetup(){ KX.on=!!(R&&R.kalmit); KX.uK.value=0; anim.kxSpr=[]; if(!KX.on) return;
+function kxSetup(){ KX.on=!!(R&&(R.kalmit||R.def.steil)); KX.uK.value=0; anim.kxSpr=[]; if(!KX.on) return;
   if(KX.uHt.value) KX.uHt.value.dispose(); const t=new THREE.DataTexture(TER.hr,TER.nx,TER.nz,THREE.RedFormat,THREE.FloatType); t.needsUpdate=true; KX.uHt.value=t;
   KX.uG.value.set(TER.x0,TER.z0,TER.res,0); KX.uN.value.set(TER.nx,TER.nz);
   if(!kxDepth){ kxDepth=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking}); kxPatch(kxDepth); }

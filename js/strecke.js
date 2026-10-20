@@ -39,7 +39,7 @@ function suedpfalzDef(loop){ const g=gpxDef(SUEDPFALZ_GPX,10); g.poly.push(g.pol
   return Object.assign(g, {name:'Südpfalz-Klassiker', start:'Godramstein', finish:'Ziel', gpx:'suedpfalz', loop:!!loop,
   zones:[['ort',0,110,{luecke:.6,fach:.3,name:'Godramstein',kreis:'Stadt Landau in der Pfalz'}],['feld',110,1000],['ort',1000,2350,{fach:.7,geh:1,abzweig:-1,name:'Arzheim',kreis:'Stadt Landau in der Pfalz'}],['reben',2350,3500,{baum:.1,weg:300}],['ort',3500,3760,{seite:-1,luecke:.5,fach:.3,name:'Ilbesheim',kreis:'Kreis Südliche Weinstraße'}],
     ['reben',3760,5400,{baum:.1,weg:350}],['ort',5400,6200,{fach:.5,geh:.6,name:'Leinsweiler',kreis:'Kreis Südliche Weinstraße'}],['reben',6200,8000,{baum:.1,weg:220}],['ort',8000,9050,{luecke:.55,fach:.35,name:'Ranschbach',kreis:'Kreis Südliche Weinstraße'}],['reben',9050,1e9,{baum:0,weg:260}]],
-  haardt:true, // Haardt als Bergkette im Westen
+  haardt:true, steil:true, // Haardt als Bergkette im Westen · Überhöhung in deiner Nähe wie an der Kalmit
   breite:[[1000,2350,5],[3500,3760,5.5],[5400,6200,4.2],[8000,9050,6.6],[9080,12990,3.2]], belag:[['pflaster',5400,6000,3.5],['beton',9080,12990,0]]}); }
 const zoneOf=(r,d)=>{ for(const z of r.zones) if(d>=z[1]&&d<z[2]) return z; return null; };
 const zoneAt=(r,d)=>{ const z=zoneOf(r,d); return z?z[0]:'wald'; };
