@@ -57,12 +57,12 @@ function showResult(){
   if(race.state==='setup') return;
   if(race.photoPending) return; // erst das Fotofinish
   race.resultShown=true;
-  const avg=me.time?me.wkgSum/me.time:0, myName=RIDERS[myKey].name; let verdict=R.loop?'Alle Runden geschafft – stark gefahren!':'Allein am Berg – stark gefahren!';
-  if(opp.active){ verdict = opp.done ? (me.time<opp.time?(R.loop?`🏆 ${myName} gewinnt!`:`🏆 ${myName} holt den KOM!`):`${esc(opp.name)} war schneller.`) : (R.loop?`🏆 ${myName} gewinnt!`:`🏆 ${myName} ist zuerst oben!`); }
+  const avg=me.time?me.wkgSum/me.time:0, myName=RIDERS[myKey].name; let verdict=R.loop?'Alle Runden geschafft – stark gefahren!':R.kalmit?'Allein am Berg – stark gefahren!':'Ziel erreicht – stark gefahren!';
+  if(opp.active){ verdict = opp.done ? (me.time<opp.time?(R.kalmit?`🏆 ${myName} holt den KOM!`:`🏆 ${myName} gewinnt!`):`${esc(opp.name)} war schneller.`) : (R.kalmit?`🏆 ${myName} ist zuerst oben!`:`🏆 ${myName} gewinnt!`); }
   const ft=race.photoShown?fmtMs:fmtT, rows=[[ myName, ft(me.time), de(avg,2)+' W/kg' ]];
   if(opp.active) rows.push([opp.name, opp.done?ft(opp.time):'noch unterwegs', opp.done&&opp.avg?de(opp.avg,2)+' W/kg':'']);
   rows.sort((a,b)=>(a[1]==='noch unterwegs')-(b[1]==='noch unterwegs'));
-  $('resultCard').innerHTML=`<h1 style="font-size:46px">${verdict}</h1><div class="sub">${esc(R.name)} · ${R.loop?race.laps+' Runden · ':''}${de(raceLen()/1000,1)} km${R.loop?'':' · '+Math.round(R.gain)+' Hm'}</div>
+  $('resultCard').innerHTML=`<h1 style="font-size:46px">${verdict}</h1><div class="sub">${esc(R.name)} · ${R.loop?race.laps+' Runden · ':''}${de(raceLen()/1000,1)} km${R.stadium?'':' · '+Math.round(R.gain*(R.loop?race.laps:1))+' Hm'}</div>
     <table>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="r num" style="font-size:22px">${r[1]}</td><td class="r">${r[2]}</td></tr>`).join('')}</table>
     ${statsHtml()}
     <div class="rowb" style="margin-top:18px"><button class="go" onclick="quitToLobby()">Neues Rennen</button>${tcxBtnHtml()}<button onclick="$('result').style.display='none'">Schließen</button></div>`;
@@ -87,7 +87,7 @@ function recStep(dt,P){
   if(key!==rec.lapKey){ rec.lapKey=key; rec.laps.push({i0:rec.s.length,name}); }
   if(race.t>=rec.sec+1){ rec.sec=Math.floor(race.t);
     rec.s.push({t:rec.sec, p:rec.accT?rec.accE/rec.accT:P, hr:rec.hrT>.3?Math.round(rec.hrS/rec.hrT):null, cad:rec.cadT>.3?Math.round(rec.cadS/rec.cadT):null,
-      d:race.mode==='train'?me.dist:me.d, v:me.v, alt:R.kalmit?elevAt(me.d):null});
+      d:race.mode==='train'?me.dist:me.d, v:me.v, alt:R.gpx?elevAt(me.d):null});
     rec.accE=rec.accT=rec.hrS=rec.hrT=rec.cadS=rec.cadT=0;
     if(rec.s.length===5||rec.s.length-rec.savedN===30) tcxBtns(); }
 }

@@ -21,7 +21,7 @@ function draw(dt){
   // Kamera: hinten oben, läuft den Anstieg mit
   const focusD=me.d; let tx,ty,tz,lx,ly,lz;
   let rollT=0; if(R.stadium){ const kc=clampN((bankAt(focusD)*180/Math.PI-ST.BANK0)/(ST.BANK1-ST.BANK0),0,1), u=mine.lane*0.8, pb=trackPt(focusD-(9-3*kc),u), pl=trackPt(focusD+12,u); [tx,ty,tz]=[pb[0],pb[1]+3.4-1.3*kc,pb[2]]; [lx,ly,lz]=[pl[0],pl[1]+1.0,pl[2]]; rollT=R.outSign*bankAt(focusD)*.5*kc; } // Steilkurve: Kamera tiefer, näher und mitgeneigt
-  else if(R.kalmit){ const back=Math.max(0,focusD-6), [bx,bz]=posAt(R,back), [ax,az]=posAt(R,Math.min(R.len,focusD+10)); // auf der Straße 6 m hinter dir, knapp 2 m über der Straße, Blick waagerecht
+  else if(R.gpx){ const back=Math.max(0,focusD-6), [bx,bz]=posAt(R,back), [ax,az]=posAt(R,R.loop?focusD+10:Math.min(R.len,focusD+10)); // auf der Straße 6 m hinter dir, knapp 2 m über der Straße, Blick waagerecht
     tx=bx; tz=bz; ty=visRoadY(back)+1.9; lx=ax; lz=az; ly=ty-0.33; }
   else { const back=Math.max(0,focusD-9), hd=smoothHeading(focusD), [fx,fz]=posAt(R,focusD); tx=fx-Math.cos(hd)*9; tz=fz-Math.sin(hd)*9; ty=(R.space?roadY(back):R.island?Math.max(roadY(back),roadY(focusD),0.3):Math.max(roadY(back), terrainAt(tx,tz)))+4.2;
     const la=R.ring?focusD+10:Math.min(R.len,focusD+10); [lx,lz]=posAt(R,la); ly=roadY(la)+1.0;
@@ -122,7 +122,7 @@ function hud(P,wkg){
   if(race.mode==='train'){ const sg=woSeg(race.t); $('hGk').textContent='Ziel'; $('hG').textContent=sg&&sg.free?'frei':Math.round(me.tgt||0)+' W'; woPanel(P,sg); }
   else if(race.mode==='chase'){ $('hGk').textContent='Runde'; $('hG').textContent=Math.floor(me.d/R.len)+1; $('hRestk').textContent='noch'; }
   else if(R.loop){ $('hGk').textContent='Runde'; $('hG').textContent=`${Math.min(race.laps,Math.floor(me.d/R.len)+1)} / ${race.laps}`; $('hRestk').textContent='bis Ziel'; }
-  else { $('hGk').textContent='Steigung'; $('hG').textContent=de(gradeAt(me.d))+' %'; $('hRestk').textContent='bis Gipfel'; }
+  else { $('hGk').textContent='Steigung'; $('hG').textContent=de(gradeAt(me.d))+' %'; $('hRestk').textContent=R.kalmit?'bis Gipfel':'bis Ziel'; }
   if(race.mode==='chase') $('hRest').textContent=fmtT(Math.max(0,((race.chase||{}).dur||0)-race.t));
   else if(race.mode!=='train') $('hRest').textContent=de(Math.max(0,raceLen()-me.d)/1000,2)+' km';
   const dr=me.draftR||0, chip=$('draftChip'); chip.style.display=race.draft&&dr>0.02&&!me.done?'flex':'none'; $('draftBar').style.width=Math.round(dr/0.35*100)+'%'; $('draftPct').textContent='−'+Math.round(dr*100)+' %'; $('hT').textContent=fmtT(me.time);
@@ -229,5 +229,5 @@ function onFinish(){
   pyroStart();
   send({t:'s',d:raceLen(),v:0,w:0,done:true,ft:me.time,vf:me.vf,avg:me.wkgSum/Math.max(1,me.time)}); finishCheck();
   beep(523,.15); setTimeout(()=>beep(659,.15),160); setTimeout(()=>beep(784,.4),320);
-  $('banner').textContent=R.loop?'ZIEL!':'GIPFEL!'; setTimeout(()=>$('banner').textContent='',2500); setSlope(0); setTimeout(showResult,R.stadium?6000:1500);
+  $('banner').textContent=R.kalmit?'GIPFEL!':'ZIEL!'; setTimeout(()=>$('banner').textContent='',2500); setSlope(0); setTimeout(showResult,R.stadium?6000:1500);
 }

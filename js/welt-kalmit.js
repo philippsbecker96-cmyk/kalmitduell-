@@ -59,6 +59,19 @@ function gableGeo(w,d,h){ const FL=[-w/2,0,d/2],FR=[w/2,0,d/2],BL=[-w/2,0,-d/2],
 /* Hausfassaden nach den Fotos aus Maikammer */
 const WALLS=['#f4f1ea','#efe2c0','#ecd28a','#cfdcbc','#d8b47e','#efd0c6'], SHUT=['#7a4a2c','#a8432f','#4d6b4a'];
 const facadeCache={};
+// Fachwerk: weißer Putz, dunkle Balken; mit Fenstern (Straßenseite) oder nur Balken (Seiten)
+function fachTex(win){ const k='fw'+win; if(facadeCache[k]) return facadeCache[k];
+  return facadeCache[k]=canvasTex(256,256,(g)=>{ g.fillStyle='#f2ede2'; g.fillRect(0,0,256,256);
+    g.fillStyle='#b9936c'; g.fillRect(0,214,256,42); g.fillStyle='rgba(0,0,0,.12)'; for(let x=0;x<256;x+=32) g.fillRect(x,214,2,42);
+    g.strokeStyle='#5a3b28'; g.lineCap='square'; const L=(a,b,c,d,w=7)=>{ g.lineWidth=w; g.beginPath(); g.moveTo(a,b); g.lineTo(c,d); g.stroke(); };
+    L(0,4,256,4,8); L(0,112,256,112,9); L(0,122,256,122,6); L(0,210,256,210,8);
+    const P=win?[5,90,166,251]:[5,69,128,187,251]; P.forEach(x=>{ L(x,4,x,112); L(x,122,x,210); });
+    if(win){ L(5,100,40,16); L(251,100,216,16); L(90,200,60,130); L(166,200,196,130);
+      [[128,30],[47,30],[209,30],[47,140],[209,140]].forEach(([x,y])=>{ g.fillStyle='#fff'; g.fillRect(x-19,y-3,38,58); g.fillStyle='#3a4250'; g.fillRect(x-15,y+1,30,50); g.fillStyle='#fff'; g.fillRect(x-1,y,2,52); g.fillRect(x-15,y+22,30,2);
+        g.fillStyle='#3d6b2e'; if(y<100) g.fillRect(x-19,y+54,38,7); });
+      g.fillStyle='#5a3a26'; g.fillRect(108,140,40,70); g.fillStyle='#d9c7a8'; g.fillRect(104,136,48,6); }
+    else for(let i=0;i<P.length-1;i++){ const a=P[i],b=P[i+1]; if(i%2) L(a,112,b,4); else L(a,4,b,112); if(i%2===0) L(a,210,b,122); }
+  }); }
 function facadeTex(wi,si){ const k=wi+'-'+si; if(facadeCache[k]) return facadeCache[k];
   return facadeCache[k]=canvasTex(256,256,(g)=>{
     g.fillStyle=WALLS[wi]; g.fillRect(0,0,256,256);
@@ -106,12 +119,14 @@ function build3D(){
     TER.hr=hr; }
   TER.h=h;
   const pos=new Float32Array(N*3), col=new Float32Array(N*3), idx=[];
-  const C=s=>new THREE.Color(s), cForest=C('#355a2c'), cForest2=C('#4a6a33'), cNeedles=C('#6b5a38'), cVerge=C('#8a9a4e'), cSand=C('#9a8160'), cVine=C('#8f9a52'), cTown=C('#9aa77a'), cRock=C('#9b7f6c'), cPlain=C('#b9b36a'), tc=new THREE.Color();
+  const C=s=>new THREE.Color(s), cForest=C('#355a2c'), cForest2=C('#4a6a33'), cNeedles=C('#6b5a38'), cVerge=C('#8a9a4e'), cSand=C('#9a8160'), cVine=C('#8f9a52'), cTown=C('#9aa77a'), cRock=C('#9b7f6c'), cPlain=C('#b9b36a'), cAcker=[C('#c2ad6a'),C('#7f9a45'),C('#8e6f50')], tc=new THREE.Color();
   for(let k=0;k<N;k++){ const i=k%n, j=(k/n)|0, x=i*res+TER.x0, z=j*res+TER.z0; pos[k*3]=x; pos[k*3+1]=h[k]; pos[k*3+2]=z;
     const d=src[k]*STEP; tc.copy(cForest).lerp(cForest2, vnoise(x/40,z/40)); tc.lerp(cNeedles, Math.max(0,vnoise(x/18,z/18)-.45)*1.2);
-    if(R.kalmit && d<R.vine && dist[k]<160) tc.copy(cVine).lerp(cForest, Math.max(0,(dist[k]-90)/70));
-    if(R.kalmit && d<R.town && dist[k]<120) tc.copy(cTown);
-    if(dist[k]<16) tc.lerp(d>R.town&&d>=R.vine-200 ? cSand : cVerge, 1-dist[k]/16);
+    const zt=zoneAt(R,d);
+    if(zt!=='wald' && dist[k]<160) tc.copy(cVine).lerp(cForest, Math.max(0,(dist[k]-90)/70));
+    if(zt==='feld' && dist[k]<200){ const p=parzAt(R,d); if(p&&p[2]) tc.copy(cAcker[p[2]-1]).lerp(cPlain, vnoise(x/9,z/9)*.25); }
+    if(zt==='ort' && dist[k]<120) tc.copy(cTown);
+    if(dist[k]<16) tc.lerp(zt!=='ort'&&zoneAt(R,d+200)==='wald' ? cSand : cVerge, 1-dist[k]/16);
     if(vnoise(x/14,z/14)>.86 && dist[k]>20) tc.lerp(cRock,.6);
     if(h[k]<plainY+6) tc.lerp(cPlain, Math.min(1,(plainY+6-h[k])/6));
     col[k*3]=tc.r; col[k*3+1]=tc.g; col[k*3+2]=tc.b; }
@@ -134,19 +149,29 @@ function build3D(){
   rtex.wrapT=THREE.RepeatWrapping; rtex.anisotropy=8;
   const strip=(d0,d1,inner,outer,lift,mat,uvLen,sides=[-1,1])=>{ for(const s of sides){ const i0=Math.max(0,Math.floor(d0/STEP)), i1=Math.min(R.xs.length-1,Math.ceil(d1/STEP)), m=i1-i0+1;
       if(m<2) continue; const p=new Float32Array(m*6), uv=new Float32Array(m*4), id=[];
-      for(let q2=0;q2<m;q2++){ const i=i0+q2, d=i*STEP, hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d)+lift, a=s*inner, b=s*outer;
+      for(let q2=0;q2<m;q2++){ const i=i0+q2, d=i*STEP, hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d)+lift, a=s*(inner.call?inner(d):inner), b=s*(outer.call?outer(d):outer);
         p.set([R.xs[i]+nx*a,y,R.ys[i]+nz*a, R.xs[i]+nx*b,y,R.ys[i]+nz*b], q2*6); uv.set([0,d/uvLen,1,d/uvLen], q2*4);
         if(q2<m-1) id.push(q2*2,q2*2+1,q2*2+2, q2*2+1,q2*2+3,q2*2+2); }
       const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setAttribute('uv',new THREE.BufferAttribute(uv,2)); geo.setIndex(id); geo.computeVertexNormals();
       world.add(new THREE.Mesh(geo,mat)); } };
   const side2=(mat)=>(mat.side=THREE.DoubleSide, mat.polygonOffset=true, mat);
-  strip(0,R.len,-(ROAD_W/2+0.9),ROAD_W/2+0.9,0.05,side2(Object.assign(lam('#8f8573'),{polygonOffsetFactor:-1})),10,[1]);
-  strip(0,R.len,-ROAD_W/2,ROAD_W/2,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:rtex}),{polygonOffsetFactor:-2})),9,[1]);
-  if(R.town){ const pav=canvasTex(64,64,g=>{ g.fillStyle='#9d6b5a'; g.fillRect(0,0,64,64); g.strokeStyle='rgba(50,25,18,.35)'; g.lineWidth=1.5;
+  const rw=d=>roadW(R,d)/2;
+  strip(0,R.len,d=>-(rw(d)+0.9),d=>rw(d)+0.9,0.05,side2(Object.assign(lam('#8f8573'),{polygonOffsetFactor:-1})),10,[1]);
+  const asph=side2(Object.assign(new THREE.MeshLambertMaterial({map:rtex}),{polygonOffsetFactor:-2}));
+  let d0=0; for(const [t,a,b] of [...R.belag].sort((x,y)=>x[1]-y[1])){ strip(d0,a,d=>-rw(d),rw,0.12,asph,9,[1]); d0=Math.min(b,R.len);
+    const tx=t==='pflaster'?canvasTex(128,64,g=>{ g.fillStyle='#6e6a64'; g.fillRect(0,0,128,64); for(let y=0;y<64;y+=8) for(let x=(y/8%2)*5-5;x<128;x+=10){ const v=95+Math.random()*45|0; g.fillStyle=`rgb(${v},${v-4},${v-10})`; g.fillRect(x+1,y+1,8,6); } })
+      : canvasTex(64,128,g=>{ g.fillStyle='#b8b6ac'; g.fillRect(0,0,64,128); for(let t2=0;t2<400;t2++){ const v=Math.random()<.5?60:255; g.fillStyle=`rgba(${v},${v},${v},.07)`; g.fillRect(Math.random()*64,Math.random()*128,2,2); }
+          g.fillStyle='#6f6d66'; g.fillRect(0,0,64,3); g.fillStyle='rgba(0,0,0,.1)'; g.fillRect(31,0,2,128); });
+    tx.wrapT=THREE.RepeatWrapping; tx.anisotropy=8;
+    strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{polygonOffsetFactor:-2})),t==='pflaster'?1.6:3.5,[1]); }
+  strip(d0,R.len,d=>-rw(d),rw,0.12,asph,9,[1]);
+  const orte=R.zones.filter(z=>z[0]==='ort');
+  if(orte.length){ const pav=canvasTex(64,64,g=>{ g.fillStyle='#9d6b5a'; g.fillRect(0,0,64,64); g.strokeStyle='rgba(50,25,18,.35)'; g.lineWidth=1.5;
       for(let y=0;y<64;y+=8){ g.beginPath(); g.moveTo(0,y); g.lineTo(64,y); g.stroke(); for(let x=(y/8%2)*8;x<64;x+=16){ g.beginPath(); g.moveTo(x,y); g.lineTo(x,y+8); g.stroke(); } } });
     pav.wrapT=THREE.RepeatWrapping;
-    strip(0,R.town,ROAD_W/2,ROAD_W/2+SIDEWALK,0.22,side2(Object.assign(new THREE.MeshLambertMaterial({map:pav}),{polygonOffsetFactor:-3})),3);
-    strip(0,R.town,ROAD_W/2-0.05,ROAD_W/2+0.2,0.26,side2(lam('#d8d4ca')),3); }
+    for(const [,za,zb,zo={}] of orte){ const geh=zo.geh??SIDEWALK, sd=zo.seite?[zo.seite]:[-1,1];
+      strip(za,Math.min(zb,R.len),rw,d=>rw(d)+geh,0.22,side2(Object.assign(new THREE.MeshLambertMaterial({map:pav}),{polygonOffsetFactor:-3})),3,sd);
+      strip(za,Math.min(zb,R.len),d=>rw(d)-0.05,d=>rw(d)+0.2,0.26,side2(lam('#d8d4ca')),3,sd); } }
 
   // ---------- Instanzen-Helfer ----------
   const m4=new THREE.Matrix4(), qq=new THREE.Quaternion(), sc=new THREE.Vector3(), ps=new THREE.Vector3(), cc=new THREE.Color(), up=new THREE.Vector3(0,1,0), eu=new THREE.Euler();
@@ -164,7 +189,10 @@ function build3D(){
   inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), leafy.filter(o=>!o.fruit), o=>{ ps.set(o.x+o.s*.45,terrainAt(o.x,o.y)+o.s*1.6+1.4,o.y-o.s*.3); qq.setFromAxisAngle(up,o.c*4); sc.set(o.s*.7,o.s*.75,o.s*.7); cc.set(o.c<.5?'#6e9e4f':'#7aa957'); });
   inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), leafy.filter(o=>!o.fruit), o=>{ ps.set(o.x-o.s*.4,terrainAt(o.x,o.y)+o.s*.8+1.4,o.y+o.s*.35); qq.setFromAxisAngle(up,o.c*7); sc.set(o.s*.65,o.s*.6,o.s*.65); cc.set(o.c<.5?'#3f6e33':'#4a7a3a'); });
   inst(new THREE.DodecahedronGeometry(1,0), lam('#fff'), S.rock, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*.3,o.y); qq.setFromAxisAngle(up,o.rot); sc.set(o.s,o.s*.7,o.s*.9); cc.set(o.rot<3?'#ad8c78':'#9c7b69'); });
-  inst(new THREE.IcosahedronGeometry(1,1), lam('#fff'), S.vine, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.85,o.y); qq.setFromAxisAngle(up,-o.rot); sc.set(1.55,.6,.42); cc.set(o.c<.55?'#5f8a34':o.c<.85?'#749838':'#a89838'); });
+  inst(new THREE.IcosahedronGeometry(1,S.vine.length>40000?0:1), lam('#fff'), S.vine, // lange Weinstrecken: gröber, sonst zu viele Dreiecke
+    o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.85,o.y); qq.setFromAxisAngle(up,-o.rot); sc.set(1.55,.6,.42); cc.set(o.c<.55?'#5f8a34':o.c<.85?'#749838':'#a89838'); });
+  inst(new THREE.BoxGeometry(1,.12,1), lam('#fff'), S.weg, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.03,o.y); qq.setFromAxisAngle(up,-o.h); sc.set(3,1,3.3); cc.set('#c9bc98'); });
+  inst(new THREE.IcosahedronGeometry(1,0), lam('#fff'), S.bush, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*(o.tree?2.4:.7),o.y); qq.setFromAxisAngle(up,o.c*6); const k=o.tree?2.2:1; sc.set(o.s*k,o.s*.9*k,o.s*k); cc.set(o.c<.4?'#3f6b32':o.c<.75?'#4d7a3a':'#5d8a45'); });
   inst(new THREE.CylinderGeometry(.045,.05,1.5,5), lam('#6b5a48'), S.vpost, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+.7,o.y); qq.identity(); sc.set(1,1,1); cc.set('#6b5a48'); });
   inst(new THREE.IcosahedronGeometry(.5,0), lam('#fff'), S.grass, o=>{ ps.set(o.x,terrainAt(o.x,o.y)+o.s*.12,o.y); qq.setFromAxisAngle(up,o.r); sc.set(o.s*1.3,o.s*.55,o.s*1.1); cc.set(o.wood?(o.c<.5?'#4f6a34':o.c<.8?'#5d7a3c':'#7a7046'):(o.c<.4?'#7f9a45':o.c<.8?'#94a852':'#b8b067')); });
   inst(new THREE.BoxGeometry(1,1,1), lam('#fff'), S.block, o=>{ ps.set(o.x,roadY(0)+0,o.y); ps.y=terrainAt(o.x,o.y)+.32*o.s; qq.setFromAxisAngle(up,-o.h); sc.set(1.3*o.s,.62*o.s,.62*o.s); cc.set(o.s<1?'#b5866b':'#a5785f'); });
@@ -174,8 +202,8 @@ function build3D(){
   // Leitplanken an den Kehren, auf der Talseite
   const rails=[], rposts=[];
   const railAt=new Uint8Array(Math.ceil(R.len/2)+1);
-  R.kehren.forEach(kd=>{ for(let d=Math.max(R.town,kd-70); d<Math.min(R.fans,kd+70); d+=2) railAt[d/2|0]=1; });
-  if(R.kalmit){ const rr=rng(17); let on=0; for(let d=R.vine-120; d<R.len-330; d+=2){ const [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd);
+  R.kehren.forEach(kd=>{ for(let d=Math.max(0,kd-70); d<Math.min(R.fans,kd+70); d+=2) if(zoneAt(R,d)!=='ort') railAt[d/2|0]=1; });
+  if(R.kalmit){ const rr=rng(17); let on=0; for(let d=Math.max(...R.zones.filter(z=>z[0]==='reben').map(z=>z[2]))-120; d<R.len-330; d+=2){ const [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd);
       const drop=Math.abs(terrainAt(x+nx*16,z+nz*16)-terrainAt(x-nx*16,z-nz*16)); if(on<=0 && drop>2.5 && rr()<.12) on=80+rr()*260; if(on>0){ railAt[d/2|0]=1; on-=2; } } }
   for(let i=0;i<railAt.length;i++){ if(!railAt[i]) continue; const d=i*2, [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd);
     const s=terrainAt(x+nx*14,z+nz*14)<terrainAt(x-nx*14,z-nz*14)?1:-1, off=ROAD_W/2+1.0;
@@ -186,7 +214,7 @@ function build3D(){
 
   // ---------- Dorf ----------
   S.house.forEach(o=>{ const gY=roadY(o.d)+0.15, grp=new THREE.Group();
-    const fm=new THREE.MeshLambertMaterial({map:facadeTex(o.wall,o.shut)}), wm=lam(WALLS[o.wall]);
+    const fm=new THREE.MeshLambertMaterial({map:o.fw?fachTex(1):facadeTex(o.wall,o.shut)}), wm=o.fw?new THREE.MeshLambertMaterial({map:fachTex(0)}):lam(WALLS[o.wall]);
     const body=new THREE.Mesh(new THREE.BoxGeometry(o.w,o.hgt,o.dep), [wm,wm,wm,wm,fm,wm]); body.position.y=o.hgt/2; grp.add(body);
     const sock=new THREE.Mesh(new THREE.BoxGeometry(o.w+.02,8,o.dep+.02), lam('#b9936c')); sock.position.y=-4+0.05; grp.add(sock);
     const roof=new THREE.Mesh(new THREE.BufferGeometry().copy(gableGeo(o.w+.5,o.dep+.9,2.6+o.dep*.18)), new THREE.MeshLambertMaterial({color:o.roof, side:THREE.DoubleSide})); roof.position.y=o.hgt; grp.add(roof);
@@ -194,7 +222,7 @@ function build3D(){
     grp.position.set(o.x,gY,o.y); world.add(grp); });
   S.lamp.forEach(o=>{ const y=roadY(0)+0, gY=terrainAt(o.x,o.y)+0.85, p=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,4.6,6), lam('#3b3f45')); p.position.set(o.x,gY+2.3,o.y); world.add(p);
     const head=new THREE.Mesh(new THREE.BoxGeometry(.35,.3,.35), lam('#2f3338')); const nx=-Math.sin(o.h)*-o.side*.6, nz=Math.cos(o.h)*-o.side*.6; head.position.set(o.x+nx,gY+4.5,o.y+nz); world.add(head); });
-  if(R.town){ // Weinlaub-Bogen über der Dorfstraße
+  if(R.kalmit){ // Weinlaub-Bogen über der Dorfstraße in Maikammer
     const d=210, [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d);
     for(const s of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,4.4,5), lam('#4b3a2c')); p.position.set(x+nx*s*(ROAD_W/2+1.4),y+2.2,z+nz*s*(ROAD_W/2+1.4)); world.add(p); }
     const leaf=lam('#4f8a35'); for(let i=0;i<26;i++){ const t=i/25*2-1, b=new THREE.Mesh(new THREE.IcosahedronGeometry(.75+Math.random()*.4,0), leaf);

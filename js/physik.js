@@ -8,7 +8,7 @@ const cdaOf=(kg,c0=phys().cda)=>c0*(0.15+0.85*Math.pow(kg/75,2/3));
 // Windschatten: bis 1 m hinter dem Vordermann 35 % weniger Luftwiderstand, bei 10 m nichts mehr
 function draftOf(gapAhead){ if(!race.draft || !(gapAhead>0.3) || gapAhead>10) return 0; return 0.35*(1-(Math.max(gapAhead,1)-1)/9); }
 function step(o, P, kg, dt, draft=0){ // P = echte Watt, kg = Fahrergewicht
-  const M=kg+BIKE_KG, th=Math.atan(gradeAt(o.d)/100);
+  const M=kg+BIKE_KG, th=Math.atan((gradeAt(o.d)+belagAt(o.d))/100);
   const Fg=M*G*Math.sin(th), Fr=phys().crr*M*G*Math.cos(th), Fa=0.5*RHO*cdaOf(kg)*(1-draft)*o.v*o.v, Fp=Math.min(P/Math.max(o.v,0.8),450); // 450 N: Grenze beim Anfahren aus dem Stand
   o.v=Math.max(0,o.v+(Fp-Fg-Fr-Fa)/(M+1.5)*dt); o.d+=o.v*dt;
 }
@@ -35,8 +35,8 @@ function botPlan(){
     else P.att.push({d:main,dur,f:fMain,rec,main:true}); }
   P.att.sort((a,b)=>a.d-b.d);
   // Zeitplan bei gleichmäßigem Schnitt – damit verteilt der Bot seine Kräfte
-  const st=20, tab=[]; let t=0; for(let d=0; d<=L+st; d+=st){ tab.push(t); t+=st/vSteady(A*kg, R.loop?0:gradeAt(d+st/2), kg, phys()); }
-  Object.assign(P,{tab,st,T:t,sprintDur:(L-P.sprintAt)/vSteady(1.6*A*kg, R.loop?0:gradeAt(L-50), kg, phys())});
+  const st=20, tab=[]; let t=0; for(let d=0; d<=L+st; d+=st){ tab.push(t); t+=st/vSteady(A*kg, gradeAt(d+st/2)+belagAt(d+st/2), kg, phys()); }
+  Object.assign(P,{tab,st,T:t,sprintDur:(L-P.sprintAt)/vSteady(1.6*A*kg, gradeAt(L-50), kg, phys())});
   return P;
 }
 function botWkgNow(dt){
