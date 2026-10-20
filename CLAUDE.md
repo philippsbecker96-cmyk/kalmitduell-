@@ -27,3 +27,4 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - Sparsam mit Tokens: nur die betroffene Datei/den Abschnitt lesen (Abschnitte sind mit `/* ===== … */`- bzw. `// ---- … ----`-Kommentaren markiert, per grep finden), keine ganzen Dateien ohne Grund.
 - Nicht selbst im Browser testen, außer der Nutzer bittet darum – er testet selbst.
 - Commit-Nachrichten auf Deutsch. Remote: GitHub `philippsbecker96-cmyk/kalmitduell-`, Branch `main`.
+- Offene Verschönerungspläne (Landschaft, Gebäude, Licht): `PLAENE.md`.
