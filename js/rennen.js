@@ -14,7 +14,7 @@ function draw(dt){
   kxFrame();
   updateForm(mine, race.state==='run'?curPower()/weight():0, dt, true, me.done&&!me.free); putRider(mine, me.d, me.crank);
   if(opp.active){ updateForm(theirs, race.state==='run'?(opp.wkg||0):0, dt, false, opp.done); putRider(theirs, opp.d, opp.crank); }
-  if(anim.fans && me.d>R.fans-300) poseFans(performance.now()/1000, false);
+  if(anim.fans && (me.d>R.fans-300 || R.loop || R.abzweig)) poseFans(performance.now()/1000, false);
   if(anim.stadium) poseStadium(performance.now()/1000);
   if(anim.space) poseSpace(dt, performance.now()/1000);
   if(anim.island) poseIsland(dt, performance.now()/1000);

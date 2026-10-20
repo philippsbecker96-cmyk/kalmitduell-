@@ -31,13 +31,13 @@ function roundCorners(P,minR){ const Q=[P[0]]; let carry=0;
     const old=Q.map(p=>p.slice()); for(let i=3;i<n-3;i++) if(on[i]) for(const k of [0,1]) Q[i][k]=(old[i-2][k]+old[i-1][k]+old[i][k]+old[i+1][k]+old[i+2][k])/5; }
   return Q; }
 // Landschaftsabschnitte: [Art, von m, bis m, Optionen] – Art: 'ort', 'reben', 'feld', 'wald' (außerhalb aller Abschnitte: Wald)
-// Optionen Ort: fach (Anteil Fachwerk), luecke (Anteil größerer Lücken), geh (Gehwegbreite), seite (-1 links/1 rechts: nur eine Seite bebaut)
+// Optionen Ort: fach (Anteil Fachwerk), luecke (Anteil größerer Lücken), geh (Gehwegbreite), seite (-1 links/1 rechts: nur eine Seite bebaut), abzweig (-1 links/1 rechts: Seitenstraße vor dem letzten Haus)
 // Optionen Reben: baum (Anteil Obstbäume am Rand), weg (mittlerer Abstand kreuzender Wirtschaftswege in m)
 // breite: [von, bis, Straßenbreite m] · belag: [Art, von, bis, Zusatzsteigung %] – Art 'pflaster' oder 'beton'
 function kalmitDef(){ return Object.assign(gpxDef(KALMIT_GPX), {name:'Kalmit-Ostrampe', start:'Maikammer', finish:'Kalmit · 673 m', plainElev:110, kalmit:true, gpx:'kalmit', zones:[['ort',0,800],['reben',800,2300]]}); }
 function suedpfalzDef(loop){ const g=gpxDef(SUEDPFALZ_GPX,10); g.poly.push(g.poly[0].slice()); // Runde schließen, sonst fehlen am Ziel 8 m Straße
   return Object.assign(g, {name:'Südpfalz-Klassiker', start:'Godramstein', finish:'Ziel', gpx:'suedpfalz', loop:!!loop,
-  zones:[['ort',0,110,{luecke:.6,fach:.3,name:'Godramstein',kreis:'Stadt Landau in der Pfalz'}],['feld',110,1000],['ort',1000,2350,{fach:.7,geh:1,name:'Arzheim',kreis:'Stadt Landau in der Pfalz'}],['reben',2350,3500,{baum:.1,weg:300}],['ort',3500,3760,{seite:-1,luecke:.5,fach:.3,name:'Ilbesheim',kreis:'Kreis Südliche Weinstraße'}],
+  zones:[['ort',0,110,{luecke:.6,fach:.3,name:'Godramstein',kreis:'Stadt Landau in der Pfalz'}],['feld',110,1000],['ort',1000,2350,{fach:.7,geh:1,abzweig:-1,name:'Arzheim',kreis:'Stadt Landau in der Pfalz'}],['reben',2350,3500,{baum:.1,weg:300}],['ort',3500,3760,{seite:-1,luecke:.5,fach:.3,name:'Ilbesheim',kreis:'Kreis Südliche Weinstraße'}],
     ['reben',3760,5400,{baum:.1,weg:350}],['ort',5400,6200,{fach:.5,geh:.6,name:'Leinsweiler',kreis:'Kreis Südliche Weinstraße'}],['reben',6200,8000,{baum:.1,weg:220}],['ort',8000,9050,{luecke:.55,fach:.35,name:'Ranschbach',kreis:'Kreis Südliche Weinstraße'}],['reben',9050,1e9,{baum:0,weg:260}]],
   haardt:true, // Haardt als Bergkette im Westen
   breite:[[1000,2350,5],[3500,3760,5.5],[5400,6200,4.2],[8000,9050,6.6],[9080,12990,3.2]], belag:[['pflaster',5400,6000,3.5],['beton',9080,12990,0]]}); }
@@ -119,7 +119,10 @@ function makeScenery(r){
       if(distRoad(cx,cy)>off-1.5 && (r.kalmit || [[1,1],[1,-1],[-1,1],[-1,-1]].every(([u,v])=>distRoad(cx+ax*u*w/2+f.nx*v*dep/2, cy+ay*u*w/2+f.ny*v*dep/2)>rwh)))
         S.house.push({x:f.px+f.nx*side*off, y:f.py+f.ny*side*off, w, dep, hgt:5.6+R1()*1.8, h:f.h, side, wall:upper&&R1()<.6?4:Math.floor(R1()*6), shut:Math.floor(R1()*3), roof:R1()<.5?'#b4472f':'#9e3a28', d:d+w/2, fw:!!zo.fach&&R2()<zo.fach});
       d+=w+(R1()<(upper?.45:.25)?2+R1()*(upper?9:3):0.2); if(zo.luecke&&R2()<zo.luecke) d+=4+R2()*12; } }
-  for(let d=za+20; d<zb-10; d+=34){ const side=zo.seite||(((d-za)/34|0)%2?1:-1), f=frame(d), o=roadW(r,d)/2+geh-0.4; S.lamp.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h, side}); } }
+  for(let d=za+20; d<zb-10; d+=34){ const side=zo.seite||(((d-za)/34|0)%2?1:-1), f=frame(d), o=roadW(r,d)/2+geh-0.4; S.lamp.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h, side, d}); } }
+  // Seitenstraße kurz vor dem Ortsende: ersetzt das vorletzte Haus der Seite, danach steht nur noch ein Haus
+  r.abzweig=null; for(const [zt,za,zb,zo={}] of r.zones) if(zt==='ort'&&zo.abzweig){ const side=zo.abzweig, L=S.house.filter(o=>o.side===side&&o.d>za&&o.d<zb).sort((a,b)=>a.d-b.d), h=L[L.length-2], d=h?h.d:zb-25, w=5;
+    if(h) S.house.splice(S.house.indexOf(h),1); S.lamp=S.lamp.filter(o=>o.side!==side||Math.abs(o.d-d)>w/2+1.5); r.abzweig={d,side,w,len:70,geh:zo.geh??SIDEWALK}; }
 
   for(let d=0; d<r.len; d+=5){
     const z=zoneAt(r,d); if(z==='ort') continue;
@@ -176,6 +179,13 @@ function makeScenery(r){
     }
     d += 2.3 - near*1.55 + R1()*.4;
   }
+  // Zuschauer an der Seitenstraße, darunter Michel und Marion (u: Abstand vom Straßenrand, al: längs der Hauptstraße)
+  if(r.abzweig){ const A=r.abzweig, f=frame(A.d), s=A.side, rw=roadW(r,A.d)/2, ax=Math.cos(f.h), ay=Math.sin(f.h), hw=A.w/2;
+    const fan=(u,al,o={})=>S.fan.push(Object.assign({x:f.px+f.nx*s*(rw+u)+ax*al, y:f.py+f.ny*s*(rw+u)+ay*al, face:Math.atan2(-f.nx*s,-f.ny*s)+(R2()-.5)*.7,
+      jack:JACK[Math.floor(R2()*JACK.length)], legs:R2()<.6?'#2a2f3a':'#4a5568', tall:.9+R2()*.2, arms:R2()<.7?2:1, phone:R2()<.3, cap:R2()<.3?JACK[Math.floor(R2()*JACK.length)]:null, flag:false, ph:R2()*6.3, d:A.d+al, u}, o));
+    fan(.55,-hw-1.1,{name:'Marion', paar:1, face:Math.atan2(-f.nx*s,-f.ny*s), tall:.93, jack:'#b5523b', legs:'#2a2f3a', cap:'#d8cfc0', arms:2, phone:false, ph:.4});
+    fan(.55,-hw-2.8,{name:'Michel', paar:1, face:Math.atan2(-f.nx*s,-f.ny*s), tall:1.01, jack:'#4a6b8a', legs:'#6b6255', cap:'#b9b9b4', arms:2, phone:false, ph:.8});
+    [[.55,-hw-4.6],[.6,-hw-5.5],[.55,hw+1],[.6,hw+1.9],[A.geh+2.5,-hw+.6,{flag:true}],[A.geh+2.2,hw-.6],[A.geh+4.6,hw-.7]].forEach(([u,al,o])=>fan(u,al,o)); }
   r.S=S;
 }
 

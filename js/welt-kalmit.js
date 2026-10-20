@@ -174,6 +174,14 @@ function build3D(){
     for(const [,za,zb,zo={}] of orte){ const geh=zo.geh??SIDEWALK, sd=zo.seite?[zo.seite]:[-1,1];
       strip(za,Math.min(zb,R.len),rw,d=>rw(d)+geh,0.22,side2(Object.assign(new THREE.MeshLambertMaterial({map:pav}),{polygonOffsetFactor:-3})),3,sd);
       strip(za,Math.min(zb,R.len),d=>rw(d)-0.05,d=>rw(d)+0.2,0.26,side2(lam('#d8d4ca')),3,sd); } }
+  // Seitenstraße: quer weg vom Straßenrand, am Anfang auf Gehweghöhe, dann aufs Gelände
+  const abY=(u,x,z,d)=>{ const A=R.abzweig, t=Math.min(1,Math.max(0,(u-A.geh-1)/12)), k=t*t*(3-2*t); return (roadY(d??A.d)+.29)*(1-k)+(terrainAt(x,z)+.06)*k; };
+  if(R.abzweig){ const A=R.abzweig, [x0,z0]=posAt(R,A.d), hd=headingAt(R,A.d), nx=-Math.sin(hd)*A.side, nz=Math.cos(hd)*A.side, ax=Math.cos(hd), az=Math.sin(hd), r0=rw(A.d);
+    const band=(a0,a1,lift,mat)=>{ const us=[]; for(let u=-.05;u<A.len;u+=u<A.geh+14?1:3) us.push(u); const p=new Float32Array(us.length*6), id=[];
+      us.forEach((u,i)=>{ [a0,a1].forEach((a,j)=>{ const x=x0+nx*(r0+u)+ax*a, z=z0+nz*(r0+u)+az*a; p.set([x,abY(u,x,z)+lift,z],i*6+j*3); }); if(i<us.length-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); });
+      const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setIndex(id); geo.computeVertexNormals(); world.add(new THREE.Mesh(geo,mat)); };
+    band(-A.w/2,A.w/2,0,side2(Object.assign(lam('#55575a'),{polygonOffsetFactor:-4})));
+    for(const s of [-1,1]) band(s*A.w/2,s*(A.w/2+.25),.03,side2(Object.assign(lam('#d8d4ca'),{polygonOffsetFactor:-4}))); }
 
   // ---------- Instanzen-Helfer ----------
   const m4=new THREE.Matrix4(), qq=new THREE.Quaternion(), sc=new THREE.Vector3(), ps=new THREE.Vector3(), cc=new THREE.Color(), up=new THREE.Vector3(0,1,0), eu=new THREE.Euler();
@@ -239,8 +247,18 @@ function build3D(){
     const flL=F.filter(o=>o.flag), pole=inst(new THREE.CylinderGeometry(.02,.02,1.6,4), lam('#ddd'), flL, ()=>{});
     const flagTex=canvasTex(64,40,g=>{ g.fillStyle='#fff'; g.fillRect(0,0,64,40); g.fillStyle='#d62828'; for(let y=5;y<40;y+=10) for(let x=(y/10%2)*5+4;x<64;x+=10){ g.beginPath(); g.arc(x,y,3,0,7); g.fill(); } });
     const flag=flL.length? new THREE.InstancedMesh(new THREE.PlaneGeometry(.9,.55), new THREE.MeshLambertMaterial({map:flagTex, side:THREE.DoubleSide}), flL.length):null; if(flag) world.add(flag);
-    F.forEach(o=>{ o.gy=terrainAt(o.x,o.y)+0.1; });
-    anim.fans={F,legs,body,head,cap,capL,arm,armL,phone,phL,pole,flag,flL};
+    F.forEach(o=>{ o.gy=o.u!=null?abY(o.u,o.x,o.y,o.d)-.06:terrainAt(o.x,o.y)+0.1; });
+    // Michel und Marion: Namen über dem Kopf, Banner für Sebbi (nur wenn Dengel mitfährt)
+    const PA=F.filter(o=>o.paar); let paar=null;
+    if(PA.length===2){ const names=PA.map(o=>{ const sp=nameSprite(o.name,o.name==='Michel'?'#1d4a8c':'#a61e4d'); sp.material.depthTest=true; sp.scale.set(2,.5,1); const y=o.gy+2.45*o.tall; sp.position.set(o.x,y,o.y); world.add(sp); return {sp,y}; });
+      const tex=canvasTex(512,128,g=>{ g.fillStyle='#fffdf5'; g.fillRect(0,0,512,128); g.strokeStyle='#c92a2a'; g.lineWidth=10; g.strokeRect(5,5,502,118);
+        g.fillStyle='#1a1a1a'; g.textAlign='center'; g.textBaseline='middle'; g.font='800 78px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText("Auf geht's Sebbi",256,68,480); });
+      const banner=new THREE.Mesh(new THREE.PlaneGeometry(2.3,.55), new THREE.MeshLambertMaterial({map:tex, side:THREE.DoubleSide})), [a,b]=PA, fc=a.face*.5+b.face*.5;
+      const L=Math.hypot(a.x-b.x,a.y-b.y), tx=(a.x-b.x)/L, tz=(a.y-b.y)/L, TW=.52, vx=Math.sin(fc)*Math.cos(TW)-tx*Math.sin(TW), vz=Math.cos(fc)*Math.cos(TW)-tz*Math.sin(TW), fv=Math.atan2(vx,vz); // 30° den Fahrern entgegen gedreht
+      PA.forEach(o=>o.face=fv);
+      banner.position.set((a.x+b.x)/2+Math.sin(fc)*.22, Math.min(a.gy+1.9*a.tall,b.gy+1.9*b.tall)+.27, (a.y+b.y)/2+Math.cos(fc)*.22); banner.rotation.y=fv; world.add(banner);
+      paar={banner,names}; }
+    anim.fans={F,legs,body,head,cap,capL,arm,armL,phone,phL,pole,flag,flL,paar,sebbi:null};
     poseFans(0, true);
   } else anim.fans=null;
 
@@ -328,14 +346,18 @@ function build3D(){
 }
 function poseFans(t, all){
   const A=anim.fans; if(!A) return; const m4=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(1,1,1), p=new THREE.Vector3(), up=new THREE.Vector3(0,1,0), e=new THREE.Euler(), c=new THREE.Color();
-  const lo=all?0:me.d-200, hi=all?1e9:me.d+400;
-  A.F.forEach((o,i)=>{ if(o.d<lo||o.d>hi) return; const hop=Math.max(0,Math.sin(t*(5+o.ph%2)+o.ph))*(o.arms?0.12:0.04), y=o.gy+hop, ty=o.tall;
+  const md=R.loop?((me.d%R.len)+R.len)%R.len:me.d, lo=all?0:md-200, hi=all?1e9:md+400;
+  const sb=myKey==='dengel'||(opp.active&&oppKey==='dengel'); // Sebbi fährt mit: Michel und Marion halten das Banner hoch
+  if(A.paar && A.sebbi!==sb){ A.sebbi=sb; A.paar.banner.visible=sb; A.paar.names.forEach(n=>n.sp.position.y=n.y+(sb?.45:0)); }
+  const hopOf=o=>o.paar&&sb?0:Math.max(0,Math.sin(t*(5+o.ph%2)+o.ph))*(o.arms?0.12:0.04)*(o.paar?.5:1);
+  A.F.forEach((o,i)=>{ if(o.d<lo||o.d>hi) return; const hop=hopOf(o), y=o.gy+hop, ty=o.tall;
     q.setFromAxisAngle(up,o.face);
     p.set(o.x,y+.42*ty,o.y); s.set(1,ty,1); m4.compose(p,q,s); A.legs.setMatrixAt(i,m4); if(all){ c.set(o.legs); A.legs.setColorAt(i,c); }
     p.set(o.x,y+(.85+.32)*ty,o.y); s.set(1,ty,1); m4.compose(p,q,s); A.body.setMatrixAt(i,m4); if(all){ c.set(o.jack); A.body.setColorAt(i,c); }
     p.set(o.x,y+1.66*ty,o.y); s.set(1,1,1); m4.compose(p,q,s); A.head.setMatrixAt(i,m4); if(all){ c.set(['#f1c9a5','#e0ac80','#c68c62','#8d5a3b'][Math.floor(o.ph)%4]); A.head.setColorAt(i,c); } });
-  A.capL.forEach((o,i)=>{ if(o.d<lo||o.d>hi) return; const hop=Math.max(0,Math.sin(t*(5+o.ph%2)+o.ph))*(o.arms?0.12:0.04); p.set(o.x,o.gy+hop+1.68*o.tall,o.y); q.identity(); s.set(1,1,1); m4.compose(p,q,s); A.cap.setMatrixAt(i,m4); if(all){ c.set(o.cap); A.cap.setColorAt(i,c);} });
-  const armTip=(o,a,t)=>{ const hop=Math.max(0,Math.sin(t*(5+o.ph%2)+o.ph))*0.12, sx=a?-1:1, tl=.25+Math.sin(t*4+o.ph+a)*.22*(o.phone&&!a?.2:1);
+  A.capL.forEach((o,i)=>{ if(o.d<lo||o.d>hi) return; const hop=hopOf(o); p.set(o.x,o.gy+hop+1.68*o.tall,o.y); q.identity(); s.set(1,1,1); m4.compose(p,q,s); A.cap.setMatrixAt(i,m4); if(all){ c.set(o.cap); A.cap.setColorAt(i,c);} });
+  const armTip=(o,a,t)=>{ if(o.paar&&sb) return {hop:0,sx:a?-1:1,tl:.15,sy:o.gy+1.42*o.tall};
+    const hop=Math.max(0,Math.sin(t*(5+o.ph%2)+o.ph))*0.12*(o.paar?.5:1), sx=a?-1:1, tl=.25+Math.sin(t*4+o.ph+a)*.22*(o.phone&&!a?.2:1);
     return {hop,sx,tl,sy:o.gy+hop+1.42*o.tall}; };
   A.armL.forEach(({o,a},i)=>{ if(o.d<lo||o.d>hi) return; const {sx,tl,sy}=armTip(o,a,t);
     e.set(0,o.face,0); q.setFromEuler(e); const off=new THREE.Vector3(sx*(.22+.3*Math.sin(tl)),0,0).applyQuaternion(q);
