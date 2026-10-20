@@ -240,19 +240,12 @@ function poseStadium(t){
 
 /* ================= Stadion-Extras: Fußballspiel, Eckfahnen, Flutlicht, Anzeigetafel, Bänke, Ordner, TV-Kamera, Konfetti ================= */
 const NIGHT_BG=0x0a1220;
-function dayLights(){ hemi.color.set(0xcfe3f5); hemi.groundColor.set(0x5a5a3a); hemi.intensity=0.62; sun.color.set(0xffe2b8); sun.intensity=1.15; SUN_DIR.copy(SUN_DAY); setSky('day'); }
-let SKYT=null;
-function skyTexs(){ if(SKYT) return SKYT; const mk=st=>{ const c=document.createElement('canvas'); c.width=4; c.height=256; const g=c.getContext('2d'), gr=g.createLinearGradient(0,0,0,256); st.forEach(([o,col])=>gr.addColorStop(o,col)); g.fillStyle=gr; g.fillRect(0,0,4,256); return new THREE.CanvasTexture(c); };
-  SKYT={day:sky.material.map, dusk:mk([[0,'#22305e'],[.22,'#5b4a7e'],[.36,'#c46a6a'],[.45,'#f0955e'],[.5,'#f6b46e'],[1,'#f6b46e']]),
-    grey:mk([[0,'#7d858d'],[.3,'#9aa1a8'],[.5,'#bcc1c4'],[1,'#bcc1c4']]), duskGrey:mk([[0,'#3b3f55'],[.3,'#6f6170'],[.46,'#a87a72'],[.5,'#b48a78'],[1,'#b48a78']])}; return SKYT; }
-function setSky(kind){ const T=skyTexs(); if(sky.material.map!==T[kind]){ sky.material.map=T[kind]; sky.material.needsUpdate=true; }
-  const cc={day:'#ffffff',dusk:'#ffb48a',grey:'#8d939a',duskGrey:'#9a8a8a'}[kind]; sky.children[0].children.forEach(c=>c.material.color.set(cc)); }
 // Stadion: Tageszeit (tag/abend/nacht) und Regen anwenden – Regen ist nur Optik, die Physik bleibt gleich
 function applyStadiumEnv(){ const A=anim.stadium; if(!A||!A.fl) return; const tod=race.tod||'tag', rain=!!race.rain, night=tod==='nacht', dusk=tod==='abend';
   dayLights(); sky.visible=!night; setSky(dusk?(rain?'duskGrey':'dusk'):(rain?'grey':'day'));
   const bg=night?NIGHT_BG:dusk?(rain?0x9a8478:0xf0a873):rain?0xb6bbbf:HORIZON; scene.background.set(bg); scene.fog.color.set(bg);
   if(night){ hemi.color.set(0x9aa8c4); hemi.groundColor.set(0x2c2c26); hemi.intensity=.32; sun.color.set(0xf4f6ff); sun.intensity=.42; SUN_DIR.set(.3,1,.4).normalize(); }
-  else if(dusk){ hemi.color.set(0xffbe96); hemi.groundColor.set(0x3a2c34); hemi.intensity=rain?.42:.5; sun.color.set(0xff9a5a); sun.intensity=rain?.3:.8; SUN_DIR.set(-1,.3,.5).normalize(); }
+  else if(dusk){ hemi.color.set(0xffbe96); hemi.groundColor.set(0x3a2c34); hemi.intensity=rain?.42:.5; sun.color.set(0xff9a5a); sun.intensity=rain?.3:.8; SUN_DIR.set(-1,.3,.5).normalize(); sunDisc(!rain); }
   else if(rain){ hemi.color.set(0xc4ccd4); hemi.intensity=.62; sun.color.set(0xeef2f6); sun.intensity=.45; }
   const on=night||dusk; A.fl.spots.forEach(l=>l.intensity=night?.3:dusk?.16:0); A.fl.glows.forEach(g=>g.visible=on); A.fl.cones.forEach(c=>c.visible=night);
   A.fl.lamp.color.set(on?'#fffbe8':'#7d8287'); A.fl.stars.visible=night&&!rain; A.fl.shOp=night?.26:dusk?.12:0;

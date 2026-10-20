@@ -176,8 +176,8 @@ function build3D(){
     for(const [,za,zb,zo={}] of orte){ const geh=zo.geh??SIDEWALK, sd=zo.seite?[zo.seite]:[-1,1];
       for(const s of sd){ strip(za,Math.min(zb,R.len),rw,d=>rw(d)+(cut(s,d)?0:geh),0.22,pavM,3,[s]);
         strip(za,Math.min(zb,R.len),d=>rw(d)-0.05,d=>cut(s,d)?rw(d)-0.05:rw(d)+0.2,0.26,curbM,3,[s]); } }
-    // Stichstraße an der Einmündung: Asphalt, Gehwege, Bordsteine; nahe der Hauptstraße auf deren Höhe, weiter weg aufs Gelände
-    if(R.stich){ const K=R.stich, at=(al,la)=>[K.x+K.ux*al+K.vx*la, K.y+K.uy*al+K.vy*la];
+    // Stichstraßen an den Einmündungen: Asphalt, Gehwege, Bordsteine; nahe der Hauptstraße auf deren Höhe, weiter weg aufs Gelände
+    for(const K of R.stich){ const at=(al,la)=>[K.x+K.ux*al+K.vx*la, K.y+K.uy*al+K.vy*la];
       const band=(la0,la1,a0,lift,mat)=>{ const as=[]; for(let al=a0;al<K.len;al+=al<30?1:2.5) as.push(al); as.push(K.len); const p=new Float32Array(as.length*6), id=[];
         as.forEach((al,i)=>{ [la0,la1].forEach((la,j)=>{ const [x,z]=at(al,la); p.set([x,stY(al,x,z)+lift,z],i*6+j*3); }); if(i<as.length-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); });
         const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setIndex(id); geo.computeVertexNormals(); world.add(new THREE.Mesh(geo,mat)); };

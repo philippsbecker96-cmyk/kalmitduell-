@@ -31,7 +31,7 @@ const de=(x,n=1)=>x.toFixed(n).replace('.',',');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function setRoute(def){
-  R=buildRoute(def); camS.init=false; build3D();
+  R=buildRoute(def); camS.init=false; build3D(); applyEnv();
   renderRouteList();
 }
 
@@ -65,3 +65,23 @@ const sky=(()=>{ const c=document.createElement('canvas'); c.width=4; c.height=2
   return m; })();
 
 function canvasTex(w,h,draw){ const c=document.createElement('canvas'); c.width=w; c.height=h; draw(c.getContext('2d'),w,h); const t=new THREE.CanvasTexture(c); t.anisotropy=4; return t; }
+
+/* ================= Tageszeit: Licht, Himmel, Dunst und Sonne für alle Welten (außer Space) ================= */
+function dayLights(){ hemi.color.set(0xcfe3f5); hemi.groundColor.set(0x5a5a3a); hemi.intensity=0.62; sun.color.set(0xffe2b8); sun.intensity=1.15; SUN_DIR.copy(SUN_DAY); setSky('day'); sunDisc(false); }
+let SKYT=null;
+function skyTexs(){ if(SKYT) return SKYT; const mk=st=>{ const c=document.createElement('canvas'); c.width=4; c.height=256; const g=c.getContext('2d'), gr=g.createLinearGradient(0,0,0,256); st.forEach(([o,col])=>gr.addColorStop(o,col)); g.fillStyle=gr; g.fillRect(0,0,4,256); return new THREE.CanvasTexture(c); };
+  SKYT={day:sky.material.map, dusk:mk([[0,'#22305e'],[.22,'#5b4a7e'],[.36,'#c46a6a'],[.45,'#f0955e'],[.5,'#f6b46e'],[1,'#f6b46e']]),
+    grey:mk([[0,'#7d858d'],[.3,'#9aa1a8'],[.5,'#bcc1c4'],[1,'#bcc1c4']]), duskGrey:mk([[0,'#3b3f55'],[.3,'#6f6170'],[.46,'#a87a72'],[.5,'#b48a78'],[1,'#b48a78']])}; return SKYT; }
+function setSky(kind){ const T=skyTexs(); if(sky.material.map!==T[kind]){ sky.material.map=T[kind]; sky.material.needsUpdate=true; }
+  const cc={day:'#ffffff',dusk:'#ffb48a',grey:'#8d939a',duskGrey:'#9a8a8a'}[kind]; sky.children[0].children.forEach(c=>c.material.color.set(cc)); }
+// Sonne am Horizont: großer warmer Schein und helle Scheibe, hängen an der Himmelskuppel (wandern mit der Kamera)
+let SUNS=null;
+function sunDisc(on){ if(!SUNS){ const rad=(a,b)=>canvasTex(128,128,(g)=>{ const gr=g.createRadialGradient(64,64,0,64,64,64); gr.addColorStop(0,a); gr.addColorStop(b,a); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,128,128); });
+    const mk=(t,col,op,sz)=>{ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t, color:col, transparent:true, opacity:op, depthWrite:false, fog:false, blending:THREE.AdditiveBlending})); s.scale.set(sz,sz,1); s.renderOrder=-9; sky.add(s); return s; };
+    SUNS=[mk(rad('rgba(255,255,255,.55)',.05),'#ff9a52',.75,3200), mk(rad('#ffffff',.55),'#fff0c4',1,230)]; }
+  SUNS.forEach(s=>{ s.visible=on; s.position.copy(SUN_DIR).multiplyScalar(4500); }); }
+// Land-Welten: Tag = Mittagssonne, Abend = Sonnenuntergang im Westsüdwesten (x = Osten, z = Süden). Nacht gibt es nur im Stadion (Flutlicht) – draußen wird daraus Abend.
+const DUSK_BG=0xf0a873;
+function applyEnv(){ if(!R||R.space) return; if(R.stadium){ applyStadiumEnv(); return; }
+  dayLights(); const dusk=race.tod!=='tag', bg=dusk?DUSK_BG:HORIZON; scene.background.set(bg); scene.fog.color.set(bg);
+  if(dusk){ setSky('dusk'); hemi.color.set(0x9c9ccc); hemi.groundColor.set(0x40302a); hemi.intensity=.76; sun.color.set(0xff9452); sun.intensity=1.45; SUN_DIR.set(-1,.2,.42).normalize(); sunDisc(true); } }

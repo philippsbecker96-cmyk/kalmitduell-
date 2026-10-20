@@ -37,7 +37,7 @@ function hoeheSchliessen(G){ const c=[0]; for(let i=1;i<G.length;i++) c.push(c[i
 // Liefert die neuen Punkte und die Ecke samt Richtung, in der die Hauptstraße geradeaus weiterläuft (für die Einmündung)
 function scharfeEcke(G,i,j,k,l){ const [p,q,a,b]=[G[i],G[j],G[k],G[l]], ux=q[0]-p[0], uy=q[1]-p[1], vx=b[0]-a[0], vy=b[1]-a[1], lu=Math.hypot(ux,uy), lv=Math.hypot(vx,vy);
   const t=((a[0]-p[0])*vy-(a[1]-p[1])*vx)/(ux*vy-uy*vx), cx=p[0]+ux*t, cy=p[1]+uy*t, s1=Math.hypot(cx-p[0],cy-p[1]), s2=Math.hypot(a[0]-cx,a[1]-cy), e=p[2]+(a[2]-p[2])*s1/(s1+s2);
-  return {G:[...G.slice(0,i+1), [cx-ux/lu*8,cy-uy/lu*8,e], [cx,cy,e], [cx+vx/lv*8,cy+vy/lv*8,e], ...G.slice(k)], kreuz:{x:cx, y:cy, ux:-vx/lv, uy:-vy/lv}}; }
+  return {G:[...G.slice(0,i+1), [cx-ux/lu*8,cy-uy/lu*8,e], [cx,cy,e], [cx+vx/lv*8,cy+vy/lv*8,e], ...G.slice(k)], kreuz:[{x:cx, y:cy, ux:-vx/lv, uy:-vy/lv}, {x:cx, y:cy, ux:ux/lu, uy:uy/lu}]}; } // Einmündungen: Gegenrichtung des Ausgangs und geradeaus weiter
 // Landschaftsabschnitte: [Art, von m, bis m, Optionen] – Art: 'ort', 'reben', 'feld', 'hain' (dichte Laubbäume und Büsche), 'wald' (außerhalb aller Abschnitte: Wald)
 // Optionen Ort: fach (Anteil Fachwerk), luecke (Anteil größerer Lücken), geh (Gehwegbreite), seite (-1 links/1 rechts: nur eine Seite bebaut), abzweig (-1 links/1 rechts: Seitenstraße vor dem letzten Haus)
 // Optionen Reben: baum (Anteil Obstbäume am Rand), weg (mittlerer Abstand kreuzender Wirtschaftswege in m)
@@ -63,9 +63,10 @@ function prepFeld(r){ const q=rng(99); r.parz=[]; r.wege=[]; r.hecke=[];
   for(const [t,a,b,o] of r.zones){ const e=Math.min(b,r.len);
     if(t==='feld'){ let d=a; while(d<e){ const L=35+q()*70; r.parz.push([d,Math.min(e,d+L),q()<.45?0:1+Math.floor(q()*3)]); d+=L; if(d<e-10){ const u=q(); if(u<.3) r.wege.push(d); else if(u<.65) r.hecke.push(d); } } }
     if(t==='reben' && o&&o.weg){ let d=a+o.weg*(.3+q()*.5); while(d<e-30){ r.wege.push(d); d+=o.weg*(.6+q()*.8); } } } }
+// noTrain: im Training nicht anbieten (Südpfalz gibt es dort nur als Runde – fährt ohnehin in Dauerschleife)
 const ROUTES=[{id:'kalmit', mode:'climb', title:'Kalmit-Ostrampe', sub:'ab Maikammer · Pfalz · echte GPX', def:kalmitDef()},
   {id:'stadion', mode:'loop', title:'Betzenberg', sub:'Steilkurven · Westkurve', def:stadionDef()},
-  {id:'suedpfalz', mode:'classic', title:'Südpfalz-Klassiker', sub:'Godramstein · Arzheim · Leinsweiler · Ranschbach · echte GPX', def:suedpfalzDef(false)},
+  {id:'suedpfalz', mode:'classic', noTrain:true, title:'Südpfalz-Klassiker', sub:'Godramstein · Arzheim · Leinsweiler · Ranschbach · echte GPX', def:suedpfalzDef(false)},
   {id:'suedpfalz-runde', mode:'loop', title:'Südpfalz-Klassiker', sub:'Runde durch die Weinberge · echte GPX', def:suedpfalzDef(true)},
   {id:'space', mode:'space', title:'Space-Strecke', sub:'aus deinem Workout erzeugt', def:null},
   {id:'insel', mode:'space', title:'Insel-Strecke', sub:'tropischer Archipel · Untergrund je nach Intensität', def:null}]; // Space nur im Training, Strecke entsteht aus dem Workout
@@ -129,8 +130,8 @@ function makeScenery(r){
         S.house.push({x:f.px+f.nx*side*off, y:f.py+f.ny*side*off, w, dep, hgt:5.6+R1()*1.8, h:f.h, side, wall:upper&&R1()<.6?4:Math.floor(R1()*6), shut:Math.floor(R1()*3), roof:R1()<.5?'#b4472f':'#9e3a28', d:d+w/2, fw:!!zo.fach&&R2()<zo.fach});
       d+=w+(R1()<(upper?.45:.25)?2+R1()*(upper?9:3):0.2); if(zo.luecke&&R2()<zo.luecke) d+=4+R2()*12; } }
   for(let d=za+20; d<zb-10; d+=34){ const side=zo.seite||(((d-za)/34|0)%2?1:-1), f=frame(d), o=roadW(r,d)/2+geh-0.4; S.lamp.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h, side, d}); } }
-  // Einmündung an der scharfen Ecke: die Hauptstraße läuft geradeaus weiter (al: längs ab der Ecke, la: quer), Häuser im Weg weichen, neue Häuser an der Stichstraße
-  r.stich=null; r.gehCut=[]; if(r.def.kreuz){ const K=r.def.kreuz, w=5, len=55, vx=-K.uy, vy=K.ux; let kd=0, bd=1e9; for(let i=0;i<r.xs.length;i++){ const dd=Math.hypot(r.xs[i]-K.x,r.ys[i]-K.y); if(dd<bd){ bd=dd; kd=i*STEP; } }
+  // Einmündungen an der scharfen Ecke: Hauptstraße läuft weiter, dazu eine Straße geradeaus (al: längs ab der Ecke, la: quer), Häuser im Weg weichen, neue Häuser an der Stichstraße
+  r.stich=[]; r.gehCut=[]; for(const K of [].concat(r.def.kreuz||[])){ const w=5, len=55, vx=-K.uy, vy=K.ux; let kd=0, bd=1e9; for(let i=0;i<r.xs.length;i++){ const dd=Math.hypot(r.xs[i]-K.x,r.ys[i]-K.y); if(dd<bd){ bd=dd; kd=i*STEP; } }
     const geh=zOpt(r,kd).geh??SIDEWALK, loc=(x,y)=>[(x-K.x)*K.ux+(y-K.y)*K.uy, (x-K.x)*vx+(y-K.y)*vy];
     const inStich=(x,y,m)=>{ const [al,la]=loc(x,y); return al>-4&&al<len+2&&Math.abs(la)<w/2+m; };
     const inHaus=(o,x,y)=>{ const dx=x-o.x, dy=y-o.y, c=Math.cos(o.h), sn=Math.sin(o.h); return Math.abs(dx*c+dy*sn)<o.w/2+.3 && Math.abs(-dx*sn+dy*c)<o.dep/2+.3; };
@@ -139,11 +140,11 @@ function makeScenery(r){
     const hdg=Math.atan2(K.uy,K.ux), rwk=roadW(r,kd)/2; let cut=null;
     for(const side of [-1,1]) for(let d=kd-30; d<kd+30; d+=1){ const f=frame(d), o=roadW(r,d)/2+geh/2, hit=inStich(f.px+f.nx*side*o, f.py+f.ny*side*o, 0); if(hit&&!cut) cut=[side,d-1.5,d+1.5]; else if(hit) cut[2]=d+1.5; else if(cut){ r.gehCut.push(cut); cut=null; } }
     for(const side of [-1,1]){ let al=rwk+geh+1; while(al<len-4){ const hw=7+R2()*4, dep=8+R2()*3, off=w/2+geh+dep/2, c={x:K.x+K.ux*(al+hw/2)+vx*side*off, y:K.y+K.uy*(al+hw/2)+vy*side*off, w:hw, dep, h:hdg};
-        if(pts(c).every(([x,y])=>distRoad(x,y)>rwk+geh+.4 && !S.house.some(o=>inHaus(o,x,y))))
+        if(pts(c).every(([x,y])=>distRoad(x,y)>rwk+geh+.4 && !S.house.some(o=>inHaus(o,x,y)) && !r.stich.some(St=>{ const a=(x-St.x)*St.ux+(y-St.y)*St.uy, b=(x-St.x)*St.vx+(y-St.y)*St.vy; return a>-4&&a<St.len+2&&Math.abs(b)<St.w/2+St.geh+.3; })))
           S.house.push(Object.assign(c,{hgt:5.6+R2()*1.8, side, wall:Math.floor(R2()*6), shut:Math.floor(R2()*3), roof:R2()<.5?'#b4472f':'#9e3a28', d:kd, fw:R2()<(zOpt(r,kd).fach||0), su:al+hw/2}));
         al+=hw+.2+(R2()<.25?2+R2()*3:0); } }
     const al0=side=>{ for(let al=-4; al<20; al+=.25){ const la=side*(w/2+geh/2); if(distRoad(K.x+K.ux*al+vx*la, K.y+K.uy*al+vy*la)>rwk+geh+.05) return al; } return 20; }; // Gehweg erst, wo Hauptstraße und ihr Gehweg enden
-    r.stich={x:K.x, y:K.y, ux:K.ux, uy:K.uy, vx, vy, w, len, geh, d:kd, al0:{'-1':al0(-1), '1':al0(1)}}; }
+    r.stich.push({x:K.x, y:K.y, ux:K.ux, uy:K.uy, vx, vy, w, len, geh, d:kd, al0:{'-1':al0(-1), '1':al0(1)}}); }
   // Seitenstraße kurz vor dem Ortsende: ersetzt das vorletzte Haus der Seite, danach steht nur noch ein Haus
   r.abzweig=null; for(const [zt,za,zb,zo={}] of r.zones) if(zt==='ort'&&zo.abzweig){ const side=zo.abzweig, L=S.house.filter(o=>o.side===side&&o.su==null&&o.d>za&&o.d<zb).sort((a,b)=>a.d-b.d), h=L[L.length-2], d=h?h.d:zb-25, w=5;
     if(h) S.house.splice(S.house.indexOf(h),1); S.lamp=S.lamp.filter(o=>o.side!==side||Math.abs(o.d-d)>w/2+1.5); r.abzweig={d,side,w,len:70,geh:zo.geh??SIDEWALK}; }

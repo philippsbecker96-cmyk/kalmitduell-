@@ -16,7 +16,7 @@ function spaceCanvas(cv2, def){ // Höhenprofil der Space-Strecke in Bahnfarben
 }
 function renderRouteList(){
   if(race.mode==='train' && race.role!=='guest'){ GEN_IDS.forEach(id=>genEntry(id)); if(GEN_IDS.includes(routeId)){ const e=genEntry(routeId); if(R && R.def!==e.def){ setRoute(e.def); sendRoute(); return; } } } // Workout geändert → Strecke neu
-  const box=$('routeList'), guest=race.role==='guest', list=race.mode==='train'?ROUTES.filter(r=>guest?r.id==='host':r.id!=='host'):race.mode==='chase'?ROUTES.filter(r=>r.id==='stadion'):ROUTES.filter(r=>r.mode===race.mode);
+  const box=$('routeList'), guest=race.role==='guest', list=race.mode==='train'?ROUTES.filter(r=>guest?r.id==='host':r.id!=='host'&&!r.noTrain):race.mode==='chase'?ROUTES.filter(r=>r.id==='stadion'):ROUTES.filter(r=>r.mode===race.mode);
   box.innerHTML=list.map(r=>{ const L=r.def.segs.reduce((a,s)=>a+s.len,0), hm=r.def.segs.reduce((a,s)=>a+Math.max(0,s.len*s.g/100),0);
     const info=r.def.island?`${de(r.def.goal/1000,1)} km · Sand und Wasser in den harten Abschnitten · danach endlos ums Atoll (5 km)`:r.def.space?`${de((L-r.def.ring)/1000,1)} km · ${Math.round(hm)} Hm · danach endlos in der Umlaufbahn`:r.def.stadium?Math.round(L)+' m pro Runde':r.def.loop?de(L/1000,1)+' km pro Runde · '+Math.round(hm)+' Hm':de(L/1000,1)+' km · '+Math.round(hm)+' Hm';
     return `<button class="route${r.id===routeId?' sel':''}" data-id="${r.id}" ${guest?'disabled':''}><canvas width="300" height="92"></canvas><div><b>${esc(r.title)}</b><span>${esc(r.sub)} · ${info}</span></div></button>`; }).join('')
@@ -24,13 +24,14 @@ function renderRouteList(){
   box.querySelectorAll('button.route').forEach(b=>{ const r=ROUTES.find(x=>x.id===b.dataset.id); r.def.stadium?ovalCanvas(b.querySelector('canvas')):r.def.space?spaceCanvas(b.querySelector('canvas'), r.def):r.def.island?islandCanvas(b.querySelector('canvas'), r.def):profileCanvas(b.querySelector('canvas'), r.def.segs);
     b.onclick=()=>{ if(routeId===r.id) return; routeId=r.id; setRoute(r.def); sendRoute(); }; });
   const ok=list.some(r=>r.id===routeId) && R && R.def===list.find(r=>r.id===routeId).def;
-  $('todBox').style.display=ok&&R.stadium?'flex':'none'; document.querySelectorAll('.tod').forEach(b=>b.disabled=race.role==='guest'); $('rainOn').disabled=race.role==='guest';
+  $('todBox').style.display=ok&&!R.space?'flex':'none'; $('todNight').style.display=$('rainOn').parentNode.style.display=ok&&R.stadium?'':'none'; // draußen nur Tag/Abend
+  if(ok&&!R.stadium&&race.tod==='nacht'){ race.tod='abend'; document.querySelectorAll('.tod').forEach(b=>b.classList.toggle('sel',b.dataset.tod==='abend')); } document.querySelectorAll('.tod').forEach(b=>b.disabled=race.role==='guest'); $('rainOn').disabled=race.role==='guest';
   if(race.mode==='train'){ const T=woTotal(); $('routeSub').textContent = ok ? R.space?`Space-Strecke aus dem Workout · Steigung je nach Intensität · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)`:R.island?`Insel-Strecke aus dem Workout · Untergrund je nach Intensität · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)`:`${R.name} in Dauerschleife · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)` : 'Strecke wählen';
     $('lapsInfo').textContent=''; $('btnStart').disabled = race.role==='guest' || !ok || T<10;
     if(race.role!=='guest') $('startHint').textContent = T<10 ? 'Das Workout ist noch leer.' : 'Wer das Training erstellt, startet für beide.'; return; }
   if(race.mode==='chase'){ $('routeSub').textContent=ok?`${R.name} · ${Math.round(R.len)} m pro Runde · du startest, der Teufel kommt hinterher`:'';
     $('lapsInfo').textContent=''; $('btnStart').disabled=race.role==='guest'||!ok; if(race.role!=='guest') $('startHint').textContent='Nur allein – nicht online.'; return; }
-  $('routeSub').textContent = ok ? (R.loop?`${R.name} · ${R.stadium?Math.round(R.len)+' m pro Runde · flach mit Steilkurven':de(R.len/1000,1)+' km pro Runde · '+Math.round(R.gain)+' Höhenmeter'}${race.tod==='nacht'?' · Abendspiel mit Flutlicht':race.tod==='abend'?' · Abenddämmerung':''}${race.rain?' · Regen':''} · gewertet in Watt pro Kilo`:`${R.name} · ${de(R.len/1000,1)} km · ${Math.round(R.gain)} Höhenmeter · gewertet in Watt pro Kilo`) : MODES[race.mode].soon;
+  $('routeSub').textContent = ok ? (R.loop?`${R.name} · ${R.stadium?Math.round(R.len)+' m pro Runde · flach mit Steilkurven':de(R.len/1000,1)+' km pro Runde · '+Math.round(R.gain)+' Höhenmeter'}${race.tod==='nacht'?' · Abendspiel mit Flutlicht':race.tod==='abend'?' · Abenddämmerung':''}${race.rain&&R.stadium?' · Regen':''} · gewertet in Watt pro Kilo`:`${R.name} · ${de(R.len/1000,1)} km · ${Math.round(R.gain)} Höhenmeter${race.tod!=='tag'?' · Sonnenuntergang':''} · gewertet in Watt pro Kilo`) : MODES[race.mode].soon;
   $('lapsInfo').textContent = race.mode==='loop' && ok ? `${race.laps} × ${Math.round(R.len)} m = ${de(R.len*race.laps/1000,1)} km` : '';
   $('btnStart').disabled = race.role==='guest' || !ok;
   if(race.role!=='guest') $('startHint').textContent = ok ? 'Wer das Rennen erstellt, startet für beide.' : 'Für diesen Modus gibt es noch keine Strecke.';
@@ -84,8 +85,8 @@ $('edSave').onclick=()=>{ const k=ED.key; if(!String(ED.look.name||'').trim()) E
   if(k===myKey){ if(race.role==='host') sendCfg(); if(race.role==='guest') send({t:'hello',rider:myKey,look:LOOKS[myKey]}); } };
 $('formsOn').onchange=$('formsOn').onchange=()=>{ race.forms=$('formsOn').checked; formsLabel(); sendCfg(); };
 function formsLabel(){ $('formsLbl').textContent=$('formsOn').checked?'An – Avatar verwandelt sich je nach W/kg':'Aus – alle bleiben normale Fahrer'; }
-function setTod(tod,tell=true){ race.tod=['tag','abend','nacht'].includes(tod)?tod:'tag'; document.querySelectorAll('.tod').forEach(b=>b.classList.toggle('sel',b.dataset.tod===race.tod)); if(R&&R.stadium) applyStadiumEnv(); renderRouteList(); if(tell) sendCfg(); }
-function setRain(on,tell=true){ race.rain=!!on; $('rainOn').checked=race.rain; if(R&&R.stadium) applyStadiumEnv(); renderRouteList(); if(tell) sendCfg(); }
+function setTod(tod,tell=true){ race.tod=['tag','abend','nacht'].includes(tod)?tod:'tag'; document.querySelectorAll('.tod').forEach(b=>b.classList.toggle('sel',b.dataset.tod===race.tod)); applyEnv(); renderRouteList(); if(tell) sendCfg(); }
+function setRain(on,tell=true){ race.rain=!!on; $('rainOn').checked=race.rain; applyEnv(); renderRouteList(); if(tell) sendCfg(); }
 document.querySelectorAll('.tod').forEach(b=>b.onclick=()=>{ if(race.role!=='guest') setTod(b.dataset.tod); }); $('rainOn').onchange=()=>{ if(race.role!=='guest') setRain($('rainOn').checked); };
 function sendCfg(){ if(race.role==='host') send({t:'cfg',rider:myKey,forms:$('formsOn').checked,draft:$('draftOn').checked,mode:race.mode,laps:race.laps,tod:race.tod,rain:race.rain,look:LOOKS[myKey],wo:race.mode==='train'?WO:null}); }
 
