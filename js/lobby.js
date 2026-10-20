@@ -88,7 +88,8 @@ function formsLabel(){ $('formsLbl').textContent=$('formsOn').checked?'An – Av
 function setTod(tod,tell=true){ race.tod=['tag','abend','nacht'].includes(tod)?tod:'tag'; document.querySelectorAll('.tod').forEach(b=>b.classList.toggle('sel',b.dataset.tod===race.tod)); applyEnv(); renderRouteList(); if(tell) sendCfg(); }
 function setRain(on,tell=true){ race.rain=!!on; $('rainOn').checked=race.rain; applyEnv(); renderRouteList(); if(tell) sendCfg(); }
 document.querySelectorAll('.tod').forEach(b=>b.onclick=()=>{ if(race.role!=='guest') setTod(b.dataset.tod); }); $('rainOn').onchange=()=>{ if(race.role!=='guest') setRain($('rainOn').checked); };
-function sendCfg(){ if(race.role==='host') send({t:'cfg',rider:myKey,forms:$('formsOn').checked,draft:$('draftOn').checked,mode:race.mode,laps:race.laps,tod:race.tod,rain:race.rain,look:LOOKS[myKey],wo:race.mode==='train'?WO:null}); }
+$('windLvl').onchange=()=>{ race.wind=+$('windLvl').value; sendCfg(); };
+function sendCfg(){ if(race.role==='host') send({t:'cfg',rider:myKey,forms:$('formsOn').checked,draft:$('draftOn').checked,wind:+$('windLvl').value,mode:race.mode,laps:race.laps,tod:race.tod,rain:race.rain,look:LOOKS[myKey],wo:race.mode==='train'?WO:null}); }
 
 /* Lobby-Hintergrund: Pfälzer Weinberge im Herbst, dahinter der Pfälzerwald */
 function lobbyBackdrop(){

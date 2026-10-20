@@ -61,7 +61,7 @@ function trainerCtl(){
 }
 function trainerSlope(){
   if(!(ftmsCtrl||fecWr)||!$('slopeOn').checked||(me.done&&!me.free)) return;
-  const g=(gradeAt(me.d)+belagAt(me.d,weight()))*(+$('slopeK').value/100), now=performance.now();
+  const g=(gradeAt(me.d)+belagAt(me.d,weight())+(me.airS||0))*(+$('slopeK').value/100), now=performance.now();
   if((lastSlopeSent===null||Math.abs(g-lastSlopeSent)>0.15)&&now-lastSlopeAt>1000){ lastSlopeSent=g; lastSlopeAt=now; setSlope(g); }
 }
 async function connectHr(){

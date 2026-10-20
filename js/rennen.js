@@ -30,8 +30,16 @@ function partsFx(dt,list){ const on=!race.paused&&!camOverride, t=performance.no
     const b=!race.rain&&R.belag&&R.belag.length?belagOf(R,o.d):null;
     if(b&&b[0]==='beton') for(let n=rate(parts.dust,key,o.v*3,dt);n>0;n--){ const s=(Math.random()-.5)*1.6; partSpawn(parts.dust,x,y,z,cx*o.v*.3-cz*s,.3+Math.random()*.4,cz*o.v*.3+cx*s,1.4,'#c2b08f'); } }
   if(on&&R.gpx&&!race.rain&&zoneAt(R,R.loop?me.d%R.len:me.d)==='wald') for(let n=rate(parts.leaf,'w',1.2,dt);n>0;n--){ const hd=headingAt(R,me.d), f=6+Math.random()*20, s=(Math.random()-.5)*12, c=camera.position;
-    partSpawn(parts.leaf,c.x+Math.cos(hd)*f-Math.sin(hd)*s,c.y+1+Math.random()*4,c.z+Math.sin(hd)*f+Math.cos(hd)*s,(Math.random()-.5),-.2,(Math.random()-.5),5,['#c8892e','#a5652a','#d9b04c','#7d8a3a'][Math.random()*4|0]); }
+    partSpawn(parts.leaf,c.x+Math.cos(hd)*f-Math.sin(hd)*s,c.y+1+Math.random()*4,c.z+Math.sin(hd)*f+Math.cos(hd)*s,(Math.random()-.5)+Math.cos(race.windDir)*windNow()*.3,-.2,(Math.random()-.5)+Math.sin(race.windDir)*windNow()*.3,5,['#c8892e','#a5652a','#d9b04c','#7d8a3a'][Math.random()*4|0]); }
   for(const k of ['spray','dust','leaf']) partStep(parts[k],dt,t); }
+// Windschatten sichtbar: feine Luftlinien hinter dem Vordermann, die sich hinter ihm zusammenziehen – je mehr Windschatten, desto deutlicher
+const luft=(()=>{ const N=28, q=rng(321), s=[]; for(let i=0;i<N;i++) s.push({y:.35+q()*1.3, z:(q()-.5)*.9, u:q()});
+  const p=new Float32Array(N*6), g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  const m=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xf2f6fa,transparent:true,opacity:0,depthWrite:false})); m.frustumCulled=false; m.visible=false; scene.add(m); return {m,p,s}; })();
+function luftFx(dt,lead,dr){ const L=luft, f=clampN(dr/.35,0,1); L.m.visible=f>.03&&!camOverride&&lead.g.visible; if(!L.m.visible) return;
+  L.m.position.copy(lead.g.position); L.m.rotation.copy(lead.g.rotation); L.m.material.opacity=.12+.4*f;
+  L.s.forEach((o,i)=>{ o.u=(o.u+dt*1.1)%1; const at=u=>[-.5-u*6, o.y+(1-o.y)*u*.7, o.z*(1-u*.75)], a=at(o.u), b=at(Math.min(1,o.u+.09)); L.p.set([...a,...b],i*6); });
+  L.m.geometry.attributes.position.needsUpdate=true; }
 function speedFx(dt,v){ const f=clampN((v-10.42)/5.56,0,1), W=wind; // 0 bei 37,5 km/h, 1 bei 57,5 km/h
   W.m.visible=f>0.01&&!R.space&&!camOverride; W.m.material.opacity=0.12+f*0.5;
   if(W.m.visible){ const n=Math.round(20+40*f); W.seed.forEach((o,i)=>{ o.z+=v*1.3*dt; if(o.z>-0.5||Math.abs(o.x)>-o.z*1.3) W.spawn(o,false);
@@ -92,7 +100,7 @@ function draw(dt){
   if(camOverride){ camera.position.set(...camOverride.pos); camera.lookAt(...camOverride.look); }
   else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); camS.roll=(camS.roll||0)+(rollT-(camS.roll||0))*Math.min(1,dt*3); if(Math.abs(camS.roll)>1e-4) camera.rotateZ(camS.roll); camShake(dt,vC); }
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
-  sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vC); regenFx(race.paused?0:dt); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);
+  sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vC); regenFx(race.paused?0:dt); luftFx(race.paused?0:dt,theirs,opp.active&&race.draft&&!me.done?me.draftR||0:0); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);
   for(const r of [mine,theirs]){ const dist=camera.position.distanceTo(r.g.position), ds=Math.max(1,dist/14); r.tag.scale.set(1.9*ds,.475*ds,1); r.tag.visible=dist>6; } // Namensschild bleibt auch aus der Ferne lesbar
   renderer.render(scene,camera);
   ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H); miniMap(); miniProfile();
@@ -115,6 +123,9 @@ function miniMap(){
   else { ctx.fillStyle='#1c7ed6'; ctx.fillRect(sx-4,sy-4,8,8); ctx.fillStyle='#d62828'; ctx.beginPath(); ctx.moveTo(ex,ey-9); ctx.lineTo(ex+7,ey+5); ctx.lineTo(ex-7,ey+5); ctx.fill(); }
   const dot=(d,col)=>{ const [px,py]=posAt(R,d), [a,b]=P(px,py); ctx.fillStyle=col; ctx.strokeStyle=lineCol(col); ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(a,b,6.5,0,7); ctx.fill(); ctx.stroke(); };
   if(opp.active) dot(opp.d,RIDERS[oppKey].dot); dot(me.d,RIDERS[myKey].dot);
+  if(race.wind&&!R.space){ const L=13; ctx.save(); ctx.translate(x0+26,y0+26); ctx.rotate(race.windDir); ctx.strokeStyle=ctx.fillStyle='#e9f1f7'; ctx.lineWidth=2.5; // Windpfeil: wohin der Wind weht (Karte genordet wie die Welt)
+    ctx.beginPath(); ctx.moveTo(-L,0); ctx.lineTo(L-5,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(L,0); ctx.lineTo(L-8,-6); ctx.lineTo(L-8,6); ctx.fill(); ctx.restore();
+    const hw=windHead(me.d); ctx.font='600 12px Barlow, sans-serif'; ctx.textAlign='left'; ctx.fillStyle='#c9d6cc'; ctx.fillText(`Wind ${Math.round(windNow()*3.6)} km/h`,x0+46,y0+22); ctx.fillText(hw>.5?'Gegenwind':hw<-.5?'Rückenwind':'Seitenwind / geschützt',x0+46,y0+37); }
 }
 function miniProfile(){
   const pad=16, h=56, w=W-pad*2, y0=H-pad;
@@ -148,6 +159,7 @@ function curPower(){ return live.src==='sim' ? (simErg()? Math.round(me.tgt||0) 
 function simStep(dt,P,wkg){
     race.t+=dt; recStep(dt,P);
     me.draftR = opp.active&&!me.done ? draftOf(opp.d-me.d) : 0;
+    me.airS=(me.airS||0)+(airSlope(me,weight(),me.draftR)-(me.airS||0))*Math.min(1,dt/2); // Wind und Windschatten am Trainer, Böen über 2 s geglättet
     if(race.mode==='train') trainStep(dt,P,wkg);
     else if(race.mode==='chase') chaseStep(dt,P,wkg);
     else { if(!me.done){ step(me,P,weight(),dt,me.draftR); me.time=race.t; me.wkgSum+=wkg*dt; me.maxWkg=Math.max(me.maxWkg,wkg);
@@ -296,10 +308,10 @@ function startRace(){
   if(race.role==='guest') return;
   if($('btnStart').disabled) return;
   if(race.mode==='train' && GEN_IDS.includes(routeId)){ const e=genEntry(routeId); if(R.def!==e.def) setRoute(e.def); } // Space/Insel: Strecke passt zum aktuellen Workout
-  resetRiders(); race.forms=$('formsOn').checked; race.draft=$('draftOn').checked;
+  resetRiders(); race.forms=$('formsOn').checked; race.draft=$('draftOn').checked; race.wind=+$('windLvl').value; race.windDir=Math.random()*Math.PI*2; // Windrichtung zufällig pro Rennen
   if(race.mode==='chase'){ oppKey='devil'; Object.assign(opp,{active:true,bot:true,watt:null,wkg:0,name:'Teufel',d:0,v:0,done:false,wkgSum:0,avg:0});
     const C=chaseCfg(); race.chase={...C,lvl:C.wkg,started:false,caught:false}; race.draft=false; riders3d.devil.lane=null; }
-  else if(conn && conn.open){ Object.assign(opp,{active:true,bot:false,watt:null,name:RIDERS[oppKey].name,d:0,target:0,v:0,done:false}); sendRoute(); send({t:'start',forms:race.forms,draft:race.draft,tod:race.tod,rain:race.rain,mode:race.mode,laps:race.laps,wo:race.mode==='train'?WO:null}); }
+  else if(conn && conn.open){ Object.assign(opp,{active:true,bot:false,watt:null,name:RIDERS[oppKey].name,d:0,target:0,v:0,done:false}); sendRoute(); send({t:'start',forms:race.forms,draft:race.draft,tod:race.tod,rain:race.rain,wind:race.wind,wd:race.windDir,mode:race.mode,laps:race.laps,wo:race.mode==='train'?WO:null}); }
   else if($('botOn').checked && race.mode!=='train'){ oppKey=botKey; Object.assign(opp,{active:true,bot:true,watt:null,name:RIDERS[oppKey].name,d:0,v:0,done:false,wkgSum:0,avg:0}); opp.plan=botPlan(); }
   else opp.active=false;
   countdown();

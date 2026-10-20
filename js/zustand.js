@@ -23,7 +23,7 @@ const $=id=>document.getElementById(id);
 const live={power:0,cadence:null,hr:null,src:'sim'};
 const me={d:0,v:0,crank:0,done:false,time:0,wkgSum:0,maxWkg:0};
 const opp={active:false,bot:false,name:RIDERS.dengel.name,d:0,v:0,target:0,crank:0,wkg:0,done:false,time:0,lastAt:0,wkgSum:0};
-const race={state:'setup',t:0,last:0,role:null,hrMax:0,forms:true,draft:true,mode:'climb',laps:5,tod:'tag',rain:false,frozen:false,resultShown:false};
+const race={state:'setup',t:0,last:0,role:null,hrMax:0,forms:true,draft:true,mode:'climb',laps:5,tod:'tag',rain:false,wind:0,windDir:0,frozen:false,resultShown:false};
 let peer=null, conn=null, ftmsCtrl=null, fecWr=null, writeQ=Promise.resolve(), lastSlopeSent=null, lastSlopeAt=0, camOverride=null;
 const weight=()=>Math.max(35,+$('weight').value||72), botKg=()=>Math.min(130,Math.max(40,+$('botKg').value||75));
 const fmtT=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s/60)%60,x=String(s%60).padStart(2,'0');return h?`${h}:${String(m).padStart(2,'0')}:${x}`:`${m}:${x}`;};

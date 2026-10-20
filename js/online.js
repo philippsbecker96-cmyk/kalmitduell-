@@ -9,7 +9,7 @@ function sendRoute(){ if(race.role!=='host'||!conn||!conn.open) return; const d=
   send({t:'route',def:{name:d.name,start:d.start,finish:d.finish,startElev:d.startElev,plainElev:d.plainElev,kalmit:d.kalmit,gpx:d.gpx,loop:d.loop,zones:d.zones,breite:d.breite,belag:d.belag,kom:d.kom,poly,segs:d.segs}}); }
 function guestUi(){ // Gast: Strecke, Verwandlungen und Fahrer legt der Ersteller fest
   document.querySelectorAll('.hostonly').forEach(t=>t.style.display=''); $('modeTag').style.display=''; $('btnBack').textContent='← Raum verlassen'; $('btnBack2').textContent='← Raum verlassen';
-  for(const id of ['formsOn','draftOn','lapMinus','lapPlus','botOn','botRider','botWkg','botKg','botStyle','botAgg','btnHost']) $(id).disabled=true; $('botOn').checked=false;
+  for(const id of ['formsOn','draftOn','windLvl','lapMinus','lapPlus','botOn','botRider','botWkg','botKg','botStyle','botAgg','btnHost']) $(id).disabled=true; $('botOn').checked=false;
   $('modeScreen').style.display='none'; $('cfgScreen').style.display=''; renderRouteList();
 }
 function wire(c){
@@ -19,14 +19,14 @@ function wire(c){
   c.on('data',m=>{
     if(m.t==='hello' && race.role==='host'){ oppKey=m.rider; if(m.look&&JSON.stringify(remoteLooks[m.rider])!==JSON.stringify(m.look)){ remoteLooks[m.rider]=m.look; rebuildRiders(); } document.querySelectorAll('.rcard').forEach(cd=>cd.classList.toggle('taken',cd.dataset.k===oppKey)); opp.name=RIDERS[oppKey].name; setConn(`Verbunden mit ${opp.name} ✓ – du startest das Rennen`); sendCfg(); }
     if(m.t==='cfg' && race.role==='guest'){ if(m.tod) setTod(m.tod,false); if(m.rain!=null) setRain(m.rain,false); $('formsOn').checked=!!m.forms; race.forms=!!m.forms; formsLabel();
-      $('draftOn').checked=!!m.draft; race.draft=!!m.draft; draftLabel(); race.laps=m.laps||5; if(m.wo){ WO=m.wo; } if(m.mode) openMode(m.mode); if(m.wo) renderWo();
+      $('draftOn').checked=!!m.draft; race.draft=!!m.draft; draftLabel(); if(m.wind!=null){ race.wind=m.wind; $('windLvl').value=m.wind; } race.laps=m.laps||5; if(m.wo){ WO=m.wo; } if(m.mode) openMode(m.mode); if(m.wo) renderWo();
       oppKey=m.rider; if(m.look&&JSON.stringify(remoteLooks[m.rider])!==JSON.stringify(m.look)){ remoteLooks[m.rider]=m.look; rebuildRiders(); }
       if(m.rider===myKey || !document.querySelector('.rcard.sel')) selectRider(RKEYS.find(k=>k!==m.rider));
       document.querySelectorAll('.rcard').forEach(cd=>cd.classList.toggle('taken',cd.dataset.k===m.rider));
       opp.name=RIDERS[m.rider].name; setConn(`Verbunden mit ${opp.name} ✓ – du fährst als ${RIDERS[myKey].name}, warte auf den Start`); }
     if(m.t==='route' && race.role==='guest'){ try{ if(m.def.stadium) m.def=stadionDef(); routeId='host'; const i=ROUTES.findIndex(r=>r.id==='host'); const e={id:'host',mode:race.mode,title:m.def.name,sub:'vom Ersteller gewählt',def:m.def};
       if(i>=0) ROUTES[i]=e; else ROUTES.push(e); setRoute(m.def); }catch(e){} }
-    if(m.t==='start' && race.role==='guest'){ if(m.wo) WO=m.wo; if(m.tod) setTod(m.tod,false); if(m.rain!=null) setRain(m.rain,false); resetRiders(); race.forms=!!m.forms; race.draft=!!m.draft; Object.assign(opp,{active:true,bot:false,watt:null,d:0,target:0,v:0,done:false}); countdown(); }
+    if(m.t==='start' && race.role==='guest'){ if(m.wo) WO=m.wo; if(m.tod) setTod(m.tod,false); if(m.rain!=null) setRain(m.rain,false); resetRiders(); race.forms=!!m.forms; race.draft=!!m.draft; race.wind=m.wind||0; race.windDir=m.wd||0; Object.assign(opp,{active:true,bot:false,watt:null,d:0,target:0,v:0,done:false}); countdown(); }
     if(m.t==='w' && race.role==='guest' && race.wert && race.wert[m.i] && !race.wert[m.i].win) wertWin(m.i,m.h?'opp':'me'); // Wertung vom Ersteller
     if(m.t==='pause') setPause(true,false);
     if(m.t==='resume') resumeRace(false);

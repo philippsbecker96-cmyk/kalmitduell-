@@ -7,6 +7,15 @@ const phys=()=>R&&R.stadium?PH_TRACK:PH_ROAD;
 const cdaOf=(kg,c0=phys().cda)=>c0*(0.15+0.85*Math.pow(kg/75,2/3));
 // Windschatten: bis 1 m hinter dem Vordermann 35 % weniger Luftwiderstand, bei 10 m nichts mehr
 function draftOf(gapAhead){ if(!race.draft || !(gapAhead>0.3) || gapAhead>10) return 0; return 0.35*(1-(Math.max(gapAhead,1)-1)/9); }
+// Wind: Stärke in der Lobby (aus/leicht/mittel/stark), Richtung zufällig pro Rennen, Böen ±30 % aus der Rennzeit (online auf beiden Seiten gleich).
+// Wald, Ort und Stadion schirmen ab, wirkt mit 60 % der vollen Kraft. windHead = Gegenwind in Fahrtrichtung in m/s (negativ = Rückenwind)
+const WIND_KMH=[0,10,20,30], WIND_K=0.6, SHIELD={wald:.3,ort:.5,hain:.6};
+const windNow=()=>!race.wind||!R||R.space?0:WIND_KMH[race.wind]/3.6*(1+.3*(.6*Math.sin(race.t/7.3+race.windDir*5)+.4*Math.sin(race.t/2.9+1)));
+function shieldAt(d){ if(R.stadium) return .4; if(R.island||!R.zones.length) return 1; const z=x=>SHIELD[zoneAt(R,R.loop?((x%R.len)+R.len)%R.len:x)]??1; return (z(d-15)+z(d)+z(d+15))/3; }
+function windHead(d){ const w=windNow(); return w?-w*shieldAt(d)*Math.cos(race.windDir-headingAt(R,d)):0; }
+const airF=(v,w)=>v*v+WIND_K*((v+w)*Math.abs(v+w)-v*v); // Luftwiderstand ∝ v² bei Windstille
+// Wind und Windschatten für den Trainer als Zusatzsteigung (wie das Pflaster), höchstens ±3 %
+function airSlope(o,kg,draft){ const v=o.v, c=0.5*RHO*cdaOf(kg)*(o.aero?AERO:1); return clampN(c*((1-draft)*airF(v,windHead(o.d))-v*v)/((kg+BIKE_KG)*G)*100,-3,3); }
 // Aero-Haltung: wer in der Abfahrt rollt (unter 15 W, ab 4 % Gefälle, über 45 km/h), duckt sich – 18 % weniger Luftwiderstand
 const AERO=0.82;
 function aeroOf(o,P,g){ o.aero=o.aero?P<25&&g<-3.5&&o.v>12:P<15&&g<=-4&&o.v>12.5; return o.aero; }
@@ -14,7 +23,7 @@ function aeroOf(o,P,g){ o.aero=o.aero?P<25&&g<-3.5&&o.v>12:P<15&&g<=-4&&o.v>12.5
 const gearOf=v=>clampN((20-v)/2.78,0,1);
 function step(o, P, kg, dt, draft=0){ // P = echte Watt, kg = Fahrergewicht
   const M=kg+BIKE_KG, g0=gradeAt(o.d), th=Math.atan((g0+belagAt(o.d,kg))/100), cda=cdaOf(kg)*(aeroOf(o,P,g0)?AERO:1);
-  const Fg=M*G*Math.sin(th), Fr=phys().crr*M*G*Math.cos(th), Fa=0.5*RHO*cda*(1-draft)*o.v*o.v, Fp=Math.min(P/Math.max(o.v,0.8),450)*gearOf(o.v); // 450 N: Grenze beim Anfahren aus dem Stand
+  const Fg=M*G*Math.sin(th), Fr=phys().crr*M*G*Math.cos(th), Fa=0.5*RHO*cda*(1-draft)*airF(o.v,windHead(o.d)), Fp=Math.min(P/Math.max(o.v,0.8),450)*gearOf(o.v); // 450 N: Grenze beim Anfahren aus dem Stand
   o.v=Math.max(0,o.v+(Fp-Fg-Fr-Fa)/(M+1.5)*dt); o.d+=o.v*dt;
 }
 
