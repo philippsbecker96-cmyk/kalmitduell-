@@ -69,7 +69,7 @@ function suedpfalzDef(loop){ const V=SP_V, E=scharfeEcke(hoeheSchliessen(SUEDPFA
   // B10 links parallel (Mitte 30 m neben dem Weg), dazwischen und dahinter Gehölz (Bahn, Queich), dahinter Gewerbe von Godramstein
   b10:Z([[12140,12800,-1,30]]), gehoelz:Z([[12140,12800,-1,4,19],[12140,12800,-1,42,130],[12800,null,-1,4,60]]), gewerbe:Z([[12450,12800,-1,160]]),
   kom:Z([[1220,2360,'Hauptstraße Arzheim'],[6150,7150,'Höchster Punkt · 271 m']]), // Bergwertungen: [Anstieg ab, Wertung oben, Name] – Arzheim bis kurz hinters Ortsausgangsschild
-  breite:Z([[1000,2350,5],[5400,6200,4.2],[8000,9050,6.6],[9080,12990,3.2]]), belag:[['pflaster',5400,6000,2.5],['beton',9080,12990,0]].map(([t,a,b,x])=>[t,...ur(a,b),x])}); }
+  breite:Z([[1000,2350,5],[5400,6200,4.2],[8000,9050,6.6],[9080,12990,3.2]]), belag:[['pflaster',5400,6000,1.2],['beton',9080,12990,0]].map(([t,a,b,x])=>[t,...ur(a,b),x])}); }
 const zoneOf=(r,d)=>{ for(const z of r.zones) if(d>=z[1]&&d<z[2]) return z; return null; };
 const zoneAt=(r,d)=>{ const z=zoneOf(r,d); return z?z[0]:'wald'; };
 const zOpt=(r,d)=>{ const z=zoneOf(r,d); return z&&z[3]||{}; };

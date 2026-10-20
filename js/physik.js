@@ -5,8 +5,9 @@ const PH_ROAD={cda:0.36,crr:0.005}, PH_TRACK={cda:0.30,crr:0.004};
 const phys=()=>R&&R.stadium?PH_TRACK:PH_ROAD;
 // Luftwiderstand wächst mit der Stirnfläche (≈ Gewicht hoch 2/3); rund 15 % davon entfallen aufs Rad und bleiben gleich
 const cdaOf=(kg,c0=phys().cda)=>c0*(0.15+0.85*Math.pow(kg/75,2/3));
-// Windschatten: bis 1 m hinter dem Vordermann 35 % weniger Luftwiderstand, bei 10 m nichts mehr
-function draftOf(gapAhead){ if(!race.draft || !(gapAhead>0.3) || gapAhead>10) return 0; return 0.35*(1-(Math.max(gapAhead,1)-1)/9); }
+// Windschatten (Abstand Mitte zu Mitte): voll 35 % bei 2–2,5 m (30–50 cm zwischen Hinter- und Vorderrad), bis 10 m auslaufend.
+// Unter 2 m fährt man zwangsläufig daneben – dort nur noch bis 10 %
+function draftOf(gapAhead){ if(!race.draft || !(gapAhead>0) || gapAhead>10) return 0; if(gapAhead<2) return 0.1*gapAhead/2; return 0.35*(1-Math.max(0,gapAhead-2.5)/7.5); }
 // Wind: Stärke in der Lobby (aus/leicht/mittel/stark), Richtung zufällig pro Rennen, Böen ±30 % aus der Rennzeit (online auf beiden Seiten gleich).
 // Wald, Ort und Stadion schirmen ab, wirkt mit 60 % der vollen Kraft. windHead = Gegenwind in Fahrtrichtung in m/s (negativ = Rückenwind)
 const WIND_KMH=[0,10,20,30], WIND_K=0.6, SHIELD={wald:.3,ort:.5,hain:.6};

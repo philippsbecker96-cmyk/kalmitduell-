@@ -89,7 +89,8 @@ function applyEnv(){ if(!R||R.space) return; if(R.stadium){ applyStadiumEnv(); r
   hausLicht(); if(dusk){ setSky(rain?'duskGrey':'dusk'); hemi.color.set(0x9c9ccc); hemi.groundColor.set(0x40302a); hemi.intensity=rain?.6:.76; sun.color.set(0xff9452); sun.intensity=rain?.4:1.45; SUN_DIR.set(-1,.2,.42).normalize(); sunDisc(!rain); }
   else if(rain){ setSky('grey'); hemi.color.set(0xc4ccd4); hemi.intensity=.7; sun.color.set(0xeef2f6); sun.intensity=.5; }
   scene.fog.near=rain?60:R.fog0[0]; scene.fog.far=rain?Math.min(R.fog0[1],900):R.fog0[1]; wetRoads(rain); }
-// Nasse Straße: Phong statt Lambert, dunkler und mit Glanzlicht (Materialien mit userData.wet)
+// Nasse Straße: Phong statt Lambert, dunkler, mit kräftigem Glanzlicht und leichter Spiegelung des Himmels (Materialien mit userData.wet)
+let WET_ENV=null; const wetEnv=()=>WET_ENV||(WET_ENV=Object.assign(canvasTex(8,128,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'#eef1f3'); gr.addColorStop(.5,'#c4c9cd'); gr.addColorStop(1,'#6d7176'); g.fillStyle=gr; g.fillRect(0,0,w,h); }),{mapping:THREE.EquirectangularReflectionMapping}));
 function wetRoads(on){ if(!world) return; world.traverse(o=>{ if(!o.isMesh) return; const d=o.userData.dry||o.material; if(!d.userData||!d.userData.wet) return; o.userData.dry=d;
-  if(on&&!d.userData.wm){ const w=d.userData.wm=new THREE.MeshPhongMaterial({map:d.map,color:d.color.clone().multiplyScalar(.62),specular:0x4a4d52,shininess:60,side:d.side,polygonOffset:d.polygonOffset,polygonOffsetFactor:d.polygonOffsetFactor,polygonOffsetUnits:d.polygonOffsetUnits}); if(KX.on) kxPatch(w); }
+  if(on&&!d.userData.wm){ const w=d.userData.wm=new THREE.MeshPhongMaterial({map:d.map,color:d.color.clone().multiplyScalar(.5),specular:0x9aa0a6,shininess:110,envMap:wetEnv(),combine:THREE.MixOperation,reflectivity:.22,side:d.side,polygonOffset:d.polygonOffset,polygonOffsetFactor:d.polygonOffsetFactor,polygonOffsetUnits:d.polygonOffsetUnits}); if(KX.on) kxPatch(w); }
   o.material=on?d.userData.wm:d; }); }
