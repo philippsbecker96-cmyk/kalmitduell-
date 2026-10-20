@@ -82,6 +82,14 @@ function sunDisc(on){ if(!SUNS){ const rad=(a,b)=>canvasTex(128,128,(g)=>{ const
   SUNS.forEach(s=>{ s.visible=on; s.position.copy(SUN_DIR).multiplyScalar(4500); }); }
 // Land-Welten: Tag = Mittagssonne, Abend = Sonnenuntergang im Westsüdwesten (x = Osten, z = Süden). Nacht gibt es nur im Stadion (Flutlicht) – draußen wird daraus Abend.
 const DUSK_BG=0xf0a873;
+// Regen (nur Optik): grauer Himmel, kürzere Sicht, wenig Sonne, nasse Straßen glänzen
 function applyEnv(){ if(!R||R.space) return; if(R.stadium){ applyStadiumEnv(); return; }
-  dayLights(); const dusk=race.tod!=='tag', bg=dusk?DUSK_BG:HORIZON; scene.background.set(bg); scene.fog.color.set(bg);
-  hausLicht(); if(dusk){ setSky('dusk'); hemi.color.set(0x9c9ccc); hemi.groundColor.set(0x40302a); hemi.intensity=.76; sun.color.set(0xff9452); sun.intensity=1.45; SUN_DIR.set(-1,.2,.42).normalize(); sunDisc(true); } }
+  if(R.fog0==null) R.fog0=[scene.fog.near,scene.fog.far];
+  dayLights(); const dusk=race.tod!=='tag', rain=!!race.rain, bg=dusk?(rain?0x9a8478:DUSK_BG):rain?0xb6bbbf:HORIZON; scene.background.set(bg); scene.fog.color.set(bg);
+  hausLicht(); if(dusk){ setSky(rain?'duskGrey':'dusk'); hemi.color.set(0x9c9ccc); hemi.groundColor.set(0x40302a); hemi.intensity=rain?.6:.76; sun.color.set(0xff9452); sun.intensity=rain?.4:1.45; SUN_DIR.set(-1,.2,.42).normalize(); sunDisc(!rain); }
+  else if(rain){ setSky('grey'); hemi.color.set(0xc4ccd4); hemi.intensity=.7; sun.color.set(0xeef2f6); sun.intensity=.5; }
+  scene.fog.near=rain?60:R.fog0[0]; scene.fog.far=rain?Math.min(R.fog0[1],900):R.fog0[1]; wetRoads(rain); }
+// Nasse Straße: Phong statt Lambert, dunkler und mit Glanzlicht (Materialien mit userData.wet)
+function wetRoads(on){ if(!world) return; world.traverse(o=>{ if(!o.isMesh) return; const d=o.userData.dry||o.material; if(!d.userData||!d.userData.wet) return; o.userData.dry=d;
+  if(on&&!d.userData.wm){ const w=d.userData.wm=new THREE.MeshPhongMaterial({map:d.map,color:d.color.clone().multiplyScalar(.62),specular:0x4a4d52,shininess:60,side:d.side,polygonOffset:d.polygonOffset,polygonOffsetFactor:d.polygonOffsetFactor,polygonOffsetUnits:d.polygonOffsetUnits}); if(KX.on) kxPatch(w); }
+  o.material=on?d.userData.wm:d; }); }

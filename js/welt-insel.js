@@ -51,7 +51,7 @@ function buildIsland(){
   const isSteg=i=>I.cross[i]&&I.mode[i]===0, isRoad=i=>!I.cross[i]&&I.mode[i]===0;
   const atex=canvasTex(64,256,g=>{ g.fillStyle='#6d6f72'; g.fillRect(0,0,64,256); for(let t=0;t<500;t++){ const v=Math.random()<.5?0:255; g.fillStyle=`rgba(${v},${v},${v},.06)`; g.fillRect(Math.random()*64,Math.random()*256,2,2); }
     g.fillStyle='#f1efe6'; g.fillRect(3,0,3,256); g.fillRect(58,0,3,256); g.fillStyle='#f2c94c'; g.fillRect(31,0,2,140); }); atex.wrapT=THREE.RepeatWrapping; atex.anisotropy=8;
-  ribbon(rangesOf(isRoad), i=>[P(i,-hw,.06),P(i,hw,.06)], Object.assign(new THREE.MeshLambertMaterial({map:atex, side:THREE.DoubleSide}),{polygonOffset:true,polygonOffsetFactor:-2}), 10);
+  ribbon(rangesOf(isRoad), i=>[P(i,-hw,.06),P(i,hw,.06)], Object.assign(new THREE.MeshLambertMaterial({map:atex, side:THREE.DoubleSide}),{userData:{wet:1},polygonOffset:true,polygonOffsetFactor:-2}), 10);
   const sandTr=canvasTex(64,128,g=>{ g.clearRect(0,0,64,128); g.fillStyle='rgba(150,120,70,.35)'; for(const x of [14,46]){ for(let y=0;y<128;y+=4) g.fillRect(x-3+Math.sin(y*.2)*1,y,6,3); } });
   sandTr.wrapT=THREE.RepeatWrapping;
   ribbon(rangesOf(i=>!isSteg(i)&&(I.mode[i]===1||I.mode[i]===2)), i=>[P(i,-2.2,.03),P(i,2.2,.03)], Object.assign(new THREE.MeshBasicMaterial({map:sandTr, transparent:true, depthWrite:false, side:THREE.DoubleSide}),{polygonOffset:true,polygonOffsetFactor:-2}), 6);

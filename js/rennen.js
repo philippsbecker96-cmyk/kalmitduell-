@@ -7,6 +7,31 @@ const wind=(()=>{ const N=60, p=new Float32Array(N*6), q=rng(4711), seed=[];
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3));
   const m=new THREE.LineSegments(g, new THREE.LineBasicMaterial({color:0xf2f6fa, transparent:true, opacity:0, depthWrite:false, fog:false}));
   m.frustumCulled=false; m.visible=false; m.renderOrder=10; camera.add(m); return {m,p,seed,spawn,N}; })();
+// Regen draußen: Tropfen um die Kamera (wie im Stadion)
+const regen=(()=>{ const N=1800, p=new Float32Array(N*6), q=rng(99), info=[]; for(let i=0;i<N;i++) info.push([(q()-.5)*60,q()*30-8,(q()-.5)*60]);
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  const m=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:'#d6dee8',transparent:true,opacity:.38,depthWrite:false})); m.frustumCulled=false; m.visible=false; scene.add(m); return {m,p,info}; })();
+function regenFx(dt){ const on=race.rain&&!R.stadium&&!R.space; regen.m.visible=on; if(!on) return; const c=camera.position;
+  regen.info.forEach((o,i)=>{ o[1]-=13*dt; if(o[1]<-8) o[1]+=30; const x=c.x+o[0]+o[1]*.06, y=c.y+o[1], z=c.z+o[2]; regen.p.set([x,y,z,x+.04,y+.6,z],i*6); }); regen.m.geometry.attributes.position.needsUpdate=true; }
+// Partikel: Gischt hinter dem Hinterrad bei Regen, Staub auf dem Betonweg, Blätter im Wald
+const parts=(()=>{ const dot=canvasTex(32,32,g=>{ const gr=g.createRadialGradient(16,16,0,16,16,16); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.5,'rgba(255,255,255,.6)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,32,32); });
+  const mk=(N,size,op,grav,map)=>{ const g=new THREE.BufferGeometry(), p=new Float32Array(N*3).fill(-1e5), c=new Float32Array(N*3); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('color',new THREE.BufferAttribute(c,3));
+    const m=new THREE.Points(g,new THREE.PointsMaterial({size,vertexColors:true,transparent:true,opacity:op,depthWrite:false,map})); m.frustumCulled=false; scene.add(m); return {m,p,c,N,grav,v:new Float32Array(N*3),life:new Float32Array(N),i:0,acc:{}}; };
+  return {spray:mk(500,.13,.75,9.8,dot), dust:mk(300,.45,.35,-.15,dot), leaf:mk(80,.16,.95,.5,null), col:new THREE.Color()}; })();
+function partSpawn(S,x,y,z,vx,vy,vz,life,col){ const i=S.i; S.i=(S.i+1)%S.N; S.p.set([x,y,z],i*3); S.v.set([vx,vy,vz],i*3); S.life[i]=life; parts.col.set(col); S.c.set([parts.col.r,parts.col.g,parts.col.b],i*3); }
+function partStep(S,dt,t){ for(let i=0;i<S.N;i++){ if(S.life[i]<=0) continue; S.life[i]-=dt; if(S.life[i]<=0){ S.p[i*3+1]=-1e5; continue; }
+    if(S===parts.leaf){ S.v[i*3]+=Math.sin(t*2.3+i)*dt*1.5; S.v[i*3+2]+=Math.cos(t*1.9+i*1.7)*dt*1.5; } // Blätter trudeln
+    S.v[i*3+1]-=S.grav*dt; for(let k=0;k<3;k++) S.p[i*3+k]+=S.v[i*3+k]*dt; }
+  S.m.geometry.attributes.position.needsUpdate=true; S.m.geometry.attributes.color.needsUpdate=true; }
+const rate=(S,key,r,dt)=>{ S.acc[key]=(S.acc[key]||0)+r*dt; const n=Math.floor(S.acc[key]); S.acc[key]-=n; return n; };
+function partsFx(dt,list){ const on=!race.paused&&!camOverride, t=performance.now()/1000; if(!(dt>0)) return;
+  if(on) for(const [r,o,key] of list){ if(!r.g.visible||o.v<1.5) continue; const hd=headingAt(R,o.d), cx=Math.cos(hd), cz=Math.sin(hd), p=r.g.position, x=p.x-cx*.5, z=p.z-cz*.5, y=p.y+.08;
+    if(race.rain&&!R.space) for(let n=rate(parts.spray,key,o.v*6,dt);n>0;n--){ const s=(Math.random()-.5)*.8; partSpawn(parts.spray,x,y,z,cx*o.v*.55-cz*s,1.5+Math.random()*1.2,cz*o.v*.55+cx*s,.45,Math.random()<.5?'#dfe6ec':'#c4ccd3'); }
+    const b=!race.rain&&R.belag&&R.belag.length?belagOf(R,o.d):null;
+    if(b&&b[0]==='beton') for(let n=rate(parts.dust,key,o.v*3,dt);n>0;n--){ const s=(Math.random()-.5)*1.6; partSpawn(parts.dust,x,y,z,cx*o.v*.3-cz*s,.3+Math.random()*.4,cz*o.v*.3+cx*s,1.4,'#c2b08f'); } }
+  if(on&&R.gpx&&!race.rain&&zoneAt(R,R.loop?me.d%R.len:me.d)==='wald') for(let n=rate(parts.leaf,'w',1.2,dt);n>0;n--){ const hd=headingAt(R,me.d), f=6+Math.random()*20, s=(Math.random()-.5)*12, c=camera.position;
+    partSpawn(parts.leaf,c.x+Math.cos(hd)*f-Math.sin(hd)*s,c.y+1+Math.random()*4,c.z+Math.sin(hd)*f+Math.cos(hd)*s,(Math.random()-.5),-.2,(Math.random()-.5),5,['#c8892e','#a5652a','#d9b04c','#7d8a3a'][Math.random()*4|0]); }
+  for(const k of ['spray','dust','leaf']) partStep(parts[k],dt,t); }
 function speedFx(dt,v){ const f=clampN((v-10.42)/5.56,0,1), W=wind; // 0 bei 37,5 km/h, 1 bei 57,5 km/h
   W.m.visible=f>0.01&&!R.space&&!camOverride; W.m.material.opacity=0.12+f*0.5;
   if(W.m.visible){ const n=Math.round(20+40*f); W.seed.forEach((o,i)=>{ o.z+=v*1.3*dt; if(o.z>-0.5||Math.abs(o.x)>-o.z*1.3) W.spawn(o,false);
@@ -67,7 +92,7 @@ function draw(dt){
   if(camOverride){ camera.position.set(...camOverride.pos); camera.lookAt(...camOverride.look); }
   else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); camS.roll=(camS.roll||0)+(rollT-(camS.roll||0))*Math.min(1,dt*3); if(Math.abs(camS.roll)>1e-4) camera.rotateZ(camS.roll); camShake(dt,vC); }
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
-  sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vC);
+  sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vC); regenFx(race.paused?0:dt); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);
   for(const r of [mine,theirs]){ const dist=camera.position.distanceTo(r.g.position), ds=Math.max(1,dist/14); r.tag.scale.set(1.9*ds,.475*ds,1); r.tag.visible=dist>6; } // Namensschild bleibt auch aus der Ferne lesbar
   renderer.render(scene,camera);
   ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H); miniMap(); miniProfile();
@@ -147,6 +172,7 @@ function loop(now){
     if(opp.active){ const kg=opp.bot?botKg():weight(), oP=opp.done||!run?0:opp.watt??(opp.wkg||0)*kg; if(!opp.bot) opp.aero=!!opp.ra;
       rideState(riders3d[oppKey],opp,oP,opp.bot?((opp.plan&&opp.plan.A)||(race.chase&&race.chase.lvl)||3)*kg:1e9,dt,opp.bot?null:opp.rc??null,opp.bot?null:opp.rst); } }
   if(live.hr) race.hrMax=Math.max(race.hrMax,live.hr);
+  rainSound(race.state!=='setup'&&race.rain&&!R.space);
   { const S=(riders3d[myKey]||{}).rs; freewheel(dt, race.state==='run'&&!race.paused&&!race.frozen&&S&&S.cad<8&&me.v>2, me.v); } // Freilauf klickt beim Rollen
   hud(P,wkg); draw(dt); requestAnimationFrame(loop);
 }

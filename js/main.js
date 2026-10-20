@@ -7,6 +7,10 @@ const noiseBuf=(dur,dec)=>{ const n=Math.floor(actx.sampleRate*dur), b=actx.crea
 function snip(buf,f,q,vol,t0=0){ const s=actx.createBufferSource(); s.buffer=buf; const bp=actx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f; bp.Q.value=q; const g=actx.createGain(); g.gain.value=vol; s.connect(bp).connect(g).connect(actx.destination); s.start(actx.currentTime+t0); }
 let SNB=null; const snb=()=>SNB||(SNB={klack:noiseBuf(.05,6),tick:noiseBuf(.006,4)});
 function klack(){ try{ actx=actx||new AudioContext(); const B=snb(); snip(B.klack,2600,3,.5); snip(B.klack,1900,3,.35,.07); }catch(e){} }
+// Regenrauschen als Endlosschleife, solange es im Rennen regnet
+let rainSrc=null; function rainSound(on){ if(!actx||on===!!rainSrc) return; try{ if(on){ const n=actx.sampleRate*2, b=actx.createBuffer(1,n,actx.sampleRate), d=b.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1;
+    const s=actx.createBufferSource(); s.buffer=b; s.loop=true; const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2200; const hp=actx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=400; const g=actx.createGain(); g.gain.value=.05;
+    s.connect(lp).connect(hp).connect(g).connect(actx.destination); s.start(); rainSrc=s; } else { rainSrc.stop(); rainSrc=null; } }catch(e){ rainSrc=null; } }
 let fwPh=0; function freewheel(dt,on,v){ if(!on||!actx) return; fwPh+=dt*Math.min(55,v*4); if(fwPh<1) return; fwPh%=1; try{ snip(snb().tick,5200,2,.18); }catch(e){} }
 $('btnTrainer').onclick=connectTrainer; $('btnHr').onclick=connectHr;
 $('btnHost').onclick=host; $('btnJoin').onclick=join; $('btnStart').onclick=startRace;

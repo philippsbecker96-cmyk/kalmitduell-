@@ -65,7 +65,7 @@ function poseAutos(dt){ const A=anim.autos; if(!A) return; const B=A.B, m=new TH
   A.body.instanceMatrix.needsUpdate=true; A.cab.instanceMatrix.needsUpdate=true; }
 
 function build3D(){
-  if(world){ scene.remove(world); world.traverse(o=>{ o.geometry&&o.geometry.dispose&&o.geometry.dispose(); for(const mt of [].concat(o.material||[])){ mt.map&&mt.map.dispose&&mt.map.dispose(); mt.dispose&&mt.dispose(); } }); }
+  if(world){ scene.remove(world); world.traverse(o=>{ o.geometry&&o.geometry.dispose&&o.geometry.dispose(); for(const mt of [].concat(o.material||[], o.userData.dry||[], (o.userData.dry&&o.userData.dry.userData.wm)||[])){ mt.map&&mt.map.dispose&&mt.map.dispose(); mt.dispose&&mt.dispose(); } }); }
   hausReset();
   world=new THREE.Group(); scene.add(world);
   anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
@@ -140,13 +140,13 @@ function build3D(){
   const side2=(mat)=>(mat.side=THREE.DoubleSide, mat.polygonOffset=true, mat);
   const rw=d=>roadW(R,d)/2;
   strip(0,R.len,d=>-(rw(d)+0.9),d=>rw(d)+0.9,0.05,side2(Object.assign(lam('#8f8573'),{polygonOffsetFactor:-1})),10,[1]);
-  const asph=side2(Object.assign(new THREE.MeshLambertMaterial({map:rtex}),{polygonOffsetFactor:-2}));
+  const asph=side2(Object.assign(new THREE.MeshLambertMaterial({map:rtex}),{userData:{wet:1},polygonOffsetFactor:-2}));
   let d0=0; for(const [t,a,b] of [...R.belag].sort((x,y)=>x[1]-y[1])){ strip(d0,a,d=>-rw(d),rw,0.12,asph,9,[1]); d0=Math.min(b,R.len);
     const tx=t==='pflaster'?canvasTex(128,64,g=>{ g.fillStyle='#6e6a64'; g.fillRect(0,0,128,64); for(let y=0;y<64;y+=8) for(let x=(y/8%2)*5-5;x<128;x+=10){ const v=95+Math.random()*45|0; g.fillStyle=`rgb(${v},${v-4},${v-10})`; g.fillRect(x+1,y+1,8,6); } })
       : canvasTex(64,128,g=>{ g.fillStyle='#b8b6ac'; g.fillRect(0,0,64,128); for(let t2=0;t2<400;t2++){ const v=Math.random()<.5?60:255; g.fillStyle=`rgba(${v},${v},${v},.07)`; g.fillRect(Math.random()*64,Math.random()*128,2,2); }
           g.fillStyle='#6f6d66'; g.fillRect(0,0,64,3); g.fillStyle='rgba(0,0,0,.1)'; g.fillRect(31,0,2,128); });
     tx.wrapT=THREE.RepeatWrapping; tx.anisotropy=8;
-    strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{polygonOffsetFactor:-2})),t==='pflaster'?1.6:3.5,[1]); }
+    strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{userData:{wet:1},polygonOffsetFactor:-2})),t==='pflaster'?1.6:3.5,[1]); }
   strip(d0,R.len,d=>-rw(d),rw,0.12,asph,9,[1]);
   // Landstraße: Leitlinie in der Mitte (6 m Strich, 12 m Lücke) · Radweg neben der Straße, hinter einem Grünstreifen
   if(R.def.mitte){ const dt=canvasTex(8,48,g=>{ g.fillStyle='#ecebe4'; g.fillRect(0,0,8,16); }); dt.wrapT=THREE.RepeatWrapping;
@@ -155,13 +155,13 @@ function build3D(){
   for(const [a,b,sd] of R.def.radweg||[]){ const i0=Math.max(0,Math.floor(a/STEP)), i1=Math.min(R.xs.length-1,Math.ceil(b/STEP)), m=i1-i0+1, p=new Float32Array(m*6), id=[];
     for(let k=0;k<m;k++){ const i=i0+k, d=i*STEP, hd=headingAt(R,d), nx=-Math.sin(hd)*sd, nz=Math.cos(hd)*sd;
       [rw(d)+2.6, rw(d)+5].forEach((o,j)=>{ const x=R.xs[i]+nx*o, z=R.ys[i]+nz*o; p.set([x,terrainAt(x,z)+.08,z],k*6+j*3); }); if(k<m-1) id.push(k*2,k*2+1,k*2+2, k*2+1,k*2+3,k*2+2); }
-    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setIndex(id); geo.computeVertexNormals(); world.add(new THREE.Mesh(geo,side2(Object.assign(lam('#6a6b6c'),{polygonOffsetFactor:-2})))); }
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setIndex(id); geo.computeVertexNormals(); world.add(new THREE.Mesh(geo,side2(Object.assign(lam('#6a6b6c'),{userData:{wet:1},polygonOffsetFactor:-2})))); }
   const stY=(al,x,z)=>{ const t=Math.min(1,Math.max(0,(al-15)/20)), k=t*t*(3-2*t); return (terrainAt(x,z,TER.hr)+.13)*(1-k)+(terrainAt(x,z)+.06)*k; }; // Höhe der Stichstraße
   const orte=R.zones.filter(z=>z[0]==='ort');
   if(orte.length){ const pav=canvasTex(64,64,g=>{ g.fillStyle='#9d6b5a'; g.fillRect(0,0,64,64); g.strokeStyle='rgba(50,25,18,.35)'; g.lineWidth=1.5;
       for(let y=0;y<64;y+=8){ g.beginPath(); g.moveTo(0,y); g.lineTo(64,y); g.stroke(); for(let x=(y/8%2)*8;x<64;x+=16){ g.beginPath(); g.moveTo(x,y); g.lineTo(x,y+8); g.stroke(); } } });
     pav.wrapT=THREE.RepeatWrapping;
-    const pavM=side2(Object.assign(new THREE.MeshLambertMaterial({map:pav}),{polygonOffsetFactor:-3})), curbM=side2(lam('#d8d4ca')), cut=(s,d)=>R.gehCut&&R.gehCut.some(c=>c[0]===s&&d>=c[1]&&d<=c[2]); // an Einmündungen kein Gehweg
+    const pavM=side2(Object.assign(new THREE.MeshLambertMaterial({map:pav}),{userData:{wet:1},polygonOffsetFactor:-3})), curbM=side2(lam('#d8d4ca')), cut=(s,d)=>R.gehCut&&R.gehCut.some(c=>c[0]===s&&d>=c[1]&&d<=c[2]); // an Einmündungen kein Gehweg
     for(const [,za,zb,zo={}] of orte){ const geh=zo.geh??SIDEWALK, sd=zo.seite?[zo.seite]:[-1,1];
       for(const s of sd){ strip(za,Math.min(zb,R.len),rw,d=>rw(d)+(cut(s,d)?0:geh),0.22,pavM,3,[s]);
         strip(za,Math.min(zb,R.len),d=>rw(d)-0.05,d=>cut(s,d)?rw(d)-0.05:rw(d)+0.2,0.26,curbM,3,[s]); } }
@@ -170,7 +170,7 @@ function build3D(){
       const band=(la0,la1,a0,lift,mat)=>{ const as=[]; for(let al=a0;al<K.len;al+=al<30?1:2.5) as.push(al); as.push(K.len); const p=new Float32Array(as.length*6), id=[];
         as.forEach((al,i)=>{ [la0,la1].forEach((la,j)=>{ const [x,z]=at(al,la); p.set([x,stY(al,x,z)+lift,z],i*6+j*3); }); if(i<as.length-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); });
         const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setIndex(id); geo.computeVertexNormals(); world.add(new THREE.Mesh(geo,mat)); };
-      band(-K.w/2,K.w/2,-3,0,side2(Object.assign(lam('#55575a'),{polygonOffsetFactor:-4})));
+      band(-K.w/2,K.w/2,-3,0,side2(Object.assign(lam('#55575a'),{userData:{wet:1},polygonOffsetFactor:-4})));
       for(const s of [-1,1]){ const a0=K.al0[s]; band(s*K.w/2,s*(K.w/2+K.geh),a0,.09,pavM); band(s*(K.w/2-.05),s*(K.w/2+.2),a0,.13,curbM); } } }
   // Weiterführende Landstraße an einer Abzweigung: Rand- und Leitlinie, nahe der Strecke auf deren Höhe (unter ihrem Belag), weiter weg aufs Gelände
   for(const K of R.weiter||[]){ const vx=-K.uy, vy=K.ux, as=[]; for(let al=-4; al<K.len; al+=al<30?1:3) as.push(al); as.push(K.len);
@@ -180,14 +180,14 @@ function build3D(){
     as.forEach((al,i)=>{ [-1,1].forEach((q,j)=>{ const x=K.x+K.ux*al+vx*q*K.w/2, z=K.y+K.uy*al+vy*q*K.w/2; p.set([x,stY(Math.max(0,al),x,z)-(al<10?.04:0),z],i*6+j*3); uv.set([j,al/18],i*4+j*2); });
       if(i<as.length-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); });
     const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setAttribute('uv',new THREE.BufferAttribute(uv,2)); geo.setIndex(id); geo.computeVertexNormals();
-    world.add(new THREE.Mesh(geo,side2(Object.assign(new THREE.MeshLambertMaterial({map:lt}),{polygonOffsetFactor:-1})))); }
+    world.add(new THREE.Mesh(geo,side2(Object.assign(new THREE.MeshLambertMaterial({map:lt}),{userData:{wet:1},polygonOffsetFactor:-1})))); }
   // Seitenstraße: quer weg vom Straßenrand, am Anfang auf Gehweghöhe, dann aufs Gelände
   const abY=(u,x,z,d)=>{ const A=R.abzweig, t=Math.min(1,Math.max(0,(u-A.geh-1)/12)), k=t*t*(3-2*t); return (roadY(d??A.d)+.29)*(1-k)+(terrainAt(x,z)+.06)*k; };
   if(R.abzweig){ const A=R.abzweig, [x0,z0]=posAt(R,A.d), hd=headingAt(R,A.d), nx=-Math.sin(hd)*A.side, nz=Math.cos(hd)*A.side, ax=Math.cos(hd), az=Math.sin(hd), r0=rw(A.d);
     const band=(a0,a1,lift,mat)=>{ const us=[]; for(let u=-.05;u<A.len;u+=u<A.geh+14?1:3) us.push(u); const p=new Float32Array(us.length*6), id=[];
       us.forEach((u,i)=>{ [a0,a1].forEach((a,j)=>{ const x=x0+nx*(r0+u)+ax*a, z=z0+nz*(r0+u)+az*a; p.set([x,abY(u,x,z)+lift,z],i*6+j*3); }); if(i<us.length-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); });
       const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setIndex(id); geo.computeVertexNormals(); world.add(new THREE.Mesh(geo,mat)); };
-    band(-A.w/2,A.w/2,0,side2(Object.assign(lam('#55575a'),{polygonOffsetFactor:-4})));
+    band(-A.w/2,A.w/2,0,side2(Object.assign(lam('#55575a'),{userData:{wet:1},polygonOffsetFactor:-4})));
     for(const s of [-1,1]) band(s*A.w/2,s*(A.w/2+.25),.03,side2(Object.assign(lam('#d8d4ca'),{polygonOffsetFactor:-4}))); }
 
   // ---------- Instanzen-Helfer ----------
