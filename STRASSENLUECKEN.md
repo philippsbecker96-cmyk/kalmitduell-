@@ -42,5 +42,9 @@ Ergebnisse:
   Die größten Werte auf Berwartstein (bis 9 m) sind die beiden Holzbrücken (992–1010 m, Zugbrücke 5490–5524 m), also gewollt.
 - Nicht geprüft: Stichstraßen/Abzweigungen (`stY` mit `TER.hr+.13`, `abY`) – die lagen bisher sicher über dem 0,6 m tieferen Gelände.
 
-## Nächster Schritt
-Im Spiel ansehen, ob die Kehren mit 0,2 m gut aussehen und nirgends Gelände durch Straße, Stichstraßen oder Bankett schaut. Für die restlichen Stellen (Kante > 0,8 m, Liste mit `__luecken()`): schräge Böschung in Bankettfarbe von der Bankettkante nach außen unten, nur dort – keine senkrechte Wand (die wirkte beim alten Versuch vermutlich dick).
+## Schulter (eingebaut)
+Schräger Streifen an beiden Straßenrändern auf der ganzen Länge (Abschnitt Straße in `build3D`): innen an der Bankettkante (Bankettfarbe), `SCH_B` = 1,5 m weiter außen `SCH_T` = 0,14 m unter dem gezeichneten Gelände (`triAt`, Geländefarbe). An Holzbrücken keine Schulter (`schulterAn`). `__luecken()` meldet jetzt „Schulter offen“, wenn die Außenkante zwischen zwei Punkten über dem Gelände liegt.
+Messung mit 0,08 m Tiefe: Kalmit 5×, Berwartstein 6× offen, je höchstens 4 cm, sonst keine offene Kante mehr außer an den Holzbrücken. Deshalb auf 0,14 m vertieft, damit sind auch diese zu.
+
+## Stand
+**Gelöst** (Okt. 2026): Mit 0,2 m Absenkung und Schulter sind im Spiel keine Lücken mehr zu sehen. Bei neuen Strecken oder Änderungen am Gelände mit `__luecken()` nachmessen.

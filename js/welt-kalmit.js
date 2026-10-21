@@ -42,7 +42,7 @@ function kxSetup(){ KX.on=!!(R&&(R.kalmit||R.def.steil)); KX.uK.value=0; anim.kx
 function kxFrame(){ if(!KX.on) return; const [cx,cz]=posAt(R,me.d); KX.uC.value.set(cx,cz); KX.uRef.value=terrainAt(cx,cz,TER.hr); KX.uK.value=KX.k-1;
   anim.kxSpr.forEach(s=>s.o.position.y=s.y+visOff(s.o.position.x,s.o.position.z)); }
 /* Test-Helfer (Konsole): __luecken(grenze=0.8) prüft alle 2 m quer über Fahrbahn und Bankett gegen das gezeichnete Gelände (ohne Überhöhung – die hebt Straße und Gelände gleich an).
-   „sticht durch“: Gelände liegt über dem Belag · „Kante schwebt“: an der Bankettkante liegt das Gelände mehr als grenze m tiefer (man sieht von der Seite unter die Straße) */
+   „sticht durch“: Gelände liegt über dem Belag · „Kante schwebt“: an der Bankettkante liegt das Gelände mehr als grenze m tiefer (nur wo keine Schulter liegt) · „Schulter offen“: Außenkante der Schulter liegt irgendwo über dem Gelände */
 window.__luecken=(grenze=.8)=>{ if(!TER.hr) return console.log('Nur auf Kalmit und Berwartstein');
   const A=[], last={}; let falt=0;
   const add=(art,i,wo,v,schl)=>{ const c=last[art]; if(c&&c.i>=i-1){ c.i=i; c.bis=i*STEP; if(schl(v,c.wert)){ c.wert=v; c.wo=wo; } } else A.push(last[art]={art,i,von:i*STEP,bis:i*STEP,wo,wert:v}); };
@@ -51,11 +51,17 @@ window.__luecken=(grenze=.8)=>{ if(!TER.hr) return console.log('Nur auf Kalmit u
     const g=(a,l)=>ry+l-triAt(R.xs[i]+nx*a,R.ys[i]+nz*a); // Abstand Belag–Gelände an Querposition a
     for(const [a,l,wo] of [[0,.12,'Mitte'],[rw/2,.12,'Fahrbahn rechts'],[-rw/2,.12,'Fahrbahn links'],[rw,.12,'Rand rechts'],[-rw,.12,'Rand links'],[rw+.9,.05,'Bankett rechts'],[-rw-.9,.05,'Bankett links']]){
       const v=g(a,l); if(v<0) add('sticht durch',i,wo,v,(v,w)=>v<w); }
-    for(const [s,wo] of [[1,'rechts'],[-1,'links']]){ const v=g(s*(rw+.9),.05); if(v>grenze) add('Kante schwebt '+wo,i,wo,v,(v,w)=>v>w); } }
+    const sch=schulterAn(d)&&schulterAn(d+STEP), aus=(k,s)=>{ const b=s*(roadW(R,k*STEP)/2+.9+SCH_B), h2=headingAt(R,k*STEP); return [R.xs[k]-Math.sin(h2)*b, R.ys[k]+Math.cos(h2)*b]; }; // Außenkante der Schulter
+    for(const [s,wo] of [[1,'rechts'],[-1,'links']]){
+      if(!sch){ const v=g(s*(rw+.9),.05); if(v>grenze) add('Kante schwebt '+wo,i,wo,v,(v,w)=>v>w); continue; }
+      const [xa,za]=aus(i,s), [xb,zb]=aus(i+1,s); for(const t of [.25,.5,.75]){ const x=xa+(xb-xa)*t, z=za+(zb-za)*t, v=(triAt(xa,za)*(1-t)+triAt(xb,zb)*t-SCH_T)-triAt(x,z); // Schulterende zwischen den Punkten über dem Gelände?
+        if(v>.02) add('Schulter offen '+wo,i,wo,v,(v,w)=>v>w); } } }
   console.table(A.map(s=>({art:s.art, von:s.von, bis:s.bis, wo:s.wo, m:+s.wert.toFixed(2)})));
   const n=a=>A.filter(s=>s.art.startsWith(a)).length;
-  console.log(`Gelände ${STR_UNTER} m unter der Straße · ${n('sticht')}× sticht durch · ${n('Kante')}× Kante über ${grenze} m · Innenkante faltet an ${falt} Punkten`); return A; };
+  console.log(`Gelände ${STR_UNTER} m unter der Straße · ${n('sticht')}× sticht durch · ${n('Kante')}× Kante über ${grenze} m · ${n('Schulter')}× Schulter offen · Innenkante faltet an ${falt} Punkten`); return A; };
 let STR_UNTER=0.2; // so tief liegt das Gelände (Rasterpunkte bis 12 m neben der Mitte) unter der Straße
+const SCH_B=1.5, SCH_T=.14; // Schulter neben dem Bankett: Breite, Ende so tief unter dem Gelände
+const schulterAn=d=>!R.belag.some(b=>b[0]==='holz'&&d>=b[1]-2&&d<=b[2]+2); // an Holzbrücken keine Schulter
 const lam=c=>new THREE.MeshLambertMaterial({color:c});
 
 function textSprite(lines, {bg='#ffffff', fg='#1a1a1a', accent='#b5523b', w=3, border=true}={}){
@@ -164,6 +170,14 @@ function build3D(){
   const side2=(mat)=>(mat.side=THREE.DoubleSide, mat.polygonOffset=true, mat);
   const rw=d=>roadW(R,d)/2;
   strip(0,R.len,d=>-(rw(d)+0.9),d=>rw(d)+0.9,0.05,side2(Object.assign(lam('#8f8573'),{polygonOffsetFactor:-1})),10,[1]);
+  // Schulter: schräger Streifen von der Bankettkante SCH_B m nach außen bis knapp unter das gezeichnete Gelände – deckt die Lücke unter der Straßenkante (nicht an Holzbrücken)
+  { const m=R.xs.length, p=new Float32Array(m*12), c=new Float32Array(m*12), id=[], cB=new THREE.Color('#8f8573');
+    for(let i=0;i<m;i++){ const d=i*STEP, hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d);
+      [-1,1].forEach((s,j)=>{ const a=s*(rw(d)+.85), b=s*(rw(d)+.9+SCH_B), xb=R.xs[i]+nx*b, zb=R.ys[i]+nz*b, o=i*12+j*6, gi=Math.round((xb-TER.x0)/res), gj=Math.round((zb-TER.z0)/res), k=(Math.max(0,Math.min(TER.nz-1,gj))*n+Math.max(0,Math.min(n-1,gi)))*3;
+        p.set([R.xs[i]+nx*a,y+.03,R.ys[i]+nz*a, xb,triAt(xb,zb)-SCH_T,zb],o); c.set([cB.r,cB.g,cB.b, col[k],col[k+1],col[k+2]],o); }); // innen Bankettfarbe, außen Geländefarbe
+      if(i<m-1&&schulterAn(d)&&schulterAn(d+STEP)) for(let j=0;j<2;j++){ const a=i*4+j*2, b=a+4; id.push(a,a+1,b, a+1,b+1,b); } }
+    const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.BufferAttribute(p,3)); geo.setAttribute('color',new THREE.BufferAttribute(c,3)); geo.setIndex(id); geo.computeVertexNormals();
+    world.add(new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true,side:THREE.DoubleSide}))); }
   const asph=side2(Object.assign(new THREE.MeshLambertMaterial({map:rtex}),{userData:{wet:1},polygonOffsetFactor:-2}));
   let d0=0; for(const [t,a,b] of [...R.belag].sort((x,y)=>x[1]-y[1])){ strip(d0,a,d=>-rw(d),rw,0.12,asph,9,[1]); d0=Math.min(b,R.len);
     const tx=t==='erde'?canvasTex(64,128,g=>{ g.fillStyle='#a8765a'; g.fillRect(0,0,64,128); for(let t2=0;t2<500;t2++){ const v=Math.random(); g.fillStyle=v<.4?'rgba(70,40,25,.18)':v<.8?'rgba(225,180,140,.18)':'rgba(120,110,80,.25)'; g.fillRect(Math.random()*64,Math.random()*128,1+Math.random()*3,1+Math.random()*3); }
