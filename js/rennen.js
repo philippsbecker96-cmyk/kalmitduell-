@@ -282,5 +282,7 @@ function onFinish(){
   pyroStart();
   send({t:'s',d:raceLen(),v:0,w:0,done:true,ft:me.time,vf:me.vf,avg:me.wkgSum/Math.max(1,me.time)}); finishCheck();
   beep(523,.15); setTimeout(()=>beep(659,.15),160); setTimeout(()=>beep(784,.4),320);
-  $('banner').textContent=R.kalmit?'GIPFEL!':'ZIEL!'; setTimeout(()=>$('banner').textContent='',2500); setSlope(0); setTimeout(showResult,R.stadium?6000:1500);
+  $('banner').textContent=R.kalmit?'GIPFEL!':'ZIEL!'; setTimeout(()=>$('banner').textContent='',2500); setSlope(0);
+  const B=anim.burg; if(B&&B.drache){ const tok={}; B.ergWarten=tok; B.drache.ergFeuer=false; setTimeout(()=>{ if(B.ergWarten===tok){ B.ergWarten=null; showResult(); } },25000); } // Berwartstein: Ergebnis erst nach dem Feuerstoß des Drachen (burgDrache), 25 s als Sicherheit
+  else setTimeout(showResult,R.stadium?6000:1500);
 }
