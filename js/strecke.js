@@ -114,7 +114,8 @@ const ROUTES=[{id:'kalmit', mode:'climb', title:'Kalmit-Ostrampe', sub:'ab Maika
   {id:'suedpfalz', mode:'classic', noTrain:true, title:'Südpfalz-Klassiker', sub:'Godramstein · Arzheim · Leinsweiler · Ranschbach · echte GPX', def:suedpfalzDef(false)},
   {id:'suedpfalz-runde', mode:'loop', title:'Südpfalz-Klassiker', sub:'Runde durch die Weinberge · echte GPX', def:suedpfalzDef(true)},
   {id:'space', mode:'space', title:'Space-Strecke', sub:'aus deinem Workout erzeugt', def:null},
-  {id:'insel', mode:'space', title:'Insel-Strecke', sub:'tropischer Archipel · Untergrund je nach Intensität', def:null}]; // Space nur im Training, Strecke entsteht aus dem Workout
+  {id:'insel', mode:'space', title:'Insel-Strecke', sub:'tropischer Archipel · Untergrund je nach Intensität', def:null},
+  {id:'trifels', mode:'kamp', noTrain:true, title:'Trifels · Queichtal', sub:'Kampagne Mission 1 · aus deinem Workout berechnet', def:null}]; // Space nur im Training, Strecke entsteht aus dem Workout
 const raceLen=()=>race.mode==='train'?Infinity:R.loop?R.len*race.laps:R.len;
 const MODES={climb:{title:'Anstieg', soon:'Weitere Anstiege folgen'}, loop:{title:'Rundstrecke', soon:'Weitere Rundstrecken folgen'}, classic:{title:'Klassisches Rennen', soon:'Strecke folgt – kommt später'}, train:{title:'Training', soon:'Strecken aus allen Modi – in Dauerschleife'}, kamp:{title:'Kampagne', soon:''}}; // kamp läuft intern als train (kampagne.js)
 let routeId='kalmit';
@@ -139,7 +140,7 @@ function buildRoute(def){
     let ve=0; segs.forEach(o=>{ o.vg=Math.sign(o.g)*Math.min(Math.abs(o.g)/SPACE_PHYS*SPACE_VX,30); o.ve0=ve; ve+=o.len*o.vg/100; }); r.vEnd=ve;
     r.space=true; return r; }
   // Landschaftszonen: Dorf, Weinberge, Wald, Fans im letzten Kilometer
-  r.fans = def.burg?r.len:Math.max(r.len*0.6, r.len-1000); // Burg: kein modernes Publikum
+  r.fans = def.burg||def.ma?r.len:Math.max(r.len*0.6, r.len-1000); // Burg: kein modernes Publikum
   r.kehren=[]; if(r.kalmit||def.burg) for(let dd=40; dd<len-40; dd+=STEP*5){ const dh=Math.abs(angDiff(headingAt(r,dd+25),headingAt(r,dd-25)));
     if(dh>1.25 && !r.kehren.some(k=>Math.abs(k-dd)<120) && !(def.burg&&(dd<1420||dd>5370))) r.kehren.push(dd); } // Burg: Ecken im Dorf und am Tor sind keine Kehren
   prepFeld(r); makeScenery(r); if(def.burg) prepBurg(r);
@@ -244,7 +245,7 @@ function makeScenery(r){
     if(z==='wald' || zoneAt(r,d+199)==='wald'){
       for(const side of [-1,1]){
         if(R1()<.16 && d<r.fans) S.block.push({x:f.px+f.nx*side*(rw+1.1), y:f.py+f.ny*side*(rw+1.1), h:f.h+(R1()-.5)*.3, s:.7+R1()*.6});
-        if(Math.round(d)%50===0&&!r.def.burg) S.post.push({x:f.px+f.nx*side*(rw+0.7), y:f.py+f.ny*side*(rw+0.7), h:f.h});
+        if(Math.round(d)%50===0&&!r.def.burg&&!r.def.ma) S.post.push({x:f.px+f.nx*side*(rw+0.7), y:f.py+f.ny*side*(rw+0.7), h:f.h});
       }
     }
   }
@@ -353,7 +354,7 @@ function spaceDef(segs, unit, f, kg){
 let spaceKey=null;
 const GEN_IDS=['space','insel'];
 function genEntry(id){ const e=ROUTES.find(r=>r.id===id), S=curSegs(), u=curUnit(), f=ftp(), kg=weight(); // Strecken, die aus dem Workout entstehen
-  const key=JSON.stringify([S.map(s=>[s.dur,s.a,s.b,!!s.free]),u,f,kg]); if(!e.def || e.key!==key){ e.def=(id==='insel'?islandDef:spaceDef)(S,u,f,kg); e.key=key; } return e; }
+  const key=JSON.stringify([S.map(s=>[s.dur,s.a,s.b,!!s.free]),u,f,kg]); if(!e.def || e.key!==key){ e.def=(id==='insel'?islandDef:id==='trifels'?trifelsDef:spaceDef)(S,u,f,kg); e.key=key; } return e; }
 
 /* ================= Insel-Strecke: flach, harte Abschnitte = schwerer Untergrund ================= */
 // Untergrund als gleichwertige Steigung: Rollwiderstand bremst wie Steigung (Crr 0,05 ≈ 5 %)
@@ -432,3 +433,40 @@ function trackPt(d,u){ // Punkt auf der Bahn: d entlang, u quer von der Innenkan
   return [x-Math.sin(hd)*o*u, u>0?u*Math.tan(b):0, z+Math.cos(hd)*o*u];
 }
 
+
+/* ================= Trifels (Kampagne, Mission 1): wird aus dem Workout berechnet ================= */
+// Wie Space: ein Streckenstück je 2 s Workout, Länge aus Watt, Gewicht und fester Steigung je Abschnitt. So liegen die Orte immer an derselben Workout-Zeit:
+// Anstieg durch den Burgwald → Kehre in der Vorburg um den Goldkarren (Audienz-Tafel) → Serpentinen-Abfahrt → Auslauf → Wirtshaus (Ende Einfahren) → flaches Queichtal
+const TRIFELS_T={rauf:150, hof:25, aus:60}; // s: Anstieg bis zur Vorburg · Kehre in der Vorburg (= eine Tafel) · flacher Auslauf vor dem Wirtshaus
+// Weg aus Stücken in [Ost, Süd], h=0 nach Norden: ['g',Anteil] gerade (teilt sich die Restlänge), ['b',Grad,Radius] Bogen (+ rechts, − links)
+function turtle(st,teile,L){ const lb=teile.reduce((a,t)=>a+(t[0]==='b'?Math.abs(t[1])*Math.PI/180*t[2]:0),0), fg=teile.reduce((a,t)=>a+(t[0]==='g'?t[1]:0),0), k=lb>L?L/lb:1, rest=Math.max(0,L-lb*k);
+  const geh=(l,dh)=>{ st.h+=dh/2; st.x+=Math.sin(st.h)*l; st.y-=Math.cos(st.h)*l; st.h+=dh/2; st.P.push([st.x,st.y]); };
+  for(const t of teile){ if(t[0]==='g'){ const l=fg?rest*t[1]/fg:0; if(l<.05) continue; const n=Math.max(1,Math.round(l/2)); for(let i=0;i<n;i++) geh(l/n,0); }
+    else { const th=t[1]*Math.PI/180, r=t[2]*k, n=Math.max(2,Math.round(Math.abs(th)*r/2)); for(let i=0;i<n;i++) geh(Math.abs(th/n)*r,th/n); } } }
+function trifelsDef(segs, unit, f, kg){
+  const DT=2, T=segs.reduce((a,s)=>a+s.dur,0), tW=segs[0]?segs[0].t0+segs[0].dur:300, Tr=TRIFELS_T, NACH=600;
+  const gAt=t=>t<Tr.rauf?3.5:t<Tr.rauf+Tr.hof?1.5:t<tW-Tr.aus?-5.5:t<tW?-1.5:.3+.6*Math.sin(t/110);
+  const raw=[], cum=[0]; let si=0;
+  for(let t=0;t<T;t+=DT){ while(si<segs.length-1 && t>=segs[si].t0+segs[si].dur) si++; const sg=segs[si], v=segVal(sg,Math.min(t+DT/2,sg.t0+sg.dur)), w=unit==='w'?v:v*f/100, g=gAt(t+DT/2);
+    raw.push({len:Math.round(vSteady(w,g,kg)*DT*100)/100, g, p:Math.round(unit==='w'?v/f*100:v)}); cum.push(cum[cum.length-1]+raw[raw.length-1].len); }
+  const out=raw.map((c,i)=>{ let s=0,n=0; for(let j=-4;j<=4;j++){ const o=raw[i+j]; if(o){ s+=o.g; n++; } } return {...c, g:Math.round(s/n*100)/100}; }); // Übergänge weich
+  out.push({len:NACH,g:.3,p:-1}); // Reserve hinter dem Workout-Ende
+  const dT=t=>{ const x=Math.max(0,Math.min(cum.length-1,t/DT)), i=Math.min(cum.length-2,Math.floor(x)); return cum[i]+(cum[i+1]-cum[i])*Math.max(0,x-i); };
+  const d1=dT(Tr.rauf), d2=dT(Tr.rauf+Tr.hof), d3=dT(tW-Tr.aus), d4=dT(tW), dE=cum[cum.length-1];
+  // Linie: Anstieg nach Norden, Rechtskehre um den Karren, Serpentinen nach Osten den Hang hinab, dann ostwärts durchs Tal
+  const st={x:0,y:0,h:0,P:[[0,0]]}, rh=Math.max(12,(d2-d1)/Math.PI);
+  turtle(st,[['g',1],['b',-25,140],['g',1],['b',25,140],['g',1]],d1);
+  const karren=[st.x+Math.cos(st.h)*rh, st.y+Math.sin(st.h)*rh];
+  turtle(st,[['b',180,rh],['g',.001]],d2-d1);
+  const B=d3-d2, HP=Math.PI*18, LG=220, n=Math.max(1,Math.floor((B-3*Math.PI*10-40+HP)/(LG+HP))), ab=[['b',-90,20],['b',90,20]];
+  for(let i=0;i<n;i++){ ab.push(['g',1]); if(i<n-1) ab.push(['b',i%2?180:-180,18]); } ab.push(['b',n%2?-90:90,20],['g',.3]); // Kehren immer nach Osten
+  turtle(st,ab,B);
+  turtle(st,[['b',-10,300],['g',1],['b',10,300]],d4-d3);
+  const tal=[]; for(let i=0,m=Math.max(1,Math.round((dE+NACH-d4)/700));i<m;i++) tal.push(['g',1],['b',i%2?-18:22,420]);
+  turtle(st,tal,dE+NACH-d4);
+  let e=0, lo=0; for(const s of out){ e+=s.len*s.g/100; lo=Math.min(lo,e); }
+  const jagd=segs.filter(s=>/Jagd/.test(s.label)).map(s=>dT(s.t0));
+  return {name:'Trifels · Queichtal', start:'Burgwald unter dem Trifels', finish:'Queichtal', startElev:330, plainElev:330+lo-25, gpx:'trifels', ma:true, planbar:true,
+    poly:st.P, segs:out, zones:[['wiese',d1-15,d2+15],['ort',d4-70,d4+80,{fach:.8,gewaende:.5,geh:.4,luecke:.3,licht:0}],['wiese',d4+80,1e9]],
+    breite:[[d1-15,d2+15,7]], belag:[['pflaster',d1,d2,.5]],
+    orte:{loewenherz:dT(75), hof:[d1,d2], karren, burg:[karren[0],karren[1]-rh-55], wirtshaus:d4, jagd, ziel:dE}}; } // Meter für Welt und Ereignisse (Schritt 3–5)

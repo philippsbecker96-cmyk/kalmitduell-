@@ -256,7 +256,8 @@ function resetRiders(){ Object.assign(me,{free:false,corr:1,d:0,v:0,done:false,t
 function startRace(){
   if(race.role==='guest') return;
   if($('btnStart').disabled) return;
-  if(race.mode==='train' && GEN_IDS.includes(routeId)){ const e=genEntry(routeId); if(R.def!==e.def) setRoute(e.def); } // Space/Insel: Strecke passt zum aktuellen Workout
+  if(race.mode==='train' && GEN_IDS.includes(routeId)){ const e=genEntry(routeId); if(R.def!==e.def) setRoute(e.def); }
+  if(race.kamp){ const e=kampRoute(); if(R.def!==e.def) setRoute(e.def); } // Kampagne: Strecke zum aktuellen Workout // Space/Insel: Strecke passt zum aktuellen Workout
   resetRiders(); race.draft=$('draftOn').checked; race.wind=+$('windLvl').value; race.windDir=Math.random()*Math.PI*2; // Windrichtung zufällig pro Rennen
   if(conn && conn.open){ Object.assign(opp,{active:true,bot:false,watt:null,name:RIDERS[oppKey].name,d:0,target:0,v:0,done:false}); sendRoute(); send({t:'start',draft:race.draft,tod:race.tod,season:race.season,rain:race.rain,wind:race.wind,wd:race.windDir,mode:race.mode,laps:race.laps,wo:race.mode==='train'?WO:null}); }
   else if($('botOn').checked && race.mode!=='train'){ oppKey=botKey; Object.assign(opp,{active:true,bot:true,watt:null,name:RIDERS[oppKey].name,d:0,v:0,done:false,wkgSum:0,avg:0}); opp.plan=botPlan(); }

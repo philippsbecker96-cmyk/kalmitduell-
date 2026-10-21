@@ -16,7 +16,8 @@ function spaceCanvas(cv2, def){ // Höhenprofil der Space-Strecke in Bahnfarben
 }
 function renderRouteList(){
   if(race.mode==='train' && race.role!=='guest'){ GEN_IDS.forEach(id=>genEntry(id)); if(GEN_IDS.includes(routeId)){ const e=genEntry(routeId); if(R && R.def!==e.def){ setRoute(e.def); sendRoute(); return; } } } // Workout geändert → Strecke neu
-  const box=$('routeList'), guest=race.role==='guest', list=race.kamp?ROUTES.filter(r=>r.id===KAMP_STRECKE):race.mode==='train'?ROUTES.filter(r=>guest?r.id==='host':r.id!=='host'&&!r.noTrain):ROUTES.filter(r=>r.mode===race.mode);
+  if(race.kamp){ const e=kampRoute(); if(routeId!==e.id||!R||R.def!==e.def){ routeId=e.id; setRoute(e.def); return; } } // Kampagne: Strecke passt zu Mission, Stufe, FTP und Gewicht
+  const box=$('routeList'), guest=race.role==='guest', list=race.kamp?[kampRoute()]:race.mode==='train'?ROUTES.filter(r=>guest?r.id==='host':r.id!=='host'&&!r.noTrain):ROUTES.filter(r=>r.mode===race.mode);
   box.innerHTML=list.map(r=>{ const L=r.def.segs.reduce((a,s)=>a+s.len,0), hm=r.def.segs.reduce((a,s)=>a+Math.max(0,s.len*s.g/100),0);
     const info=r.def.island?`${de(r.def.goal/1000,1)} km · Sand und Wasser in den harten Abschnitten · danach endlos ums Atoll (5 km)`:r.def.space?`${de((L-r.def.ring)/1000,1)} km · ${Math.round(hm)} Hm · danach endlos in der Umlaufbahn`:r.def.stadium?Math.round(L)+' m pro Runde':r.def.loop?de(L/1000,1)+' km pro Runde · '+Math.round(hm)+' Hm':de(L/1000,1)+' km · '+Math.round(hm)+' Hm';
     return `<button class="route${r.id===routeId?' sel':''}" data-id="${r.id}" ${guest?'disabled':''}><canvas width="300" height="92"></canvas><div><b>${esc(r.title)}</b><span>${esc(r.sub)} · ${info}</span></div></button>`; }).join('')
@@ -26,7 +27,7 @@ function renderRouteList(){
   const ok=list.some(r=>r.id===routeId) && R && R.def===list.find(r=>r.id===routeId).def;
   $('todBox').style.display=ok&&!R.space?'flex':'none'; $('todNight').style.display=ok&&R.stadium?'':'none'; $('rainOn').parentNode.style.display=ok?'':'none'; $('seaBox').style.display=ok&&!R.stadium&&!R.island&&!R.def.burg?'':'none'; document.querySelectorAll('.sea').forEach(b=>b.disabled=race.role==='guest'); // draußen nur Tag/Abend
   if(ok&&!R.stadium&&race.tod==='nacht'){ race.tod='abend'; document.querySelectorAll('.tod').forEach(b=>b.classList.toggle('sel',b.dataset.tod==='abend')); } document.querySelectorAll('.tod').forEach(b=>b.disabled=race.role==='guest'); $('rainOn').disabled=race.role==='guest';
-  if(race.kamp){ const T=woTotal(), on=!!(conn&&conn.open); $('routeSub').textContent=ok?`Mission ${race.kamp.nr}: ${race.kamp.titel} · ${KST.stufe==='hart'?'Hart':'Leicht'} · Workout ${fmtT(T)} · Trainer hält die Watt (ERG) · Platzhalter-Strecke ${R.name} in Dauerschleife`:'';
+  if(race.kamp){ const T=woTotal(), on=!!(conn&&conn.open); $('routeSub').textContent=ok?`Mission ${race.kamp.nr}: ${race.kamp.titel} · ${KST.stufe==='hart'?'Hart':'Leicht'} · Workout ${fmtT(T)} · Trainer hält die Watt (ERG) · ${R.def.planbar?`${R.name} · ${de(R.len/1000,1)} km, aus deinem Workout berechnet`:`Platzhalter-Strecke ${R.name} in Dauerschleife`}`:'';
     $('lapsInfo').textContent=''; $('btnStart').disabled=!ok||on||!KST.stand||!!race.kamp.bald||T<10;
     $('startHint').textContent=on?'Die Kampagne gibt es nur allein – nicht online.':!KST.stand?'Wähle zuerst, ob du Bauer oder Bäuerin bist.':'Die Tafeln laufen schon im Einfahren – einfach locker treten.'; return; }
   if(race.mode==='train'){ const T=woTotal(); $('routeSub').textContent = ok ? R.space?`Space-Strecke aus dem Workout · Steigung je nach Intensität · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)`:R.island?`Insel-Strecke aus dem Workout · Untergrund je nach Intensität · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)`:`${R.name} in Dauerschleife · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)` : 'Strecke wählen';
@@ -42,7 +43,7 @@ function openMode(m){
   race.mode=m; $('lapsBox').style.display=m==='loop'?'flex':'none'; $('lapsV').textContent=race.laps;
   const tr=m==='train'; $('woBlock').style.display=tr?'':'none'; $('ergRow').style.display=tr?'':'none'; $('botRow').style.display=tr?'none':''; $('botStyleRow').style.display=tr?'none':'';
   $('oppTitle').textContent=tr?'Mitfahrer':'Gegner'; $('btnStart').textContent=kp?'Mission starten':tr?'Training starten':'Rennen starten'; if(tr) renderWo();
-  const first=kp?ROUTES.find(r=>r.id===KAMP_STRECKE):ROUTES.find(r=>r.mode===m); if(first && routeId!==first.id && race.role!=='guest'){ routeId=first.id; setRoute(first.def); }
+  const first=kp?null:ROUTES.find(r=>r.mode===m); // Kampagne: Strecke setzt renderRouteList if(first && routeId!==first.id && race.role!=='guest'){ routeId=first.id; setRoute(first.def); }
   $('modeScreen').style.display='none'; $('cfgScreen').style.display=''; renderRouteList(); sendCfg();
 }
 document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>openMode(b.dataset.m));

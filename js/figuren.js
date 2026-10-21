@@ -1,6 +1,6 @@
 /* ---------- Becker & Dengel als 3D-Figuren ---------- */
 const riders3d={becker:null,dengel:null,custom:null};
-const mittelalter=()=>!!(R&&R.def&&R.def.burg); // Burg Berwartstein: Holzrad und Mittelalter-Kleidung für alle (Lobby-Vorschau bleibt modern)
+const mittelalter=()=>!!(R&&R.def&&(R.def.burg||R.def.ma)); // Burg Berwartstein und Kampagne (def.ma): Holzrad und Mittelalter-Kleidung für alle (Lobby-Vorschau bleibt modern)
 function buildRiders(){ const ma=mittelalter(); RKEYS.forEach(k=>{ riders3d[k]=makeRider(k,undefined,ma); world.add(riders3d[k].g); }); riders3d.devil=makeDevil(ma); riders3d.devil.g.visible=false; world.add(riders3d.devil.g); }
 function rebuildRiders(){ refreshRiders(); // nach einer Änderung am Aussehen: Fahrer in Welt und Lobby-Vorschau neu bauen
   if(world) RKEYS.forEach(k=>{ const o=riders3d[k]; if(o) world.remove(o.g); const r=makeRider(k,undefined,mittelalter()); riders3d[k]=r; world.add(r.g); if(anim.stadium) addFloodShadows(r);
