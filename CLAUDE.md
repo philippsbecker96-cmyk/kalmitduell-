@@ -16,7 +16,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `js/figuren.js` – 3D-Fahrer (Becker, Dengel, eigener Fahrer, Teufel-Bot), Haltung (Wiegetritt, Aero, Kurvenlage, Trittfrequenz), Avatar-Vorschau
 - `js/effekte.js` – Fahrtwind-Linien, Regen, Partikel (Gischt, Staub, Blätter), Windschatten-Linien, Kamerawackeln, Antritt-Kick
 - `js/rennen.js` – Kamera, Zeichnen, Rennlogik, Pause/Menü, Wake Lock
-- `js/training.js` – Workouts, FTP-Tests, Verfolgungsmodus
+- `js/training.js` – Workouts, FTP-Tests
 - `js/auswertung.js` – Testmodus, Fotofinish, Aufzeichnung, Ergebnis, TCX-Export
 - `js/lobby.js` – Lobby, Fahrer-Editor, Lobby-Hintergrund
 - `js/online.js` – PeerJS-Raumcode, Sync mit dem Gegner
@@ -27,7 +27,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 ## Regeln
 - Klassische `<script>`-Tags, keine ES-Module: alle Dateien teilen sich globale Variablen. Reihenfolge in `index.html` ist wichtig – Code, der beim Laden läuft, darf nur Funktionen aus derselben oder früheren Dateien aufrufen.
 - Code und Kommentare auf Deutsch, kompakter Stil (viele Anweisungen pro Zeile) beibehalten.
-- localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`, `kd-chase`, `kd-shake`.
+- localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`, `kd-shake`.
 
 ## Arbeitsweise
 - Sparsam mit Tokens: nur die betroffene Datei/den Abschnitt lesen (Abschnitte sind mit `/* ===== … */`- bzw. `// ---- … ----`-Kommentaren markiert, per grep finden), keine ganzen Dateien ohne Grund.

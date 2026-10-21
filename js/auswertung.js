@@ -79,7 +79,7 @@ function showResult(){
 
 /* ================= Aufzeichnung, Auswertung und TCX-Export =================
    Jede Sekunde ein Messpunkt: Zeit, Distanz, Geschwindigkeit, Watt (Mittel der Sekunde), Puls, Trittfrequenz, Höhe (nur Kalmit).
-   Runden in der TCX: Training = jeder Abschnitt, Rundstrecke/Verfolgung = jede Runde, Anstieg = eine Runde.
+   Runden in der TCX: Training = jeder Abschnitt, Rundstrecke = jede Runde, Anstieg = eine Runde.
    Keine GPS-Daten – sonst würde Strava die Fahrt in echte Segmente einsortieren. */
 const BEST_DUR=[[60,'1 min'],[300,'5 min'],[480,'8 min'],[900,'15 min'],[1200,'20 min'],[1800,'30 min'],[2700,'45 min'],[3600,'60 min']];
 const rec={s:[],laps:[],start:null,savedN:0};
@@ -91,7 +91,7 @@ function recStep(dt,P){
   if(live.hr){ rec.hrS+=live.hr*dt; rec.hrT+=dt; } if(live.src!=='sim'&&live.cadence!=null){ rec.cadS+=live.cadence*dt; rec.cadT+=dt; }
   let key, name;
   if(race.mode==='train'){ if(me.done){ key='free'; name='Ausrollen'; } else { const sg=woSeg(race.t); key=race.woSegs.indexOf(sg); name=sg?sg.label:'Abschnitt'; } }
-  else if(R.loop||race.mode==='chase'){ key=Math.floor(me.d/R.len); name='Runde '+(key+1); } else { key=0; name=R.name; }
+  else if(R.loop){ key=Math.floor(me.d/R.len); name='Runde '+(key+1); } else { key=0; name=R.name; }
   if(key!==rec.lapKey){ rec.lapKey=key; rec.laps.push({i0:rec.s.length,name}); }
   if(race.t>=rec.sec+1){ rec.sec=Math.floor(race.t);
     rec.s.push({t:rec.sec, p:rec.accT?rec.accE/rec.accT:P, hr:rec.hrT>.3?Math.round(rec.hrS/rec.hrT):null, cad:rec.cadT>.3?Math.round(rec.cadS/rec.cadT):null,
@@ -127,8 +127,7 @@ function statsHtml(){
 const xesc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 function rideNote(st){
   const parts=['Kalmit-Duell', (MODES[rec.mode]||{}).title||rec.mode, rec.route+(rec.mode==='loop'?` (${rec.laps0} Runden)`:'')];
-  if(rec.mode==='chase'&&race.chase&&race.chase.won!=null) parts.push(race.chase.won?'dem Teufel entkommen':'vom Teufel erwischt');
-  else if(rec.mode==='train') parts.push(race.woKind==='ramp'?'FTP-Rampentest':race.woKind==='t20'?'20-Minuten-Test':'Workout');
+  if(rec.mode==='train') parts.push(race.woKind==='ramp'?'FTP-Rampentest':race.woKind==='t20'?'20-Minuten-Test':'Workout');
   else if(opp.active){ const place=me.done&&(!opp.done||me.time<opp.time)?1:me.done?2:null; parts.push(`gegen ${opp.name}${opp.bot?' (Bot)':''}`+(place?` · Platz ${place}`:'')); }
   if(me.ftpRes) parts.push(`neue FTP ${me.ftpRes} W`);
   return parts.join(' · ')+`\nØ ${Math.round(st.avg)} W · NP ${Math.round(st.np)} W · IF ${de(st.IF,2)} · TSS ${Math.round(st.tss)} · ${Math.round(st.kj)} kJ`

@@ -30,9 +30,9 @@ function draw(dt){
   if(theirs.lane==null) theirs.lane=ownLane(oppKey);
   lanes(mine,opp.d-me.d,theirs,tm.t,me.d); lanes(theirs,me.d-opp.d,mine,to.t,opp.d); leanStep(mine,me.d,me.v,dt); if(opp.active) leanStep(theirs,opp.d,opp.v,dt);
   kxFrame();
-  updateForm(mine, race.state==='run'?curPower()/weight():0, dt, true, me.done&&!me.free); putRider(mine, me.d, me.crank);
+  wkgGlatt(mine, race.state==='run'?curPower()/weight():0, dt); putRider(mine, me.d, me.crank);
   { const S=camS.sh; mine.body.position.y=S&&!camOverride?S.n*S.a*.5-S.j*.4:0; } // eigener Fahrer rüttelt mit
-  if(opp.active){ updateForm(theirs, race.state==='run'?(opp.wkg||0):0, dt, false, opp.done); putRider(theirs, opp.d, opp.crank); }
+  if(opp.active){ wkgGlatt(theirs, race.state==='run'?(opp.wkg||0):0, dt); putRider(theirs, opp.d, opp.crank); }
   if(anim.fans && (me.d>R.fans-300 || R.loop || R.abzweig)) poseFans(performance.now()/1000, false);
   if(anim.stadium) poseStadium(performance.now()/1000);
   if(anim.space) poseSpace(dt, performance.now()/1000);
@@ -90,13 +90,6 @@ function miniMap(){
 function miniProfile(){
   const pad=16, h=56, w=W-pad*2, y0=H-pad;
   if(race.mode==='train'){ glassBox(pad-6,y0-h-12,w+12,h+18); drawWo(ctx,pad,y0-h-4,w,h+2,race.woSegs||[],race.woT||1,{cur:race.t,trace:me.trace,k:woK()}); return; }
-  if(race.mode==='chase'){ const C=race.chase||{}, X=d=>pad+(((d%R.len)+R.len)%R.len)/R.len*w, yb=y0-30;
-    glassBox(pad-6,y0-h-12,w+12,h+18);
-    ctx.fillStyle='rgba(255,255,255,.14)'; ctx.fillRect(pad,yb-6,w,12);
-    ctx.font='600 13px Barlow, sans-serif'; ctx.fillStyle='#c9d6cc'; ctx.textAlign='left'; ctx.fillText(`Runde ${Math.floor(me.d/R.len)+1} · ${Math.round(R.len)} m`,pad,yb+26);
-    if(C.dur){ const f=Math.min(1,race.t/C.dur); ctx.fillStyle='rgba(255,255,255,.12)'; ctx.fillRect(pad,yb-22,w,6); ctx.fillStyle='#f2d7ae'; ctx.fillRect(pad,yb-22,w*f,6); ctx.textAlign='right'; ctx.fillText(`noch ${fmtT(Math.max(0,C.dur-race.t))}`,pad+w,yb+26); }
-    const dot=(d,col)=>{ ctx.fillStyle=col; ctx.strokeStyle=lineCol(col); ctx.lineWidth=2; ctx.beginPath(); ctx.arc(X(d),yb,7,0,7); ctx.fill(); ctx.stroke(); };
-    if(C.started) dot(opp.d,RIDERS.devil.dot); dot(me.d,RIDERS[myKey].dot); return; }
   if(R.loop){ // Rennfortschritt mit Runden statt Höhenprofil
     const tot=raceLen(), X=d=>pad+Math.min(1,Math.max(0,d/tot))*w, yb=y0-30;
     glassBox(pad-6,y0-h-12,w+12,h+18);
@@ -121,7 +114,6 @@ function simStep(dt,P,wkg){
     me.draftR = opp.active&&!me.done ? draftOf(opp.d-me.d) : 0;
     me.airS=(me.airS||0)+(airSlope(me,weight(),me.draftR)-(me.airS||0))*Math.min(1,dt/2); // Wind und Windschatten am Trainer, Böen über 2 s geglättet
     if(race.mode==='train') trainStep(dt,P,wkg);
-    else if(race.mode==='chase') chaseStep(dt,P,wkg);
     else { if(!me.done){ step(me,P,weight(),dt,me.draftR); me.time=race.t; me.wkgSum+=wkg*dt; me.maxWkg=Math.max(me.maxWkg,wkg);
       if(R.loop){ const lap=Math.floor(me.d/R.len); if(lap>me.lap){ me.lap=lap; if(lap<race.laps){ if(lap===race.laps-1){ flash('🔔 Letzte Runde!'); [0,250,500].forEach(t=>setTimeout(()=>beep(1320,.12),t)); } else { flash(`Runde ${lap+1} / ${race.laps}`); beep(880); } } } }
       if(me.d>=raceLen()){ me.time=Math.max(0,race.t-(me.d-raceLen())/Math.max(me.v,.1)); me.vf=me.v; me.d=raceLen(); me.done=true; onFinish(); } }
@@ -134,7 +126,7 @@ function loop(now){
   const P=curPower(), wkg=P/weight();
   if(race.state==='run' && !race.frozen && !race.paused){
     const tot=dt*simSpeed(), n=Math.max(1,Math.ceil(tot/0.05)); // Testmodus: schneller simulieren, in kleinen Schritten
-    for(let i=0;i<n;i++){ simStep(tot/n,P,wkg); if(race.mode==='chase'&&me.done) break; }
+    for(let i=0;i<n;i++){ simStep(tot/n,P,wkg); }
     trainerCtl();
   }
   if(race.state==='run' && !race.paused) wertStep();
@@ -142,7 +134,7 @@ function loop(now){
   if(!race.paused&&race.state!=='setup'){ const run=race.state==='run'||race.frozen; // Kurbeln, Wiegetritt und Aero-Haltung beider Figuren
     rideState(riders3d[myKey],me,run&&!(me.done&&!me.free)?P:0,ftp(),dt,live.src!=='sim'?live.cadence:null);
     if(opp.active){ const kg=opp.bot?botKg():weight(), oP=opp.done||!run?0:opp.watt??(opp.wkg||0)*kg; if(!opp.bot) opp.aero=!!opp.ra;
-      rideState(riders3d[oppKey],opp,oP,opp.bot?((opp.plan&&opp.plan.A)||(race.chase&&race.chase.lvl)||3)*kg:1e9,dt,opp.bot?null:opp.rc??null,opp.bot?null:opp.rst); } }
+      rideState(riders3d[oppKey],opp,oP,opp.bot?((opp.plan&&opp.plan.A)||3)*kg:1e9,dt,opp.bot?null:opp.rc??null,opp.bot?null:opp.rst); } }
   if(live.hr) race.hrMax=Math.max(race.hrMax,live.hr);
   rainSound(race.state!=='setup'&&race.rain&&!R.space);
   { const S=(riders3d[myKey]||{}).rs; freewheel(dt, race.state==='run'&&!race.paused&&!race.frozen&&S&&S.cad<8&&me.v>2, me.v); } // Freilauf klickt beim Rollen
@@ -151,27 +143,22 @@ function loop(now){
 function hud(P,wkg){
   if(race.state==='setup') return;
   $('hW').textContent=Math.round(P); $('hWkg').textContent=de(wkg);
-  $('hDist').textContent=de((race.mode==='train'?(me.dist||0):me.d)/1000,2)+' km'; $('sRest').style.display=race.mode==='train'||(race.mode==='chase'&&!(race.chase&&race.chase.dur))?'none':'';
+  $('hDist').textContent=de((race.mode==='train'?(me.dist||0):me.d)/1000,2)+' km'; $('sRest').style.display=race.mode==='train'?'none':'';
   const inPlay=race.state==='run'&&!race.paused&&$('pause').style.display!=='flex', canPause=inPlay&&(!me.done||me.free);
   $('btnPause').style.display=canPause?'block':'none'; $('btnMenu').style.display=inPlay?'block':'none'; $('btnMenu').style.right=canPause?'140px':'14px'; // Menü auch nach dem Ende
   $('hV').textContent=de(me.v*3.6,1);
   if(race.mode==='train'){ const sg=woSeg(race.t); $('hGk').textContent='Ziel'; $('hG').textContent=sg&&sg.free?'frei':Math.round(me.tgt||0)+' W'; woPanel(P,sg); }
-  else if(race.mode==='chase'){ $('hGk').textContent='Runde'; $('hG').textContent=Math.floor(me.d/R.len)+1; $('hRestk').textContent='noch'; }
   else if(R.loop){ $('hGk').textContent='Runde'; $('hG').textContent=`${Math.min(race.laps,Math.floor(me.d/R.len)+1)} / ${race.laps}`; $('hRestk').textContent='bis Ziel'; }
   else { $('hGk').textContent='Steigung'; $('hG').textContent=de(gradeAt(me.d))+' %'; $('hRestk').textContent=R.kalmit?'bis Gipfel':'bis Ziel'; }
-  if(race.mode==='chase') $('hRest').textContent=fmtT(Math.max(0,((race.chase||{}).dur||0)-race.t));
-  else if(race.mode!=='train') $('hRest').textContent=de(Math.max(0,raceLen()-me.d)/1000,2)+' km';
+  if(race.mode!=='train') $('hRest').textContent=de(Math.max(0,raceLen()-me.d)/1000,2)+' km';
   const dr=me.draftR||0, chip=$('draftChip'); chip.style.display=race.draft&&dr>0.02&&!me.done?'flex':'none'; $('draftBar').style.width=Math.round(dr/0.35*100)+'%'; $('draftPct').textContent='−'+Math.round(dr*100)+' %'; $('hT').textContent=fmtT(me.time);
   $('hHr').textContent=live.hr??'–'; $('hCad').textContent=live.src!=='sim'&&live.cadence!=null?Math.round(live.cadence):'–';
-  if(opp.active && race.mode==='chase'){ const C=race.chase||{}, gap=me.d-opp.d; $('gapName').textContent='Vorsprung auf den Teufel';
-    $('gapV').textContent=Math.round(Math.max(0,gap))+' m'; $('gapV').style.color=!C.started||gap>60?'#9cc46b':gap>20?'#f0b860':'#ff6b6b';
-    $('gapSub').textContent=me.done&&C.caught?'erwischt!':!C.started?`Teufel startet in ${Math.max(0,Math.ceil(C.delay-race.t))} s`:`≈ ${Math.round(Math.max(0,gap)/Math.max(1,opp.v))} s Vorsprung`; }
-  else if(opp.active){ const gap=me.d-opp.d; $('gapName').textContent=`Abstand zu ${opp.name}`;
+  if(opp.active){ const gap=me.d-opp.d; $('gapName').textContent=`Abstand zu ${opp.name}`;
     $('gapV').textContent=Math.abs(gap)<0.5?'±0 m':(gap>=0?'+':'−')+Math.round(Math.abs(gap))+' m'; $('gapV').style.color=gap>=0?'#9cc46b':'#f0b860';
     const v=Math.max(1,gap>=0?opp.v:me.v); $('gapSub').textContent= R.loop&&Math.abs(gap)>=R.len&&!opp.done?`${Math.floor(Math.abs(gap)/R.len)} Runde${Math.abs(gap)>=2*R.len?'n':''} ${gap>=0?'Vorsprung':'Rückstand'}`: opp.done?`${opp.name} im Ziel: ${fmtT(opp.time)}`:`≈ ${Math.round(Math.abs(gap)/v)} s ${gap>=0?'Vorsprung':'Rückstand'}`; }
   const mk=RIDERS[myKey], ok=RIDERS[oppKey];
   let rows=`<div class="p"><i style="background:${mk.dot}"></i><b>${mk.name}</b><span class="w num">${Math.round(P)} W</span><span class="k num">(${de(wkg)} W/kg)</span></div>`;
-  if(opp.active) rows+=`<div class="p"><i style="background:${ok.dot};border-color:${lineCol(ok.dot)}"></i><b>${ok.name}</b>${opp.done&&race.mode!=='chase'?'<span class="w num">Ziel</span><span class="k num"></span>':opp.watt!=null?`<span class="w num">${Math.round(opp.watt)} W</span><span class="k num">(${de(opp.wkg||0)} W/kg)</span>`:`<span class="w num">${de(opp.wkg||0)}</span><span class="k num">W/kg</span>`}</div>`;
+  if(opp.active) rows+=`<div class="p"><i style="background:${ok.dot};border-color:${lineCol(ok.dot)}"></i><b>${ok.name}</b>${opp.done?'<span class="w num">Ziel</span><span class="k num"></span>':opp.watt!=null?`<span class="w num">${Math.round(opp.watt)} W</span><span class="k num">(${de(opp.wkg||0)} W/kg)</span>`:`<span class="w num">${de(opp.wkg||0)}</span><span class="k num">W/kg</span>`}</div>`;
   $('powRows').innerHTML=rows;
 }
 let msgT=null; function flash(t){ const m=$('msg'); m.textContent=t; m.style.display='block'; clearTimeout(msgT); msgT=setTimeout(()=>m.style.display='none',4500); }
@@ -183,7 +170,7 @@ function wakeOff(){ try{ wakeLock&&wakeLock.release(); }catch(e){} wakeLock=null
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && race.state!=='setup') wakeOn(); }); // nach Tab-Wechsel neu anfordern
 /* ---------- Bergwertungen und Ortsschilder: wer zuerst drüber ist, holt die Wertung ---------- */
 // Nur im Duell (Bot oder online). Online entscheidet der Ersteller und schickt das Ergebnis an den Gast
-function prepWert(){ race.wert=[]; if(race.mode==='train'||race.mode==='chase'||!opp.active||!R.kom) return; const L=[];
+function prepWert(){ race.wert=[]; if(race.mode==='train'||!opp.active||!R.kom) return; const L=[];
   for(const [a,b,name] of R.kom) L.push({typ:'berg',a,d:b,name});
   for(const [t,za,,zo] of R.zones) if(t==='ort'&&zo&&zo.name&&za>4) L.push({typ:'ort',d:za-4,name:zo.name}); // Ortseingangsschild
   L.sort((p,q)=>p.d-q.d); for(let k=0;k<(R.loop?race.laps:1);k++) for(const w of L) race.wert.push({...w, a:w.a!=null?w.a+k*R.len:null, d:w.d+k*R.len, win:null, ann:false}); }
@@ -248,7 +235,7 @@ function quitToLobby(){
   if(anim.stadium&&anim.stadium.pyro){ const Y=anim.stadium.pyro; Y.t0=null; Y.list.forEach(P=>{ P.glow.visible=P.core.visible=false; P.smoke.forEach(sm=>sm.visible=false); }); Y.sparks.visible=false; Y.lights.forEach(l=>l.intensity=0); }
   // Gast-Sperren der Lobby wieder aufheben
   document.querySelectorAll('.hostonly').forEach(t=>t.style.display='none'); $('modeTag').style.display='none'; $('btnBack').textContent='← Modus wechseln'; $('btnBack2').textContent='← Zurück';
-  for(const id of ['formsOn','draftOn','lapMinus','lapPlus','botOn','botRider','botWkg','botKg','botStyle','botAgg','btnHost','btnStart']) $(id).disabled=false; $('botOn').checked=true;
+  for(const id of ['draftOn','lapMinus','lapPlus','botOn','botRider','botWkg','botKg','botStyle','botAgg','btnHost','btnStart']) $(id).disabled=false; $('botOn').checked=true;
   document.querySelectorAll('.rcard').forEach(c=>c.classList.remove('taken')); setConn('');
   if(Object.keys(remoteLooks).length){ for(const k in remoteLooks) delete remoteLooks[k]; rebuildRiders(); } oppKey=botKey; opp.name=RIDERS[oppKey].name; $('joinState').textContent='';
   $('setup').style.display=''; $('cfgScreen').style.display='none'; $('modeScreen').style.display=''; resetRiders(); me.d=0; me.v=0;
@@ -268,10 +255,8 @@ function startRace(){
   if(race.role==='guest') return;
   if($('btnStart').disabled) return;
   if(race.mode==='train' && GEN_IDS.includes(routeId)){ const e=genEntry(routeId); if(R.def!==e.def) setRoute(e.def); } // Space/Insel: Strecke passt zum aktuellen Workout
-  resetRiders(); race.forms=$('formsOn').checked; race.draft=$('draftOn').checked; race.wind=+$('windLvl').value; race.windDir=Math.random()*Math.PI*2; // Windrichtung zufällig pro Rennen
-  if(race.mode==='chase'){ oppKey='devil'; Object.assign(opp,{active:true,bot:true,watt:null,wkg:0,name:'Teufel',d:0,v:0,done:false,wkgSum:0,avg:0});
-    const C=chaseCfg(); race.chase={...C,lvl:C.wkg,started:false,caught:false}; race.draft=false; riders3d.devil.lane=null; }
-  else if(conn && conn.open){ Object.assign(opp,{active:true,bot:false,watt:null,name:RIDERS[oppKey].name,d:0,target:0,v:0,done:false}); sendRoute(); send({t:'start',forms:race.forms,draft:race.draft,tod:race.tod,season:race.season,rain:race.rain,wind:race.wind,wd:race.windDir,mode:race.mode,laps:race.laps,wo:race.mode==='train'?WO:null}); }
+  resetRiders(); race.draft=$('draftOn').checked; race.wind=+$('windLvl').value; race.windDir=Math.random()*Math.PI*2; // Windrichtung zufällig pro Rennen
+  if(conn && conn.open){ Object.assign(opp,{active:true,bot:false,watt:null,name:RIDERS[oppKey].name,d:0,target:0,v:0,done:false}); sendRoute(); send({t:'start',draft:race.draft,tod:race.tod,season:race.season,rain:race.rain,wind:race.wind,wd:race.windDir,mode:race.mode,laps:race.laps,wo:race.mode==='train'?WO:null}); }
   else if($('botOn').checked && race.mode!=='train'){ oppKey=botKey; Object.assign(opp,{active:true,bot:true,watt:null,name:RIDERS[oppKey].name,d:0,v:0,done:false,wkgSum:0,avg:0}); opp.plan=botPlan(); }
   else opp.active=false;
   countdown();

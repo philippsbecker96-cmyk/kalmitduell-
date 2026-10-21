@@ -73,10 +73,6 @@
         <svg viewBox="0 0 200 90" aria-hidden="true"><path d="M6 84 L6 64 L40 50 L40 84Z" fill="#4a90d9"/><rect x="40" y="22" width="18" height="62" fill="#ec8a3a"/><rect x="58" y="60" width="18" height="24" fill="#9aa5ad"/><rect x="76" y="22" width="18" height="62" fill="#ec8a3a"/><rect x="94" y="60" width="18" height="24" fill="#9aa5ad"/><rect x="112" y="22" width="18" height="62" fill="#ec8a3a"/><rect x="130" y="60" width="18" height="24" fill="#9aa5ad"/><rect x="148" y="40" width="22" height="44" fill="#e9c43a"/><rect x="170" y="62" width="24" height="22" fill="#9aa5ad"/></svg>
         <b>Training</b><span>Eigenes Workout mit Intervallen – auf einer Strecke in Dauerschleife. Allein oder zu zweit.</span>
       </button>
-      <button class="mode" data-m="chase">
-        <svg viewBox="0 0 200 90" aria-hidden="true"><rect x="22" y="14" width="156" height="62" rx="31" fill="none" stroke="#c2553c" stroke-width="10"/><circle cx="150" cy="16" r="8" fill="#1c7ed6" stroke="#fff" stroke-width="2"/><circle cx="62" cy="16" r="9" fill="#d62828" stroke="#fff" stroke-width="2"/><path d="M56 9 l-3 -7 l6 4 Z M68 9 l3 -7 l-6 4 Z" fill="#7a1712"/><path d="M80 16 h40" stroke="#fff" stroke-width="2" stroke-dasharray="4 4"/></svg>
-        <b>Verfolgung</b><span>Der Teufel startet hinter dir. Fahr ihm so lange wie möglich davon.</span>
-      </button>
     </div>
     <div class="joinbar" id="lastRide" style="display:none"><span>Die letzte Einheit ist noch nicht gespeichert.</span><button class="tcxBtn" style="display:none">⬇ TCX für Strava</button></div>
     <div class="joinbar">
@@ -124,20 +120,6 @@
         </div>
       </div>
       <div>
-        <div class="block" id="chaseBlock" style="display:none">
-          <h2>Teufel 😈</h2>
-          <div class="rowb">
-            <span class="small">startet</span> <input type="number" id="chDelay" value="30" min="5" max="600" step="5" style="width:80px"> <span class="small">s nach dir · fährt mit Ø</span>
-            <input type="number" id="chWkg" value="3.0" min="1" max="7" step="0.1" style="width:80px"> <span class="small">W/kg</span>
-          </div>
-          <div class="rowb" style="margin-top:10px">
-            <label class="check">Dauer <select id="chDur"><option value="0">endlos – bis er dich hat</option><option value="1">feste Zeit</option></select></label>
-            <span id="chMinBox" style="display:none"><input type="number" id="chMin" value="20" min="1" max="240" style="width:80px"> <span class="small">min – wer dann noch vorne ist, gewinnt</span></span>
-          </div>
-          <label class="check" style="margin-top:10px"><input type="checkbox" id="chGrow"> Teufel wird mit der Zeit stärker <span class="small">(alle 3 min +0,1 W/kg)</span></label>
-          <div class="small" style="margin-top:8px">Er rechnet mit deinem Gewicht: gleiche W/kg = gleiches Tempo. Kein Windschatten für ihn.</div>
-          <div class="small" id="chRec" style="margin-top:6px;color:var(--sky1)"></div>
-        </div>
         <div class="block" id="oppBlock">
           <h2 id="oppTitle">Gegner</h2>
           <div class="rowb">
@@ -161,8 +143,6 @@
           <label class="switch"><input type="checkbox" id="draftOn" checked><span class="knob"></span><span><b>Windschatten</b> <span class="small" id="draftLbl">An – dicht hinter dem Gegner brauchst du weniger Watt</span></span></label>
           <div class="rowb" style="margin-top:12px"><label class="check"><b>Wind</b> <select id="windLvl"><option value="0">aus</option><option value="1">leicht · 10 km/h</option><option value="2">mittel · 20 km/h</option><option value="3">stark · 30 km/h</option></select></label>
             <span class="small">Richtung zufällig, mit Böen · Wald und Ortschaften schirmen ab · am Trainer als Zusatzsteigung</span></div>
-          <label class="switch" style="margin-top:12px"><input type="checkbox" id="formsOn" checked><span class="knob"></span><span><b>Verwandlungen</b> <span class="small" id="formsLbl">An – Avatar verwandelt sich je nach W/kg</span></span></label>
-          <div class="forms"><span>🐌 unter 2</span><span>🚴 2–4</span><span>🌈 über 4</span><span>🚀 über 7 W/kg</span></div>
         </div>
         <div class="block">
           <h2>Trainer</h2>

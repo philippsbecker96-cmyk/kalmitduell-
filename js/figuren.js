@@ -35,7 +35,7 @@ function makeRider(key,Lo,ma){
   const g=new THREE.Group(), tilt=new THREE.Group(), body=new THREE.Group(); g.add(tilt); tilt.add(body); tilt.scale.setScalar(1);
   const M=c=>new THREE.MeshLambertMaterial({color:c});
   const black=M('#1b1b1d'), skin=M('#efc9a6'), tire=M('#151515'), white=M('#f4f4ef'), pantsM=M(ma?'#3b342e':L.pants), leinen=M('#ece3cf'), stiefel=M('#4a3222');
-  const kit=[]; const kitMat=(c,map)=>{ const m=new THREE.MeshLambertMaterial({color:c,map:map||null}); kit.push({m,c:new THREE.Color(c),map:map||null}); return m; };
+  const kitMat=(c,map)=>new THREE.MeshLambertMaterial({color:c,map:map||null});
 
   // --- Rad ---
   let crank; if(ma) crank=holzRad(body,M); else { const frameC=L.frame, accent=L.accent;
@@ -62,10 +62,6 @@ function makeRider(key,Lo,ma){
   const torso=new THREE.Mesh(new THREE.CylinderGeometry(S.torsoR*.92,S.torsoR,1,10), kitMat(L.jersey)); torso.scale.z=S.torsoZ; place(torso,hip,sh); body.add(torso);
   if(L.hem){ const hem=new THREE.Mesh(new THREE.CylinderGeometry(S.torsoR+.008,S.torsoR+.008,1,10), kitMat(L.sleeve)); hem.scale.z=S.torsoZ; place(hem,hip,[hip[0]+.04,hip[1]+.06,0]); body.add(hem); }
   const pants=new THREE.Mesh(new THREE.SphereGeometry(S.torsoR*1.05,10,8), pantsM); pants.scale.set(1.15,.8,S.torsoZ*1.05); pants.position.set(hip[0],hip[1],0); body.add(pants);
-  // Regenbogenstreifen (Weltmeister) – nur in diesem Modus sichtbar
-  const rainbow=new THREE.Group(); body.add(rainbow); rainbow.visible=false;
-  ['#1e5bc6','#d62828','#111111','#f4c300','#1f9d55'].forEach((c,i)=>{ const t0=.42+i*.055, a=[hip[0]+(sh[0]-hip[0])*t0, hip[1]+(sh[1]-hip[1])*t0, 0], t1=t0+.05, b=[hip[0]+(sh[0]-hip[0])*t1, hip[1]+(sh[1]-hip[1])*t1, 0];
-    const s=new THREE.Mesh(new THREE.CylinderGeometry(S.torsoR+.012,S.torsoR+.012,1,10), M(c)); s.scale.z=S.torsoZ; place(s,a,b); rainbow.add(s); });
   if(ma){ // Wams: helle Knopfleiste vorn (Brust zeigt nach vorn unten), Schulterwülste in der Zweitfarbe mit Streifen, Ledergürtel
     const ax=[sh[0]-hip[0],sh[1]-hip[1]], al=Math.hypot(...ax), nx=ax[1]/al, ny=-ax[0]/al, kn=M('#e6d6a8');
     for(let i=1;i<=4;i++){ const t=i/5.2, b=new THREE.Mesh(new THREE.SphereGeometry(.018,6,5),kn); b.position.set(hip[0]+ax[0]*t+nx*S.torsoR*.97, hip[1]+ax[1]*t+ny*S.torsoR*.97, 0); body.add(b); }
@@ -103,34 +99,9 @@ function makeRider(key,Lo,ma){
   const legs=[]; for(const z of [-.11,.11]){ const th=cyl(S.legR,pantsM,S.legR*.85), shn=cyl(S.legR*.72,ma?pantsM:skin,S.legR*.6), sk=cyl(S.legR*(ma?.74:.66),ma?stiefel:M(sockC),S.legR*.6), // Mittelalter: lange Hose, Lederstiefel
       sho=new THREE.Mesh(new THREE.BoxGeometry(.22,.075,.085), ma?stiefel:M(shoeC)); body.add(th,shn,sk,sho); legs.push({th,sh:shn,sk,sho,z}); }
 
-  // Schnecke
-  const snail=new THREE.Group(); tilt.add(snail); snail.visible=false;
-  const slime=M('#c8b46a');
-  const foot=new THREE.Mesh(new THREE.SphereGeometry(1,14,10), slime); foot.scale.set(.9,.16,.3); foot.position.set(.05,.16,0); snail.add(foot);
-  const neckS=new THREE.Mesh(new THREE.SphereGeometry(1,12,10), slime); neckS.scale.set(.2,.3,.2); neckS.position.set(.72,.38,0); snail.add(neckS);
-  const shell=new THREE.Mesh(new THREE.SphereGeometry(.48,16,12), M(S.ui)); shell.position.set(-.1,.68,0); shell.scale.set(1,1,.8); snail.add(shell);
-  for(const [r,t] of [[.34,.06],[.2,.05]]){ const sp=new THREE.Mesh(new THREE.TorusGeometry(r,t,8,24), M(lum(S.ui)>.3?'#5b3a24':'#f1f1ec'));
-    for(const zz of [-.39,.39]){ const c=sp.clone(); c.position.set(-.1,.68,zz); snail.add(c); } }
-  for(const z of [-.08,.08]){ const st=cyl(.025,slime); place(st,[.78,.55,z],[.88,.95,z*2.2]); snail.add(st);
-    const eye=new THREE.Mesh(new THREE.SphereGeometry(.06,8,6), black); eye.position.set(.88,.97,z*2.2); snail.add(eye); }
-  const sHelm=new THREE.Mesh(new THREE.SphereGeometry(.2,12,8,0,Math.PI*2,0,Math.PI/2), M(L.helmet)); sHelm.position.set(.74,.62,0); snail.add(sHelm);
-
-  // Rakete
-  const rocket=new THREE.Group(); tilt.add(rocket); rocket.visible=false;
-  const hull=M('#eef0f2'), acc=M(S.ui);
-  const tube=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,1.7,16), hull); tube.rotation.z=-Math.PI/2; rocket.add(tube);
-  const nose=new THREE.Mesh(new THREE.ConeGeometry(.3,.6,16), acc); nose.rotation.z=-Math.PI/2; nose.position.x=1.15; rocket.add(nose);
-  const band=new THREE.Mesh(new THREE.CylinderGeometry(.305,.305,.18,16), acc); band.rotation.z=-Math.PI/2; band.position.x=.3; rocket.add(band);
-  const win=new THREE.Mesh(new THREE.SphereGeometry(.11,10,8), M('#7fc8f8')); win.position.set(.45,.25,0); rocket.add(win);
-  for(let i=0;i<3;i++){ const fin=new THREE.Mesh(new THREE.BoxGeometry(.5,.04,.38), acc); const a=i*Math.PI*2/3;
-    fin.position.set(-.7,Math.cos(a)*.38,Math.sin(a)*.38); fin.rotation.x=a; rocket.add(fin); }
-  const flame=new THREE.Mesh(new THREE.ConeGeometry(.24,1,12), new THREE.MeshBasicMaterial({color:'#ff9a2e', transparent:true, opacity:.9}));
-  flame.rotation.z=Math.PI/2; flame.position.x=-1.35; rocket.add(flame);
-  const flame2=new THREE.Mesh(new THREE.ConeGeometry(.13,.6,10), new THREE.MeshBasicMaterial({color:'#fff3a0'})); flame2.rotation.z=Math.PI/2; flame2.position.x=-1.15; rocket.add(flame2);
-
   g.scale.setScalar(S.scale);
   const tag=nameSprite(S.name,S.ui); tag.scale.set(1.9,.475,1); g.add(tag); tag.position.set(0,2.3,laneKey(key)==='becker'?.55:-.55);
-  const r={key,g,tilt,body,snail,rocket,rainbow,flame,flame2,kit,legs,hip,tag,crankG:crank,form:'rider',pop:1,wS:0,spec:S};
+  const r={key,g,tilt,body,legs,hip,tag,crankG:crank,wS:0,spec:S};
   rigUpper(r,body.children.slice(i0,ih),body.children.slice(ih,il),[.36,1.47,0],arms); poseRider(r,0); return r;
 }
 /* ---------- Teufel-Bot: kleiner, süßer Teufel auf dem Rad (eigene Figur) ---------- */
@@ -201,31 +172,12 @@ function makeDevil(ma){
   const ring=new THREE.Mesh(new THREE.TorusGeometry(.024,.008,6,12), gold); ring.rotation.x=Math.PI/2; ring.position.y=.9; tri.add(ring);
   g.scale.setScalar(.92);
   const tag=nameSprite('Teufel','#c81e1e'); tag.scale.set(1.9,.475,1); g.add(tag); tag.position.set(0,2.3,0);
-  const none=new THREE.Group(); none.visible=false; tilt.add(none);
-  const r={key:'devil',g,tilt,body,snail:none,rocket:none,rainbow:none,flame:none,flame2:none,kit:[],legs,hip,tag,crankG:crank,form:'rider',pop:1,wS:0,spec:{name:'Teufel',ui:'#c81e1e',dot:'#c81e1e'},tail:segs,tailTip:tip};
+  const r={key:'devil',g,tilt,body,legs,hip,tag,crankG:crank,wS:0,spec:{name:'Teufel',ui:'#c81e1e',dot:'#c81e1e'},tail:segs,tailTip:tip};
   rigUpper(r,body.children.slice(i0,ih),body.children.slice(ih,il),[.2,1.4,0],arms); poseRider(r,0); return r;
 }
 function animTail(r,t){ r.tail.forEach((s,i)=>{ s.rotation.z=(i<2?.2:-.3)+Math.sin(t*7-i*.7)*.09*(i/8+.3); s.rotation.y=Math.sin(t*5.3-i*.6)*.12*(i/8+.2); }); }
-/* Verwandlung je nach W/kg – mit etwas Puffer, damit nichts flackert */
-const FORM_TXT={snail:'🐌 Schneckenmodus – unter 2 W/kg', rider:'Normaler Fahrer', wm:'🌈 Weltmeister-Modus – über 4 W/kg!', rocket:'🚀 RAKETE – über 7 W/kg!!'};
-function nextForm(f,w){
-  if(!race.forms) return 'rider';
-  if(w>7 || (f==='rocket'&&w>6.8)) return 'rocket';
-  if(w>4 || (f==='wm'&&w>3.85)) return 'wm';
-  if(w<2 || (f==='snail'&&w<2.15)) return 'snail';
-  return 'rider';
-}
-const WHITE=new THREE.Color('#f7f7f2');
-function updateForm(r,w,dt,isMe,frozen){
-  r.wS += (w-r.wS)*Math.min(1,dt/1.5);
-  const f = r.key==='devil' ? 'rider' : frozen ? r.form : nextForm(r.form, r.wS); // der Teufel verwandelt sich nie
-  if(f!==r.form){ r.form=f; r.pop=0; if(isMe && race.state==='run' && !race.frozen) flash(FORM_TXT[f]); }
-  r.body.visible = f==='rider'||f==='wm'; r.snail.visible = f==='snail'; r.rocket.visible = f==='rocket';
-  r.rainbow.visible = f==='wm';
-  r.kit.forEach(k=>{ const wm=f==='wm'; k.m.color.copy(wm?WHITE:k.c); if((wm?null:k.map)!==k.m.map){ k.m.map=wm?null:k.map; k.m.needsUpdate=true; } });
-  r.pop=Math.min(1,r.pop+dt*3); const p=r.pop<1? 1+Math.sin(r.pop*Math.PI)*.45 : 1; r.tilt.scale.setScalar(p);
-  if(f==='rocket'){ const t=performance.now()/1000; r.rocket.position.y=1.0+Math.sin(t*3)*.12; r.flame.scale.set(1,.8+Math.random()*.5,1); r.flame2.scale.set(1,.8+Math.random()*.4,1); }
-}
+/* geglättete W/kg je Figur (z. B. für Reaktionen der Leute am Weg) */
+function wkgGlatt(r,w,dt){ r.wS += (w-r.wS)*Math.min(1,dt/1.5); }
 /* Oberkörper (Drehpunkt Hüfte) und Kopf (Drehpunkt Hals) als eigene Gruppen – für Wiegetritt und Aero-Haltung; die Arme greifen per IK zum Lenker */
 const armOf=(ua,fa,hd,hip,shp,el,hand)=>({ua,fa,hd,s:[shp[0]-hip[0],shp[1]-hip[1],shp[2]],h:hand,ez:el[2],l1:Math.hypot(el[0]-shp[0],el[1]-shp[1]),l2:Math.hypot(hand[0]-el[0],hand[1]-el[1])});
 function rigUpper(r,ms,heads,neck,arms){ const H=new THREE.Vector3(...r.hip), N=new THREE.Vector3(...neck), up=new THREE.Group(), hg=new THREE.Group(), skip=new Set(arms.flatMap(A=>[A.ua,A.fa,A.hd]));
@@ -252,10 +204,10 @@ function poseRider(r,crank){
 }
 const ownLane=k=>{ const q=laneKey(k); return R.stadium?(q==='becker'?1.3:2.7):RIDERS[q].side; };
 function putRider(r,d,crank){
-  const hd=headingAt(R,d), u=r.lane, rk=r.form==='rocket'?0.12:0;
-  if(R.stadium){ const p=trackPt(d,u); r.g.position.set(p[0],p[1]+0.03,p[2]); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(-R.outSign*bankAt(d),0,rk); }
-  else if(KX.on){ const [x,z]=posAt(R,d), px=x-Math.sin(hd)*u, pz=z+Math.cos(hd)*u; r.g.position.set(px, roadY(d)+visOff(px,pz)+0.12, pz); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(r.lean||0,0,Math.atan((visRoadY(d+1.5)-visRoadY(d-1.5))/3)+rk); }
-  else { const [x,z]=posAt(R,d); r.g.position.set(x-Math.sin(hd)*u, roadY(d)+0.12, z+Math.cos(hd)*u); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(r.lean||0,0,Math.atan((R.island?0:R.space&&d>=0&&d<=R.len?segOf(d).vg:gradeAt(d))/100)+rk); } r.tag.position.y = r.form==='rocket'?2.5:r.form==='snail'?1.6:2.3; poseRider(r,crank);
+  const hd=headingAt(R,d), u=r.lane;
+  if(R.stadium){ const p=trackPt(d,u); r.g.position.set(p[0],p[1]+0.03,p[2]); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(-R.outSign*bankAt(d),0,0); }
+  else if(KX.on){ const [x,z]=posAt(R,d), px=x-Math.sin(hd)*u, pz=z+Math.cos(hd)*u; r.g.position.set(px, roadY(d)+visOff(px,pz)+0.12, pz); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(r.lean||0,0,Math.atan((visRoadY(d+1.5)-visRoadY(d-1.5))/3)); }
+  else { const [x,z]=posAt(R,d); r.g.position.set(x-Math.sin(hd)*u, roadY(d)+0.12, z+Math.cos(hd)*u); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(r.lean||0,0,Math.atan((R.island?0:R.space&&d>=0&&d<=R.len?segOf(d).vg:gradeAt(d))/100)); } poseRider(r,crank);
 }
 function smoothHeading(d){ let sx=0,sz=0; for(let k=-4;k<=4;k++){ const h=headingAt(R,d+k*3); sx+=Math.cos(h); sz+=Math.sin(h); } return Math.atan2(sz,sx); }
 // Krümmung (rad/m, positiv = Kurve zur Spur +u) · Kurvenlage atan(v²·κ/g), höchstens 40°

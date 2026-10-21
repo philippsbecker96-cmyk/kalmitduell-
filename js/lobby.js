@@ -16,11 +16,11 @@ function spaceCanvas(cv2, def){ // Höhenprofil der Space-Strecke in Bahnfarben
 }
 function renderRouteList(){
   if(race.mode==='train' && race.role!=='guest'){ GEN_IDS.forEach(id=>genEntry(id)); if(GEN_IDS.includes(routeId)){ const e=genEntry(routeId); if(R && R.def!==e.def){ setRoute(e.def); sendRoute(); return; } } } // Workout geändert → Strecke neu
-  const box=$('routeList'), guest=race.role==='guest', list=race.mode==='train'?ROUTES.filter(r=>guest?r.id==='host':r.id!=='host'&&!r.noTrain):race.mode==='chase'?ROUTES.filter(r=>r.id==='stadion'):ROUTES.filter(r=>r.mode===race.mode);
+  const box=$('routeList'), guest=race.role==='guest', list=race.mode==='train'?ROUTES.filter(r=>guest?r.id==='host':r.id!=='host'&&!r.noTrain):ROUTES.filter(r=>r.mode===race.mode);
   box.innerHTML=list.map(r=>{ const L=r.def.segs.reduce((a,s)=>a+s.len,0), hm=r.def.segs.reduce((a,s)=>a+Math.max(0,s.len*s.g/100),0);
     const info=r.def.island?`${de(r.def.goal/1000,1)} km · Sand und Wasser in den harten Abschnitten · danach endlos ums Atoll (5 km)`:r.def.space?`${de((L-r.def.ring)/1000,1)} km · ${Math.round(hm)} Hm · danach endlos in der Umlaufbahn`:r.def.stadium?Math.round(L)+' m pro Runde':r.def.loop?de(L/1000,1)+' km pro Runde · '+Math.round(hm)+' Hm':de(L/1000,1)+' km · '+Math.round(hm)+' Hm';
     return `<button class="route${r.id===routeId?' sel':''}" data-id="${r.id}" ${guest?'disabled':''}><canvas width="300" height="92"></canvas><div><b>${esc(r.title)}</b><span>${esc(r.sub)} · ${info}</span></div></button>`; }).join('')
-    + (race.mode==='train'||race.mode==='chase'?'':`<div class="route soon"><div class="ph">folgt</div><div><b>${list.length?'Weitere Strecken':'Noch keine Strecke'}</b><span>${MODES[race.mode].soon}</span></div></div>`);
+    + (race.mode==='train'?'':`<div class="route soon"><div class="ph">folgt</div><div><b>${list.length?'Weitere Strecken':'Noch keine Strecke'}</b><span>${MODES[race.mode].soon}</span></div></div>`);
   box.querySelectorAll('button.route').forEach(b=>{ const r=ROUTES.find(x=>x.id===b.dataset.id); r.def.stadium?ovalCanvas(b.querySelector('canvas')):r.def.space?spaceCanvas(b.querySelector('canvas'), r.def):r.def.island?islandCanvas(b.querySelector('canvas'), r.def):profileCanvas(b.querySelector('canvas'), r.def.segs);
     b.onclick=()=>{ if(routeId===r.id) return; routeId=r.id; setRoute(r.def); sendRoute(); }; });
   const ok=list.some(r=>r.id===routeId) && R && R.def===list.find(r=>r.id===routeId).def;
@@ -29,8 +29,6 @@ function renderRouteList(){
   if(race.mode==='train'){ const T=woTotal(); $('routeSub').textContent = ok ? R.space?`Space-Strecke aus dem Workout · Steigung je nach Intensität · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)`:R.island?`Insel-Strecke aus dem Workout · Untergrund je nach Intensität · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)`:`${R.name} in Dauerschleife · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)` : 'Strecke wählen';
     $('lapsInfo').textContent=''; $('btnStart').disabled = race.role==='guest' || !ok || T<10;
     if(race.role!=='guest') $('startHint').textContent = T<10 ? 'Das Workout ist noch leer.' : 'Wer das Training erstellt, startet für beide.'; return; }
-  if(race.mode==='chase'){ $('routeSub').textContent=ok?`${R.name} · ${Math.round(R.len)} m pro Runde · du startest, der Teufel kommt hinterher`:'';
-    $('lapsInfo').textContent=''; $('btnStart').disabled=race.role==='guest'||!ok; if(race.role!=='guest') $('startHint').textContent='Nur allein – nicht online.'; return; }
   $('routeSub').textContent = ok ? (R.loop?`${R.name} · ${R.stadium?Math.round(R.len)+' m pro Runde · flach mit Steilkurven':de(R.len/1000,1)+' km pro Runde · '+Math.round(R.gain)+' Höhenmeter'}${race.tod==='nacht'?' · Abendspiel mit Flutlicht':race.tod==='abend'?' · Abenddämmerung':''}${race.rain?' · Regen':''}${race.season==='herbst'&&!R.stadium?' · Herbst':''} · gewertet in Watt pro Kilo`:`${R.name} · ${de(R.len/1000,1)} km · ${Math.round(R.gain)} Höhenmeter${race.tod!=='tag'?' · Sonnenuntergang':''}${race.rain?' · Regen':''}${R.def.burg&&race.tod==='tag'?' · Morgennebel':''}${race.season==='herbst'&&!R.island&&!R.def.burg?' · Herbst':''} · gewertet in Watt pro Kilo`) : MODES[race.mode].soon;
   $('lapsInfo').textContent = race.mode==='loop' && ok ? `${race.laps} × ${Math.round(R.len)} m = ${de(R.len*race.laps/1000,1)} km` : '';
   $('btnStart').disabled = race.role==='guest' || !ok;
@@ -38,10 +36,9 @@ function renderRouteList(){
 }
 function openMode(m){
   race.mode=m; $('modeTitle').textContent=MODES[m].title; $('lapsBox').style.display=m==='loop'?'flex':'none'; $('lapsV').textContent=race.laps;
-  const tr=m==='train', ch=m==='chase'; $('woBlock').style.display=tr?'':'none'; $('ergRow').style.display=tr?'':'none'; $('botRow').style.display=tr?'none':''; $('botStyleRow').style.display=tr?'none':'';
-  $('oppBlock').style.display=ch?'none':''; $('chaseBlock').style.display=ch?'':'none'; if(ch) chaseUi();
-  $('oppTitle').textContent=tr?'Mitfahrer':'Gegner'; $('btnStart').textContent=tr?'Training starten':ch?'Verfolgung starten':'Rennen starten'; if(tr) renderWo();
-  const first=ch?ROUTES.find(r=>r.id==='stadion'):ROUTES.find(r=>r.mode===m); if(first && routeId!==first.id && race.role!=='guest'){ routeId=first.id; setRoute(first.def); }
+  const tr=m==='train'; $('woBlock').style.display=tr?'':'none'; $('ergRow').style.display=tr?'':'none'; $('botRow').style.display=tr?'none':''; $('botStyleRow').style.display=tr?'none':'';
+  $('oppTitle').textContent=tr?'Mitfahrer':'Gegner'; $('btnStart').textContent=tr?'Training starten':'Rennen starten'; if(tr) renderWo();
+  const first=ROUTES.find(r=>r.mode===m); if(first && routeId!==first.id && race.role!=='guest'){ routeId=first.id; setRoute(first.def); }
   $('modeScreen').style.display='none'; $('cfgScreen').style.display=''; renderRouteList(); sendCfg();
 }
 document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>openMode(b.dataset.m));
@@ -83,8 +80,6 @@ $('edCancel').onclick=closeEditor;
 $('edReset').onclick=()=>{ ED.look={...LOOK_DEF[ED.key]}; edForm(); edPreview(); };
 $('edSave').onclick=()=>{ const k=ED.key; if(!String(ED.look.name||'').trim()) ED.look.name=LOOK_DEF[k].name; LOOKS[k]={...ED.look}; saveLooks(); closeEditor(); rebuildRiders(); opp.name=RIDERS[oppKey].name;
   if(k===myKey){ if(race.role==='host') sendCfg(); if(race.role==='guest') send({t:'hello',rider:myKey,look:LOOKS[myKey]}); } };
-$('formsOn').onchange=$('formsOn').onchange=()=>{ race.forms=$('formsOn').checked; formsLabel(); sendCfg(); };
-function formsLabel(){ $('formsLbl').textContent=$('formsOn').checked?'An – Avatar verwandelt sich je nach W/kg':'Aus – alle bleiben normale Fahrer'; }
 function setTod(tod,tell=true){ race.tod=['tag','abend','nacht'].includes(tod)?tod:'tag'; document.querySelectorAll('.tod').forEach(b=>b.classList.toggle('sel',b.dataset.tod===race.tod)); applyEnv(); renderRouteList(); if(tell) sendCfg(); }
 // Jahreszeit (Kalmit, Südpfalz): Farben werden beim Aufbau gesetzt – beim Wechsel wird die Welt neu gebaut
 function setSeason(s,tell=true){ s=s==='herbst'?'herbst':'sommer'; document.querySelectorAll('.sea').forEach(b=>b.classList.toggle('sel',b.dataset.sea===s)); if(s!==race.season){ race.season=s; if(R&&!R.stadium&&!R.space&&!R.island){ camS.init=false; build3D(); applyEnv(); } renderRouteList(); } if(tell) sendCfg(); }
@@ -92,7 +87,7 @@ document.querySelectorAll('.sea').forEach(b=>b.onclick=()=>{ if(race.role!=='gue
 function setRain(on,tell=true){ race.rain=!!on; $('rainOn').checked=race.rain; applyEnv(); renderRouteList(); if(tell) sendCfg(); }
 document.querySelectorAll('.tod').forEach(b=>b.onclick=()=>{ if(race.role!=='guest') setTod(b.dataset.tod); }); $('rainOn').onchange=()=>{ if(race.role!=='guest') setRain($('rainOn').checked); };
 $('windLvl').onchange=()=>{ race.wind=+$('windLvl').value; sendCfg(); };
-function sendCfg(){ if(race.role==='host') send({t:'cfg',rider:myKey,season:race.season,forms:$('formsOn').checked,draft:$('draftOn').checked,wind:+$('windLvl').value,mode:race.mode,laps:race.laps,tod:race.tod,rain:race.rain,look:LOOKS[myKey],wo:race.mode==='train'?WO:null}); }
+function sendCfg(){ if(race.role==='host') send({t:'cfg',rider:myKey,season:race.season,draft:$('draftOn').checked,wind:+$('windLvl').value,mode:race.mode,laps:race.laps,tod:race.tod,rain:race.rain,look:LOOKS[myKey],wo:race.mode==='train'?WO:null}); }
 
 /* Lobby-Hintergrund: Pfälzer Weinberge im Herbst, dahinter der Pfälzerwald */
 function lobbyBackdrop(){

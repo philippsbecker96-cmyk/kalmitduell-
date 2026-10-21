@@ -572,10 +572,6 @@ function drawBoard(A){ const S=A.sb, g=S.g, W=1024, H=360, F=s=>`800 ${s}px "Bar
   else if(race.state==='setup') line(170,'WILLKOMMEN IM STADION','','#fff',66);
   else if(race.state==='count') line(170,'GLEICH GEHT ES LOS','','#fff',66);
   else if(race.mode==='train'){ line(112,'TRAINING','RUNDE '+(S.lap+1),'#fff',50); line(184,'ZEIT '+fmtT(race.t),S.last?'LETZTE RUNDE '+fmtLap(S.last):''); line(250,mk,Math.round(curPower())+' W'); }
-  else if(race.mode==='chase'){ const C=race.chase||{}, gap=me.d-opp.d;
-    line(112,'VERFOLGUNG',C.dur?'NOCH '+fmtT(Math.max(0,C.dur-race.t)):'RUNDE '+(Math.floor(me.d/R.len)+1),'#fff',50);
-    line(184,mk,me.done&&C.caught?'ERWISCHT':C.started?'+'+Math.round(Math.max(0,gap))+' M':'ZEIT '+fmtT(race.t));
-    line(250,'TEUFEL',C.started?de(C.lvl||C.wkg,1)+' W/KG':'STARTET IN '+Math.max(0,Math.ceil(C.delay-race.t))+' S','#ff6b6b'); }
   else { const rows=[{n:mk,d:me.d,done:me.done,t:me.time,v:me.v}]; if(opp.active) rows.push({n:on,d:opp.d,done:opp.done,t:opp.time,v:opp.v});
     rows.sort((a,b)=>(a.done&&b.done)?a.t-b.t:a.done?-1:b.done?1:b.d-a.d);
     line(112,rows.every(r=>r.done)?'ERGEBNIS':me.done?'IM ZIEL':`RUNDE ${Math.min(race.laps,Math.floor(me.d/R.len)+1)} / ${race.laps}`,S.last?'LETZTE RUNDE '+fmtLap(S.last):'','#fff',50);
