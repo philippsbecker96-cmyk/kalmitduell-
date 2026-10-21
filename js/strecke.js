@@ -143,7 +143,7 @@ function buildRoute(def){
   r.fans = def.burg||def.ma?r.len:Math.max(r.len*0.6, r.len-1000); // Burg: kein modernes Publikum
   r.kehren=[]; if(r.kalmit||def.burg) for(let dd=40; dd<len-40; dd+=STEP*5){ const dh=Math.abs(angDiff(headingAt(r,dd+25),headingAt(r,dd-25)));
     if(dh>1.25 && !r.kehren.some(k=>Math.abs(k-dd)<120) && !(def.burg&&(dd<1420||dd>5370))) r.kehren.push(dd); } // Burg: Ecken im Dorf und am Tor sind keine Kehren
-  prepFeld(r); makeScenery(r); if(def.burg) prepBurg(r);
+  prepFeld(r); makeScenery(r); if(def.burg) prepBurg(r); if(def.ma&&def.orte) prepTrifels(r); // Trifels: welt-trifels.js
   return r;
 }
 function posAt(r,d){ if(r.ring && d>r.len) d-=r.ring; // hinter dem Ziel: Umlaufbahn
@@ -437,7 +437,7 @@ function trackPt(d,u){ // Punkt auf der Bahn: d entlang, u quer von der Innenkan
 /* ================= Trifels (Kampagne, Mission 1): wird aus dem Workout berechnet ================= */
 // Wie Space: ein Streckenstück je 2 s Workout, Länge aus Watt, Gewicht und fester Steigung je Abschnitt. So liegen die Orte immer an derselben Workout-Zeit:
 // Anstieg durch den Burgwald → Kehre in der Vorburg um den Goldkarren (Audienz-Tafel) → Serpentinen-Abfahrt → Auslauf → Wirtshaus (Ende Einfahren) → flaches Queichtal
-const TRIFELS_T={rauf:150, hof:25, aus:60}; // s: Anstieg bis zur Vorburg · Kehre in der Vorburg (= eine Tafel) · flacher Auslauf vor dem Wirtshaus
+const TRIFELS_T={rauf:150, rampe:30, hof:25, aus:60}; // s: Anstieg bis zur Vorburg (7 %, die letzten rampe s 10 %) · Kehre in der Vorburg (= eine Tafel) · flacher Auslauf vor dem Wirtshaus
 // Weg aus Stücken in [Ost, Süd], h=0 nach Norden: ['g',Anteil] gerade (teilt sich die Restlänge), ['b',Grad,Radius] Bogen (+ rechts, − links)
 function turtle(st,teile,L){ const lb=teile.reduce((a,t)=>a+(t[0]==='b'?Math.abs(t[1])*Math.PI/180*t[2]:0),0), fg=teile.reduce((a,t)=>a+(t[0]==='g'?t[1]:0),0), k=lb>L?L/lb:1, rest=Math.max(0,L-lb*k);
   const geh=(l,dh)=>{ st.h+=dh/2; st.x+=Math.sin(st.h)*l; st.y-=Math.cos(st.h)*l; st.h+=dh/2; st.P.push([st.x,st.y]); };
@@ -445,7 +445,7 @@ function turtle(st,teile,L){ const lb=teile.reduce((a,t)=>a+(t[0]==='b'?Math.abs
     else { const th=t[1]*Math.PI/180, r=t[2]*k, n=Math.max(2,Math.round(Math.abs(th)*r/2)); for(let i=0;i<n;i++) geh(Math.abs(th/n)*r,th/n); } } }
 function trifelsDef(segs, unit, f, kg){
   const DT=2, T=segs.reduce((a,s)=>a+s.dur,0), tW=segs[0]?segs[0].t0+segs[0].dur:300, Tr=TRIFELS_T, NACH=600;
-  const gAt=t=>t<Tr.rauf?3.5:t<Tr.rauf+Tr.hof?1.5:t<tW-Tr.aus?-5.5:t<tW?-1.5:.3+.6*Math.sin(t/110);
+  const gAt=t=>t<Tr.rauf-Tr.rampe?7:t<Tr.rauf?10:t<Tr.rauf+Tr.hof?1.5:t<tW-Tr.aus?-5.5:t<tW?-1.5:.3+.6*Math.sin(t/110);
   const raw=[], cum=[0]; let si=0;
   for(let t=0;t<T;t+=DT){ while(si<segs.length-1 && t>=segs[si].t0+segs[si].dur) si++; const sg=segs[si], v=segVal(sg,Math.min(t+DT/2,sg.t0+sg.dur)), w=unit==='w'?v:v*f/100, g=gAt(t+DT/2);
     raw.push({len:Math.round(vSteady(w,g,kg)*DT*100)/100, g, p:Math.round(unit==='w'?v/f*100:v)}); cum.push(cum[cum.length-1]+raw[raw.length-1].len); }

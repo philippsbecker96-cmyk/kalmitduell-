@@ -98,7 +98,7 @@ function build3D(){
   if(sp){ buildSpace(); return; }
   if(R.island){ buildIsland(); return; }
   if(R.stadium){ scene.fog.near=250; scene.fog.far=2200; buildStadium(); return; }
-  const BG=!!R.def.burg; scene.fog.near=BG?200:140; scene.fog.far=BG?5000:1500; camera.far=R.def.haardt||BG?13000:6000; // Burg: weite Sicht, Burg schon vom Dorf aus zu sehen camera.updateProjectionMatrix();
+  const BG=!!R.def.burg, MA=BG||!!R.def.ma; scene.fog.near=MA?200:140; scene.fog.far=MA?5000:1500; camera.far=R.def.haardt||MA?13000:6000; // MA: Mittelalter (Berwartstein, Kampagne) – keine modernen Schilder, Gitter, Bögen // Burg: weite Sicht, Burg schon vom Dorf aus zu sehen camera.updateProjectionMatrix();
   const S=R.S, plainY=(R.def.plainElev ?? (R.startElev-60))-R.startElev;
 
   // ---------- Gelände ----------
@@ -119,7 +119,7 @@ function build3D(){
   for(let pass=0;pass<12;pass++){ tmp.set(h); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; if(dist[k]<12) continue;
       h[k]=(tmp[k]*2+tmp[k-1]+tmp[k+1]+tmp[k-n]+tmp[k+n])/6; } }
   for(let k=0;k<N;k++) if(dist[k]<12) h[k]=roadY(src[k]*STEP)-STR_UNTER;
-  TER.vbw=null; TER.bach=BG?burgGelaende(h,src,dist):null; // Burg: Bachbett und ebene Vorburg
+  TER.vbw=null; TER.bach=BG?burgGelaende(h,src,dist):null; if(R.tri) trifelsGelaende(h); // Burg: Bachbett und ebene Vorburg · Trifels: Vorburg und Burgberg (welt-trifels.js)
   // Höhe der nächstgelegenen Straßenstelle je Geländepunkt (geglättet) – danach richtet sich die Überhöhung, damit die Straße quer nicht kippt
   { const hr=new Float32Array(N), tq=new Float32Array(N); for(let k=0;k<N;k++) hr[k]=roadY(src[k]*STEP);
     for(let pass=0;pass<14;pass++){ tq.set(hr); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; hr[k]=(tq[k]*4+tq[k-1]+tq[k+1]+tq[k-n]+tq[k+n])/8; } }
@@ -148,7 +148,7 @@ function build3D(){
   world.add(new THREE.Mesh(tg, new THREE.MeshLambertMaterial({vertexColors:true})));
 
   // Weite Ebene (Rheinebene) rundherum, Felder als Flickenteppich · Burg: Wiesengrund und Pfälzerwald-Kuppen
-  if(BG) buildBurgUmland(plainY,x0,z0,x1,z1); else { const pt=canvasTex(512,512,g=>{ const pal=['#c7b660','#a9b45a','#d6c071','#8fa24c','#b89a52','#9bae63','#cfc584'];
+  if(MA) buildBurgUmland(plainY,x0,z0,x1,z1); else { const pt=canvasTex(512,512,g=>{ const pal=['#c7b660','#a9b45a','#d6c071','#8fa24c','#b89a52','#9bae63','#cfc584'];
       for(let y=0;y<512;y+=32) for(let x=0;x<512;){ const w=24+Math.random()*60; g.fillStyle=pal[Math.floor(Math.random()*pal.length)]; g.fillRect(x,y,w,32); x+=w; }
       g.fillStyle='rgba(60,80,40,.5)'; for(let i=0;i<120;i++){ g.beginPath(); g.arc(Math.random()*512,Math.random()*512,2+Math.random()*4,0,7); g.fill(); } });
     pt.wrapS=pt.wrapT=THREE.RepeatWrapping; pt.repeat.set(14,14);
@@ -358,7 +358,7 @@ function build3D(){
     if(za>0) sign(za-4,false); else if(R.loop) sign(-90,false); // Godramstein: Ortseingang vor dem Ziel
     if(zb<R.len) sign(zb+4,true); }
   // Absperrgitter mit Bannern auf den letzten 300 m
-  if(!BG){ const bl=[], texts=R.kalmit?['BERGWERTUNG','KALMIT','HOPP HOPP!','PFALZ','ALLEZ!','673 m']:['SÜDPFALZ','HOPP HOPP!','WEINSTRASSE','ALLEZ!','PFALZ','ZIEL'], cols=['#1c7ed6','#2f9e44','#e8590c','#ae3ec9','#c92a2a','#0b7285'];
+  if(!MA){ const bl=[], texts=R.kalmit?['BERGWERTUNG','KALMIT','HOPP HOPP!','PFALZ','ALLEZ!','673 m']:['SÜDPFALZ','HOPP HOPP!','WEINSTRASSE','ALLEZ!','PFALZ','ZIEL'], cols=['#1c7ed6','#2f9e44','#e8590c','#ae3ec9','#c92a2a','#0b7285'];
     for(let d=R.len-320; d<R.len-6; d+=2.5) for(const s of [-1,1]){ const [x,z]=posAt(R,d+1.25), hd=headingAt(R,d+1.25), nx=-Math.sin(hd), nz=Math.cos(hd), off=ROAD_W/2+0.45;
       bl.push({x:x+nx*s*off, z:z+nz*s*off, bx:x+nx*s*(off-.05), bz:z+nz*s*(off-.05), y:roadY(d+1.25), g:gradeAt(d+1.25), h:hd, s, t:Math.floor((d/2.5+(s>0?3:0)))%texts.length}); }
     inst(new THREE.BoxGeometry(2.45,1.05,.04), lam('#c3c8cc'), bl, o=>{ ps.set(o.x,o.y+.62,o.z); slopeQ(o.h,o.g); sc.set(1,1,1); cc.set('#aab0b6'); });
@@ -366,10 +366,10 @@ function build3D(){
       const list=bl.filter(o=>o.t===ti); inst(new THREE.PlaneGeometry(2.35,.8), new THREE.MeshBasicMaterial({map:tex, side:THREE.DoubleSide}), list, o=>{ ps.set(o.bx,o.y+.62,o.bz); slopeQ(o.h,o.g,o.s>0); sc.set(1,1,1); }); }); }
 
   // ---------- Schilder, Start, Ziel ----------
-  for(let k=1;!R.def.burg&&k*1000<R.len;k++){ const d=k*1000, hd=headingAt(R,d), sp=textSprite([`km ${k}`,`${de(gradeAt(d+1),0)} %`],{w:1.6});
+  for(let k=1;!MA&&k*1000<R.len;k++){ const d=k*1000, hd=headingAt(R,d), sp=textSprite([`km ${k}`,`${de(gradeAt(d+1),0)} %`],{w:1.6});
     sp.position.set(R.xs[d/STEP|0]-Math.sin(hd)*(ROAD_W/2+1.6), roadY(d)+1.9, R.ys[d/STEP|0]+Math.cos(hd)*(ROAD_W/2+1.6)); world.add(sp);
     const post=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,1.2,5), lam('#666')); post.position.set(sp.position.x, roadY(d)+0.7, sp.position.z); world.add(post); }
-  if(!R.def.burg) R.kehren.forEach((d,i)=>{ const [x,z]=posAt(R,d), sp=textSprite([`Kehre ${i+1}`],{w:3.2,bg:'#f6f3ea'}); sp.position.set(x, roadY(d)+5.5, z); world.add(sp); });
+  if(!MA) R.kehren.forEach((d,i)=>{ const [x,z]=posAt(R,d), sp=textSprite([`Kehre ${i+1}`],{w:3.2,bg:'#f6f3ea'}); sp.position.set(x, roadY(d)+5.5, z); world.add(sp); });
   const arch=(d,draw,ch=80,bh=1.1)=>{ const [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d), half=ROAD_W/2+0.6;
     const ph=4.4+bh; for(const s of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,ph,8), lam('#222')); p.position.set(x+nx*half*s, y+ph/2, z+nz*half*s); world.add(p); }
     const b=new THREE.Mesh(new THREE.PlaneGeometry(half*2+.4,bh), new THREE.MeshBasicMaterial({map:canvasTex(512,ch,draw), side:THREE.DoubleSide}));
@@ -382,7 +382,7 @@ function build3D(){
     g.fillStyle='#1a1a1a'; g.font='700 22px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(sub,256,116,296);
     g.strokeStyle='#1a1a1a'; g.lineWidth=6; g.strokeRect(3,3,506,144); };
   for(const [,b,n] of R.kom) arch(b,komBanner('BERGWERTUNG',n,70),150,1.6);
-  if(BG); else if(!R.kalmit) arch(R.loop?0.5:R.len-0.5, // Burg: Zielbanner im Mittelalter-Stil (welt-berwartstein.js)
+  if(MA); else if(!R.kalmit) arch(R.loop?0.5:R.len-0.5, // Burg: Zielbanner im Mittelalter-Stil (welt-berwartstein.js)
     (g)=>{ g.fillStyle='#fff'; g.fillRect(0,0,512,150); g.fillStyle='#111'; // Start/Ziel-Bogen mit Zielflaggen-Karos
     for(let i=0;i<64;i++) for(let j=0;j<2;j++) if((i+j)%2){ g.fillRect(i*8,j*8,8,8); g.fillRect(i*8,134+j*8,8,8); }
     g.fillStyle='#1c7ed6'; g.fillRect(0,16,512,118); g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle';
@@ -390,7 +390,7 @@ function build3D(){
     g.font='700 24px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(R.name.toUpperCase(),256,114,490); }, 150, 2.0);
   else { arch(0.5,(g)=>{ g.fillStyle='#1c7ed6'; g.fillRect(0,0,512,80); g.fillStyle='#fff'; g.font='800 40px "Barlow Condensed", Arial Narrow, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(`START · ${R.start}`,256,42,490); });
   arch(R.len-0.5,komBanner('KOM',`King of the Mountain · ${R.finish}`), 150, 2.0); }
-  { const cc2=canvasTex(16,128,g=>{ for(let i=0;i<16;i++) for(let j=0;j<2;j++){ g.fillStyle=BG?'#efe8d4':(i+j)%2?'#111':'#fff'; g.fillRect(j*8,i*8,8,8); } }); // Burg: Kreidestrich statt Karos
+  if(!R.def.ma){ const cc2=canvasTex(16,128,g=>{ for(let i=0;i<16;i++) for(let j=0;j<2;j++){ g.fillStyle=BG?'#efe8d4':(i+j)%2?'#111':'#fff'; g.fillRect(j*8,i*8,8,8); } }); // Burg: Kreidestrich statt Karos
     const [x,z]=posAt(R,R.len-1), hd=headingAt(R,R.len-1), fl=new THREE.Mesh(new THREE.PlaneGeometry(BG?.3:1.4,BG?roadW(R,R.len-1):ROAD_W), // Burg: schmaler Kreidestrich
       new THREE.MeshBasicMaterial({map:cc2}));
     fl.rotation.x=-Math.PI/2; fl.rotation.z=-hd; fl.position.set(x,roadY(R.len-1)+0.16,z); world.add(fl); }
@@ -427,7 +427,7 @@ function build3D(){
     for(let i=0;i<4;i++){ box(2.4,.08,.8,lam('#7a5a3e'),-6+i*3.6,1.0,-11); box(2.4,.06,.3,lam('#7a5a3e'),-6+i*3.6,.6,-11.7); box(2.4,.06,.3,lam('#7a5a3e'),-6+i*3.6,.6,-10.3); }
     box(1.1,2.6,1.1,stoneM(.5,1),-9.5,1.8,-3.5); }
 
-  if(BG) buildBurg();
+  if(BG) buildBurg(); if(R.tri) buildTrifels();
   buildRiders();
   world.traverse(o=>{ if(o.isMesh){ o.receiveShadow=true; o.castShadow=!(o.geometry&&o.geometry.type==='PlaneGeometry') && !o.material.transparent; } });
   kxSetup();
