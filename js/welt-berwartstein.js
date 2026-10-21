@@ -33,6 +33,7 @@ function prepBurg(r){ const S=r.S, q=rng(321), rw=d=>roadW(r,d)/2, frei=[]; // f
     for(const k of ['tor','ranke']) S[k]=S[k].filter(t=>!weg.some(h=>h.side===t.side&&Math.abs(h.d-t.d)<h.w/2+3));
     for(const h of S.house){ if(h.d>Z[2]+20) continue; const dep0=h.dep, sh=(dep0-(h.dep*=.82))/2, nx=-Math.sin(h.h)*h.side, ny=Math.cos(h.h)*h.side;
       h.w*=.75+q()*.15; h.hgt*=.88; h.x-=nx*sh; h.y-=ny*sh; h.fw=q()<.75; h.gw=false; if(q()<.5) h.roof=q()<.6?'#a8925c':'#8f7d50'; else if(h.roof==='#6f6f70') h.roof='#9e3a28'; }
+    r.inschrift=S.house.filter(h=>h.side===-1&&h.su==null).sort((a,b)=>a.d-b.d)[0]||null; // erstes Haus links: bekommt die Inschrift
     // zweite Reihe: einzelne Häuser 14–20 m hinter der Straße, am Ende der Gassen und dazwischen (nicht hinter dem Kirchplatz)
     r.hinter=[]; for(const side of [-1,1]) for(let d=22; d<Z[2]-10; d+=24+q()*16){ if(side===1&&Math.abs(d-180)<26) continue; const g=r.gassen.find(G=>G.s===side&&Math.abs(G.d-d)<16), dd=g&&q()<.8?g.d:d;
       const w=6+q()*2.5, dep=6.5+q()*2, f=fr(dd), o=rw(dd)+geh+14+dep/2+q()*6, x=f.px+f.nx*side*o, y=f.py+f.ny*side*o, k=q();
@@ -42,19 +43,17 @@ function prepBurg(r){ const S=r.S, q=rng(321), rw=d=>roadW(r,d)/2, frei=[]; // f
   const F={tuerme:[], waende:[], tor:3110}; r.felsen=F;
   [[2845,1],[2965,-1],[3055,1],[3235,-1],[3395,1]].forEach(([d,s])=>{ const f=fr(d), o=rw(d)+7.5+q()*6, rad=2.6+q()*1.8; F.tuerme.push({d, x:f.px+f.nx*s*o, y:f.py+f.ny*s*o, r:rad, hg:12+q()*10, sd:1+q()*1e4|0, hut:q()<.5}); frei.push([f.px+f.nx*s*o, f.py+f.ny*s*o, rad+3]); });
   [[2905,-1,36],[3170,1,44],[3315,-1,30]].forEach(([d,s,len])=>{ F.waende.push({d,s,len,hg:9+q()*4}); for(let a=d-len/2; a<=d+len/2; a+=4){ const f=fr(a), o=rw(a)+6.5; frei.push([f.px+f.nx*s*o, f.py+f.ny*s*o, 5.5]); } });
-  F.tuerme[2].hut=true; F.tuerme[2].schuetze=true; // auf diesem Pilzfelsen steht der Bogenschütze: niedrig, 5 m vom Wegrand, auf der Kurvenaußenseite (man fährt auf ihn zu)
-  { const T=F.tuerme[2], d=T.d, s=-Math.sign(angDiff(headingAt(r,d+15),headingAt(r,d-15)))||1, f=fr(d), o=rw(d)+5+T.r; Object.assign(T,{x:f.px+f.nx*s*o, y:f.py+f.ny*s*o, hg:8+q()*2}); frei.push([T.x,T.y,10]); }
   // Wegelagerer in der zweiten Kehre (1,9 km), außen am Scheitel – dort fährt man bergauf
   { let best=0, bd=1890; for(let d=1840; d<=1940; d+=2){ const k=Math.abs(angDiff(headingAt(r,d+8),headingAt(r,d-8))); if(k>best){ best=k; bd=d; } }
-    const s=-Math.sign(angDiff(headingAt(r,bd+8),headingAt(r,bd-8)))||1; r.raeuber={d:bd, s}; for(const da of [-7,-2,3]){ const f=fr(bd+da), o=rw(bd+da)+2; frei.push([f.px+f.nx*s*o, f.py+f.ny*s*o, 3]); } }
+    const s=-Math.sign(angDiff(headingAt(r,bd+8),headingAt(r,bd-8)))||1; r.raeuber={d:bd, s}; for(const da of [-2.2,0,2.2]){ const f=fr(bd+da), o=rw(bd+da)+2; frei.push([f.px+f.nx*s*o, f.py+f.ny*s*o, 3]); } }
   { const f=fr(F.tor); for(const s of [-1,1]) frei.push([f.px+f.nx*s*(rw(F.tor)+3.5), f.py+f.ny*s*(rw(F.tor)+3.5), 5]); }
   for(const [d,s,,o] of VOLK_WEG) if(o>1){ const f=fr(d), u=rw(d)+o; frei.push([f.px+f.nx*s*u, f.py+f.ny*s*u, 2.5]); }
   // Vorburg: Achsen ab dem Torturm (a Richtung Burg, u nach rechts), Platz von Halsgraben bis hinter den Burgfelsen frei
   { const f=fr(VB.tor), g=fr(r.len-20); r.vb={x:f.px, y:f.py, h:g.h, ex:Math.cos(g.h), ey:Math.sin(g.h), nx:g.nx, ny:g.ny, L:r.len-VB.tor};
     const V=r.vb; for(const k of ['tree','rock','bush','block','konif','grass']) S[k]=S[k].filter(o=>{ const a=(o.x-V.x)*V.ex+(o.y-V.y)*V.ey, u=(o.x-V.x)*V.nx+(o.y-V.y)*V.ny; return !(a>-48&&a<205&&Math.abs(u)<(a<-4?30:44)); }); }
   { const f=fr(ZOLL.d-3), o=rw(ZOLL.d)+5; frei.push([f.px+f.nx*ZOLL.s*o, f.py+f.ny*ZOLL.s*o, 13]); } // Platz für Zollhaus, Karren und Pferd
-  // Burgfelsen 62 m hinter dem Ziel (mitten in der Schleife der Schlussrampe), drumherum die ebene Vorburg
-  { const f=fr(r.len); r.burgPos={x:f.px+Math.cos(f.h)*62, y:f.py+Math.sin(f.h)*62, h:f.h}; frei.push([r.burgPos.x,r.burgPos.y,85]); }
+  // Burg 50 m hinter dem Ziel (Palas-Front 40 m), drumherum die ebene Vorburg
+  { const f=fr(r.len); r.burgPos={x:f.px+Math.cos(f.h)*50, y:f.py+Math.sin(f.h)*50, h:f.h}; frei.push([r.burgPos.x,r.burgPos.y,85]); }
   for(const k of ['tree','rock','bush','block','konif']) S[k]=S[k].filter(o=>!frei.some(([x,y,m])=>Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m&&Math.hypot(o.x-x,o.y-y)<m)); }
 
 // ---- Gelände (aus build3D): Bachbett, ebene Vorburg, Halsgraben; liefert je Geländepunkt den Abstand zum Bach (Kiesfarbe), TER.vbw = Anteil Turnierwiese (Wiesenfarbe) ----
@@ -205,6 +204,13 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
     const wa=new THREE.Mesh(new THREE.CylinderGeometry(1.32,1.32,.05,16),new THREE.MeshPhongMaterial({color:'#6d8f93',shininess:60})); wa.position.set(K.bx,by+.72,K.by); world.add(wa);
     const sl=new THREE.Mesh(new THREE.CylinderGeometry(.22,.26,2.2,8),sand); sl.position.set(K.bx,by+1.5,K.by); world.add(sl);
     const kg=new THREE.Mesh(new THREE.SphereGeometry(.32,8,6),sand); kg.position.set(K.bx,by+2.7,K.by); world.add(kg);
+    // Inschrift auf der Giebelwand des ersten Hauses links (zum Start hin): rote und schwarze Fraktur mit Rankenrahmen
+    { const H=R.inschrift; if(H){ const tx=Math.cos(H.h), tz=Math.sin(H.h), b=Math.min(H.dep*.85,7), hh=Math.min(H.hgt*.62,3.6);
+      const t=frakturTex(512,256,g=>{ g.fillStyle='#efe6d0'; g.fillRect(0,0,512,256); g.strokeStyle='#8a2a1a'; g.lineWidth=6; g.strokeRect(12,12,488,232); g.strokeStyle='#4f7a3a'; g.lineWidth=3;
+        for(let x=24;x<490;x+=26) for(const y of [12,244]){ g.beginPath(); g.arc(x,y+(y<100?7:-7),6,0,Math.PI*(y<100?1:-1),y>100); g.stroke(); } // Ranken oben und unten
+        g.textAlign='center'; g.textBaseline='middle'; g.fillStyle='#9b1b1b'; g.font='58px '+FRAKTUR; g.fillText('Gott zum Gruße!',256,70,470);
+        g.fillStyle='#2a1a10'; g.font='40px '+FRAKTUR; g.fillText('Wer die Burg will sehn,',256,140,470); g.fillText('muss die Pedale drehn.',256,190,470); });
+      const pl=new THREE.Mesh(new THREE.PlaneGeometry(b,hh),new THREE.MeshLambertMaterial({map:t})); pl.position.set(H.x-tx*(H.w/2+.06), roadY(H.d)+.15+H.hgt*.52, H.y-tz*(H.w/2+.06)); pl.rotation.y=Math.atan2(-tx,-tz); world.add(pl); } }
     // Gassen: Erdwege quer zur Straße, am Anfang auf Gehweghöhe, dann aufs Gelände
     const gm=Object.assign(lam('#a07a58'),{side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3});
     for(const Gs of R.gassen){ const f=fr(Gs.d), o0=rw(Gs.d), us=[]; for(let u=0;u<Gs.len;u+=u<6?1:2) us.push(u); us.push(Gs.len); const p=new Float32Array(us.length*6), id=[], tx=Math.cos(f.h), tz=Math.sin(f.h);
@@ -233,7 +239,7 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
   { const d=R.felsen.tor, f=fr(d), w=rw(d), y0=roadY(d)-1.5, qa=rng(77);
     for(const s of [-1,1]){ let y=0; while(y<9){ const lh=1.6+qa()*1.2; FB.push({x:f.px+f.nx*s*(w+2.8), y:y0+y+lh/2, z:f.py+f.ny*s*(w+2.8), w:5+qa(), h:lh, d:3.6+qa()*.8, ry:-f.h+(qa()-.5)*.15, c:qa()}); y+=lh; } }
     for(const [y,h,dd] of [[9.4,1.8,5.6],[11.2,1.6,4.6],[12.6,1.2,3.4]]) FB.push({x:f.px, y:y0+y, z:f.py, w:dd, h, d:2*(w+2.8)+4.5-y*.25, ry:-f.h, c:qa()}); // Sturz quer über den Weg
-    const kr=new THREE.Mesh(new THREE.IcosahedronGeometry(1.6,0),lam('#3f6b32')); kr.position.set(f.px+f.nx*2,y0+14,f.py+f.ny*2); kr.scale.set(1.4,.6,1.2); world.add(kr); }
+    const kr=new THREE.Mesh(new THREE.IcosahedronGeometry(1.6,0),lam('#3f6b32')); kr.position.set(f.px+f.nx*4.5,y0+13.6,f.py+f.ny*4.5); kr.scale.set(1.4,.6,1.2); world.add(kr); }
   inst(new THREE.BoxGeometry(1,1,1), fels, FB, o=>{ ps.set(o.x,o.y,o.z); qq.setFromAxisAngle(up,o.ry); sc.set(o.w,o.h,o.d); cc.setHSL(.03,.25,.72+o.c*.25); });
 
   // ---------- Burg Berwartstein: steht ohne Felsen auf einem niedrigen Mauersockel; Palas mit Holzaltan, hoher Bergfried, Vorburg-Haus – bündig, ein Sandstein ----------
@@ -343,16 +349,16 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
     { const sh=new THREE.Mesh(new THREE.PlaneGeometry(2,2.4),new THREE.MeshLambertMaterial({map:schildTex(0),transparent:true,alphaTest:.5})); sh.position.set(-4.06,y0+9,0); sh.rotation.y=-Math.PI/2; VG.add(sh); }
     // Ringmauer mit Zinnen und runden Türmen um Turnierwiese und Burgfelsen
     // eng gefasst: rechts direkt hinter der Tribüne, links hinter den Zelten, um die Burg herum weiter; Oberkante überall gleich hoch
-    const ML=20, MR=15.5, MB=26, AK=135, AE=196, TOP=Math.max(yR(0),yR(V.L))+7.5, mauer=[], merl=[], seg=(a0,u0,a1,u1)=>{ const L=Math.hypot(a1-a0,u1-u0), n=Math.ceil(L/8); for(let i=0;i<n;i++){ const ta=(i+.5)/n, a=a0+(a1-a0)*ta, u=u0+(u1-u0)*ta, top=TOP;
+    const ML=20, MR=15.5, MB=22, AK=V.L+26, AE=V.L+62, TOP=Math.max(yR(0),yR(V.L))+7.5, mauer=[], merl=[], seg=(a0,u0,a1,u1)=>{ const L=Math.hypot(a1-a0,u1-u0), n=Math.ceil(L/8); for(let i=0;i<n;i++){ const ta=(i+.5)/n, a=a0+(a1-a0)*ta, u=u0+(u1-u0)*ta, top=TOP;
         mauer.push({a,u,y:top-6.5,L:L/n+.1,h:13,r:Math.atan2(u1-u0,a1-a0)}); for(let k=0;k<4;k++){ const tb=(i+(k+.25)/4)/n; merl.push({a:a0+(a1-a0)*tb,u:u0+(u1-u0)*tb,y:top+.55,r:Math.atan2(u1-u0,a1-a0)}); } } };
-    seg(4,-tw-4.8,4,-ML); seg(4,tw+4.8,4,MR); seg(4,-ML,AK,-ML); seg(AK,-ML,AK+6,-MB); seg(AK+6,-MB,AE,-MB); seg(4,MR,AK,MR); seg(AK,MR,AK+6,MB); seg(AK+6,MB,AE,MB); seg(AE,-MB,AE,MB);
+    seg(4,-tw-4.8,4,-ML); seg(4,tw+4.8,4,MR); seg(4,-ML,AE,-ML); seg(4,MR,AK,MR); seg(AK,MR,AK+5,MB); seg(AK+5,MB,AE,MB); seg(AE,-ML,AE,MB); // rechts erst um Bergfried und Vorburg-Haus weiter
     const vinst=(geo,mat,list,fn)=>{ const im=new THREE.InstancedMesh(geo,mat,list.length); list.forEach((o,i)=>{ fn(o); m4.compose(ps,qq,sc); im.setMatrixAt(i,m4); }); im.instanceMatrix.needsUpdate=true; VG.add(im); return im; };
     vinst(new THREE.BoxGeometry(1,1,1),sand,mauer,o=>{ ps.set(o.a,o.y,o.u); qq.setFromAxisAngle(up,-o.r); sc.set(o.L,o.h,1.8); });
     vinst(new THREE.BoxGeometry(1,1,1),sand,merl,o=>{ ps.set(o.a,o.y,o.u); qq.setFromAxisAngle(up,-o.r); sc.set(1,1.1,1.9); });
-    for(const [a,u] of [[4,-ML],[4,MR],[AK,-ML],[AK,MR],[AE,-MB],[AE,MB]]){ const top=TOP+3, t=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.7,16,14),sand); t.position.set(a,top-8,u); VG.add(t);
+    for(const [a,u] of [[4,-ML],[4,MR],[AK,-ML],[AK,MR],[AE,-ML],[AE,MB]]){ const top=TOP+3, t=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.7,16,14),sand); t.position.set(a,top-8,u); VG.add(t);
       for(let i=0;i<8;i++){ const al=i/8*Math.PI*2; vbox(1,1.1,1,sand,a+Math.cos(al)*3.1,top+.55,u+Math.sin(al)*3.1); } fahne(a,top+3.4,u); }
     // Turnierwiese: Sandbahn links neben der Zielgeraden, Schranke (rot-weiß), Zaun mit Andreaskreuzen, Wimpelketten, Ritterzelte
-    const AS=14, AZ=104, ul=-(w+1.3), uz=-(w+9.5), sk=Math.atan((yR(AZ)-yR(AS))/(AZ-AS));
+    const AS=12, AZ=V.L-4, ul=-(w+1.3), uz=-(w+9.5), sk=Math.atan((yR(AZ)-yR(AS))/(AZ-AS));
     { const sb=vbox(AZ-AS+6,.08,uz-ul-.6,M('#d6c39a'),(AS+AZ)/2,yR((AS+AZ)/2)-.36,(ul+uz)/2); sb.rotation.z=sk; }
     const str=new THREE.MeshLambertMaterial({map:streifenTex(['#c62f24','#f2ece0'],8,false)}); str.map.wrapS=THREE.RepeatWrapping; str.map.repeat.set(30,1);
     for(let a=AS;a<=AZ;a+=3) vbox(.16,1.3,.16,holzD,a,yR(a)+.15,ul); { const r=vbox(AZ-AS,.2,.14,str,(AS+AZ)/2,yR((AS+AZ)/2)+.85,ul); r.rotation.z=sk; }
@@ -360,7 +366,7 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
     const wim=[], WC=['#c62f24','#1f4e8c','#e2b33a','#f2ece0'], tri=new THREE.BufferGeometry(); tri.setAttribute('position',new THREE.BufferAttribute(new Float32Array([-.18,0,0, .18,0,0, 0,-.42,0]),3)); tri.computeVertexNormals();
     for(let a=AS;a<AZ;a+=6){ stange(holzD,[a,yR(a)-.3,uz-.4],[a,yR(a)+3.2,uz-.4]); for(let i=1;i<10;i++){ const t=i/10, aa=a+6*t; wim.push({a:aa,y:yR(aa)+3.1-Math.sin(t*Math.PI)*.55,u:uz-.4,c:WC[(i+a/6|0)%4]}); } }
     { const im=new THREE.InstancedMesh(tri,new THREE.MeshLambertMaterial({side:THREE.DoubleSide}),wim.length); wim.forEach((o,i)=>{ ps.set(o.a,o.y,o.u); qq.identity(); sc.set(1,1,1); m4.compose(ps,qq,sc); im.setMatrixAt(i,m4); im.setColorAt(i,cc.set(o.c)); }); VG.add(im); }
-    for(const [a,u,c] of [[26,-16.4,0],[54,-16.4,1],[82,-16.4,0]]){ const tx=streifenTex(c?['#1f4e8c','#f2ece0']:['#c62f24','#f2ece0'],8,true), tm=new THREE.MeshLambertMaterial({map:tx,side:THREE.DoubleSide});
+    for(const [a,u,c] of [[20,-16.4,0],[40,-16.4,1]]){ const tx=streifenTex(c?['#1f4e8c','#f2ece0']:['#c62f24','#f2ece0'],8,true), tm=new THREE.MeshLambertMaterial({map:tx,side:THREE.DoubleSide});
       const zw=new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.2,2.4,16,1,true),tm); zw.position.set(a,yR(a)+.7,u); VG.add(zw); const zd=new THREE.Mesh(new THREE.ConeGeometry(2.6,2.6,16,1,true),tm); zd.position.set(a,yR(a)+3.2,u); VG.add(zd);
       fahne(a,yR(a)+5.3,u,1,.6); }
     // Tribüne rechts am Ziel: Holzstufen, Brüstung mit Wimpelfries und Wappenschilden, Königsloge mit Baldachin, großes Löwenbanner, Fahnen
@@ -403,42 +409,45 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
       const pl=new THREE.MeshLambertMaterial({map:streifenTex(F,8,true),side:THREE.DoubleSide}); for(const [x,z,hh] of [[-1.4,.8,2.2],[1.4,.8,2.2],[-1.4,-.8,2.6],[1.4,-.8,2.6]]) box(G,.1,hh,.1,holzD,x,hh/2,z);
       box(G,3,.08,1.4,holz,0,.9,.1); box(G,2.9,.8,.05,holzD,0,.5,.78); const pn=box(G,3.3,.06,2,pl,0,2.45,0); pn.rotation.x=-.2; ware(G);
       const sg=new THREE.Mesh(new THREE.PlaneGeometry(1.5,.5),schild(txt)); sg.position.set(0,2.0,.83); G.add(sg); leut(a-.8,u-2.2,yB(a),0); if(q()<.7) leut(a+.9,u-2.4,yB(a),0); };
-    stand(16,11.5,['#c62f24','#f2ece0'],'Met & Bier',G=>{ const f=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.9,12),holz); f.rotation.z=Math.PI/2; f.position.set(-.6,1.36,0); G.add(f);
+    stand(12,11.5,['#c62f24','#f2ece0'],'Met & Bier',G=>{ const f=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.9,12),holz); f.rotation.z=Math.PI/2; f.position.set(-.6,1.36,0); G.add(f);
       for(let i=0;i<5;i++) box(G,.13,.18,.13,M('#8a6a44'),.3+i*.22,1.03,.35); });
-    stand(30,11.5,['#2f6b3a','#efe4c8'],'Brot',G=>{ for(let i=0;i<6;i++){ const b=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),M(i%2?'#a8743a':'#c48a4a')); b.scale.set(1.5,.7,1); b.position.set(-1.1+i*.42,1.03,.1+(i%2)*.3); G.add(b); }
+    stand(24,11.5,['#2f6b3a','#efe4c8'],'Brot',G=>{ for(let i=0;i<6;i++){ const b=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),M(i%2?'#a8743a':'#c48a4a')); b.scale.set(1.5,.7,1); b.position.set(-1.1+i*.42,1.03,.1+(i%2)*.3); G.add(b); }
       for(let i=0;i<3;i++){ const br=new THREE.Mesh(new THREE.TorusGeometry(.12,.04,5,10),M('#9a5a2a')); br.rotation.x=-Math.PI/2; br.position.set(-.8+i*.6,.99,.5); G.add(br); } });
-    stand(72,11.5,['#1f4e8c','#efe4c8'],'Käs & Obst',G=>{ for(let i=0;i<3;i++){ const k=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.16,12),M('#e0b84a')); k.position.set(-1+i*.6,1.02,.15); G.add(k); }
+    stand(36,11.5,['#1f4e8c','#efe4c8'],'Käs & Obst',G=>{ for(let i=0;i<3;i++){ const k=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.16,12),M('#e0b84a')); k.position.set(-1+i*.6,1.02,.15); G.add(k); }
       for(let i=0;i<8;i++){ const ap=new THREE.Mesh(new THREE.SphereGeometry(.08,6,5),M(i%3?'#c0392b':'#7a9a3a')); ap.position.set(.6+(i%4)*.18,1.02,.1+(i>>2)*.25); G.add(ap); } });
     // Spanferkel am Spieß über dem Feuer, Rauch steigt auf
-    { const a=50, u=9.5, y=yB(a); for(let i=0;i<9;i++){ const al=i/9*Math.PI*2, st=new THREE.Mesh(new THREE.DodecahedronGeometry(.22,0),M('#8a8278')); st.position.set(a+Math.cos(al)*.9,y+.1,u+Math.sin(al)*.9); VG.add(st); }
+    { const a=AT+1, u=-15, y=yB(a); for(let i=0;i<9;i++){ const al=i/9*Math.PI*2, st=new THREE.Mesh(new THREE.DodecahedronGeometry(.22,0),M('#8a8278')); st.position.set(a+Math.cos(al)*.9,y+.1,u+Math.sin(al)*.9); VG.add(st); }
       for(const r of [.4,-.6,1.4]){ const lg=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,1.4,6),holzD); lg.rotation.set(Math.PI/2,0,r); lg.position.set(a,y+.15,u); VG.add(lg); } flamme(a,y,u);
       for(const da of [-1.3,1.3]){ stange(holzD,[a+da,y,u],[a+da,y+1.5,u]); } stange(M('#5a5a5a'),[a-1.5,y+1.45,u],[a+1.5,y+1.45,u]);
       const ferkel=new THREE.Mesh(new THREE.SphereGeometry(.5,12,8),M('#b0704a')); ferkel.scale.set(1.5,.6,.65); ferkel.position.set(a,y+1.45,u); VG.add(ferkel); A.ferkel=ferkel; rauch(a,y+1.9,u,6);
       for(const [da,du] of [[-2.4,-1.5],[2.2,-1.8],[0,-2.4]]) leut(a+da,u+du,y,Math.atan2(-da,-du)); }
     // Bierbänke mit Krügen, Leute sitzen beidseitig
-    for(const a0 of [20,36,60]){ const y=yB(a0+2.5); box(VG,5,.08,1,holz,a0+2.5,y+.8,6.9); for(const uu of [6.1,7.7]) box(VG,5,.07,.32,holz,a0+2.5,y+.45,uu); for(const x of [a0+.4,a0+4.6]) box(VG,.1,.8,.8,holzD,x,y+.4,6.9);
+    for(const a0 of [14,28]){ const y=yB(a0+2.5); box(VG,5,.08,1,holz,a0+2.5,y+.8,6.9); for(const uu of [6.1,7.7]) box(VG,5,.07,.32,holz,a0+2.5,y+.45,uu); for(const x of [a0+.4,a0+4.6]) box(VG,.1,.8,.8,holzD,x,y+.4,6.9);
       for(let i=0;i<4;i++) box(VG,.12,.17,.12,M('#8a6a44'),a0+.8+i*1.2,y+.92,6.9+(i%2?.25:-.25));
       for(let x=a0+.6;x<a0+4.6;x+=1){ if(q()<.8) leut(x,6.0,y,0,.72); if(q()<.8) leut(x,7.8,y,Math.PI,.72); } }
+    // Burgweg: nach dem Ziel geht das Kopfsteinpflaster bis vor den Palas weiter
+    { const pf=canvasTex(128,64,g=>{ g.fillStyle='#6e6a64'; g.fillRect(0,0,128,64); for(let y=0;y<64;y+=8) for(let x=(y/8%2)*5-5;x<128;x+=10){ const v=95+Math.random()*45|0; g.fillStyle=`rgb(${v},${v-4},${v-10})`; g.fillRect(x+1,y+1,8,6); } });
+      pf.wrapS=pf.wrapT=THREE.RepeatWrapping; pf.repeat.set(38/3.2,2*w/1.6); vbox(38,.1,2*w,new THREE.MeshLambertMaterial({map:pf}),AT+19,yR(AT)+.07,0); }
     // Links nach dem Ziel: Pferdestall mit Strohdach, Schmiede mit glühender Esse, Holzstapel, Karren, Hühner; rechts vor der Burg ein Ziehbrunnen
     const stroh=hMat('strohDach',()=>{ const t=dachTex('#a8925c'); t.wrapS=t.wrapT=THREE.RepeatWrapping; return new THREE.MeshLambertMaterial({map:t,side:THREE.DoubleSide}); }), fw=glowMat(fachTex(false));
-    { const a=124, u=-16, y=yB(a); vbox(12,3.2,.3,fw,a,y+1.6,u-3); for(const da of [-6,6]) vbox(.3,3.2,6,fw,a+da,y+1.6,u); for(const da of [-2,2]) vbox(.15,1.6,4.6,holzD,a+da,y+.8,u-.6);
+    { const a=AT+14, u=-16, y=yB(a); vbox(12,3.2,.3,fw,a,y+1.6,u-3); for(const da of [-6,6]) vbox(.3,3.2,6,fw,a+da,y+1.6,u); for(const da of [-2,2]) vbox(.15,1.6,4.6,holzD,a+da,y+.8,u-.6);
       for(const da of [-6,-2,2,6]) vbox(.22,3.2,.22,holzD,a+da,y+1.6,u+3); for(const da of [-4,0,4]) vbox(3.4,1.25,.1,holz,a+da,y+.62,u+2.9); // Pfosten, halbe Stalltüren
       const rf=new THREE.Mesh(dachGeo(12,6,13.4,7.4,2.6),[stroh,fw]); rf.position.set(a,y+3.2,u); VG.add(rf);
       [['#6b4a2e','#2e2018'],['#2a2420','#1a1410'],['#c9c0b0','#8a8078']].forEach(([fell,mh],i)=>{ const P=new THREE.Group(); P.position.set(a-4+i*4,y+1.2,u+2.7); P.rotation.y=-Math.PI/2; VG.add(P);
         const hals=box(P,.75,.32,.28,M(fell),.25,.2,0); hals.rotation.z=.7; box(P,.55,.24,.22,M(fell),.62,.38,0).rotation.z=-.5; box(P,.5,.06,.06,M(mh),.2,.4,0).rotation.z=.7;
         for(const zz of [-.06,.06]){ const o=new THREE.Mesh(new THREE.ConeGeometry(.04,.13,5),M(fell)); o.position.set(.45,.6,zz); P.add(o); } A.pferde.push({P,ph:i*1.7}); }); // Pferdeköpfe schauen heraus
       for(const da of [-5.4,-3.9]){ vbox(1.2,.55,.6,M('#d8c070'),a+da,y+.28,u+4.6); } vbox(2,.5,.6,holz,a+4,y+.25,u+4.4); vbox(1.9,.04,.5,M('#6d8f93'),a+4,y+.49,u+4.4); } // Heuballen, Tränke
-    { const a=141, u=-15, y=yB(a); for(const [da,du] of [[-3,-3],[3,-3],[-3,3],[3,3]]) vbox(.22,3,.22,holzD,a+da,y+1.5,u+du); const rf=vbox(7,.18,7,dach,a,y+3.1,u); rf.rotation.x=.12;
+    { const a=AT+28, u=-15, y=yB(a); for(const [da,du] of [[-3,-3],[3,-3],[-3,3],[3,3]]) vbox(.22,3,.22,holzD,a+da,y+1.5,u+du); const rf=vbox(7,.18,7,dach,a,y+3.1,u); rf.rotation.x=.12;
       vbox(1.8,1,1.5,sand,a-1.6,y+.5,u-2); const glut=vbox(1.2,.1,1,new THREE.MeshBasicMaterial({color:'#ff6a1a'}),a-1.6,y+1.04,u-2); A.flammen.push(glut); vbox(.8,3.2,.8,sand,a-1.6,y+2.6,u-2.6); rauch(a-1.6,y+4.3,u-2.6,4); flamme(a-1.6,y+1,u-2,.5);
       vbox(.45,.55,.45,holzD,a+.6,y+.28,u); const amb=vbox(.75,.28,.3,M('#3a3a3e'),a+.6,y+.69,u); const sm=W(a+.6,u+1.1); sm.y=y; const m=mensch(sm,W(a+.6,u),'#4a3a2a','#2a2a2a',()=>{},{rock:'#5a3a22',band:'#3a2a1c'}); // Schmied mit Lederschürze
       const H=new THREE.Group(); H.position.y=-.62; m.arme[1].add(H); box(H,.04,.4,.04,holzD,0,-.15,0); box(H,.16,.08,.08,M('#5f6266'),0,-.36,0); A.schmied={m,amb:W(a+.6,u),ay:y+.85};
       for(const [da,du] of [[2.6,2.4],[3.2,1.6]]){ const f=new THREE.Mesh(new THREE.CylinderGeometry(.35,.32,.85,10),holz); f.position.set(a+da,y+.42,u+du); VG.add(f); } }
-    { const a=133, u=-18.5, y=yB(a); [[0,0],[.42,0],[.84,0],[.21,.38],[.63,.38],[.42,.76]].forEach(([dz,dy])=>{ const l=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,3,7),holzD); l.rotation.z=Math.PI/2; l.position.set(a,y+.2+dy,u+dz); VG.add(l); }); } // Holzstapel
-    { const a=112, u=-12, y=yB(a); vbox(2.4,.12,1.3,holz,a,y+.85,u); for(const dz of [-.6,.6]) vbox(2.4,.3,.06,holz,a,y+1.05,u+dz); for(const dz of [-.75,.75]){ const r=new THREE.Mesh(new THREE.TorusGeometry(.48,.05,5,16),holzD); r.position.set(a-.2,y+.48,u+dz); VG.add(r); }
+    { const a=AT+23.5, u=-18.5, y=yB(a); [[0,0],[.42,0],[.84,0],[.21,.38],[.63,.38],[.42,.76]].forEach(([dz,dy])=>{ const l=new THREE.Mesh(new THREE.CylinderGeometry(.2,.2,3,7),holzD); l.rotation.z=Math.PI/2; l.position.set(a,y+.2+dy,u+dz); VG.add(l); }); } // Holzstapel
+    { const a=AT+36, u=-12, y=yB(a); vbox(2.4,.12,1.3,holz,a,y+.85,u); for(const dz of [-.6,.6]) vbox(2.4,.3,.06,holz,a,y+1.05,u+dz); for(const dz of [-.75,.75]){ const r=new THREE.Mesh(new THREE.TorusGeometry(.48,.05,5,16),holzD); r.position.set(a-.2,y+.48,u+dz); VG.add(r); }
       stange(holz,[a+1.1,y+.85,u-.4],[a+2.6,y+.05,u-.3]); stange(holz,[a+1.1,y+.85,u+.4],[a+2.6,y+.05,u+.3]); }
-    for(let i=0;i<7;i++){ const P=new THREE.Group(), a=116+q()*16, u=-10-q()*2.5; P.position.set(a,yB(a),u); P.rotation.y=q()*6.3; VG.add(P); const k=new THREE.Mesh(new THREE.SphereGeometry(.15,8,6),M(q()<.5?'#f2ece0':'#a0602a')); k.scale.set(1.2,.9,.8); k.position.y=.2; P.add(k);
+    for(let i=0;i<7;i++){ const P=new THREE.Group(), a=AT+5+q()*14, u=-10-q()*2.5; P.position.set(a,yB(a),u); P.rotation.y=q()*6.3; VG.add(P); const k=new THREE.Mesh(new THREE.SphereGeometry(.15,8,6),M(q()<.5?'#f2ece0':'#a0602a')); k.scale.set(1.2,.9,.8); k.position.y=.2; P.add(k);
       const kopf=new THREE.Group(); kopf.position.set(.17,.32,0); P.add(kopf); const kh=new THREE.Mesh(new THREE.SphereGeometry(.07,6,5),k.material); kopf.add(kh); const ka=box(kopf,.03,.06,.02,M('#d22a1a'),0,.07,0); box(kopf,.06,.02,.02,M('#e0a020'),.07,-.01,0); A.huehner.push({kopf,P,ph:q()*6}); } // Hühner picken
-    { const a=138, u=8.5, y=yB(a); const b=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.4,.8,10),sand); b.position.set(a,y+.4,u); VG.add(b); const wa=new THREE.Mesh(new THREE.CylinderGeometry(1.12,1.12,.04,14),new THREE.MeshPhongMaterial({color:'#4d6d72',shininess:50})); wa.position.set(a,y+.7,u); VG.add(wa);
+    { const a=AT+21, u=8.5, y=yB(a); const b=new THREE.Mesh(new THREE.CylinderGeometry(1.3,1.4,.8,10),sand); b.position.set(a,y+.4,u); VG.add(b); const wa=new THREE.Mesh(new THREE.CylinderGeometry(1.12,1.12,.04,14),new THREE.MeshPhongMaterial({color:'#4d6d72',shininess:50})); wa.position.set(a,y+.7,u); VG.add(wa);
       for(const du of [-1.2,1.2]) vbox(.14,2.4,.14,holzD,a,y+1.2,u+du); vbox(.12,.12,2.6,holz,a,y+2.3,u); const dw=new THREE.Mesh(dachGeo(1.6,2.8,1.9,3.1,.8),[stroh,holz]); dw.rotation.y=Math.PI/2; dw.position.set(a,y+2.4,u); VG.add(dw);
       const ei=new THREE.Mesh(new THREE.CylinderGeometry(.16,.13,.25,8),holz); ei.position.set(a,y+1.4,u); VG.add(ei); for(let i=0;i<5;i++){ const al=i/5*6.28+.4; leut(a+Math.cos(al)*2.4,u+Math.sin(al)*2.4,y,Math.atan2(-Math.cos(al),-Math.sin(al))); } } // Ziehbrunnen, Leute plaudern drumherum
     const vi=(geo,list)=>{ const im=new THREE.InstancedMesh(geo,lam('#fff'),list.length); VG.add(im); return im; };
@@ -456,13 +465,13 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
       const ns=new THREE.Mesh(new THREE.BoxGeometry(.035,.17,.025),M('#a9adb2')); ns.position.set(0,.06,.14); k.add(ns); }; // Spangenhelm mit Nasenschutz
     const kragen=(m,c)=>{ const k=new THREE.Mesh(new THREE.ConeGeometry(.4,.38,12,1,true),new THREE.MeshLambertMaterial({color:c,side:THREE.DoubleSide})); k.position.y=1.36; m.G.add(k); }; // Gugel-Schulterkragen
     const waffe=(arm,lang)=>{ const W=new THREE.Group(); W.position.y=-.62; arm.add(W); box(W,.045,lang,.012,M('#c9ccd0'),0,-lang/2-.08,0); box(W,lang>.5?.24:.12,.035,.04,M('#6b5a3a'),0,-.07,0); box(W,.035,.12,.035,M('#3a2a1c'),0,.02,0); }; // Klinge zeigt den Arm entlang
-    const L=[mensch(at(-7),bl,'#6b2a24','#2a2a2a',nasal,{aermel:'#e6dccb'}), mensch(at(-2),bl,'#3f6b3a','#3a3020',k=>{ nasal(k); },{aermel:'#3f6b3a'}), mensch(at(3),bl,'#2a2a2c','#4a3a2a',k=>{ HUT.kapuze(k); k.children[k.children.length-1].material=M('#1e1e20'); },{aermel:'#7a1f1f'})];
+    const L=[mensch(at(-2.2),bl,'#6b2a24','#2a2a2a',nasal,{aermel:'#e6dccb'}), mensch(at(0),bl,'#3f6b3a','#3a3020',k=>{ nasal(k); },{aermel:'#3f6b3a'}), mensch(at(2.2),bl,'#2a2a2c','#4a3a2a',k=>{ HUT.kapuze(k); k.children[k.children.length-1].material=M('#1e1e20'); },{aermel:'#7a1f1f'})];
     kragen(L[0],'#5a4128'); kragen(L[1],'#6b4a2e'); kragen(L[2],'#1e1e20'); waffe(L[0].arme[1],.9); waffe(L[1].arme[1],.3); waffe(L[2].arme[1],.3);
-    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex('Her mit euren Gulden, wenn euch euer Leben lieb ist!'),transparent:true,depthWrite:false})), p=at(-2); sp.scale.set(5.2,1.6,1); sp.position.set(p.x,p.y+3.1,p.z); sp.visible=false; world.add(sp);
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex('Her mit euren Gulden, wenn euch euer Leben lieb ist!'),transparent:true,depthWrite:false})), p=at(0); sp.scale.set(8.3,2.56,1); sp.position.set(p.x,p.y+3.1,p.z); sp.visible=false; world.add(sp);
     A.raeuber={L,d:K.d,sp,droh:sp.material.map,staun:blaseTex('Bei allen Heiligen … der hat den Teufel in den Waden!'),staunT:0,lastD:-1e9}; }
-  // ---------- Bogenschütze auf dem Pilzfelsen: zielt, schießt einmal pro Vorbeifahrt, der Pfeil steckt vor oder neben dem Vorderrad im Weg ----------
-  { const T=R.felsen.tuerme.find(t=>t.schuetze), p={x:T.x,y:T.top,z:T.y}, m=mensch(p,{x:p.x,z:p.z+1},'#7a3f1c','#2a2a2a',k=>{ const h=new THREE.Mesh(new THREE.ConeGeometry(.15,.34,10),M('#2f9a3a')); h.position.set(0,.27,-.03); h.rotation.x=-.3; k.add(h);
-        const kr=new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.03,12),M('#355a30')); kr.position.y=.15; k.add(kr); for(let i=0;i<3;i++){ const fd=new THREE.Mesh(new THREE.BoxGeometry(.025,.34,.06),M('#d22a1a')); fd.position.set(.1+i*.02,.32,-.05-i*.02); fd.rotation.z=-.5-i*.15; k.add(fd); } },{aermel:'#2f9a3a'}); m.G.scale.setScalar(1.12); // Spitzhut mit rotem Federbusch, etwas größer
+  // ---------- Bogenschütze oben auf dem Felsentor: zielt, schießt einmal pro Vorbeifahrt, der Pfeil steckt vor oder neben dem Vorderrad im Weg ----------
+  { const td=R.felsen.tor, tf=fr(td), T={d:td}, p={x:tf.px,y:roadY(td)+11.7,z:tf.py}, m=mensch(p,{x:p.x,z:p.z+1},'#7a3f1c','#2a2a2a',k=>{ const h=new THREE.Mesh(new THREE.ConeGeometry(.15,.34,10),M('#2f9a3a')); h.position.set(0,.27,-.03); h.rotation.x=-.3; k.add(h);
+        const kr=new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.03,12),M('#355a30')); kr.position.y=.15; k.add(kr); for(let i=0;i<3;i++){ const fd=new THREE.Mesh(new THREE.BoxGeometry(.025,.34,.06),M('#d22a1a')); fd.position.set(.1+i*.02,.32,-.05-i*.02); fd.rotation.z=-.5-i*.15; k.add(fd); } },{aermel:'#2f9a3a'}); m.G.scale.setScalar(1.4); // Spitzhut mit rotem Federbusch, deutlich größer (steht mittig auf dem Felsentor)
     const kc=new THREE.Mesh(new THREE.CylinderGeometry(.08,.07,.6,8),M('#5a3a22')); kc.position.set(.12,1.2,-.22); kc.rotation.x=.3; m.G.add(kc); for(let i=0;i<4;i++){ const pf=box(m.G,.015,.7,.015,M('#c9b28a'),.08+i*.03,1.55,-.3+i*.01); pf.rotation.x=.3; } // Köcher mit Pfeilen
     const bow=new THREE.Mesh(new THREE.TorusGeometry(.75,.022,4,18,2.3),holzD); bow.rotation.set(0,Math.PI/2,-Math.PI/2-1.15); bow.position.set(0,.13,0); m.arme[0].add(bow); // senkrecht, Bauch nach vorn, Griff in der Hand
     m.arme[0].rotation.x=m.arme[1].rotation.x=-1.5; m.arme[1].rotation.z=.5; // Bogenarm gestreckt, Zugarm an der Wange
@@ -498,19 +507,19 @@ function poseBurg(dt){ const A=anim.burg, t=performance.now()/1000, cp=camera.po
   // Wegelagerer: drohen und schwingen die Waffen; fährst du mit über 4 W/kg vorbei, hüllt sie eine Staubwolke ein und sie staunen
   if(A.raeuber){ const Q=A.raeuber, md=me.d; if(md<Q.lastD-30||md<Q.d-200) Q.staunT=0;
     if(Q.lastD<Q.d-150&&md>=Q.d-150) warnKasten('Habt Acht! Dort im Gehölz lauern finstere Gestalten …');
-    if(Q.lastD<Q.d&&md>=Q.d&&ich&&ich.wS>4){ Q.staunT=6; Q.kamT=0; Q.sp.material.map=Q.staun; for(const m of Q.L){ const P=m.G.position; for(let i=0;i<70;i++){ const a=Math.random()*6.3, v=1+Math.random()*2.5;
+    if(Q.lastD<Q.d&&md>=Q.d&&ich&&ich.wS>4){ Q.staunT=7; Q.kamT=0; Q.sp.material.map=Q.staun; for(const m of Q.L){ const P=m.G.position; for(let i=0;i<70;i++){ const a=Math.random()*6.3, v=1+Math.random()*2.5;
         partSpawn(parts.dust,P.x+(Math.random()-.5)*2,P.y+.2+Math.random()*1.6,P.z+(Math.random()-.5)*2,Math.cos(a)*v,.4+Math.random()*.8,Math.sin(a)*v,2.2+Math.random(),Math.random()<.5?'#b98466':'#a8765a'); } } }
-    Q.lastD=md; if(Q.staunT>0) Q.staunT-=dt; else Q.sp.material.map=Q.droh; Q.sp.visible=Math.abs(md-Q.d)<70&&(Q.staunT>0||md<Q.d+12);
+    Q.lastD=md; if(Q.staunT>0) Q.staunT-=dt; else Q.sp.material.map=Q.droh; Q.sp.visible=Q.staunT>0||(md>Q.d-30&&md<Q.d+12); const gr=Q.kamT!=null?2:1.6; Q.sp.scale.set(5.2*gr,1.6*gr,1); // erst ab 30 m, beim Schulterblick doppelt so groß
     Q.L.forEach((m,i)=>{ const P=m.G.position; m.G.rotation.y=Math.atan2(cp.x-P.x,cp.z-P.z);
       if(Q.staunT>0){ const hu=Math.sin(t*14+i*2); m.arme[0].rotation.x=-2.1+.15*hu; m.arme[1].rotation.x=-1.9-.1*hu; m.arme[1].rotation.z=.12; m.kopf.rotation.x=.25+.1*hu; } // husten, Arme vors Gesicht
       else { m.arme[1].rotation.x=-1.1-1.1*Math.max(0,Math.sin(t*(3.2+i*.4)+i)); m.arme[1].rotation.z=.4*Math.sin(t*2.6+i); m.arme[0].rotation.x=-.4-.3*Math.sin(t*2+i); m.kopf.rotation.x=0; } }); }
-  // Bogenschütze: dreht sich mit, spannt, schießt bei 60 m einmal; der Pfeil fliegt im Bogen und steckt vor oder neben dem Vorderrad
+  // Bogenschütze auf dem Felsentor: dreht sich mit, spannt, schießt bei 45 m einmal; der Pfeil fliegt im Bogen und steckt vor oder neben dem Vorderrad
   if(A.schuetze&&ich){ const S2=A.schuetze, P=S2.m.G.position, rp=ich.g.position, e=Math.hypot(rp.x-P.x,rp.z-P.z); if(me.d<S2.T.d-120) S2.schuss=false;
     if(e<90) S2.m.G.rotation.y=Math.atan2(rp.x-P.x,rp.z-P.z);
-    S2.zug=e<85&&!S2.schuss?Math.min(1,S2.zug+dt):Math.max(0,S2.zug-dt*2); S2.m.arme[1].rotation.x=-1.5+.3*S2.zug; S2.m.arme[1].rotation.z=.5-.25*S2.zug;
-    if(!S2.schuss&&e<60&&me.v>1){ S2.schuss=true; const dT=me.d+3+me.v*1.1, hT=headingAt(R,dT), u=(ich.lane||0)+(Math.random()<.5?-1:1)*(.4+Math.random()*.9), [x,z]=posAt(R,dT);
+    S2.zug=e<70&&!S2.schuss?Math.min(1,S2.zug+dt):Math.max(0,S2.zug-dt*2); S2.m.arme[1].rotation.x=-1.5+.3*S2.zug; S2.m.arme[1].rotation.z=.5-.25*S2.zug;
+    if(!S2.schuss&&e<45&&me.v>1){ S2.schuss=true; const dT=me.d+3+me.v*1.1, hT=headingAt(R,dT), u=(ich.lane||0)+(Math.random()<.5?-1:1)*(.4+Math.random()*.9), [x,z]=posAt(R,dT);
       const pf=S2.pfeil.clone(); pf.visible=true; world.add(pf); S2.pfeile.push(pf); if(S2.pfeile.length>6) world.remove(S2.pfeile.shift());
-      S2.flug={pf, a:new THREE.Vector3(P.x,P.y+1.45,P.z), b:new THREE.Vector3(x-Math.sin(hT)*u, roadY(dT)+.12, z+Math.cos(hT)*u), t:0, T:1.1}; }
+      S2.flug={pf, a:new THREE.Vector3(P.x,P.y+1.45*1.4,P.z), b:new THREE.Vector3(x-Math.sin(hT)*u, roadY(dT)+.12, z+Math.cos(hT)*u), t:0, T:1.1}; }
     const F=S2.flug; if(F){ F.t=Math.min(F.T,F.t+dt); const bahn=k=>{ const v=F.a.clone().lerp(F.b,k); v.y+=Math.sin(k*Math.PI)*3; return v; }, k=F.t/F.T, pos=bahn(k), dir=bahn(Math.min(1,k+.02)).sub(bahn(Math.max(0,k-.02))).normalize();
       F.pf.position.copy(pos).addScaledVector(dir,k<1?0:-.3); F.pf.lookAt(F.pf.position.clone().add(dir));
       if(k>=1){ for(let i=0;i<18;i++) partSpawn(parts.dust,F.b.x,F.b.y+.05,F.b.z,(Math.random()-.5)*1.6,.5+Math.random()*.7,(Math.random()-.5)*1.6,1.2,'#b98466'); S2.flug=null; } } } // Einschlag: kleine Staubwolke
@@ -530,8 +539,8 @@ function poseVolk(t,alle){ const P=anim.burg.volk, m=new THREE.Matrix4(), q=new 
       q.setFromAxisAngle(up,o.r); q.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(Math.cos(o.r),0,-Math.sin(o.r)),-tl));
       m.compose(p,q,s.set(1,1,1)); P.arm.setMatrixAt(i*2+(sx>0?1:0),m); if(alle) P.arm.setColorAt(i*2+(sx>0?1:0),c.set(o.c)); } });
   for(const im of [P.body,P.head,P.arm,...P.hut.filter(Boolean)]){ im.instanceMatrix.needsUpdate=true; if(alle&&im.instanceColor) im.instanceColor.needsUpdate=true; } }
-// Kamera (aus rennen.js, nach der normalen Kamera): beim Einstauben 2,8 s Schulterblick zurück auf die Wegelagerer, dann wieder hinter den Fahrer
-function burgKamera(dt){ const Q=anim.burg.raeuber, ich=riders3d[myKey]; if(!Q||Q.kamT==null||!ich) return; Q.kamT+=dt; const T=2.8; if(Q.kamT>T){ Q.kamT=null; return; }
+// Kamera (aus rennen.js, nach der normalen Kamera): beim Einstauben 6 s Schulterblick zurück auf die Wegelagerer, dann wieder hinter den Fahrer
+function burgKamera(dt){ const Q=anim.burg.raeuber, ich=riders3d[myKey]; if(!Q||Q.kamT==null||!ich) return; Q.kamT+=dt; const T=6; if(Q.kamT>T){ Q.kamT=null; return; }
   const w=bSm(Q.kamT/.6)*bSm((T-Q.kamT)/.7), rp=ich.g.position, bc=Q.L[1].G.position, hd=headingAt(R,me.d), fx=Math.cos(hd), fz=Math.sin(hd), sx=bc.x-rp.x, sz=bc.z-rp.z, sl=Math.hypot(sx,sz)||1;
   const pos=new THREE.Vector3(rp.x+fx*5-sx/sl*2.5, rp.y+2.4, rp.z+fz*5-sz/sl*2.5), look=new THREE.Vector3(bc.x, rp.y+1.1, bc.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz);
   camera.position.lerp(pos,w); camera.lookAt(now.lerp(look,w)); }

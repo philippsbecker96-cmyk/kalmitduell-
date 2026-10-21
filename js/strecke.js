@@ -53,9 +53,9 @@ const BURG_WEG=[[0,0],[0,-130,9],[170,-150,9],[200,-470,60], [330,-700,90],[520,
   [250,-1050,12],[600,-1140,12],[250,-1230,12],[600,-1320,12], // untere Kehren im Wald
   [330,-1400,50],[150,-1450,50],[30,-1600,60],[150,-1750,50],[300,-1780,30], // Felsenpfad
   [600,-1820,12],[280,-1890,12],[600,-1960,12],[280,-2030,12], // obere Kehren unter der Burg
-  [520,-2070,60],[700,-2030,80],[810,-2150,80],[760,-2310,70],[600,-2340,50],[440,-2290,22],[642,-2217]]; // Schlussrampe um den Burgfelsen, letzte Rechtskurve, Zugbrücke über den Halsgraben, Torturm, Turnierwiese
+  [520,-2070,60],[700,-2030,80],[810,-2150,80],[760,-2310,70],[600,-2340,50],[440,-2290,22],[599,-2233]]; // Schlussrampe um den Burgfelsen, letzte Rechtskurve, Zugbrücke über den Halsgraben, Torturm, Turnierwiese
 // Steigung je Abschnitt [bis m, %, Schwankung ± %]
-const BURG_PROF=[[300,1.5,.4],[616,2.5,.5],[1300,3.5,.5],[2771,8,1],[3478,5.5,.5],[4560,9,1],[5410,12,1],[5468,9,.5],[5506,1,0],[1e9,.5,0]]; // Zugbrücke 5470–5504, Torturm 5508, Ziel 5614 · Turnierwiese fast eben
+const BURG_PROF=[[300,1.5,.4],[616,2.5,.5],[1300,3.5,.5],[2771,8,1],[3478,5.5,.5],[4560,9,1],[5410,12,1],[5468,9,.5],[5506,1,0],[1e9,.5,0]]; // Zugbrücke 5470–5504, Torturm 5508, Ziel ~5568 · Turnierwiese fast eben
 function eckenWeg(W,ds=2){ const out=[[W[0][0],W[0][1]]]; let cur=[W[0][0],W[0][1]];
   const seg=(a,b)=>{ const L=Math.hypot(b[0]-a[0],b[1]-a[1]), n=Math.max(1,Math.round(L/ds)); for(let i=1;i<=n;i++) out.push([a[0]+(b[0]-a[0])*i/n, a[1]+(b[1]-a[1])*i/n]); };
   for(let i=1;i<W.length-1;i++){ const P=W[i], A=W[i-1], B=W[i+1], r=P[2]||0, u=[P[0]-A[0],P[1]-A[1]], v=[B[0]-P[0],B[1]-P[1]], lu=Math.hypot(...u), lv=Math.hypot(...v); u[0]/=lu; u[1]/=lu; v[0]/=lv; v[1]/=lv;
