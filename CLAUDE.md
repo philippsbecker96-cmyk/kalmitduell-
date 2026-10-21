@@ -10,7 +10,8 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `js/zustand.js` – Fahrer-Aussehen (`LOOKS`), Spielzustand (`me`, `opp`, `race`), 3D-Grundgerüst (`scene`, `camera`, `renderer`), `setRoute`, `canvasTex`
 - `js/welt-bausteine.js` – Haus-Baukasten: `haus(o)` (Altort, Neubau, Fachwerk), Fassaden mit Leuchtkarte, Ziegeldach, `hoftor`, `hausLicht()` für Abendfenster
 - `js/welt-space.js`, `js/welt-insel.js`, `js/welt-kalmit.js` – die übrigen 3D-Welten
-- `js/welt-berwartstein.js` – Fantasy-Strecke Burg Berwartstein (Linie und Zonen: `berwartsteinDef` in `strecke.js`): Bach mit Mühle und Holzbrücke, Kirche in Erlenbach, Felsen im Wald, Zollstation, Leute am Weg, Wegelagerer (Staubwolke ab 4 W/kg), Bogenschütze, Vorburg (Zugbrücke, Torturm, Ringmauer, Turnierwiese, Tribüne mit Königspaar, Volk), Burg, Pfälzerwald-Kuppen, Morgennebel; wird aus `build3D` aufgerufen. Holzrad/Mittelalter-Kleidung: `holzRad` und `ma` in `figuren.js`
+- `js/welt-berwartstein.js` – Fantasy-Strecke Burg Berwartstein (Linie und Zonen: `berwartsteinDef` in `strecke.js`): Bauernfest links am Start (`FEST`: Tanzbaum mit Reigen, Musikanten, Gaukler, Tanzbär, Festtafel; `poseFest`), Spruch auf dem Fachwerkgiebel rechts, Bach mit Mühle und Holzbrücke, Kirche in Erlenbach, Felsen im Wald, Zollstation, Leute am Weg, Wegelagerer (Staubwolke ab 4 W/kg), Bogenschütze, Vorburg (Zugbrücke, Torturm, Ringmauer, Turnierwiese, Tribüne mit Königspaar, Volk), Burg, Burgwald am Hang (Kiefern, Fichten, Unterholz, Felsnasen, Pfad mit Geländer, Mauerrest, Efeu, Reh), Pfälzerwald-Kuppen, Morgennebel; wird aus `build3D` aufgerufen. Holzrad/Mittelalter-Kleidung: `holzRad` und `ma` in `figuren.js`
+- `js/welt-dorf.js` – Dorfleben in Erlenbach (Berwartstein): Ortseingang im Vorlauf (`BURG_VOR` = 20 m vor dem Ort, alle Meterangaben der Strecke zählen ab dem neuen Start), Szenen in den Häuserlücken (`DORF_PLATZ`), Tiere, Kleinkram; `prepDorf`/`buildDorf`/`poseDorf` aus prepBurg/buildBurg/poseBurg. Kamerafahrt am Fest beim Countdown: `startKamera` in `welt-berwartstein.js`
 - `js/figuren.js` – 3D-Fahrer (Becker, Dengel, eigener Fahrer, Teufel-Bot), Haltung (Wiegetritt, Aero, Kurvenlage, Trittfrequenz), Avatar-Vorschau
 - `js/effekte.js` – Fahrtwind-Linien, Regen, Partikel (Gischt, Staub, Blätter), Windschatten-Linien, Kamerawackeln, Antritt-Kick
 - `js/rennen.js` – Kamera, Zeichnen, Rennlogik, Pause/Menü, Wake Lock
@@ -33,3 +34,4 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - Commit-Nachrichten auf Deutsch. Remote: GitHub `philippsbecker96-cmyk/kalmitduell-`, Branch `main`.
 - Offene Verschönerungspläne (Landschaft, Gebäude, Licht): `PLAENE.md`.
 - Plan für Rennen mit bis zu 4 Fahrern (Bots und online): `MEHRSPIELER.md`.
+- Offenes Problem Lücken zwischen Straße und Gelände in steilen Kehren (Ursachen, verworfene Versuche, nächster Test): `STRASSENLUECKEN.md`.

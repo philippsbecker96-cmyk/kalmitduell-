@@ -49,13 +49,14 @@ function scharfeEcke(G,i,j,k,l){ const [p,q,a,b]=[G[i],G[j],G[k],G[l]], ux=q[0]-
 // kom: [Anstieg ab, Bergwertung bei, Name] · breite: [von, bis, Straßenbreite m] · belag: [Art, von, bis, Zusatzsteigung % bei 75 kg] – Art 'pflaster' oder 'beton'
 function kalmitDef(){ return Object.assign(gpxDef(KALMIT_GPX), {name:'Kalmit-Ostrampe', start:'Maikammer', finish:'Kalmit · 673 m', plainElev:110, kalmit:true, gpx:'kalmit', zones:[['ort',0,800],['reben',800,2300]]}); }
 // Burg Berwartstein (Fantasy-Anstieg ab Erlenbach): frei erfundene Linie. Wegpunkte [Ost m, Süd m, Radius der Ecke m] – gerade Stücke, Ecken als Kreisbogen
-const BURG_WEG=[[0,0],[0,-130,9],[170,-150,9],[200,-470,60], [330,-700,90],[520,-820,90],[650,-1000,40], // Erlenbach · Bachtal mit Mühle
+const BURG_VOR=20; // Vorlauf vor dem Ortseingang: der Start liegt 20 m vor Erlenbach, damit man am Bauernfest vorbeifährt – alle Meterangaben der Strecke zählen ab hier
+const BURG_WEG=[[0,BURG_VOR],[0,0],[0,-130,9],[170,-150,9],[200,-470,60], [330,-700,90],[520,-820,90],[650,-1000,40], // Erlenbach · Bachtal mit Mühle
   [250,-1050,12],[600,-1140,12],[250,-1230,12],[600,-1320,12], // untere Kehren im Wald
   [330,-1400,50],[150,-1450,50],[30,-1600,60],[150,-1750,50],[300,-1780,30], // Felsenpfad
   [600,-1820,12],[280,-1890,12],[600,-1960,12],[280,-2030,12], // obere Kehren unter der Burg
   [520,-2070,60],[700,-2030,80],[810,-2150,80],[760,-2310,70],[600,-2340,50],[440,-2290,22],[599,-2233]]; // Schlussrampe um den Burgfelsen, letzte Rechtskurve, Zugbrücke über den Halsgraben, Torturm, Turnierwiese
 // Steigung je Abschnitt [bis m, %, Schwankung ± %]
-const BURG_PROF=[[300,1.5,.4],[616,2.5,.5],[1300,3.5,.5],[2771,8,1],[3478,5.5,.5],[4560,9,1],[5410,12,1],[5468,9,.5],[5506,1,0],[1e9,.5,0]]; // Zugbrücke 5470–5504, Torturm 5508, Ziel ~5568 · Turnierwiese fast eben
+const BURG_PROF=[[320,1.5,.4],[636,2.5,.5],[1320,3.5,.5],[2791,8,1],[3498,5.5,.5],[4580,9,1],[5430,12,1],[5488,9,.5],[5526,1,0],[1e9,.5,0]]; // Zugbrücke 5490–5524, Torturm 5528, Ziel ~5588 · Turnierwiese fast eben
 function eckenWeg(W,ds=2){ const out=[[W[0][0],W[0][1]]]; let cur=[W[0][0],W[0][1]];
   const seg=(a,b)=>{ const L=Math.hypot(b[0]-a[0],b[1]-a[1]), n=Math.max(1,Math.round(L/ds)); for(let i=1;i<=n;i++) out.push([a[0]+(b[0]-a[0])*i/n, a[1]+(b[1]-a[1])*i/n]); };
   for(let i=1;i<W.length-1;i++){ const P=W[i], A=W[i-1], B=W[i+1], r=P[2]||0, u=[P[0]-A[0],P[1]-A[1]], v=[B[0]-P[0],B[1]-P[1]], lu=Math.hypot(...u), lv=Math.hypot(...v); u[0]/=lu; u[1]/=lu; v[0]/=lv; v[1]/=lv;
@@ -67,8 +68,8 @@ function berwartsteinDef(){ const P=eckenWeg(BURG_WEG), G=[[P[0][0],P[0][1],215]
   for(let i=1;i<P.length;i++){ const l=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]), m=d+l/2, [,g,s]=BURG_PROF.find(p=>m<p[0]); G.push([P[i][0],P[i][1],G[i-1][2]+l*(g+s*Math.sin(m/130))/100]); d+=l; }
   return Object.assign(gpxDef(G), {name:'Burg Berwartstein', start:'Erlenbach', finish:'Burg Berwartstein', plainElev:200, gpx:'berwartstein', burg:true, steil:true, // steil: Überhöhung in deiner Nähe wie an der Kalmit
    
-    zones:[['ort',0,330,{fach:.6,gewaende:.4,geh:.5,luecke:.2,licht:0}],['wiese',330,1300]], breite:[[-50,6000,4.4]], // Altort ohne Laternen, Bachtal als Wiese, sonst Wald
-    belag:[['pflaster',0,345,.8],['erde',345,972,0],['holz',972,990,0],['erde',990,4560,0],['pflaster',4560,5470,1],['holz',5470,5504,0],['pflaster',5504,1e9,1]]}); } // Kopfstein im Dorf und an der Schlussrampe, Holzbrücke über den Bach
+    zones:[['wiese',0,20],['ort',20,350,{fach:.6,gewaende:.4,geh:.5,luecke:.2,licht:0}],['wiese',350,1320]], breite:[[-50,6100,4.4]], // Vorlauf und Bachtal als Wiese, Altort ohne Laternen, sonst Wald
+    belag:[['pflaster',0,365,.8],['erde',365,992,0],['holz',992,1010,0],['erde',1010,4580,0],['pflaster',4580,5490,1],['holz',5490,5524,0],['pflaster',5524,1e9,1]]}); } // Kopfstein im Dorf und an der Schlussrampe, Holzbrücke über den Bach
 // Runde an der Stelle V (m) neu beginnen lassen: Punkt dort einfügen, das Stück davor hinten anhängen
 function rundeAb(G,V){ let c=0; const n=G.length, zu=Math.hypot(G[n-1][0]-G[0][0],G[n-1][1]-G[0][1])<1; // zu: GPX endet schon am Anfang
   for(let i=1;i<n;i++){ const a=G[i-1], b=G[i], l=Math.hypot(b[0]-a[0],b[1]-a[1]); if(c+l>=V){ const t=(V-c)/l, P=a.map((v,k)=>v+(b[k]-v)*t); return [P,...G.slice(i),...G.slice(zu?1:0,i),P]; } c+=l; }
@@ -140,7 +141,7 @@ function buildRoute(def){
   // Landschaftszonen: Dorf, Weinberge, Wald, Fans im letzten Kilometer
   r.fans = def.burg?r.len:Math.max(r.len*0.6, r.len-1000); // Burg: kein modernes Publikum
   r.kehren=[]; if(r.kalmit||def.burg) for(let dd=40; dd<len-40; dd+=STEP*5){ const dh=Math.abs(angDiff(headingAt(r,dd+25),headingAt(r,dd-25)));
-    if(dh>1.25 && !r.kehren.some(k=>Math.abs(k-dd)<120) && !(def.burg&&(dd<1400||dd>5350))) r.kehren.push(dd); } // Burg: Ecken im Dorf und am Tor sind keine Kehren
+    if(dh>1.25 && !r.kehren.some(k=>Math.abs(k-dd)<120) && !(def.burg&&(dd<1420||dd>5370))) r.kehren.push(dd); } // Burg: Ecken im Dorf und am Tor sind keine Kehren
   prepFeld(r); makeScenery(r); if(def.burg) prepBurg(r);
   return r;
 }
