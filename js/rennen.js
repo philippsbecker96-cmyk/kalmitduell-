@@ -138,7 +138,8 @@ function loop(now){
       rideState(riders3d[oppKey],opp,oP,opp.bot?((opp.plan&&opp.plan.A)||3)*kg:1e9,dt,opp.bot?null:opp.rc??null,opp.bot?null:opp.rst); } }
   if(live.hr) race.hrMax=Math.max(race.hrMax,live.hr);
   rainSound(race.state!=='setup'&&race.rain&&!R.space);
-  { const S=(riders3d[myKey]||{}).rs; freewheel(dt, race.state==='run'&&!race.paused&&!race.frozen&&S&&S.cad<8&&me.v>2, me.v); } // Freilauf klickt beim Rollen
+  // Freilauf-Klicken vorerst stumm (Funktion freewheel in main.js bleibt)
+  if(0){ const S=(riders3d[myKey]||{}).rs; freewheel(dt, race.state==='run'&&!race.paused&&!race.frozen&&S&&S.cad<8&&me.v>2, me.v); } // Freilauf klickt beim Rollen
   hud(P,wkg); draw(dt); requestAnimationFrame(loop);
 }
 function hud(P,wkg){
@@ -267,7 +268,7 @@ function pyroStart(){ const A=anim.stadium; if(A && A.sb && !A.replay) takeRepla
 function onFinish(){
   pyroStart();
   send({t:'s',d:raceLen(),v:0,w:0,done:true,ft:me.time,vf:me.vf,avg:me.wkgSum/Math.max(1,me.time)}); finishCheck();
-  if(!R.def.burg){ beep(523,.15); setTimeout(()=>beep(659,.15),160); setTimeout(()=>beep(784,.4),320); } // Zielfanfare (nicht auf Berwartstein: dort speit der Drache)
+  beep(523,.15); setTimeout(()=>beep(659,.15),160); setTimeout(()=>beep(784,.4),320); // Zielfanfare (auf allen Strecken)
   $('banner').textContent=R.kalmit?'GIPFEL!':'ZIEL!'; setTimeout(()=>$('banner').textContent='',2500); setSlope(0);
   const B=anim.burg; if(B&&B.drache){ const tok={}; B.ergWarten=tok; B.drache.ergFeuer=false; setTimeout(()=>{ if(B.ergWarten===tok){ B.ergWarten=null; showResult(); } },25000); } // Berwartstein: Ergebnis erst nach dem Feuerstoß des Drachen (burgDrache), 25 s als Sicherheit
   else setTimeout(showResult,R.stadium?6000:1500);
