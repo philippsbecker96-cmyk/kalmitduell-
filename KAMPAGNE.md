@@ -148,3 +148,4 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 - Wie wird Trotha genau besiegt? (flieht von der Burg, ergibt sich, oder sein Drache wendet sich gegen ihn)
 - Namen: Knappe, Burgherr des Trifels.
 - Weitere Ideen: Bonusmission aus Sicht von Weißenburg (Stadt vor der Flut warnen).
+- Ideen Mission 1 (vom Nutzer, noch nicht ausgearbeitet): **Elwetritsche-Fallen** und **Neumond**.
