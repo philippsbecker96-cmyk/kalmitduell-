@@ -186,7 +186,7 @@ function buildTrifelsLeute(T,hy){ const A=anim.tri={reiter:[], traeger:null, kpf
   for(const [i,mo,sk,fb] of L){ const p=trPferd({fell:i%2?'#2a201a':'#3a2a22',schabracke:sk,federbusch:fb||(i===0?null:'#efeae0')}), m=trMensch(mo); trReiter(p,m); world.add(p.G);
     if(i===1){ const st=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,3.6,6),holz); st.position.set(.25,1.5,.1); m.G.add(st); const f=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.8),new THREE.MeshLambertMaterial({map:canvasTex(160,116,g=>wappenMal(g,160,116,0)),side:THREE.DoubleSide})); f.position.set(.25,2.9,-.55); f.rotation.y=Math.PI/2; m.G.add(f); A.fahne=f; }
     A.reiter.push({p,m,ab:i*5.5,u:(i%2?.15:-.15),ph:i*1.3}); }
-  const ru=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(kText(TRI_BEISEITE)),transparent:true,depthWrite:false})); ru.scale.set(7.4,2.3,1); ru.visible=false; world.add(ru); A.ruf=ru; } // Kolonne: alle 5,5 m einer, mitten auf dem Weg · Ruf des Bannerträgers
+  const ru=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(kText(TRI_BEISEITE)),transparent:true,depthWrite:false})); ru.scale.set(7.4,2.3,1); ru.visible=false; world.add(ru); A.ruf=ru; buildFriedel(T); } // Kolonne: alle 5,5 m einer, mitten auf dem Weg · Ruf des Bannerträgers
 
 // ---- Bewegung (jeden Frame): Gefolge reitet dir auf dem Anstieg entgegen und vorbei, Träger, Pferde nicken ----
 const TRI_V=3.2; // Trab der Reiter, m/s
@@ -198,6 +198,7 @@ function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=
     if(lauf) r.ph+=dt*TRI_V*2.6*simSpeed(); const s=Math.sin(r.ph), a=lauf?1:0; r.p.beine.forEach((b,i)=>b.rotation.x=.55*a*(i===0||i===3?s:-s)); r.p.hals.rotation.x=.08*a*Math.sin(r.ph*2)+.03*Math.sin(t*.9+r.ab);
     r.m.G.position.y=1.1+.05*a*Math.abs(Math.sin(r.ph)); }
   A.d0=d0; // für triSpur
+  poseFriedel(dt,t,rt);
   if(A.ruf){ const g=d0-me.d, an=race.state==='run'&&g<48&&g>2, b=A.reiter[1].p.G.position; A.ruf.visible=an; if(an){ A.ruf.position.set(b.x,b.y+5.2,b.z); const tx=kText(TRI_BEISEITE); if(A.rufTx!==tx){ A.rufTx=tx; A.ruf.material.map=blaseTex(tx); A.ruf.material.needsUpdate=true; } } }
   if(A.fahne) A.fahne.rotation.x=.12*Math.sin(t*2.3);
   // Burgherr: hebt die Hand und spricht dich an, kurz bevor die Audienz-Tafel kommt
@@ -216,5 +217,89 @@ function triSpur(d,t){ const A=anim.tri; if(!A||A.d0==null||race.state!=='run') 
   const H=roadW(R,d)/2-.55, mitte=bSm((70-g)/15), rechts=bSm((32-g)/6)*bSm((g+L+6)/5); return t+(0-t)*mitte*(1-rechts)+(H-t)*rechts; }
 const TRI_RUF=[TRIFELS_T.rauf+2, TRIFELS_T.rauf+12], TRI_RUF_TXT='Halt! Ihr seid doch [der Bursche, der|die Magd, die] sich für das Gold meldet?'; // Workout-Zeit (s): Burgherr ruft dich an; danach Audienz-Tafel (at in kampagne.js)
 // Kamera (aus draw): schaut kurz zum Burgherrn, während er dich anspricht (wie beim Zöllner)
-function trifelsKamera(dt){ const B=anim.tri&&anim.tri.burgherr, ich=riders3d[myKey]; if(!B||!ich||race.state!=='run') return; const rt=race.t, a=TRI_RUF[0]+6, b=TRI_RUF[1]+1; if(rt<a||rt>b) return;
-  const w=.75*bSm((rt-a)/1.2)*bSm((b-rt)/1.2), p=B.m.G.position, look=new THREE.Vector3(p.x,p.y+1.6,p.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz); camera.lookAt(now.lerp(look,w)); }
+function trifelsKamera(dt){ const A=anim.tri, B=A&&A.burgherr, ich=riders3d[myKey]; if(!B||!ich||race.state!=='run') return; const rt=race.t, D=A.dorf&&A.dorf.dorfmann, tW=A.sk?A.sk.tW:1e9;
+  let a=TRI_RUF[0]+6, b=TRI_RUF[1]+1, p=B.m.G.position; if(D&&rt>=tW-9&&rt<=tW) [a,b,p]=[tW-9,tW,D.m.G.position]; if(rt<a||rt>b) return; // Burgherr, dann die Dorfleute am Wirtshaus
+  const w=.75*bSm((rt-a)/1.2)*bSm((b-rt)/1.2), look=new THREE.Vector3(p.x,p.y+1.6,p.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz); camera.lookAt(now.lerp(look,w)); }
+
+// ---- Friedel, Wirtshaus-Szene, Elwetritsche-Jagden (Schritt 4/5) – Texte vom Nutzer, Übersicht in KAMPAGNE.md ----
+const TRI_TXT={dorfmann:'Zeh Guld, dass du heit owend kä Elwetritsch fangsch!', friedel1:'Des wer ma mo sehe!', dorfweib:'Dem Bu henn se ah ä mo zu oft hochgeworfe un ä mo zu wenich uffgfange.',
+  friedel2:'Ihr fahren doch a noch Siede, gell? Kinna ma do vielleicht helfe? Allä trau ich mich ned in de Wald…',
+  ank:['Psst. Do vorne raschelts, [Herr|Herrin]!','Do is se widder!','Wie frech se uns aguckt, die mänt a, sie is de Kees!','Uffbasse, [Herr|Herrin], die is gscheit wie sunscht was.','Des is die letzscht Chance! Ich halt schummo de Sack uff, [Herr|Herrin]!'],
+  hopp:'Hopp, hopp, alleweil hemmer se!', zeh:'Noch zeh Herzschläch…', finf:'Noch finf!',
+  zurueck:['Jetz warten doch bitte uff mich!','Mein Bock is oich longsam…','Mei Wade krampfen, [Herr|Herrin]!','Jetz warten doch bitte uff mich!'],
+  weg:['Weg isse – ins Gebisch!',"Die hot uns d' Zung rausgstreckt, hosch des gsähne?",'Jetzt lacht se uns a noch aus!','Des gibts doch ned – schun widder!'],
+  angst:['Die beißen, die Sauviecher, ich schwörs!','Henn ihr des Geheul ghört? Des war bestimmt bloß de Wind…','Im Dunkle seht ma do hinnen Ache leichte, do werd ma ganz onnerschd.'],
+  lob:['Ihr treden wie de Deifel persönlich, ich gläb ich nenn eich Betzi ab jetzad!','So schnell bin ich noch nie gewesst!','Mit eich krieche ma noch so eh Vieh, ich spürs!'],
+  fang:'Ich hab se!!! Ich hab des Scheißding! Zeh Gulde, aller!!!', ende:'Isch muss glei zurick ind Wertschaft, die werren gucken… Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell?'};
+// Ablauf aus dem Workout: wer sagt wann was (Workout-Zeit in s) – Wirtshaus am Ende des Einfahrens, je Jagd Ankündigung, Anfeuern, Zurückfallen, Countdown, Entwischt/Fang, dazwischen Lob und Angst
+function triSkript(){ const S=race.woSegs||[], tW=S[0]?S[0].t0+S[0].dur:480, J=S.filter(s=>/Jagd/.test(s.label)), L=[], X=TRI_TXT, sag=(t0,dur,wer,txt)=>L.push({t0,t1:t0+dur,wer,txt});
+  sag(tW-15,7,'dorfmann',X.dorfmann); sag(tW-8,8,'dorfweib',X.dorfweib); sag(tW-1,5,'friedel',X.friedel1); sag(tW+6,11,'friedel',X.friedel2);
+  J.forEach((j,k)=>{ const a=j.t0; sag(a-7,7,'friedel',X.ank[k]); sag(a+3,5,'friedel',X.hopp); if(k<4) sag(a+10,6,'friedel',X.zurueck[k]); sag(a+18,4,'friedel',X.zeh); sag(a+24,3,'friedel',X.finf);
+    if(k<4) sag(a+j.dur+1,6,'friedel',X.weg[k]); else sag(a+j.dur-3,9,'friedel',X.fang);
+    if(k<3){ sag(a+70,7,'friedel',X.lob[k]); sag(a+140,8,'friedel',X.angst[k]); } });
+  const T=race.woT||0; sag(T-66,14,'friedel',X.ende); // vor den zwei Ende-Tafeln
+  return {L,tW,J,T}; }
+// Sprechblase in fester Bildschirmgröße (gut lesbar, auch von weitem)
+function triBlase(){ const s=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false,depthTest:false,sizeAttenuation:false})); s.scale.set(.5,.155,1); s.renderOrder=10; s.visible=false; world.add(s); return s; }
+function triBlaseText(s,txt){ if(s.userData.txt!==txt){ s.userData.txt=txt; if(s.material.map) s.material.map.dispose(); s.material.map=blaseTex(txt); s.material.needsUpdate=true; } }
+
+// Elwetritsche nach den Vorlagen (vorlagen/elwetritsche/): dicker gelb-oranger Körper, großer Entenschnabel, Glupschaugen auf Stielen, Federschopf, Stummelflügel, bunter Schwanz, rote Beine; blickt nach +z
+function elwetritscheModell(){ const G=new THREE.Group(), K=new THREE.Group(); G.add(K); const L=c=>lam(c);
+  const rumpf=new THREE.Mesh(new THREE.SphereGeometry(.32,14,10),L('#f0a830')); rumpf.scale.set(1,1.05,1.15); rumpf.position.y=.55; K.add(rumpf);
+  const bauch=new THREE.Mesh(new THREE.SphereGeometry(.24,12,8),L('#f6d27a')); bauch.position.set(0,.5,.16); K.add(bauch);
+  const kopf=new THREE.Group(); kopf.position.set(0,.85,.12); K.add(kopf); const hk=new THREE.Mesh(new THREE.SphereGeometry(.17,12,9),L('#e8862a')); kopf.add(hk);
+  const schnabel=new THREE.Mesh(new THREE.BoxGeometry(.2,.07,.34),L('#f2c230')); schnabel.position.set(0,-.03,.26); kopf.add(schnabel); const uk=new THREE.Mesh(new THREE.BoxGeometry(.18,.05,.28),L('#e0a820')); uk.position.set(0,-.09,.22); uk.rotation.x=.12; kopf.add(uk);
+  const zunge=new THREE.Mesh(new THREE.BoxGeometry(.06,.02,.16),L('#d0261d')); zunge.position.set(0,-.07,.42); zunge.visible=false; kopf.add(zunge);
+  const augen=[]; for(const x of [-.07,.07]){ const a=new THREE.Group(); a.position.set(x,.12,.06); kopf.add(a); const st=new THREE.Mesh(new THREE.CylinderGeometry(.018,.022,.16,6),L('#e8862a')); st.position.y=.08; a.add(st);
+    const ap=new THREE.Mesh(new THREE.SphereGeometry(.065,10,8),L('#f6f4ee')); ap.position.y=.18; a.add(ap); const pu=new THREE.Mesh(new THREE.SphereGeometry(.03,8,6),L('#151515')); pu.position.set(0,.18,.05); a.add(pu); augen.push(a); }
+  for(let i=0;i<6;i++){ const f=new THREE.Mesh(new THREE.ConeGeometry(.03,.22,4),L(i%2?'#d0261d':'#f0a830')); f.position.set((i-2.5)*.03,.2,-.04); f.rotation.set(-.4,0,(i-2.5)*.18); kopf.add(f); } // Federschopf
+  const fluegel=[-1,1].map(s=>{ const w=new THREE.Mesh(new THREE.SphereGeometry(.16,8,6),L('#d9782a')); w.scale.set(.35,.7,1); w.position.set(s*.31,.6,0); K.add(w); return w; });
+  const F=['#d0261d','#f0a830','#3aa655','#2f80ed','#9b5fe0','#f2c230','#2bb5c4']; F.forEach((c,i)=>{ const f=new THREE.Mesh(new THREE.BoxGeometry(.05,.5,.02),L(c)); const a=(i-3)*.28; f.position.set(Math.sin(a)*.14,.72+Math.cos(a)*.14,-.36); f.rotation.set(-.6,0,-a); K.add(f); }); // bunter Schwanzfächer
+  const beine=[-.11,.11].map(x=>{ const b=new THREE.Group(); b.position.set(x,.32,0); G.add(b); const l=new THREE.Mesh(new THREE.CylinderGeometry(.018,.018,.32,5),L('#c0392b')); l.position.y=-.16; b.add(l);
+    for(const a of [-.5,0,.5]){ const z=new THREE.Mesh(new THREE.BoxGeometry(.03,.02,.14),L('#c0392b')); z.position.set(Math.sin(a)*.04,-.31,.05); z.rotation.y=a; b.add(z); } return b; });
+  G.scale.setScalar(1.2); return {G,K,kopf,beine,fluegel,augen,zunge}; }
+
+// ---- Aufbau (aus buildTrifelsLeute): Friedel auf dem Holzrad mit Sack und Laterne, Dorfleute vor dem Wirtshaus, Elwetritsche ----
+function buildFriedel(T){ const A=anim.tri, M=c=>lam(c);
+  const r=makeRider('custom',{...LOOK_DEF.custom,name:'Friedel',build:.9,jersey:'#5d7a3a',sleeve:'#a8862e'},true); r.g.scale.setScalar(.95); r.tag.visible=false; world.add(r.g); // schmächtig, Wams grün
+  const haar=M('#b8452a'), haar2=M('#9c3a22'); for(let i=0;i<16;i++){ const a=Math.PI*(.45+i/15*1.1), l=.2+((i*37)%7)*.03, st=new THREE.Mesh(new THREE.BoxGeometry(.035,l,.05),i%2?haar:haar2); // lange zottelige rote Haare unter der Haube
+    st.position.set(.04+Math.cos(a)*.13,.02-l/2+.04,Math.sin(a)*.13); st.rotation.set(Math.sin(a)*.25,0,Math.cos(a)*-.25); r.headG.add(st); }
+  for(let i=0;i<4;i++){ const st=new THREE.Mesh(new THREE.BoxGeometry(.03,.07,.05),haar); st.position.set(.15,.1,(i-1.5)*.05); r.headG.add(st); } // Fransen vorn
+  const sack=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),M('#c8b48a')); sack.scale.set(.9,1.1,.8); sack.position.set(-.32,1.15,-.12); r.body.add(sack); // Sack auf dem Rücken
+  const la=new THREE.Mesh(new THREE.BoxGeometry(.12,.16,.12),lampGlowMat()); la.position.set(.62,.88,0); r.body.add(la); const lh=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.12,4),M('#2e2c2a')); lh.position.set(.62,.99,0); r.body.add(lh); // Laterne am Lenker
+  A.friedel={r,sack,d:T.wirtD+1,crank:0,mode:'park',blase:triBlase()};
+  // Dorfleute vor dem Wirtshaus „Zack Zack“ (rechts), mit Krügen, blicken zu Friedel
+  const H=T.wirt, dw=T.wirtD, rw=roadW(R,dw)/2, fp=wegPos(dw+1,rw-.6), krug=m=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(.05,.045,.13,8),M('#8a6a44')); k.position.y=-.66; m.arme[1].add(k); m.arme[1].rotation.x=-.9; };
+  const leut=[['dorfmann',{kittel:'#6b5a3a',hose:'#3a3020',haar:'#4a3222',bart:'#4a3222'},-2.5,1.4],['dorfweib',{lang:'#8a3a2a',haar:'#e8e0d0'},2.8,1.5],[null,{kittel:'#4a5a6a',hose:'#3a3a2a',haar:'#6a5236'},.4,2.6],[null,{kittel:'#7a3a3a',hose:'#2e2a24',haar:'#2e2420',bart:'#2e2420'},-.8,3.4]];
+  A.dorf={}; for(const [wer,o,da,uo] of leut){ const m=trMensch(o), p=wegPos(dw+da,rw+uo); m.G.position.set(p.x,terrainAt(p.x,p.z),p.z); m.G.rotation.y=Math.atan2(fp.x-p.x,fp.z-p.z); world.add(m.G); krug(m);
+    if(wer){ A.dorf[wer]={m,blase:triBlase()}; A.dorf[wer].blase.position.set(p.x,m.G.position.y+2.4,p.z); } }
+  A.elw=elwetritscheModell(); A.elw.G.visible=false; world.add(A.elw.G);
+  if(!document.getElementById('triSag')){ const el=document.createElement('div'); el.id='triSag'; document.body.appendChild(el); } } // Friedels Worte, wenn er nicht im Bild ist
+
+// ---- Bewegung (aus poseTrifels) ----
+function poseFriedel(dt,t,rt){ const A=anim.tri, F=A.friedel, T=R.tri; if(!F) return; const run=race.state==='run', lauf=run&&!race.paused?dt*simSpeed():0;
+  if(run&&A.skS!==race.woSegs){ A.sk=triSkript(); A.skS=race.woSegs; } const K=run?A.sk:null, ich=riders3d[myKey], H=roadW(R,me.d)/2-.5;
+  // Friedel: wartet am Wirtshaus, fährt ab Ende des Einfahrens mit, fällt in den Jagden 1–4 zurück (bei der letzten hält er den Sack bereit), am Ende kehrt er um
+  if(!K||rt<K.tW-1){ F.d=T.wirtD+1; F.mode='park'; F.r.lane=roadW(R,F.d)/2-.6; putRider(F.r,F.d,F.crank); F.r.g.visible=true; }
+  else { const jj=K.J.findIndex(j=>rt>=j.t0&&rt<j.t0+j.dur), heim=rt>=K.T-52;
+    if(heim){ F.d-=6*lauf; F.crank+=6*lauf*2.4; }
+    else { const want=jj>=0&&jj<4?-36:-1.3, vr=clampN((want-(F.d-me.d))*.6,-2.6,1.6); F.d+=Math.max(0,me.v+vr)*lauf; F.crank+=Math.max(0,me.v+vr)*lauf*2.4; }
+    const ml=ich&&ich.lane!=null?ich.lane:0, u=heim?-H:(ml-1.25<-H?ml+1.25:ml-1.25); F.r.lane=F.r.lane==null?u:F.r.lane+(u-F.r.lane)*Math.min(1,dt*2);
+    putRider(F.r,F.d,F.crank); if(heim) F.r.g.rotation.y+=Math.PI; F.r.g.visible=!(heim&&F.d<me.d-150); }
+  // Elwetritsche: taucht mit jeder Jagd 34 m vor dir auf, rennt im Zickzack davon, du holst auf; kurz vor Schluss schlägt sie einen Haken ins Gebüsch – bei der letzten springt sie in Friedels Sack
+  const E=A.elw; let ev=false; if(K){ const k=K.J.findIndex(j=>rt>=j.t0&&rt<j.t0+j.dur+1), j=K.J[k];
+    if(j){ const tau=rt-j.t0, s=k%2?1:-1, letzt=k===K.J.length-1, gap=34-30*clampN(tau/25,0,1), haken=bSm((tau-25)/2.5); let d=me.d+gap, u=.9*Math.sin(tau*1.7), y=0;
+      if(letzt&&tau>23){ const w=bSm((tau-23)/2.5), sp=new THREE.Vector3(); F.sack.getWorldPosition(sp); const [x0,z0]=(()=>{ const p=wegPos(d,u); return [p.x,p.z]; })(); E.G.position.set(x0+(sp.x-x0)*w, roadY(d)+(sp.y-roadY(d))*w*.8+Math.sin(w*Math.PI)*1.2, z0+(sp.z-z0)*w); ev=tau<25.6; }
+      else { u+=(s*(roadW(R,d)/2+4)-u)*haken; const p=wegPos(d,u); y=roadY(d)+Math.abs(Math.sin(tau*9))*.22; E.G.position.set(p.x,y,p.z); ev=tau<27.6; }
+      const hd=headingAt(R,d); E.G.rotation.y=-hd+Math.PI/2-s*haken*1.2; // läuft in Fahrtrichtung, beim Haken zur Seite
+      const blick=(tau%8>5.5)&&tau<24&&k>0; E.kopf.rotation.y=blick?Math.PI*.85:0; E.zunge.visible=blick&&k>=1; // schaut frech zurück, ab Jagd 2 mit Zunge
+      E.beine[0].rotation.x=.7*Math.sin(tau*18); E.beine[1].rotation.x=-.7*Math.sin(tau*18); E.fluegel.forEach((w,i)=>w.rotation.z=(i?-1:1)*(.3+.5*Math.abs(Math.sin(tau*14)))); E.augen.forEach((a,i)=>a.rotation.z=.25*Math.sin(t*11+i)); E.K.rotation.z=.12*Math.sin(tau*9); } }
+  E.G.visible=ev;
+  // Sack: nach dem Fang dick und zappelig
+  const voll=K&&K.J.length&&rt>K.J[K.J.length-1].t0+25.6; F.sack.scale.set(voll?1.35+.08*Math.sin(t*13):.9, voll?1.45:1.1, voll?1.2:.8); if(voll) F.sack.rotation.z=.15*Math.sin(t*9);
+  // Sprechen: Dorfleute über dem Kopf, Friedel über dem Kopf wenn im Bild, sonst unten im Bild
+  const akt=K?K.L.filter(s=>rt>=s.t0&&rt<s.t1):[], el=document.getElementById('triSag'); let unten='';
+  for(const w of ['dorfmann','dorfweib']){ const D=A.dorf[w]; if(!D) continue; const s=akt.find(x=>x.wer===w); D.blase.visible=!!s; if(s) triBlaseText(D.blase,kText(s.txt)); D.m.arme[0].rotation.x=s?-.6-.3*Math.sin(t*5):0; }
+  { const s=akt.find(x=>x.wer==='friedel'), B=F.blase; let im=false; if(s&&F.r.g.visible){ const p=F.r.g.position.clone(); p.y+=2.3; B.position.copy(p); const q=p.clone().project(camera); im=q.z<1&&Math.abs(q.x)<.9&&Math.abs(q.y)<.9&&camera.position.distanceTo(p)<45; }
+    B.visible=!!s&&im; if(B.visible) triBlaseText(B,kText(s.txt)); if(s&&!im) unten='Friedel: '+kText(s.txt); }
+  if(el){ if(unten){ el.textContent=unten; el.classList.add('zeig'); } else el.classList.remove('zeig'); } }
