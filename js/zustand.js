@@ -88,7 +88,9 @@ function applyEnv(){ if(!R||R.space) return; if(R.stadium){ applyStadiumEnv(); r
   dayLights(); const dusk=race.tod!=='tag', rain=!!race.rain, bg=dusk?(rain?0x9a8478:DUSK_BG):rain?0xb6bbbf:HORIZON; scene.background.set(bg); scene.fog.color.set(bg);
   hausLicht(); if(dusk){ setSky(rain?'duskGrey':'dusk'); hemi.color.set(0x9c9ccc); hemi.groundColor.set(0x40302a); hemi.intensity=rain?.6:.76; sun.color.set(0xff9452); sun.intensity=rain?.4:1.45; SUN_DIR.set(-1,.2,.42).normalize(); sunDisc(!rain); }
   else if(rain){ setSky('grey'); hemi.color.set(0xc4ccd4); hemi.intensity=.7; sun.color.set(0xeef2f6); sun.intensity=.5; }
-  const hz=race.season==='herbst'&&!R.island&&!rain; // Herbst am Tag: tiefere, wärmere Sonne und leichter Dunst
+  const BG=!!(R.def&&R.def.burg); // Burg Berwartstein: früher Morgen, tiefe Sonne im Osten, Dunst im Tal (Nebelschwaden: welt-berwartstein.js)
+  if(BG&&!dusk&&!rain){ SUN_DIR.set(1,.4,.3).normalize(); sun.color.set(0xffd6a6); sun.intensity=1.05; hemi.color.set(0xd2dce6); hemi.groundColor.set(0x4f5a3c); hemi.intensity=.7; scene.background.set(0xdfe3e1); scene.fog.color.set(0xdfe3e1); sunDisc(true); }
+  const hz=race.season==='herbst'&&!R.island&&!rain&&!BG; // Herbst am Tag: tiefere, wärmere Sonne und leichter Dunst
   if(hz&&!dusk){ SUN_DIR.set(-1,.72,.62).normalize(); sun.color.set(0xffcf96); sun.intensity=1.1; hemi.color.set(0xd8dccc); hemi.groundColor.set(0x6a5a3a); scene.background.set(0xe4dccb); scene.fog.color.set(0xe4dccb); }
   scene.fog.near=rain?60:hz?90:R.fog0[0]; scene.fog.far=rain?Math.min(R.fog0[1],900):hz?R.fog0[1]*.75:R.fog0[1]; wetRoads(rain); }
 // Nasse Straße: Phong statt Lambert, dunkler, mit kräftigem Glanzlicht und leichter Spiegelung des Himmels (Materialien mit userData.wet)

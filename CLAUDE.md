@@ -10,6 +10,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `js/zustand.js` – Fahrer-Aussehen (`LOOKS`), Spielzustand (`me`, `opp`, `race`), 3D-Grundgerüst (`scene`, `camera`, `renderer`), `setRoute`, `canvasTex`
 - `js/welt-bausteine.js` – Haus-Baukasten: `haus(o)` (Altort, Neubau, Fachwerk), Fassaden mit Leuchtkarte, Ziegeldach, `hoftor`, `hausLicht()` für Abendfenster
 - `js/welt-space.js`, `js/welt-insel.js`, `js/welt-kalmit.js` – die übrigen 3D-Welten
+- `js/welt-berwartstein.js` – Fantasy-Strecke Burg Berwartstein (Linie und Zonen: `berwartsteinDef` in `strecke.js`): Bach mit Mühle und Holzbrücke, Kirche in Erlenbach, Felsen im Wald, Zollstation, Leute am Weg, Wegelagerer (Staubwolke ab 4 W/kg), Bogenschütze, Vorburg (Zugbrücke, Torturm, Ringmauer, Turnierwiese, Tribüne mit Königspaar, Volk), Burg, Pfälzerwald-Kuppen, Morgennebel; wird aus `build3D` aufgerufen. Holzrad/Mittelalter-Kleidung: `holzRad` und `ma` in `figuren.js`
 - `js/figuren.js` – 3D-Fahrer (Becker, Dengel, eigener Fahrer, Teufel-Bot), Haltung (Wiegetritt, Aero, Kurvenlage, Trittfrequenz), Avatar-Vorschau
 - `js/effekte.js` – Fahrtwind-Linien, Regen, Partikel (Gischt, Staub, Blätter), Windschatten-Linien, Kamerawackeln, Antritt-Kick
 - `js/rennen.js` – Kamera, Zeichnen, Rennlogik, Pause/Menü, Wake Lock
@@ -17,6 +18,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `js/auswertung.js` – Testmodus, Fotofinish, Aufzeichnung, Ergebnis, TCX-Export
 - `js/lobby.js` – Lobby, Fahrer-Editor, Lobby-Hintergrund
 - `js/online.js` – PeerJS-Raumcode, Sync mit dem Gegner
+- `js/fernbedienung.js` – Handy als Fernbedienung: QR-Code (qrcodejs), eigener PeerJS-Peer `kalmit-duell-v3-r-CODE`, Befehle start/pause/resume; Handy-Seite ist `remote.html` (läuft über GitHub Pages, da `file://` vom Handy nicht erreichbar)
 - `js/bluetooth.js` – FTMS/FE-C-Trainer, Pulsgurt
 - `js/main.js` – Sound, Tasten, Event-Bindings, Start (`setRoute`, `requestAnimationFrame(loop)`), Test-Helfer `window.__scene`
 

@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kalmit-Duell</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;800&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;800&family=Barlow:wght@400;600;700&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -42,7 +43,7 @@
       <div class="rowb" style="margin-top:6px"><button data-i="90">90 %</button><button data-i="95">95 %</button><button data-i="100">100 %</button><button data-i="105">105 %</button><button data-i="110">110 %</button></div></div>
     <div class="small" id="mNoOpts" style="display:none">Kein ERG in Rennen – jeder tritt und schaltet selbst.</div>
   </div>
-  <div id="pauseMain" class="rowb"><button class="go" id="btnResume">▶ Weiter</button><button class="tcxBtn" style="display:none">⬇ TCX für Strava</button><button id="btnQuit">Beenden</button></div>
+  <div id="pauseMain" class="rowb"><button class="go" id="btnResume">▶ Weiter</button><button class="tcxBtn" style="display:none">⬇ TCX für Strava</button><button id="btnQuit">Beenden</button><button id="btnRemote2" class="rcBtn" title="Handy als Fernbedienung">📱 Handy</button></div>
   <div id="pauseAsk" class="rowb" style="display:none"><span style="font-size:17px;flex-basis:100%">Wirklich beenden und zurück in die Lobby?</span><button class="tcxBtn" style="display:none">⬇ TCX für Strava</button><button class="go" id="btnQuitYes">Ja, beenden</button><button id="btnQuitNo">Abbrechen</button></div></div></div>
 <div id="woNow"><div class="lab" id="wnLab"></div><div class="big"><span id="wnW">0</span> <small>W</small></div>
   <div class="row"><span id="wnMe">Du: 0 W</span><span class="cd" id="wnCd">0:00</span></div><div class="nx" id="wnNx"></div><div id="wnList"></div><button id="wnStop" style="display:none;margin-top:8px;background:var(--sand);padding:6px 14px;font-size:15px">Test beenden</button></div>
@@ -204,12 +205,17 @@
     <div class="foot">
       <button class="back" id="btnBack2">← Zurück</button>
       <button class="go" id="btnStart">Rennen starten</button>
+      <button id="btnRemote" class="rcBtn" title="Handy als Fernbedienung">📱 Handy</button>
       <span class="small" id="startHint">Wer das Rennen erstellt, startet für beide.</span>
     </div>
   </div>
 </div>
 
 <div id="result"><div class="card" id="resultCard"></div></div>
+<div id="remote"><div class="card"><h1 style="font-size:40px;margin:0">Handy als Fernbedienung</h1>
+  <div class="sub">QR-Code scannen – dann kannst du vom Rad aus starten, pausieren und weiterfahren.</div>
+  <div id="rcQr"></div><div class="num" id="rcCode"></div><div class="small" id="rcUrl"></div><div class="small" id="rcState" style="margin-top:8px"></div>
+  <div class="rowb"><button class="go" id="rcClose">Schließen</button></div></div></div>
 <div id="editor"><div class="card"><h1 style="font-size:40px;margin:0" id="edTitle">Fahrer bearbeiten</h1><div class="sub">Änderungen bleiben auf diesem Gerät gespeichert und werden online an den Gegner übertragen.</div>
   <div class="edgrid"><canvas id="edCv" width="300" height="285"></canvas><div id="edForm"></div></div>
   <div class="rowb"><button class="go" id="edSave">Speichern</button><button id="edCancel">Abbrechen</button><button id="edReset">Auf Original zurücksetzen</button></div></div></div>
@@ -223,6 +229,7 @@
 <script src="js/welt-insel.js"></script>
 <script src="js/welt-bausteine.js"></script>
 <script src="js/welt-kalmit.js"></script>
+<script src="js/welt-berwartstein.js"></script>
 <script src="js/figuren.js"></script>
 <script src="js/effekte.js"></script>
 <script src="js/rennen.js"></script>
@@ -230,6 +237,7 @@
 <script src="js/auswertung.js"></script>
 <script src="js/lobby.js"></script>
 <script src="js/online.js"></script>
+<script src="js/fernbedienung.js"></script>
 <script src="js/bluetooth.js"></script>
 <script src="js/main.js"></script>
 </body>

@@ -68,12 +68,12 @@ function build3D(){
   if(world){ scene.remove(world); world.traverse(o=>{ o.geometry&&o.geometry.dispose&&o.geometry.dispose(); for(const mt of [].concat(o.material||[], o.userData.dry||[], (o.userData.dry&&o.userData.dry.userData.wm)||[])){ mt.map&&mt.map.dispose&&mt.map.dispose(); mt.dispose&&mt.dispose(); } }); }
   hausReset();
   world=new THREE.Group(); scene.add(world);
-  anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
+  anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; anim.burg=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
   const sp=!!R.space; sky.visible=!sp; spaceSky.visible=sp; streaks.m.visible=false; scene.background.set(sp?SPACE_BG:HORIZON); scene.fog.color.set(sp?SPACE_BG:HORIZON);
   if(sp){ buildSpace(); return; }
   if(R.island){ buildIsland(); return; }
   if(R.stadium){ scene.fog.near=250; scene.fog.far=2200; buildStadium(); return; }
-  scene.fog.near=140; scene.fog.far=1500; camera.far=R.def.haardt?13000:6000; camera.updateProjectionMatrix();
+  const BG=!!R.def.burg; scene.fog.near=BG?200:140; scene.fog.far=BG?5000:1500; camera.far=R.def.haardt||BG?13000:6000; // Burg: weite Sicht, Burg schon vom Dorf aus zu sehen camera.updateProjectionMatrix();
   const S=R.S, plainY=(R.def.plainElev ?? (R.startElev-60))-R.startElev;
 
   // ---------- Gelände ----------
@@ -94,6 +94,7 @@ function build3D(){
   for(let pass=0;pass<12;pass++){ tmp.set(h); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; if(dist[k]<12) continue;
       h[k]=(tmp[k]*2+tmp[k-1]+tmp[k+1]+tmp[k-n]+tmp[k+n])/6; } }
   for(let k=0;k<N;k++) if(dist[k]<12) h[k]=roadY(src[k]*STEP)-0.6;
+  TER.vbw=null; TER.bach=BG?burgGelaende(h,src,dist):null; // Burg: Bachbett und ebene Vorburg
   // Höhe der nächstgelegenen Straßenstelle je Geländepunkt (geglättet) – danach richtet sich die Überhöhung, damit die Straße quer nicht kippt
   { const hr=new Float32Array(N), tq=new Float32Array(N); for(let k=0;k<N;k++) hr[k]=roadY(src[k]*STEP);
     for(let pass=0;pass<14;pass++){ tq.set(hr); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; hr[k]=(tq[k]*4+tq[k-1]+tq[k+1]+tq[k-n]+tq[k+n])/8; } }
@@ -101,14 +102,17 @@ function build3D(){
 
   TER.h=h;
   const pos=new Float32Array(N*3), col=new Float32Array(N*3), idx=[];
-  const HB=race.season==='herbst', C=(s,h)=>new THREE.Color(HB&&h?h:s); // Herbst: Waldboden mit Laub, Wiesen und Weinberge strohiger
-  const cForest=C('#355a2c','#55502e'), cForest2=C('#4a6a33','#6e5530'), cNeedles=C('#6b5a38','#7d5a34'), cVerge=C('#8a9a4e','#a49a5a'), cSand=C('#9a8160'), cVine=C('#8f9a52','#aa9a58'), cTown=C('#9aa77a','#a8a67e'), cRock=C('#9b7f6c'), cPlain=C('#b9b36a','#c4b070'), cAcker=[C('#c2ad6a'),C('#7f9a45','#9a8f50'),C('#8e6f50')], tc=new THREE.Color();
+  const HB=race.season==='herbst'&&!BG, C=(s,h)=>new THREE.Color(HB&&h?h:s); // Herbst: Waldboden mit Laub, Wiesen und Weinberge strohiger
+  const cForest=C('#355a2c','#55502e'), cForest2=C('#4a6a33','#6e5530'), cNeedles=C('#6b5a38','#7d5a34'), cVerge=C('#8a9a4e','#a49a5a'), cSand=C('#9a8160'), cVine=C('#8f9a52','#aa9a58'), cTown=C('#9aa77a','#a8a67e'), cRock=C('#9b7f6c'), cPlain=C(BG?'#6f8f45':'#b9b36a','#c4b070'), cWiese=C('#6f9a40'), cWiese2=C('#86a84c'), cKies=C('#9a907c'), cAcker=[C('#c2ad6a'),C('#7f9a45','#9a8f50'),C('#8e6f50')], tc=new THREE.Color();
   for(let k=0;k<N;k++){ const i=k%n, j=(k/n)|0, x=i*res+TER.x0, z=j*res+TER.z0; pos[k*3]=x; pos[k*3+1]=h[k]; pos[k*3+2]=z;
     const d=src[k]*STEP; tc.copy(cForest).lerp(cForest2, vnoise(x/40,z/40)); tc.lerp(cNeedles, Math.max(0,vnoise(x/18,z/18)-.45)*1.2);
     const zt=zoneAt(R,d);
     if(zt!=='wald' && zt!=='hain' && dist[k]<160) tc.copy(cVine).lerp(cForest, Math.max(0,(dist[k]-90)/70));
     if(zt==='feld' && dist[k]<200){ const p=parzAt(R,d); if(p&&p[2]) tc.copy(cAcker[p[2]-1]).lerp(cPlain, vnoise(x/9,z/9)*.25); }
     if(zt==='ort' && dist[k]<120) tc.copy(cTown);
+    if(zt==='wiese' && dist[k]<240) tc.copy(cWiese).lerp(cWiese2, vnoise(x/30,z/30)).lerp(cForest, Math.max(0,(dist[k]-170)/70));
+    if(TER.vbw && TER.vbw[k]>0) tc.lerp(cWiese, TER.vbw[k]*.9);
+    if(TER.bach && TER.bach[k]<5) tc.lerp(cKies, (1-TER.bach[k]/5)*.7);
     if(dist[k]<16) tc.lerp(zt!=='ort'&&zoneAt(R,d+200)==='wald' ? cSand : cVerge, 1-dist[k]/16);
     if(vnoise(x/14,z/14)>.86 && dist[k]>20) tc.lerp(cRock,.6);
     if(h[k]<plainY+6) tc.lerp(cPlain, Math.min(1,(plainY+6-h[k])/6));
@@ -118,8 +122,8 @@ function build3D(){
   tg.setIndex(idx); tg.computeVertexNormals();
   world.add(new THREE.Mesh(tg, new THREE.MeshLambertMaterial({vertexColors:true})));
 
-  // Weite Ebene (Rheinebene) rundherum, Felder als Flickenteppich
-  { const pt=canvasTex(512,512,g=>{ const pal=['#c7b660','#a9b45a','#d6c071','#8fa24c','#b89a52','#9bae63','#cfc584'];
+  // Weite Ebene (Rheinebene) rundherum, Felder als Flickenteppich · Burg: Wiesengrund und Pfälzerwald-Kuppen
+  if(BG) buildBurgUmland(plainY,x0,z0,x1,z1); else { const pt=canvasTex(512,512,g=>{ const pal=['#c7b660','#a9b45a','#d6c071','#8fa24c','#b89a52','#9bae63','#cfc584'];
       for(let y=0;y<512;y+=32) for(let x=0;x<512;){ const w=24+Math.random()*60; g.fillStyle=pal[Math.floor(Math.random()*pal.length)]; g.fillRect(x,y,w,32); x+=w; }
       g.fillStyle='rgba(60,80,40,.5)'; for(let i=0;i<120;i++){ g.beginPath(); g.arc(Math.random()*512,Math.random()*512,2+Math.random()*4,0,7); g.fill(); } });
     pt.wrapS=pt.wrapT=THREE.RepeatWrapping; pt.repeat.set(14,14);
@@ -143,11 +147,14 @@ function build3D(){
   strip(0,R.len,d=>-(rw(d)+0.9),d=>rw(d)+0.9,0.05,side2(Object.assign(lam('#8f8573'),{polygonOffsetFactor:-1})),10,[1]);
   const asph=side2(Object.assign(new THREE.MeshLambertMaterial({map:rtex}),{userData:{wet:1},polygonOffsetFactor:-2}));
   let d0=0; for(const [t,a,b] of [...R.belag].sort((x,y)=>x[1]-y[1])){ strip(d0,a,d=>-rw(d),rw,0.12,asph,9,[1]); d0=Math.min(b,R.len);
-    const tx=t==='pflaster'?canvasTex(128,64,g=>{ g.fillStyle='#6e6a64'; g.fillRect(0,0,128,64); for(let y=0;y<64;y+=8) for(let x=(y/8%2)*5-5;x<128;x+=10){ const v=95+Math.random()*45|0; g.fillStyle=`rgb(${v},${v-4},${v-10})`; g.fillRect(x+1,y+1,8,6); } })
+    const tx=t==='erde'?canvasTex(64,128,g=>{ g.fillStyle='#a8765a'; g.fillRect(0,0,64,128); for(let t2=0;t2<500;t2++){ const v=Math.random(); g.fillStyle=v<.4?'rgba(70,40,25,.18)':v<.8?'rgba(225,180,140,.18)':'rgba(120,110,80,.25)'; g.fillRect(Math.random()*64,Math.random()*128,1+Math.random()*3,1+Math.random()*3); }
+        g.fillStyle='rgba(80,50,30,.18)'; g.fillRect(14,0,7,128); g.fillRect(43,0,7,128); }) // Waldweg aus rotem Sandsteinsand, zwei dunklere Fahrspuren
+      : t==='holz'?canvasTex(64,64,g=>{ for(let y=0;y<64;y+=8){ const v=.85+Math.random()*.25; g.fillStyle=`rgb(${120*v|0},${88*v|0},${60*v|0})`; g.fillRect(0,y,64,8); g.fillStyle='rgba(30,18,10,.6)'; g.fillRect(0,y+7,64,1); } }) // Bohlen quer zur Fahrtrichtung
+      : t==='pflaster'?canvasTex(128,64,g=>{ g.fillStyle='#6e6a64'; g.fillRect(0,0,128,64); for(let y=0;y<64;y+=8) for(let x=(y/8%2)*5-5;x<128;x+=10){ const v=95+Math.random()*45|0; g.fillStyle=`rgb(${v},${v-4},${v-10})`; g.fillRect(x+1,y+1,8,6); } })
       : canvasTex(64,128,g=>{ g.fillStyle='#b8b6ac'; g.fillRect(0,0,64,128); for(let t2=0;t2<400;t2++){ const v=Math.random()<.5?60:255; g.fillStyle=`rgba(${v},${v},${v},.07)`; g.fillRect(Math.random()*64,Math.random()*128,2,2); }
           g.fillStyle='#6f6d66'; g.fillRect(0,0,64,3); g.fillStyle='rgba(0,0,0,.1)'; g.fillRect(31,0,2,128); });
     tx.wrapT=THREE.RepeatWrapping; tx.anisotropy=8;
-    strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{userData:{wet:1},polygonOffsetFactor:-2})),t==='pflaster'?1.6:3.5,[1]); }
+    strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{userData:{wet:1},polygonOffsetFactor:-2})),t==='pflaster'?1.6:t==='erde'?6:t==='holz'?2:3.5,[1]); }
   strip(d0,R.len,d=>-rw(d),rw,0.12,asph,9,[1]);
   // Landstraße: Leitlinie in der Mitte (6 m Strich, 12 m Lücke) · Radweg neben der Straße, hinter einem Grünstreifen
   if(R.def.mitte){ const dt=canvasTex(8,48,g=>{ g.fillStyle='#ecebe4'; g.fillRect(0,0,8,16); }); dt.wrapT=THREE.RepeatWrapping;
@@ -232,7 +239,7 @@ function build3D(){
   const rails=[], rposts=[];
   const railAt=new Uint8Array(Math.ceil(R.len/2)+1);
   for(const [a,b,bs] of R.def.planke||[]) for(let d=a; d<Math.min(b,R.len); d+=2) railAt[d/2|0]=bs===2?2:1;
-  R.kehren.forEach(kd=>{ for(let d=Math.max(0,kd-70); d<Math.min(R.fans,kd+70); d+=2) if(zoneAt(R,d)!=='ort') railAt[d/2|0]=1; });
+  if(!BG) R.kehren.forEach(kd=>{ for(let d=Math.max(0,kd-70); d<Math.min(R.fans,kd+70); d+=2) if(zoneAt(R,d)!=='ort') railAt[d/2|0]=1; });
   if(R.kalmit){ const rr=rng(17); let on=0; for(let d=Math.max(...R.zones.filter(z=>z[0]==='reben').map(z=>z[2]))-120; d<R.len-330; d+=2){ const [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd);
       const drop=Math.abs(terrainAt(x+nx*16,z+nz*16)-terrainAt(x-nx*16,z-nz*16)); if(on<=0 && drop>2.5 && rr()<.12) on=80+rr()*260; if(on>0){ railAt[d/2|0]=1; on-=2; } } }
   for(let i=0;i<railAt.length;i++){ if(!railAt[i]) continue; const d=i*2, [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd);
@@ -318,7 +325,7 @@ function build3D(){
     if(za>0) sign(za-4,false); else if(R.loop) sign(-90,false); // Godramstein: Ortseingang vor dem Ziel
     if(zb<R.len) sign(zb+4,true); }
   // Absperrgitter mit Bannern auf den letzten 300 m
-  { const bl=[], texts=R.kalmit?['BERGWERTUNG','KALMIT','HOPP HOPP!','PFALZ','ALLEZ!','673 m']:['SÜDPFALZ','HOPP HOPP!','WEINSTRASSE','ALLEZ!','PFALZ','ZIEL'], cols=['#1c7ed6','#2f9e44','#e8590c','#ae3ec9','#c92a2a','#0b7285'];
+  if(!BG){ const bl=[], texts=R.kalmit?['BERGWERTUNG','KALMIT','HOPP HOPP!','PFALZ','ALLEZ!','673 m']:['SÜDPFALZ','HOPP HOPP!','WEINSTRASSE','ALLEZ!','PFALZ','ZIEL'], cols=['#1c7ed6','#2f9e44','#e8590c','#ae3ec9','#c92a2a','#0b7285'];
     for(let d=R.len-320; d<R.len-6; d+=2.5) for(const s of [-1,1]){ const [x,z]=posAt(R,d+1.25), hd=headingAt(R,d+1.25), nx=-Math.sin(hd), nz=Math.cos(hd), off=ROAD_W/2+0.45;
       bl.push({x:x+nx*s*off, z:z+nz*s*off, bx:x+nx*s*(off-.05), bz:z+nz*s*(off-.05), y:roadY(d+1.25), g:gradeAt(d+1.25), h:hd, s, t:Math.floor((d/2.5+(s>0?3:0)))%texts.length}); }
     inst(new THREE.BoxGeometry(2.45,1.05,.04), lam('#c3c8cc'), bl, o=>{ ps.set(o.x,o.y+.62,o.z); slopeQ(o.h,o.g); sc.set(1,1,1); cc.set('#aab0b6'); });
@@ -342,15 +349,17 @@ function build3D(){
     g.fillStyle='#1a1a1a'; g.font='700 22px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(sub,256,116,296);
     g.strokeStyle='#1a1a1a'; g.lineWidth=6; g.strokeRect(3,3,506,144); };
   for(const [,b,n] of R.kom) arch(b,komBanner('BERGWERTUNG',n,70),150,1.6);
-  if(!R.kalmit) arch(R.loop?0.5:R.len-0.5,(g)=>{ g.fillStyle='#fff'; g.fillRect(0,0,512,150); g.fillStyle='#111'; // Start/Ziel-Bogen mit Zielflaggen-Karos
+  if(BG); else if(!R.kalmit) arch(R.loop?0.5:R.len-0.5, // Burg: Zielbanner im Mittelalter-Stil (welt-berwartstein.js)
+    (g)=>{ g.fillStyle='#fff'; g.fillRect(0,0,512,150); g.fillStyle='#111'; // Start/Ziel-Bogen mit Zielflaggen-Karos
     for(let i=0;i<64;i++) for(let j=0;j<2;j++) if((i+j)%2){ g.fillRect(i*8,j*8,8,8); g.fillRect(i*8,134+j*8,8,8); }
     g.fillStyle='#1c7ed6'; g.fillRect(0,16,512,118); g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle';
     g.font='800 76px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText('START · ZIEL',256,66,490);
     g.font='700 24px "Barlow Condensed", Arial Narrow, sans-serif'; g.fillText(R.name.toUpperCase(),256,114,490); }, 150, 2.0);
   else { arch(0.5,(g)=>{ g.fillStyle='#1c7ed6'; g.fillRect(0,0,512,80); g.fillStyle='#fff'; g.font='800 40px "Barlow Condensed", Arial Narrow, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(`START · ${R.start}`,256,42,490); });
   arch(R.len-0.5,komBanner('KOM',`King of the Mountain · ${R.finish}`), 150, 2.0); }
-  { const cc2=canvasTex(16,128,g=>{ for(let i=0;i<16;i++) for(let j=0;j<2;j++){ g.fillStyle=(i+j)%2?'#111':'#fff'; g.fillRect(j*8,i*8,8,8); } });
-    const [x,z]=posAt(R,R.len-1), hd=headingAt(R,R.len-1), fl=new THREE.Mesh(new THREE.PlaneGeometry(1.4,ROAD_W), new THREE.MeshBasicMaterial({map:cc2}));
+  { const cc2=canvasTex(16,128,g=>{ for(let i=0;i<16;i++) for(let j=0;j<2;j++){ g.fillStyle=BG?'#efe8d4':(i+j)%2?'#111':'#fff'; g.fillRect(j*8,i*8,8,8); } }); // Burg: Kreidestrich statt Karos
+    const [x,z]=posAt(R,R.len-1), hd=headingAt(R,R.len-1), fl=new THREE.Mesh(new THREE.PlaneGeometry(BG?.3:1.4,BG?roadW(R,R.len-1):ROAD_W), // Burg: schmaler Kreidestrich
+      new THREE.MeshBasicMaterial({map:cc2}));
     fl.rotation.x=-Math.PI/2; fl.rotation.z=-hd; fl.position.set(x,roadY(R.len-1)+0.16,z); world.add(fl); }
   if(R.kalmit){ // Gipfel: Sandsteinturm mit grüner Blechverkleidung, dunkle Holzhütte auf Sandsteinsockel, Aussichtsterrasse
     const [x,z]=posAt(R,R.len), hd=headingAt(R,R.len), fx=Math.cos(hd), fz=Math.sin(hd), nx=-Math.sin(hd), nz=Math.cos(hd);
@@ -385,6 +394,7 @@ function build3D(){
     for(let i=0;i<4;i++){ box(2.4,.08,.8,lam('#7a5a3e'),-6+i*3.6,1.0,-11); box(2.4,.06,.3,lam('#7a5a3e'),-6+i*3.6,.6,-11.7); box(2.4,.06,.3,lam('#7a5a3e'),-6+i*3.6,.6,-10.3); }
     box(1.1,2.6,1.1,stoneM(.5,1),-9.5,1.8,-3.5); }
 
+  if(BG) buildBurg();
   buildRiders();
   world.traverse(o=>{ if(o.isMesh){ o.receiveShadow=true; o.castShadow=!(o.geometry&&o.geometry.type==='PlaneGeometry') && !o.material.transparent; } });
   kxSetup();

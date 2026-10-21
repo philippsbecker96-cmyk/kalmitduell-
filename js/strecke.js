@@ -39,7 +39,8 @@ function scharfeEcke(G,i,j,k,l){ const [p,q,a,b]=[G[i],G[j],G[k],G[l]], ux=q[0]-
   const t=((a[0]-p[0])*vy-(a[1]-p[1])*vx)/(ux*vy-uy*vx), cx=p[0]+ux*t, cy=p[1]+uy*t, s1=Math.hypot(cx-p[0],cy-p[1]), s2=Math.hypot(a[0]-cx,a[1]-cy), e=p[2]+(a[2]-p[2])*s1/(s1+s2);
   return {G:[...G.slice(0,i+1), [cx-ux/lu*8,cy-uy/lu*8,e], [cx,cy,e], [cx+vx/lv*8,cy+vy/lv*8,e], ...G.slice(k)], kreuz:[{x:cx, y:cy, ux:-vx/lv, uy:-vy/lv}, {x:cx, y:cy, ux:ux/lu, uy:uy/lu}]}; } // Einmündungen: Gegenrichtung des Ausgangs und geradeaus weiter
 // Landschaftsabschnitte: [Art, von m, bis m, Optionen] – Art: 'ort', 'reben', 'feld', 'hain' (dichte Laubbäume und Büsche), 'wald' (außerhalb aller Abschnitte: Wald)
-// Optionen Ort: fach (Anteil Fachwerk), luecke (Anteil größerer Lücken), geh (Gehwegbreite), seite (-1 links/1 rechts: nur eine Seite bebaut), abzweig (-1 links/1 rechts: Seitenstraße vor dem letzten Haus),
+// Art 'wiese': Talwiese mit Obstbäumen (Bachtal Berwartstein)
+// Optionen Ort: licht:0 (keine Laternen), fach (Anteil Fachwerk), luecke (Anteil größerer Lücken), geh (Gehwegbreite), seite (-1 links/1 rechts: nur eine Seite bebaut), abzweig (-1 links/1 rechts: Seitenstraße vor dem letzten Haus),
 //   gewaende (Anteil rote Sandstein-Gewände), laden (bevorzugte Ladenfarbe 0–2), ranken (Anteil Weinranken an der Fassade),
 //   quader / giebel / solar (Anteil Sandstein-Quader-Fassaden, giebelständige Häuser, Solardächer),
 //   teile: [[von, bis, {Optionen}]] Ortsteile mit eigenen Optionen, dazu neu (Neubaugebiet mit Vorgärten), obst / reben (unbebaute Seite mit Obstbäumen bzw. Rebzeilen), strbaum (Bäumchen im Gehweg)
@@ -47,6 +48,27 @@ function scharfeEcke(G,i,j,k,l){ const [p,q,a,b]=[G[i],G[j],G[k],G[l]], ux=q[0]-
 // Optionen Reben: baum (Anteil Obstbäume am Rand), weg (mittlerer Abstand kreuzender Wirtschaftswege in m)
 // kom: [Anstieg ab, Bergwertung bei, Name] · breite: [von, bis, Straßenbreite m] · belag: [Art, von, bis, Zusatzsteigung % bei 75 kg] – Art 'pflaster' oder 'beton'
 function kalmitDef(){ return Object.assign(gpxDef(KALMIT_GPX), {name:'Kalmit-Ostrampe', start:'Maikammer', finish:'Kalmit · 673 m', plainElev:110, kalmit:true, gpx:'kalmit', zones:[['ort',0,800],['reben',800,2300]]}); }
+// Burg Berwartstein (Fantasy-Anstieg ab Erlenbach): frei erfundene Linie. Wegpunkte [Ost m, Süd m, Radius der Ecke m] – gerade Stücke, Ecken als Kreisbogen
+const BURG_WEG=[[0,0],[0,-130,9],[170,-150,9],[200,-470,60], [330,-700,90],[520,-820,90],[650,-1000,40], // Erlenbach · Bachtal mit Mühle
+  [250,-1050,12],[600,-1140,12],[250,-1230,12],[600,-1320,12], // untere Kehren im Wald
+  [330,-1400,50],[150,-1450,50],[30,-1600,60],[150,-1750,50],[300,-1780,30], // Felsenpfad
+  [600,-1820,12],[280,-1890,12],[600,-1960,12],[280,-2030,12], // obere Kehren unter der Burg
+  [520,-2070,60],[700,-2030,80],[810,-2150,80],[760,-2310,70],[600,-2340,50],[440,-2290,22],[642,-2217]]; // Schlussrampe um den Burgfelsen, letzte Rechtskurve, Zugbrücke über den Halsgraben, Torturm, Turnierwiese
+// Steigung je Abschnitt [bis m, %, Schwankung ± %]
+const BURG_PROF=[[300,1.5,.4],[616,2.5,.5],[1300,3.5,.5],[2771,8,1],[3478,5.5,.5],[4560,9,1],[5410,12,1],[5468,9,.5],[5506,1,0],[1e9,.5,0]]; // Zugbrücke 5470–5504, Torturm 5508, Ziel 5614 · Turnierwiese fast eben
+function eckenWeg(W,ds=2){ const out=[[W[0][0],W[0][1]]]; let cur=[W[0][0],W[0][1]];
+  const seg=(a,b)=>{ const L=Math.hypot(b[0]-a[0],b[1]-a[1]), n=Math.max(1,Math.round(L/ds)); for(let i=1;i<=n;i++) out.push([a[0]+(b[0]-a[0])*i/n, a[1]+(b[1]-a[1])*i/n]); };
+  for(let i=1;i<W.length-1;i++){ const P=W[i], A=W[i-1], B=W[i+1], r=P[2]||0, u=[P[0]-A[0],P[1]-A[1]], v=[B[0]-P[0],B[1]-P[1]], lu=Math.hypot(...u), lv=Math.hypot(...v); u[0]/=lu; u[1]/=lu; v[0]/=lv; v[1]/=lv;
+    const th=Math.acos(Math.max(-1,Math.min(1,u[0]*v[0]+u[1]*v[1]))), t=r*Math.tan(th/2); if(!r||th<1e-3){ seg(cur,P); cur=[P[0],P[1]]; continue; }
+    const p1=[P[0]-u[0]*t,P[1]-u[1]*t], s=Math.sign(u[0]*v[1]-u[1]*v[0]), cx=p1[0]-u[1]*s*r, cz=p1[1]+u[0]*s*r, a0=Math.atan2(p1[1]-cz,p1[0]-cx), n=Math.max(2,Math.round(r*th/ds)); seg(cur,p1);
+    for(let k=1;k<=n;k++){ const a=a0+s*th*k/n; out.push([cx+Math.cos(a)*r, cz+Math.sin(a)*r]); } cur=[P[0]+v[0]*t,P[1]+v[1]*t]; }
+  seg(cur,W[W.length-1]); return out; }
+function berwartsteinDef(){ const P=eckenWeg(BURG_WEG), G=[[P[0][0],P[0][1],215]]; let d=0;
+  for(let i=1;i<P.length;i++){ const l=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]), m=d+l/2, [,g,s]=BURG_PROF.find(p=>m<p[0]); G.push([P[i][0],P[i][1],G[i-1][2]+l*(g+s*Math.sin(m/130))/100]); d+=l; }
+  return Object.assign(gpxDef(G), {name:'Burg Berwartstein', start:'Erlenbach', finish:'Burg Berwartstein', plainElev:200, gpx:'berwartstein', burg:true, steil:true, // steil: Überhöhung in deiner Nähe wie an der Kalmit
+   
+    zones:[['ort',0,330,{fach:.6,gewaende:.4,geh:.5,luecke:.2,licht:0}],['wiese',330,1300]], breite:[[-50,6000,4.4]], // Altort ohne Laternen, Bachtal als Wiese, sonst Wald
+    belag:[['pflaster',0,345,.8],['erde',345,972,0],['holz',972,990,0],['erde',990,4560,0],['pflaster',4560,5470,1],['holz',5470,5504,0],['pflaster',5504,1e9,1]]}); } // Kopfstein im Dorf und an der Schlussrampe, Holzbrücke über den Bach
 // Runde an der Stelle V (m) neu beginnen lassen: Punkt dort einfügen, das Stück davor hinten anhängen
 function rundeAb(G,V){ let c=0; const n=G.length, zu=Math.hypot(G[n-1][0]-G[0][0],G[n-1][1]-G[0][1])<1; // zu: GPX endet schon am Anfang
   for(let i=1;i<n;i++){ const a=G[i-1], b=G[i], l=Math.hypot(b[0]-a[0],b[1]-a[1]); if(c+l>=V){ const t=(V-c)/l, P=a.map((v,k)=>v+(b[k]-v)*t); return [P,...G.slice(i),...G.slice(zu?1:0,i),P]; } c+=l; }
@@ -86,6 +108,7 @@ function prepFeld(r){ const q=rng(99); r.parz=[]; r.wege=[]; r.hecke=[];
     if(t==='reben' && o&&o.weg){ let d=a+o.weg*(.3+q()*.5); while(d<e-30){ r.wege.push(d); d+=o.weg*(.6+q()*.8); } } } }
 // noTrain: im Training nicht anbieten (Südpfalz gibt es dort nur als Runde – fährt ohnehin in Dauerschleife)
 const ROUTES=[{id:'kalmit', mode:'climb', title:'Kalmit-Ostrampe', sub:'ab Maikammer · Pfalz · echte GPX', def:kalmitDef()},
+  {id:'berwartstein', mode:'climb', title:'Burg Berwartstein', sub:'ab Erlenbach · Dahner Felsenland · Fantasy', def:berwartsteinDef()},
   {id:'stadion', mode:'loop', title:'Betzenberg', sub:'Steilkurven · Westkurve', def:stadionDef()},
   {id:'suedpfalz', mode:'classic', noTrain:true, title:'Südpfalz-Klassiker', sub:'Godramstein · Arzheim · Leinsweiler · Ranschbach · echte GPX', def:suedpfalzDef(false)},
   {id:'suedpfalz-runde', mode:'loop', title:'Südpfalz-Klassiker', sub:'Runde durch die Weinberge · echte GPX', def:suedpfalzDef(true)},
@@ -115,10 +138,10 @@ function buildRoute(def){
     let ve=0; segs.forEach(o=>{ o.vg=Math.sign(o.g)*Math.min(Math.abs(o.g)/SPACE_PHYS*SPACE_VX,30); o.ve0=ve; ve+=o.len*o.vg/100; }); r.vEnd=ve;
     r.space=true; return r; }
   // Landschaftszonen: Dorf, Weinberge, Wald, Fans im letzten Kilometer
-  r.fans = Math.max(r.len*0.6, r.len-1000);
-  r.kehren=[]; if(r.kalmit) for(let dd=40; dd<len-40; dd+=STEP*5){ const dh=Math.abs(angDiff(headingAt(r,dd+25),headingAt(r,dd-25)));
-    if(dh>1.25 && !r.kehren.some(k=>Math.abs(k-dd)<120)) r.kehren.push(dd); }
-  prepFeld(r); makeScenery(r);
+  r.fans = def.burg?r.len:Math.max(r.len*0.6, r.len-1000); // Burg: kein modernes Publikum
+  r.kehren=[]; if(r.kalmit||def.burg) for(let dd=40; dd<len-40; dd+=STEP*5){ const dh=Math.abs(angDiff(headingAt(r,dd+25),headingAt(r,dd-25)));
+    if(dh>1.25 && !r.kehren.some(k=>Math.abs(k-dd)<120) && !(def.burg&&(dd<1400||dd>5350))) r.kehren.push(dd); } // Burg: Ecken im Dorf und am Tor sind keine Kehren
+  prepFeld(r); makeScenery(r); if(def.burg) prepBurg(r);
   return r;
 }
 function posAt(r,d){ if(r.ring && d>r.len) d-=r.ring; // hinter dem Ziel: Umlaufbahn
@@ -174,7 +197,7 @@ function makeScenery(r){
       if(ok && gap>1.5 && gap<9 && d+w+gap<zb-8){ const dm=d+w+gap/2, g=frame(dm), o2=roadW(r,dm)/2+geh+.2; // Hoftor oder Mauer in der Lücke
         S.tor.push({x:g.px+g.nx*side*o2, y:g.py+g.ny*side*o2, h:g.h, side, w:gap+.3, d:dm, v:gap<2.6?2:R3()<.55?0:1}); }
       d+=w+gap; } }
-  for(let d=za+20; d<zb-10; d+=34){ const side=zo.seite||(((d-za)/34|0)%2?1:-1), f=frame(d), o=roadW(r,d)/2+geh-0.4; S.lamp.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h, side, d}); }
+  for(let d=za+20; zo.licht!==0&&d<zb-10; d+=34){ const side=zo.seite||(((d-za)/34|0)%2?1:-1), f=frame(d), o=roadW(r,d)/2+geh-0.4; S.lamp.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h, side, d}); }
   for(const t of zo.teile||[]) if(t[2].strbaum) for(let d=t[0]+12, i=0; d<t[1]-6; d+=26+R3()*10, i++){ const f=frame(d), s=i%2?1:-1, o=roadW(r,d)/2+geh-.7; // Bäumchen im Gehweg
     S.tree.push({x:f.px+f.nx*s*o, y:f.py+f.ny*s*o, s:1.1+R3()*.4, c:R3(), pine:false, ht:3}); }
   for(const t of zo.teile||[]) if(t[2].seite&&t[2].obst) for(let d=t[0]; d<t[1]; d+=7+R3()*5){ const f=frame(d), s=-t[2].seite, o=roadW(r,d)/2+geh+3+R3()*12; // unbebaute Seite: Wiese mit Obstbäumen und Birken
@@ -206,20 +229,21 @@ function makeScenery(r){
       for(let t=0;t<tries;t++){
         const off=side*((inFans?10:6)+R1()*(inVine?55:45)), along=(R1()-.5)*5;
         const x=f.px+f.nx*off+Math.cos(f.h)*along, y=f.py+f.ny*off+Math.sin(f.h)*along, dr=distRoad(x,y);
-        if(inVine) continue;
+        if(inVine||z==='wiese') continue;
         const rad=2.2+R1()*3; if(dr<rad+roadW(r,d)/2+(inFans?7:2)) continue;
         if(R1()<.05) S.rock.push({x,y,s:1.2+R1()*2.6,rot:R1()*6});
         else S.tree.push({x,y,s:rad,c:R1(),pine:R1()<.5,ht:9+R1()*7});
       }
     }
     const rw=roadW(r,d)/2;
+    if(z==='wiese' && d%20<5) for(const side of [-1,1]) if(R2()<.55){ const o=rw+6+R2()*80; S.tree.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, s:1.5+R2()*1, c:R2(), pine:false, ht:3, fruit:true}); } // Obstwiese
     if(z==='reben' && d%30<5) for(const side of [-1,1]) if(R1()<(zOpt(r,d).baum??.55) && !inBand(r.def.radweg,d,side)) S.tree.push({x:f.px+f.nx*side*(rw+3.2+R1()*1.5), y:f.py+f.ny*side*(rw+3.2+R1()*1.5), s:1.6+R1()*.8, c:R1(), pine:false, ht:3, fruit:true});
     for(const side of [-1,1]) for(let t=0;t<3;t++){ const off=side*(rw+1+R1()*(inBand(r.def.radweg,d,side)?1.3:4.5)), al=(R1()-.5)*5; S.grass.push({x:f.px+f.nx*off+Math.cos(f.h)*al, y:f.py+f.ny*off+Math.sin(f.h)*al, s:.5+R1()*.6, c:R1(), r:R1()*6, wood:z==='wald'&&zoneAt(r,d-.01)==='wald'}); }
     // Sandsteinblöcke und Leitpfosten am Straßenrand (Wald)
     if(z==='wald' || zoneAt(r,d+199)==='wald'){
       for(const side of [-1,1]){
         if(R1()<.16 && d<r.fans) S.block.push({x:f.px+f.nx*side*(rw+1.1), y:f.py+f.ny*side*(rw+1.1), h:f.h+(R1()-.5)*.3, s:.7+R1()*.6});
-        if(Math.round(d)%50===0) S.post.push({x:f.px+f.nx*side*(rw+0.7), y:f.py+f.ny*side*(rw+0.7), h:f.h});
+        if(Math.round(d)%50===0&&!r.def.burg) S.post.push({x:f.px+f.nx*side*(rw+0.7), y:f.py+f.ny*side*(rw+0.7), h:f.h});
       }
     }
   }

@@ -6,7 +6,7 @@ function sendRoute(){ if(race.role!=='host'||!conn||!conn.open) return; const d=
   const poly=[]; for(let i=0;i<R.xs.length;i+=5) poly.push([Math.round(R.xs[i]*10)/10,Math.round(R.ys[i]*10)/10]); poly.push([R.xs[R.xs.length-1],R.ys[R.ys.length-1]]);
   if(d.stadium){ send({t:'route',def:{stadium:true}}); return; }
   if(d.space||d.island){ send({t:'route',def:d}); return; } // Space: Strecke des Erstellers (seine FTP und sein Workout)
-  send({t:'route',def:{name:d.name,start:d.start,finish:d.finish,startElev:d.startElev,plainElev:d.plainElev,kalmit:d.kalmit,gpx:d.gpx,loop:d.loop,zones:d.zones,breite:d.breite,belag:d.belag,kom:d.kom,poly,segs:d.segs}}); }
+  send({t:'route',def:{name:d.name,start:d.start,finish:d.finish,startElev:d.startElev,plainElev:d.plainElev,kalmit:d.kalmit,gpx:d.gpx,burg:d.burg,steil:d.steil,haardt:d.haardt,loop:d.loop,zones:d.zones,breite:d.breite,belag:d.belag,kom:d.kom,poly,segs:d.segs}}); }
 function guestUi(){ // Gast: Strecke, Verwandlungen und Fahrer legt der Ersteller fest
   document.querySelectorAll('.hostonly').forEach(t=>t.style.display=''); $('modeTag').style.display=''; $('btnBack').textContent='← Raum verlassen'; $('btnBack2').textContent='← Raum verlassen';
   for(const id of ['formsOn','draftOn','windLvl','lapMinus','lapPlus','botOn','botRider','botWkg','botKg','botStyle','botAgg','btnHost']) $(id).disabled=true; $('botOn').checked=false;

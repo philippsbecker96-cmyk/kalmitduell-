@@ -1,8 +1,9 @@
 /* ---------- Becker & Dengel als 3D-Figuren ---------- */
 const riders3d={becker:null,dengel:null,custom:null};
-function buildRiders(){ RKEYS.forEach(k=>{ riders3d[k]=makeRider(k); world.add(riders3d[k].g); }); riders3d.devil=makeDevil(); riders3d.devil.g.visible=false; world.add(riders3d.devil.g); }
+const mittelalter=()=>!!(R&&R.def&&R.def.burg); // Burg Berwartstein: Holzrad und Mittelalter-Kleidung für alle (Lobby-Vorschau bleibt modern)
+function buildRiders(){ const ma=mittelalter(); RKEYS.forEach(k=>{ riders3d[k]=makeRider(k,undefined,ma); world.add(riders3d[k].g); }); riders3d.devil=makeDevil(ma); riders3d.devil.g.visible=false; world.add(riders3d.devil.g); }
 function rebuildRiders(){ refreshRiders(); // nach einer Änderung am Aussehen: Fahrer in Welt und Lobby-Vorschau neu bauen
-  if(world) RKEYS.forEach(k=>{ const o=riders3d[k]; if(o) world.remove(o.g); const r=makeRider(k); riders3d[k]=r; world.add(r.g); if(anim.stadium) addFloodShadows(r);
+  if(world) RKEYS.forEach(k=>{ const o=riders3d[k]; if(o) world.remove(o.g); const r=makeRider(k,undefined,mittelalter()); riders3d[k]=r; world.add(r.g); if(anim.stadium) addFloodShadows(r);
     if(R&&!R.space&&!R.island) r.g.traverse(m=>{ if(m.isMesh){ m.receiveShadow=true; m.castShadow=!(m.geometry&&m.geometry.type==='PlaneGeometry')&&!m.material.transparent; } }); });
   RKEYS.forEach(k=>{ prev.sc.remove(prev.rs[k].g); const r=makeRider(k); r.tag.visible=false; prev.rs[k]=r; prev.sc.add(r.g); });
   renderRiderCards(); }
@@ -10,15 +11,34 @@ const UNIT_Y=new THREE.Vector3(0,1,0);
 function cyl(r,mat,r2){ return new THREE.Mesh(new THREE.CylinderGeometry(r,r2??r,1,8),mat); }
 function place(m,a,b){ const va=new THREE.Vector3(...a), vb=new THREE.Vector3(...b), dir=vb.clone().sub(va), L=dir.length();
   m.position.copy(va).add(vb).multiplyScalar(.5); m.scale.set(m.scale.x,L,m.scale.z); m.quaternion.setFromUnitVectors(UNIT_Y, dir.normalize()); }
-function makeRider(key,Lo){
+// Holzrad (Draisine mit Pedalen): Speichenräder mit Eisenreif, Längsbalken, Holzgabeln mit Eisenbeschlägen, T-Lenker, Ledersattel, Holzkurbeln – gleiche Maße wie das Rennrad, damit Haltung und Treten passen
+function holzRad(body,M){ const holz=M('#7a5234'), dunkel=M('#4e3423'), eisen=M('#2e2c2a'), leder=M('#5a2e1c');
+  const balken=(a,b,w=.06,d=.055,m=holz)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,1,d),m); place(o,a,b); body.add(o); return o; };
+  for(const x of [-.52,.52]){ const fe=new THREE.Mesh(new THREE.TorusGeometry(.315,.03,6,24),dunkel); fe.position.set(x,.34,0); body.add(fe);
+    const rf=new THREE.Mesh(new THREE.TorusGeometry(.345,.014,4,24),eisen); rf.position.set(x,.34,0); body.add(rf);
+    for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; balken([x+Math.cos(a)*.04,.34+Math.sin(a)*.04,0],[x+Math.cos(a)*.3,.34+Math.sin(a)*.3,0],.018,.018); }
+    const nb=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.12,8),holz); nb.rotation.x=Math.PI/2; nb.position.set(x,.34,0); body.add(nb);
+    for(const z of [-.06,.06]){ const bs=new THREE.Mesh(new THREE.BoxGeometry(.07,.07,.012),eisen); bs.position.set(x,.34,z); body.add(bs); } }
+  balken([-.66,.72,0],[.46,.77,0],.08,.07); // Längsbalken
+  for(const z of [-.055,.055]){ balken([-.42,.73,z],[-.52,.34,z],.035,.03); balken([-.64,.72,z],[-.52,.34,z],.035,.03); balken([.36,.76,z],[.52,.34,z],.035,.03); balken([.5,.79,z],[.52,.34,z],.035,.03); } // Gabeln als Dreiecke
+  balken([-.04,.74,0],[0,.3,0],.05,.05); balken([0,.3,0],[-.5,.36,0],.03,.03,dunkel); // Tretlager-Stütze, Strebe nach hinten
+  balken([-.16,.75,0],[-.16,.86,0],.05,.05); const sa=new THREE.Mesh(new THREE.BoxGeometry(.3,.06,.15),leder); sa.position.set(-.16,.9,0); body.add(sa);
+  balken([.44,.76,0],[.47,.92,0],.045,.045); const bar=cyl(.022,holz); place(bar,[.47,.92,-.22],[.47,.92,.22]); body.add(bar);
+  for(const z of [-.2,.2]){ const gr=cyl(.028,dunkel); place(gr,[.47,.92,z-.05],[.47,.92,z+.05]); body.add(gr); }
+  const crank=new THREE.Group(); crank.position.set(0,.3,0); body.add(crank); // Holzkurbeln, Pedal 0 zeigt bei Kurbelwinkel 0 nach vorn
+  const sch=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.03,10),dunkel); sch.rotation.x=Math.PI/2; crank.add(sch);
+  for(const s of [1,-1]){ const k=new THREE.Mesh(new THREE.BoxGeometry(.19,.035,.03),holz); k.position.set(s*.085,0,-s*.08); crank.add(k);
+    const pd=new THREE.Mesh(new THREE.BoxGeometry(.07,.025,.1),eisen); pd.position.set(s*.17,0,-s*.13); crank.add(pd); } // Pedal 0 gehört zum linken Bein (z = -0,11)
+  return crank; }
+function makeRider(key,Lo,ma){
   const L=Lo||lookOf(key), S=Lo?specOf(key,Lo):RIDERS[key];
   const g=new THREE.Group(), tilt=new THREE.Group(), body=new THREE.Group(); g.add(tilt); tilt.add(body); tilt.scale.setScalar(1);
   const M=c=>new THREE.MeshLambertMaterial({color:c});
-  const black=M('#1b1b1d'), skin=M('#efc9a6'), tire=M('#151515'), white=M('#f4f4ef'), pantsM=M(L.pants);
+  const black=M('#1b1b1d'), skin=M('#efc9a6'), tire=M('#151515'), white=M('#f4f4ef'), pantsM=M(ma?'#3b342e':L.pants), leinen=M('#ece3cf'), stiefel=M('#4a3222');
   const kit=[]; const kitMat=(c,map)=>{ const m=new THREE.MeshLambertMaterial({color:c,map:map||null}); kit.push({m,c:new THREE.Color(c),map:map||null}); return m; };
 
   // --- Rad ---
-  const frameC=L.frame, accent=L.accent;
+  let crank; if(ma) crank=holzRad(body,M); else { const frameC=L.frame, accent=L.accent;
   for(const x of [-.52,.52]){ const w=new THREE.Mesh(new THREE.TorusGeometry(.34,.03,6,24), tire); w.position.set(x,.34,0); body.add(w);
     if(L.tanwall){ const tw=new THREE.Mesh(new THREE.TorusGeometry(.31,.012,4,24), M('#c8a46e')); tw.position.set(x,.34,.012); body.add(tw); }
     const rim=new THREE.Mesh(new THREE.TorusGeometry(.29,.018,4,24), M(L.tanwall?'#3a3d42':'#1d1d1f')); rim.position.set(x,.34,0); body.add(rim);
@@ -34,8 +54,8 @@ function makeRider(key,Lo){
   if(L.bag!=='keine'){ const big=L.bag==='gross'; // Satteltasche: groß und schwarz oder klein und hell
     const bag=new THREE.Mesh(new THREE.CylinderGeometry(big?.12:.07, big?.07:.05, big?.55:.28, 10), M(big?'#1e1f22':'#d6d6d0'));
     bag.rotation.z=Math.PI/2+0.25; bag.position.set(big?-.47:-.34, big?.84:.82, 0); body.add(bag); }
-  const crank=new THREE.Group(); crank.position.set(0,.3,0); body.add(crank);
-  const cr=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.02,12), M('#444')); cr.rotation.x=Math.PI/2; cr.position.z=.06; crank.add(cr);
+  crank=new THREE.Group(); crank.position.set(0,.3,0); body.add(crank);
+  const cr=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.02,12), M('#444')); cr.rotation.x=Math.PI/2; cr.position.z=.06; crank.add(cr); }
 
   // --- Fahrer ---
   const hip=[-.13,.99,0], sh=[.25,1.36,0], i0=body.children.length, arms=[];
@@ -46,19 +66,29 @@ function makeRider(key,Lo){
   const rainbow=new THREE.Group(); body.add(rainbow); rainbow.visible=false;
   ['#1e5bc6','#d62828','#111111','#f4c300','#1f9d55'].forEach((c,i)=>{ const t0=.42+i*.055, a=[hip[0]+(sh[0]-hip[0])*t0, hip[1]+(sh[1]-hip[1])*t0, 0], t1=t0+.05, b=[hip[0]+(sh[0]-hip[0])*t1, hip[1]+(sh[1]-hip[1])*t1, 0];
     const s=new THREE.Mesh(new THREE.CylinderGeometry(S.torsoR+.012,S.torsoR+.012,1,10), M(c)); s.scale.z=S.torsoZ; place(s,a,b); rainbow.add(s); });
+  if(ma){ // Wams: helle Knopfleiste vorn (Brust zeigt nach vorn unten), Schulterwülste in der Zweitfarbe mit Streifen, Ledergürtel
+    const ax=[sh[0]-hip[0],sh[1]-hip[1]], al=Math.hypot(...ax), nx=ax[1]/al, ny=-ax[0]/al, kn=M('#e6d6a8');
+    for(let i=1;i<=4;i++){ const t=i/5.2, b=new THREE.Mesh(new THREE.SphereGeometry(.018,6,5),kn); b.position.set(hip[0]+ax[0]*t+nx*S.torsoR*.97, hip[1]+ax[1]*t+ny*S.torsoR*.97, 0); body.add(b); }
+    for(const z of [-S.zS,S.zS]){ const w=new THREE.Mesh(new THREE.SphereGeometry(.075,10,8),kitMat(L.sleeve)); w.scale.set(1.15,.85,1); w.position.set(sh[0]-.03,sh[1]-.01,z*.95); body.add(w);
+      const st=new THREE.Mesh(new THREE.TorusGeometry(.068,.012,4,14),kitMat(L.jersey)); st.position.copy(w.position); st.rotation.y=Math.PI/2; body.add(st); }
+    const gu=new THREE.Mesh(new THREE.CylinderGeometry(S.torsoR+.012,S.torsoR+.012,1,10),M('#5a3a22')); gu.scale.z=S.torsoZ; place(gu,[hip[0]+ax[0]*.12,hip[1]+ax[1]*.12,0],[hip[0]+ax[0]*.18,hip[1]+ax[1]*.18,0]); body.add(gu); }
   // Arme: Ärmel (optional mit Zickzack), kurze Ärmel mit nackten Unterarmen oder lange Ärmel
   const zl=new THREE.Color(L.sleeve).lerp(new THREE.Color('#ffffff'),.55).getStyle();
   const zig=L.zigzag?canvasTex(64,64,g=>{ g.fillStyle=L.sleeve; g.fillRect(0,0,64,64); g.strokeStyle=zl; g.lineWidth=3; for(let y=8;y<64;y+=16){ g.beginPath(); for(let x=0;x<=64;x+=8) g.lineTo(x,y+((x/8)%2?5:-5)); g.stroke(); } }):null;
-  const sleeveM=kitMat(L.zigzag?'#ffffff':L.sleeve, zig), foreM=L.longSleeve?sleeveM:skin;
+  const sleeveM=ma?leinen:kitMat(L.zigzag?'#ffffff':L.sleeve, zig), foreM=ma?leinen:L.longSleeve?sleeveM:skin; // Mittelalter: weite Leinenärmel
   const zS=S.zS;
   for(const z of [-zS,zS]){ const el=[.36,1.12,z*1.05], hand=[.5,.9,z>0?.2:-.2], shp=[sh[0]-.02,sh[1]-.02,z*.9];
-    const ua=cyl(S.armR*1.25,sleeveM,S.armR*1.1); place(ua,shp,el); body.add(ua);
-    const fa=cyl(S.armR,foreM,S.armR*.85); place(fa,el,hand); body.add(fa);
+    const ua=cyl(S.armR*(ma?1.45:1.25),sleeveM,S.armR*(ma?1.35:1.1)); place(ua,shp,el); body.add(ua);
+    const fa=cyl(S.armR*(ma?1.35:1),foreM,S.armR*(ma?1.25:.85)); place(fa,el,hand); body.add(fa);
     const hd=new THREE.Mesh(new THREE.SphereGeometry(S.armR*1.05,6,5), skin); hd.position.set(...hand); body.add(hd); arms.push(armOf(ua,fa,hd,hip,shp,el,hand)); }
   // Kopf, Helm, Brille, Kappe
   const ih=body.children.length, neck=cyl(.05,skin); place(neck,[sh[0]+.02,sh[1]+.02,0],[.36,1.47,0]); body.add(neck);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.12,12,10), skin); head.scale.set(1.05,1.1,.95); head.position.set(.4,1.53,0); body.add(head);
-  const helm=new THREE.Mesh(new THREE.SphereGeometry(.15,14,10,0,Math.PI*2,0,Math.PI/2), M(L.helmet)); helm.scale.set(1.18,1,1); helm.position.set(.39,1.56,0); helm.rotation.z=-.28; body.add(helm);
+  if(ma){ // Bundhaube aus braunem Filz: eng anliegend, Ohrenklappen, Bänder unters Kinn
+    const hb=new THREE.Mesh(new THREE.SphereGeometry(.132,14,10,0,Math.PI*2,0,Math.PI*.58), M('#6b4a2e')); hb.scale.set(1.08,1.1,1); hb.position.set(.39,1.535,0); hb.rotation.z=.35; body.add(hb);
+    for(const z of [-.112,.112]){ const ok=new THREE.Mesh(new THREE.SphereGeometry(.06,8,6), M('#6b4a2e')); ok.scale.set(1,1.15,.45); ok.position.set(.37,1.49,z); body.add(ok);
+      const bd=cyl(.007,M('#4a3220')); place(bd,[.38,1.44,z*.95],[.45,1.41,z*.55]); body.add(bd); } }
+  else { const helm=new THREE.Mesh(new THREE.SphereGeometry(.15,14,10,0,Math.PI*2,0,Math.PI/2), M(L.helmet)); helm.scale.set(1.18,1,1); helm.position.set(.39,1.56,0); helm.rotation.z=-.28; body.add(helm);
   const ventC=new THREE.Color(L.helmet).multiplyScalar(lum(L.helmet)>.3?.85:.45).getStyle();
   for(let i=-1;i<=1;i++){ const vent=new THREE.Mesh(new THREE.BoxGeometry(.13,.012,.018), M(ventC)); vent.position.set(.38,1.705,i*.05); vent.rotation.z=-.25; body.add(vent); }
   if(L.glasses==='helm'){ // Brille steckt oben im Helm
@@ -67,11 +97,11 @@ function makeRider(key,Lo){
   else if(L.glasses==='nase'){ const gl=new THREE.Mesh(new THREE.BoxGeometry(.03,.05,.21), new THREE.MeshLambertMaterial({color:'#9b5fe0', emissive:'#2a1050'})); gl.position.set(.51,1.53,0); body.add(gl); }
   if(L.cap){ // weiße Radkappe unter dem Helm
     const band=new THREE.Mesh(new THREE.CylinderGeometry(.128,.128,.045,14), white); band.position.set(.4,1.555,0); band.rotation.z=-.22; body.add(band);
-    const brim=new THREE.Mesh(new THREE.BoxGeometry(.12,.014,.16), white); brim.position.set(.55,1.6,0); brim.rotation.z=.18; body.add(brim); }
+    const brim=new THREE.Mesh(new THREE.BoxGeometry(.12,.014,.16), white); brim.position.set(.55,1.6,0); brim.rotation.z=.18; body.add(brim); } }
   // Beine: Hose, Socken, Schuhe
   const sockC=L.socks, shoeC=L.shoes, il=body.children.length;
-  const legs=[]; for(const z of [-.11,.11]){ const th=cyl(S.legR,pantsM,S.legR*.85), shn=cyl(S.legR*.72,skin,S.legR*.6), sk=cyl(S.legR*.66,M(sockC),S.legR*.6),
-      sho=new THREE.Mesh(new THREE.BoxGeometry(.22,.075,.085), M(shoeC)); body.add(th,shn,sk,sho); legs.push({th,sh:shn,sk,sho,z}); }
+  const legs=[]; for(const z of [-.11,.11]){ const th=cyl(S.legR,pantsM,S.legR*.85), shn=cyl(S.legR*.72,ma?pantsM:skin,S.legR*.6), sk=cyl(S.legR*(ma?.74:.66),ma?stiefel:M(sockC),S.legR*.6), // Mittelalter: lange Hose, Lederstiefel
+      sho=new THREE.Mesh(new THREE.BoxGeometry(.22,.075,.085), ma?stiefel:M(shoeC)); body.add(th,shn,sk,sho); legs.push({th,sh:shn,sk,sho,z}); }
 
   // Schnecke
   const snail=new THREE.Group(); tilt.add(snail); snail.visible=false;
@@ -104,11 +134,12 @@ function makeRider(key,Lo){
   rigUpper(r,body.children.slice(i0,ih),body.children.slice(ih,il),[.36,1.47,0],arms); poseRider(r,0); return r;
 }
 /* ---------- Teufel-Bot: kleiner, süßer Teufel auf dem Rad (eigene Figur) ---------- */
-function makeDevil(){
+function makeDevil(ma){
   const g=new THREE.Group(), tilt=new THREE.Group(), body=new THREE.Group(); g.add(tilt); tilt.add(body);
   const M=c=>new THREE.MeshLambertMaterial({color:c}), B=c=>new THREE.MeshBasicMaterial({color:c});
   const skin=M('#e23a2c'), skinD=M('#b8241c'), horn=M('#7a1712'), jers=M('#9e0f17'), black=M('#1b1b1d'), tire=M('#151515'), white=B('#ffffff');
-  // --- Rad: schwarz mit roten Akzenten ---
+  // --- Rad: schwarz mit roten Akzenten (Burg: Holzrad) ---
+  let crank; if(ma) crank=holzRad(body,M); else {
   for(const x of [-.52,.52]){ const w=new THREE.Mesh(new THREE.TorusGeometry(.34,.03,6,24), tire); w.position.set(x,.34,0); body.add(w);
     const rim=new THREE.Mesh(new THREE.TorusGeometry(.29,.018,4,24), M('#c81e1e')); rim.position.set(x,.34,0); body.add(rim);
     const hub=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.1,6), M('#777')); hub.rotation.x=Math.PI/2; hub.position.set(x,.34,0); body.add(hub); }
@@ -118,8 +149,8 @@ function makeDevil(){
   const bar=cyl(.022,horn); place(bar,[.47,.92,-.2],[.47,.92,.2]); body.add(bar);
   for(const z of [-.2,.2]){ const drop=cyl(.02,horn); place(drop,[.47,.92,z],[.55,.84,z]); body.add(drop); }
   const saddle=new THREE.Mesh(new THREE.BoxGeometry(.26,.04,.09), black); saddle.position.set(-.16,.9,0); body.add(saddle);
-  const crank=new THREE.Group(); crank.position.set(0,.3,0); body.add(crank);
-  const cr=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.02,12), M('#444')); cr.rotation.x=Math.PI/2; cr.position.z=.06; crank.add(cr);
+  crank=new THREE.Group(); crank.position.set(0,.3,0); body.add(crank);
+  const cr=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,.02,12), M('#444')); cr.rotation.x=Math.PI/2; cr.position.z=.06; crank.add(cr); }
   // --- Körper: kleiner, runder Bauch im roten Trikot ---
   const hip=[-.13,.99,0], sh=[.16,1.3,0], i0=body.children.length, arms=[];
   const torso=new THREE.Mesh(new THREE.SphereGeometry(.2,16,12), jers); torso.position.set((hip[0]+sh[0])/2,(hip[1]+sh[1])/2,0); torso.scale.set(.85,1.25,.9); torso.rotation.z=-Math.atan2(sh[0]-hip[0],sh[1]-hip[1]); body.add(torso);
