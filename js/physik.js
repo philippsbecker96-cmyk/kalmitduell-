@@ -1,7 +1,7 @@
 /* ================= Physik (echte Watt, echtes Gewicht + 8 kg Rad) ================= */
 const BIKE_KG=8, CRR=0.005, RHO=1.2, G=9.81;
-// Straße: CdA 0,36 bei 75 kg, Crr 0,005 · Stadion (Holzbahn, Unterlenker): CdA 0,30, Crr 0,004
-const PH_ROAD={cda:0.36,crr:0.005}, PH_TRACK={cda:0.30,crr:0.004};
+// Straße: CdA 0,36 bei 75 kg, Crr 0,005 · Stadion (Holzbahn, tiefe Bahnhaltung): CdA 0,26, Crr 0,004
+const PH_ROAD={cda:0.36,crr:0.005}, PH_TRACK={cda:0.26,crr:0.004};
 const phys=()=>R&&R.stadium?PH_TRACK:PH_ROAD;
 // Luftwiderstand wächst mit der Stirnfläche (≈ Gewicht hoch 2/3); rund 15 % davon entfallen aufs Rad und bleiben gleich
 const cdaOf=(kg,c0=phys().cda)=>c0*(0.15+0.85*Math.pow(kg/75,2/3));
@@ -16,14 +16,15 @@ function shieldAt(d){ if(R.stadium) return .4; if(R.island||!R.zones.length) ret
 function windHead(d){ const w=windNow(); return w?-w*shieldAt(d)*Math.cos(race.windDir-headingAt(R,d)):0; }
 const airF=(v,w)=>v*v+WIND_K*((v+w)*Math.abs(v+w)-v*v); // Luftwiderstand ∝ v² bei Windstille
 // Wind und Windschatten für den Trainer als Zusatzsteigung (wie das Pflaster), höchstens ±3 %
-function airSlope(o,kg,draft){ const v=o.v, c=0.5*RHO*cdaOf(kg)*(o.aero?AERO:1); return clampN(c*((1-draft)*airF(v,windHead(o.d))-v*v)/((kg+BIKE_KG)*G)*100,-3,3); }
+function airSlope(o,kg,draft){ const v=o.v, c=0.5*RHO*cdaOf(kg)*(o.aero&&!R.stadium?AERO:1); return clampN(c*((1-draft)*airF(v,windHead(o.d))-v*v)/((kg+BIKE_KG)*G)*100,-3,3); }
 // Aero-Haltung: wer in der Abfahrt rollt (unter 15 W, ab 4 % Gefälle, über 45 km/h), duckt sich – 18 % weniger Luftwiderstand
+// Stadion: immer in Aero-Haltung, steckt schon im Bahn-CdA (kein Zusatzabschlag)
 const AERO=0.82;
-function aeroOf(o,P,g){ o.aero=o.aero?P<25&&g<-3.5&&o.v>12:P<15&&g<=-4&&o.v>12.5; return o.aero; }
+function aeroOf(o,P,g){ if(R.stadium) return o.aero=true; o.aero=o.aero?P<25&&g<-3.5&&o.v>12:P<15&&g<=-4&&o.v>12.5; return o.aero; }
 // Übersetzung: zwischen 62 und 72 km/h tritt man zunehmend ins Leere
 const gearOf=v=>clampN((20-v)/2.78,0,1);
 function step(o, P, kg, dt, draft=0){ // P = echte Watt, kg = Fahrergewicht
-  const M=kg+BIKE_KG, g0=gradeAt(o.d), th=Math.atan((g0+belagAt(o.d,kg))/100), cda=cdaOf(kg)*(aeroOf(o,P,g0)?AERO:1);
+  const M=kg+BIKE_KG, g0=gradeAt(o.d), th=Math.atan((g0+belagAt(o.d,kg))/100), cda=cdaOf(kg)*(aeroOf(o,P,g0)&&!R.stadium?AERO:1);
   const Fg=M*G*Math.sin(th), Fr=phys().crr*M*G*Math.cos(th), Fa=0.5*RHO*cda*(1-draft)*airF(o.v,windHead(o.d)), Fp=Math.min(P/Math.max(o.v,0.8),450)*gearOf(o.v); // 450 N: Grenze beim Anfahren aus dem Stand
   o.v=Math.max(0,o.v+(Fp-Fg-Fr-Fa)/(M+1.5)*dt); o.d+=o.v*dt;
 }

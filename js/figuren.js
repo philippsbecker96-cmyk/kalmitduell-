@@ -213,15 +213,15 @@ function smoothHeading(d){ let sx=0,sz=0; for(let k=-4;k<=4;k++){ const h=headin
 // Krümmung (rad/m, positiv = Kurve zur Spur +u) · Kurvenlage atan(v²·κ/g), höchstens 40°
 const curv=d=>{ const a=smoothHeading(d+6), b=smoothHeading(d-6); return Math.atan2(Math.sin(a-b),Math.cos(a-b))/12; };
 function leanStep(r,d,v,dt){ const t=R.stadium||camOverride?0:clampN(Math.atan(v*v*curv(d)/G),-.7,.7); r.lean=r.lean==null||dt>.09?t:r.lean+(t-r.lean)*Math.min(1,dt*4); }
-/* Fahrweise der Figur: Trittfrequenz, Wiegetritt (Anstieg und Sprint) und Aero-Haltung (Abfahrt, kommt aus der Physik: o.aero) */
+/* Fahrweise der Figur: Trittfrequenz, Wiegetritt (Anstieg und Sprint) und Aero-Haltung (Abfahrt und Stadion, kommt aus der Physik: o.aero) */
 function rideState(r,o,P,ftpW,dt,cadReal,standRemote){ if(!r) return; const S=r.rs||(r.rs={st:0,ae:0,cad:0,up:false,t:0,sp:false,spT:0,lock:false,stand:false}), g=R.stadium?0:gradeAt(o.d), v=o.v;
   // Sprint: ab 1,6 × FTP aus dem Sattel, unter 1,2 × FTP (frühestens nach 2 s) oder spätestens nach 20 s wieder sitzen
   if(S.sp){ S.spT+=dt; if((P<1.2*ftpW&&S.spT>2)||S.spT>20){ S.sp=false; S.lock=S.spT>20; } } else if(P>1.6*ftpW&&!S.lock){ S.sp=true; S.spT=0; }
   if(S.lock&&P<1.2*ftpW) S.lock=false; // nach 20 s erst wieder nach einer Pause aufstehen
   // Anstieg: ab 10 % im Wechsel (etwa 8 s stehen, 25 s sitzen), ab 14 % oder unter 12 km/h fast immer
   const steep=g>=14||v<3.3; S.t-=dt; if(S.t<=0){ S.up=!S.up; S.t=S.up?(steep?30+Math.random()*10:6+Math.random()*4):(steep?4+Math.random()*3:20+Math.random()*10); }
-  S.stand=!o.aero&&P>=15&&(standRemote!=null?!!standRemote:S.sp||(g>=10&&S.up));
-  S.st+=((S.stand?1:0)-S.st)*Math.min(1,dt*4); S.ae+=((o.aero?1:0)-S.ae)*Math.min(1,dt*2.5); S.sw=(S.sw||0)+((S.stand?1:0)-(S.sw||0))*Math.min(1,dt*1.2); r.st=S.st; r.ae=S.ae; r.sw=S.sw; // Pendeln setzt langsam ein und klingt langsam ab
+  S.stand=(!o.aero||R.stadium)&&P>=15&&(standRemote!=null?!!standRemote:S.sp||(g>=10&&S.up));
+  S.st+=((S.stand?1:0)-S.st)*Math.min(1,dt*4); S.ae+=((o.aero&&!S.stand?1:0)-S.ae)*Math.min(1,dt*2.5); S.sw=(S.sw||0)+((S.stand?1:0)-(S.sw||0))*Math.min(1,dt*1.2); r.st=S.st; r.ae=S.ae; r.sw=S.sw; // Pendeln setzt langsam ein und klingt langsam ab
   // Trittfrequenz: echte vom Sensor, sonst geschätzt; unter 15 W stehen die Kurbeln, die Pedale bleiben waagerecht stehen
   const est=P<15||v<.3?0:S.sp?105:S.stand?66:clampN(88-Math.max(0,g-3)*2.5,70,90);
   S.cad+=((cadReal??est)-S.cad)*Math.min(1,dt*2);
