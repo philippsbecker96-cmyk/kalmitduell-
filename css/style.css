@@ -80,8 +80,8 @@ input[type=text],input[type=number]{font:600 16px Barlow,sans-serif;padding:8px 
 .laps button{width:40px;height:40px;padding:0;font-size:22px;border-radius:10px}
 .laps b{font:800 34px/1 "Barlow Condensed",sans-serif;min-width:34px;text-align:center}
 .todrow{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:15px;flex-wrap:wrap}
-.tod,.sea{background:#14241c;border:3px solid transparent;padding:7px 14px;font-size:15px}
-.tod.sel,.sea.sel{border-color:var(--sky1);background:#1f3a2c}
+.tod,.sea,.kst{background:#14241c;border:3px solid transparent;padding:7px 14px;font-size:15px}
+.tod.sel,.sea.sel,.kst.sel{border-color:var(--sky1);background:#1f3a2c}
 .route.soon{border:3px dashed #3d6a52;opacity:.85;cursor:default}
 .route.soon canvas{display:none}
 .route .ph{width:150px;height:46px;flex:none;border-radius:8px;background:repeating-linear-gradient(45deg,#1f3a2c 0 8px,#18301f 8px 16px);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
@@ -186,8 +186,8 @@ input[type=checkbox]{accent-color:var(--acc)}
 .mode{background:var(--g-soft);border:1px solid var(--g-line);border-radius:18px;transition:background .15s,border-color .15s,transform .15s}
 .mode:hover{background:var(--g-hover);border-color:rgba(255,255,255,.34);transform:translateY(-2px)}
 .mode svg{background:rgba(0,0,0,.26);border-radius:12px}
-.rcard,.route,.tod,.sea{background:var(--g-soft);border:1px solid var(--g-line);border-radius:14px}
-.rcard.sel,.route.sel,.tod.sel,.sea.sel{background:rgba(255,122,69,.12);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.rcard,.route,.tod,.sea,.kst{background:var(--g-soft);border:1px solid var(--g-line);border-radius:14px}
+.rcard.sel,.route.sel,.tod.sel,.sea.sel,.kst.sel{background:rgba(255,122,69,.12);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
 .route.soon{border:1px dashed rgba(255,255,255,.22)}
 .route .ph{background:repeating-linear-gradient(45deg,rgba(255,255,255,.06) 0 8px,rgba(255,255,255,.02) 8px 16px)}
 .redit{background:var(--g-soft);border:1px solid var(--g-line)}
@@ -251,3 +251,16 @@ input[type=checkbox]{accent-color:var(--acc)}
 #rcQr{display:inline-block;background:#fff;padding:12px;border-radius:12px;min-height:244px;min-width:244px;color:var(--ink)} #rcQr img,#rcQr canvas{display:block}
 #rcCode{font-size:34px;letter-spacing:4px;margin-top:8px} #rcUrl{word-break:break-all}
 .rcBtn.on{background:#2b8a3e}
+
+/* Kampagne: Missionen im Menü, Story-Tafeln im Rennen (kampagne.js) */
+.route.kmis[disabled]{opacity:.55;cursor:default}
+.route.kmis .ph{font-size:22px;color:var(--paper)}
+#kampTafel{position:fixed;left:50%;top:12%;transform:translate(-50%,-12px);width:min(720px,92vw);display:flex;gap:18px;align-items:center;padding:18px 24px 26px;z-index:7;pointer-events:none;opacity:0;transition:opacity .6s,transform .6s;
+  color:#3b2412;background:radial-gradient(ellipse at center,#f4e6c4 0%,#ead7a8 62%,#c9a86a 100%);border:2px solid #8a6436;border-radius:6px 14px 8px 12px;box-shadow:inset 0 0 30px rgba(110,70,20,.55),0 8px 24px rgba(0,0,0,.4)}
+#kampTafel.zeig{opacity:1;transform:translate(-50%,0)}
+#kampTafel .kbild{flex:none;width:130px;height:130px;display:flex;align-items:center;justify-content:center;font-size:54px;background:rgba(120,80,30,.14);border:2px solid #8a6436;border-radius:8px}
+#kampTafel h3{margin:0 0 6px;font:400 32px/1.1 'UnifrakturMaguntia',Georgia,serif}
+#kampTafel p{margin:0;font:400 20px/1.4 Georgia,serif}
+#kampTafel .kbar{position:absolute;left:24px;right:24px;bottom:10px;height:5px;background:rgba(90,60,20,.2);border-radius:3px;overflow:hidden}
+#kampTafel .kbar i{display:block;height:100%;width:0;background:#8a6436}
+@media (max-width:820px){#kampTafel .kbild{width:80px;height:80px;font-size:34px}#kampTafel p{font-size:16px}}

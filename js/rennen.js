@@ -129,6 +129,7 @@ function loop(now){
     for(let i=0;i<n;i++){ simStep(tot/n,P,wkg); }
     trainerCtl();
   }
+  if(race.kamp) kampTick(); // Kampagne: Tafeln
   if(race.state==='run' && !race.paused) wertStep();
   if(opp.active && !opp.bot && !race.frozen && !race.paused){ const age=(now-opp.lastAt)/1000, tgt=opp.done?opp.target:opp.target+opp.v*Math.min(age,1); if(Math.abs(tgt-opp.d)>R.len/2) opp.d=tgt; else opp.d+=(tgt-opp.d)*Math.min(1,dt*6); }
   if(!race.paused&&race.state!=='setup'){ const run=race.state==='run'||race.frozen; // Kurbeln, Wiegetritt und Aero-Haltung beider Figuren

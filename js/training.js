@@ -22,9 +22,9 @@ function rampSegs(f){ const st=180, out=[{label:'Einfahren',dur:300,a:150,b:170,
   for(let k=0, w=st; w<=Math.max(700,f*2.2); k++, w+=20){ out.push({label:`Stufe ${k+1}`,dur:60,a:w,b:null,t0:t,step:true}); t+=60; } return out; }
 function t20Segs(f){ const L=[['Einfahren',600,f*.5,f*.7],['Locker',300,f*.55,null],['20-min-Test',1200,0,null,true],['Ausfahren',600,f*.5,null]]; let t=0;
   return L.map(([label,dur,a,b,free])=>{ const o={label,dur,a:Math.round(a),b:b==null?null:Math.round(b),t0:t,free:!!free}; t+=dur; return o; }); }
-const woKind=()=>WO.kind||'wo';
-function curSegs(){ const k=woKind(); return k==='ramp'?rampSegs(ftp()):k==='t20'?t20Segs(ftp()):woFlat(WO); }
-const curUnit=()=>woKind()==='wo'?WO.unit:'w';
+const woKind=()=>race.kamp?'wo':WO.kind||'wo'; // Kampagne: immer Workout (kampagne.js)
+function curSegs(){ if(race.kamp) return kampSegs(race.kamp); const k=woKind(); return k==='ramp'?rampSegs(ftp()):k==='t20'?t20Segs(ftp()):woFlat(WO); }
+const curUnit=()=>race.kamp?'pct':woKind()==='wo'?WO.unit:'w';
 const woTotal=()=>curSegs().reduce((a,s)=>a+s.dur,0);
 const TEST_INFO={ramp:'<b>Rampentest</b> · 5 min Einfahren, danach erhöht der Trainer (ERG) jede Minute um 20 W – so lange, bis du die Watt nicht mehr halten kannst. Der Test endet von selbst, wenn du 8 Sekunden lang unter 80 % der Stufe fällst, oder mit „Test beenden“. <b>FTP = 75 % deiner besten Minute.</b>',
   t20:'<b>20-Minuten-Test</b> · 10 min Einfahren und 5 min locker mit ERG, dann <b>20 min Vollgas ohne ERG</b> – du schaltest selbst, den Widerstand bestimmt die Strecke. Danach 10 min Ausfahren. <b>FTP = 95 % deines 20-min-Schnitts.</b>'};
@@ -54,7 +54,7 @@ function woRowHtml(s,path,ro){ const dis=ro?'disabled':''; const wa=Math.round(t
     <span class="eq num">${wb==null?wa:wa+'→'+wb}</span><span class="bt">${ro?'':`<button data-act="up" title="nach oben">↑</button><button data-act="down" title="nach unten">↓</button><button data-act="del" title="löschen">✕</button>`}</span></div>`; }
 function renderWo(){
   const ro=race.role==='guest', L=$('woList'), k=woKind();
-  $('woKind').value=k; $('woKind').disabled=ro; document.querySelectorAll('#woBlock .woEd').forEach(e=>e.style.display=k==='wo'?'':'none');
+  $('woKind').value=k; $('woKind').disabled=ro; document.querySelectorAll('#woBlock .woEd').forEach(e=>e.style.display=k==='wo'&&!race.kamp?'':'none'); $('woKind').parentNode.style.display=race.kamp?'none':''; // Kampagne: Workout fest, nur FTP
   $('woTestInfo').style.display=k==='wo'?'none':''; $('woTestInfo').innerHTML=TEST_INFO[k]||'';
   $('woHa').textContent=WO.unit==='w'?'Watt':'% FTP'; $('woUnit').value=WO.unit; $('woUnit').disabled=ro; $('woPreset').disabled=ro; $('woAddStep').style.display=$('woAddRep').style.display=ro?'none':'';
   L.innerHTML=WO.items.map((it,i)=> it.k==='r'
@@ -135,7 +135,7 @@ function woPanel(P,sg){ if(!sg) return; const S=race.woSegs, i=S.indexOf(sg), nx
   woNext(i);
   if(simErg()){ $('simP').value=Math.round(tgt); $('simPv').textContent=Math.round(tgt)+' (ERG)'; } }
 function trainFinish(){
-  const T=race.woKind==='ramp'?Math.max(1,race.t):race.woT; race.woT=T; me.done=true; me.free=!!R.ring; me.time=T; pyroStart(); $('wnStop').style.display='none';
+  const T=race.woKind==='ramp'?Math.max(1,race.t):race.woT; race.woT=T; me.done=true; if(race.kamp) kampFertig(); me.free=!!R.ring; me.time=T; pyroStart(); $('wnStop').style.display='none';
   if(race.woKind==='ramp'){ const b=best60(me.bins); me.ftpRes=b?Math.round(b*.75):null; }
   if(race.woKind==='t20'){ me.ftpRes=me.testT>=60?Math.round(me.testE/me.testT*.95):null; }
   send({t:'s',d:me.d,v:0,w:0,done:true,ft:T,ftpRes:me.ftpRes,avg:me.wkgSum/Math.max(1,T),avgW:me.wSum/Math.max(1,T),zone:me.zoneT?me.inZone/me.zoneT:0,dist:me.dist});
