@@ -34,8 +34,8 @@ function prepBurg(r){ const S=r.S, q=rng(321), rw=d=>roadW(r,d)/2, frei=[]; // f
     for(const k of ['tor','ranke']) S[k]=S[k].filter(t=>!weg.some(h=>h.side===t.side&&Math.abs(h.d-t.d)<h.w/2+3));
     for(const h of S.house){ if(h.d>Z[2]+20) continue; const dep0=h.dep, sh=(dep0-(h.dep*=.82))/2, nx=-Math.sin(h.h)*h.side, ny=Math.cos(h.h)*h.side;
       h.w*=.75+q()*.15; h.hgt*=.88; h.x-=nx*sh; h.y-=ny*sh; h.fw=q()<.75; h.gw=false; if(q()<.5) h.roof=q()<.6?'#a8925c':'#8f7d50'; else if(h.roof==='#6f6f70') h.roof='#9e3a28'; }
-    r.inschrift=S.house.filter(h=>h.side===-1&&h.su==null).sort((a,b)=>a.d-b.d)[0]||null; // erstes Haus links: bekommt die Inschrift
-    r.giebel=S.house.filter(h=>h.side===1&&h.su==null&&h.fw&&!h.gs).sort((a,b)=>a.d-b.d)[0]||null; // erstes Fachwerkhaus rechts: Spruch auf dem Giebel zum Start
+    const amHaus=(s,d)=>S.house.filter(h=>h.side===s&&h.su==null&&!h.gs).sort((a,b)=>Math.abs(a.d-d)-Math.abs(b.d-d))[0]||null; // Haus an der Straße, das d am nächsten steht
+    r.inschrift=amHaus(-1,290); r.giebel=amHaus(1,164); r.wirt=amHaus(-1,47); // Inschrift links hinter dem Gemüsegarten, Spruch rechts gleich nach der ersten Kurve, Wirtshaus hinter dem Bauernfest – vor allen viel Platz, man sieht die Giebel von weitem
     // zweite Reihe: einzelne Häuser 14–20 m hinter der Straße, am Ende der Gassen und dazwischen (nicht hinter dem Kirchplatz)
     r.hinter=[]; for(const side of [-1,1]) for(let d=Z[1]+22; d<Z[2]-10; d+=24+q()*16){ if(side===1&&Math.abs(d-r.kirche.d)<26) continue; const g=r.gassen.find(G=>G.s===side&&Math.abs(G.d-d)<16), dd=g&&q()<.8?g.d:d;
       const w=6+q()*2.5, dep=6.5+q()*2, f=fr(dd), o=rw(dd)+geh+14+dep/2+q()*6, x=f.px+f.nx*side*o, y=f.py+f.ny*side*o, k=q();
@@ -257,14 +257,14 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
     const wa=new THREE.Mesh(new THREE.CylinderGeometry(1.32,1.32,.05,16),new THREE.MeshPhongMaterial({color:'#6d8f93',shininess:60})); wa.position.set(K.bx,by+.72,K.by); world.add(wa);
     const sl=new THREE.Mesh(new THREE.CylinderGeometry(.22,.26,2.2,8),sand); sl.position.set(K.bx,by+1.5,K.by); world.add(sl);
     const kg=new THREE.Mesh(new THREE.SphereGeometry(.32,8,6),sand); kg.position.set(K.bx,by+2.7,K.by); world.add(kg);
-    // Inschrift auf der Giebelwand des ersten Hauses links (zum Start hin): rote und schwarze Fraktur mit Rankenrahmen
+    // Inschrift auf der Giebelwand des hohen Fachwerkhauses links hinter dem Gemüsegarten (zum Start hin): rote und schwarze Fraktur mit Rankenrahmen
     { const H=R.inschrift; if(H){ const tx=Math.cos(H.h), tz=Math.sin(H.h), b=Math.min(H.dep*.85,7), hh=Math.min(H.hgt*.62,3.6);
       const t=frakturTex(512,256,g=>{ g.fillStyle='#efe6d0'; g.fillRect(0,0,512,256); g.strokeStyle='#8a2a1a'; g.lineWidth=6; g.strokeRect(12,12,488,232); g.strokeStyle='#4f7a3a'; g.lineWidth=3;
         for(let x=24;x<490;x+=26) for(const y of [12,244]){ g.beginPath(); g.arc(x,y+(y<100?7:-7),6,0,Math.PI*(y<100?1:-1),y>100); g.stroke(); } // Ranken oben und unten
         g.textAlign='center'; g.textBaseline='middle'; g.fillStyle='#9b1b1b'; g.font='58px '+FRAKTUR; g.fillText('Gott zum Gruße!',256,70,470);
         g.fillStyle='#2a1a10'; g.font='40px '+FRAKTUR; g.fillText('Wer die Burg will sehn,',256,140,470); g.fillText('muss die Pedale drehn.',256,190,470); });
       const pl=new THREE.Mesh(new THREE.PlaneGeometry(b,hh),new THREE.MeshLambertMaterial({map:t})); pl.position.set(H.x-tx*(H.w/2+.06), roadY(H.d)+.15+H.hgt*.52, H.y-tz*(H.w/2+.06)); pl.rotation.y=Math.atan2(-tx,-tz); world.add(pl); } }
-    // Spruch auf dem Giebeldreieck des ersten Fachwerkhauses rechts (zum Start hin), direkt auf den Putz gemalt
+    // Spruch auf dem Giebeldreieck des Fachwerkhauses rechts nach der ersten Kurve (zum Start hin), direkt auf den Putz gemalt
     { const H=R.giebel; if(H){ const tx=Math.cos(H.h), tz=Math.sin(H.h), T=H.dep*.94, rh=(2.6+H.dep*.18)*.94, geo=new THREE.BufferGeometry(); // Dachhöhe wie in haus()
       geo.setAttribute('position',new THREE.Float32BufferAttribute([-T/2,0,0, T/2,0,0, 0,rh,0],3)); geo.setAttribute('uv',new THREE.Float32BufferAttribute([0,0, 1,0, .5,1],2)); geo.computeVertexNormals();
       const t=frakturTex(512,256,g=>{ g.textAlign='center'; g.textBaseline='middle'; g.fillStyle='#a21d18'; g.font='52px '+FRAKTUR; g.fillText('Olé rot-weiß,',256,142,250); g.fillStyle='#2a1a10'; g.font='46px '+FRAKTUR; g.fillText('so laaft die Gschicht.',256,206,390); });
@@ -586,7 +586,7 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
       for(const x of [-2.4,.6,2.9]){ const br=new THREE.Mesh(new THREE.SphereGeometry(.2,8,6),M('#b07a3a')); br.scale.set(1.4,.6,.9); br.position.set(x,.9,0); tg.add(br); }
       [[-3,-1,'#8a6a44'],[-1.2,-1,'#c62f24'],[.8,-1,'#e2b33a'],[2.8,-1,'#3f7a3a'],[-2,1,'#6b5a8a'],[1.8,1,'#c9733a']].forEach(([x,sz,k],i)=>{ const m=mensch({x,y:-.32,z:sz*.95},{x,z:sz*-5},k,'#3a2a1c',[HUT.stroh,filz,HUT.tuch][i%3],i===2?{lang:1}:{}); tg.add(m.G);
         krug(m.arme[1],i%2?'#9aa0a6':'#8a6a4a'); m.arme[0].rotation.x=-.5; F.zecher.push({m,ph:i*1.3}); });
-      const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex('Auf zur Burg, Pedalritter, und kehrt danach auf ein Krüglein ein!'),transparent:true,depthWrite:false})), bp=at(9.5,13.5); sp.scale.set(7.2,2.23,1); sp.position.set(bp.x,TP.y+3.3,bp.z); sp.visible=false; world.add(sp); F.sp=sp; }
+    }
     // Bierfass auf dem Bock, daneben der Wirt mit Schürze
     { const FP=at(16.8,13.4), fg=grp(FP); for(const x of [-.45,.45]){ for(const z of [-.3,.3]){ const b=box(fg,.08,.8,.08,holzD,x,.38,z*.7); b.rotation.x=z*.6; } box(fg,.1,.08,.7,holzD,x,.7,0); }
       const fs=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,1.1,14),holz); fs.rotation.z=Math.PI/2; fs.position.y=1.15; fg.add(fs); for(const x of [-.4,0,.4]){ const r2=new THREE.Mesh(new THREE.TorusGeometry(x?.41:.44,.025,5,16),M('#2e2c2a')); r2.position.set(x,1.15,0); r2.rotation.y=Math.PI/2; fg.add(r2); }
@@ -711,7 +711,7 @@ function poseBurg(dt){ const A=anim.burg, t=performance.now()/1000, cp=camera.po
   if(A.reh){ const Rh=A.reh, P=Rh.G.position, w=bSm((45-Math.hypot(cp.x-P.x,cp.z-P.z))/15); Rh.hals.rotation.z=(1-w)*(-2+.15*Math.sin(t*1.3))+w*.1; Rh.ohr.forEach((o,i)=>o.rotation.z=.4*Math.max(0,Math.sin(t*2.3+i*2))**8); } // Reh äst, schaut auf, wenn man naht
   if(A.wasser) A.wasser.offset.y+=dt*.5; if(A.rad) A.rad.rotation.z-=dt*.9;
   const k=race.tod==='tag'?1:.55; for(const o of A.nebel) o.sp.material.opacity=o.base*k*bSm((o.sp.position.distanceTo(cp)-o.s*.3)/(o.s*.7)); }
-// Bauernfest am Start: Reigen dreht sich, Musikanten wippen, Gaukler jongliert, Bär tanzt an der Kette, Kinder klatschen, Zecher prosten und rufen
+// Bauernfest am Start: Reigen dreht sich, Musikanten wippen, Gaukler jongliert, Bär tanzt an der Kette, Kinder klatschen, Zecher prosten
 function poseFest(t,cp){ const F=anim.burg.fest; if(!F) return; const e=Math.hypot(cp.x-F.x,cp.z-F.z); if(e>160) return; const nah=bSm((40-e)/15);
   F.reigen.rotation.y=t*.55; for(const T of F.tanz){ T.m.G.position.y=.12*Math.abs(Math.sin(t*5.5+T.i*1.7)); T.m.G.rotation.z=.08*Math.sin(t*2.75+T.i); T.m.kopf.rotation.z=.12*Math.sin(t*2.75+T.i); }
   for(const U of F.musik){ U.m.G.rotation.z=.06*Math.sin(t*3+U.ph); U.m.kopf.rotation.x=.08*Math.sin(t*6+U.ph); }
@@ -722,8 +722,7 @@ function poseFest(t,cp){ const F=anim.burg.fest; if(!F) return; const e=Math.hyp
     Fu.arme[1].rotation.x=-2+.25*Math.sin(t*11); Fu.arme[1].rotation.z=.2*Math.sin(t*5.5); // Schellentrommel
     B.kr.getWorldPosition(F.v1); Fu.arme[0].children[1].getWorldPosition(F.v2); const a=F.v1.toArray(), b=F.v2.toArray(), m=[(a[0]+b[0])/2,(a[1]+b[1])/2-.35,(a[2]+b[2])/2]; place(F.kette[0],a,m); place(F.kette[1],m,b); } // Kette hängt durch
   for(const K of F.kinder){ const c=.28+.22*Math.sin(t*9+K.ph); K.m.arme[0].rotation.z=c; K.m.arme[1].rotation.z=-c; K.m.G.position.y=K.y+.06*Math.max(0,Math.sin(t*4.5+K.ph)); }
-  for(const Z of F.zecher) Z.m.arme[1].rotation.x=-.5-1.7*Math.max(Math.max(0,Math.sin(t*.8+Z.ph))**4, nah*(.8+.2*Math.sin(t*7+Z.ph))); // prosten, heben die Krüge, wenn man naht
-  F.sp.visible=me.d>.5&&me.d<30; }
+  for(const Z of F.zecher) Z.m.arme[1].rotation.x=-.5-1.7*Math.max(Math.max(0,Math.sin(t*.8+Z.ph))**4, nah*(.8+.2*Math.sin(t*7+Z.ph))); } // prosten, heben die Krüge, wenn man naht
 // Volk in der Vorburg: hüpft und reckt die Arme, je näher du dem Ziel kommst
 function poseVolk(t,alle){ const P=anim.burg.volk, m=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(), p=new THREE.Vector3(), up=new THREE.Vector3(0,1,0), c=new THREE.Color(), e=new THREE.Euler();
   const nah=alle?0:bSm((140-Math.hypot(camera.position.x-P.mitte.x,camera.position.z-P.mitte.z))/80), hi=[0,0,0,0];
@@ -743,11 +742,17 @@ function burgKamera(dt){ const Q=anim.burg.raeuber, ich=riders3d[myKey]; endKame
   const w=bSm(Q.kamT/.6)*bSm((T-Q.kamT)/.7), rp=ich.g.position, bc=Q.L[1].G.position, hd=headingAt(R,me.d), fx=Math.cos(hd), fz=Math.sin(hd), sx=bc.x-rp.x, sz=bc.z-rp.z, sl=Math.hypot(sx,sz)||1;
   const pos=new THREE.Vector3(rp.x+fx*5-sx/sl*2.5, rp.y+2.4, rp.z+fz*5-sz/sl*2.5), look=new THREE.Vector3(bc.x, rp.y+1.1, bc.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz);
   camera.position.lerp(pos,w); camera.lookAt(now.lerp(look,w)); }
-// Kamerafahrt beim Countdown: die Kamera beginnt auf der Straße vor dem Bauernfest und gleitet rückwärts daran vorbei zum Fahrer
-function startKamera(dt){ const A=anim.burg, F=A.fest, ich=riders3d[myKey]; if(race.state!=='count'||!F||!ich||me.d>1){ A.introT=null; return; }
-  const t=A.introT=(A.introT??0)+dt, w=1-bSm((t-3.6)/1.3); if(w<=0) return; const k=bSm(t/4.4), d=Math.max(0,46-46*k), [x,z]=posAt(R,d), hd=headingAt(R,d), ziel=new THREE.Vector3(camS.lx,camS.ly,camS.lz);
-  const pos=new THREE.Vector3(x-Math.sin(hd)*1.8, visRoadY(d)+3.4-1.3*k, z+Math.cos(hd)*1.8), look=new THREE.Vector3(F.x,F.y+1.6,F.z).lerp(ziel,bSm((t-2.6)/1.8)); // rechte Straßenseite rückwärts am Fest vorbei, Blick aufs Fest, dann nach vorn
-  camera.position.lerp(pos,w); camera.lookAt(ziel.lerp(look,w)); }
+// Kamera am Start: beim Countdown gleitet sie von der Straße vor dem Bauernfest rückwärts daran vorbei zum Fahrer; nach dem Start folgt der Blick beim Vorbeifahren
+// dem Fest (Gaukler, Reigen, Tanzbär) und dreht bis 52 m wieder nach vorn
+function startKamera(dt){ const A=anim.burg, F=A.fest, ich=riders3d[myKey]; if(!F||!ich||me.d>52||(race.state!=='count'&&race.state!=='run')){ A.introT=A.kamP=null; return; }
+  const vor=new THREE.Vector3(camS.lx,camS.ly,camS.lz), zd=Math.min(FEST.d1-3,Math.max(FEST.d0+3,me.d+9)), [fx,fz]=posAt(R,zd), fh=headingAt(R,zd), o=roadW(R,zd)/2+(zOpt(R,zd).geh??SIDEWALK)+4.5;
+  const wR=.6*bSm((52-me.d)/18), blick=vor.clone().lerp(new THREE.Vector3(fx+Math.sin(fh)*o, F.y+1.3, fz-Math.cos(fh)*o),wR), hd=headingAt(R,me.d); // Blickziel wandert mit dir am Fest entlang
+  const hier=camera.position.clone().add(new THREE.Vector3(-Math.sin(hd)*.9*wR, .5*wR, Math.cos(hd)*.9*wR)); // etwas nach rechts und höher, damit der eigene Fahrer nicht im Weg ist
+  const ruhig=(p,l)=>{ const k=Math.min(1,dt*1.6), dp=p.clone().sub(camera.position), dl=l.clone().sub(vor); if(!A.kamP){ A.kamP=dp; A.kamL=dl; } A.kamP.lerp(dp,k); A.kamL.lerp(dl,k); camera.position.add(A.kamP); camera.lookAt(vor.clone().add(A.kamL)); }; // nur den Versatz zur normalen Kamera träge nachziehen – keine Zuckler, kein Hinterherhinken
+  if(race.state==='run'){ A.introT=null; ruhig(hier,blick); return; }
+  const t=A.introT=(A.introT??0)+dt, w=1-bSm((t-3.6)/1.3), k=bSm(t/4.4), d=Math.max(0,46-46*k), [x,z]=posAt(R,d), h=headingAt(R,d);
+  const pos=new THREE.Vector3(x-Math.sin(h)*1.8, visRoadY(d)+3.4-1.3*k, z+Math.cos(h)*1.8), look=new THREE.Vector3(F.x,F.y+1.6,F.z).lerp(blick,bSm((t-2.6)/1.8)); // rechte Straßenseite rückwärts am Fest vorbei
+  ruhig(hier.lerp(pos,w),blick.lerp(look,w)); }
 // Drache und Raben (aus poseBurg): ab 3,74 km frontaler Tiefflug mit Feuer auf dich, dann begleitet er dich (1–2 langsame Überflüge von hinten/der Seite), 350 m vor dem Ziel fliegt er zum Bergfried, beim ersten Zieleinlauf Landung auf der Turmspitze mit Feuerstößen
 const BF={x:13,y:53,z:-1}, KR=46; // Spitze des Bergfried-Dachs in Burg-Koordinaten, Kreisradius des Drachen
 function burgDrache(dt,t){ const A=anim.burg, Q=A.drache, G=A.burg, ich=riders3d[myKey]; if(!Q||!G||!ich) return;
