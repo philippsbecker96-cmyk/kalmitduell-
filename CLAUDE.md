@@ -32,3 +32,4 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - Nicht selbst im Browser testen, außer der Nutzer bittet darum – er testet selbst.
 - Commit-Nachrichten auf Deutsch. Remote: GitHub `philippsbecker96-cmyk/kalmitduell-`, Branch `main`.
 - Offene Verschönerungspläne (Landschaft, Gebäude, Licht): `PLAENE.md`.
+- Plan für Rennen mit bis zu 4 Fahrern (Bots und online): `MEHRSPIELER.md`.
