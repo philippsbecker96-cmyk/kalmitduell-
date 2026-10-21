@@ -93,7 +93,7 @@ function build3D(){
   if(world){ scene.remove(world); world.traverse(o=>{ o.geometry&&o.geometry.dispose&&o.geometry.dispose(); for(const mt of [].concat(o.material||[], o.userData.dry||[], (o.userData.dry&&o.userData.dry.userData.wm)||[])){ mt.map&&mt.map.dispose&&mt.map.dispose(); mt.dispose&&mt.dispose(); } }); }
   hausReset();
   world=new THREE.Group(); scene.add(world);
-  anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; anim.burg=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
+  anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; anim.burg=null; anim.tri=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
   const sp=!!R.space; sky.visible=!sp; spaceSky.visible=sp; streaks.m.visible=false; scene.background.set(sp?SPACE_BG:HORIZON); scene.fog.color.set(sp?SPACE_BG:HORIZON);
   if(sp){ buildSpace(); return; }
   if(R.island){ buildIsland(); return; }
@@ -119,7 +119,7 @@ function build3D(){
   for(let pass=0;pass<12;pass++){ tmp.set(h); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; if(dist[k]<12) continue;
       h[k]=(tmp[k]*2+tmp[k-1]+tmp[k+1]+tmp[k-n]+tmp[k+n])/6; } }
   for(let k=0;k<N;k++) if(dist[k]<12) h[k]=roadY(src[k]*STEP)-STR_UNTER;
-  TER.vbw=null; TER.bach=BG?burgGelaende(h,src,dist):null; if(R.tri) trifelsGelaende(h); // Burg: Bachbett und ebene Vorburg · Trifels: Vorburg und Burgberg (welt-trifels.js)
+  TER.vbw=null; TER.bach=BG?burgGelaende(h,src,dist):null; if(R.tri) trifelsGelaende(h,src,dist); // Burg: Bachbett und ebene Vorburg · Trifels: Vorburg und Burgberg (welt-trifels.js)
   // Höhe der nächstgelegenen Straßenstelle je Geländepunkt (geglättet) – danach richtet sich die Überhöhung, damit die Straße quer nicht kippt
   { const hr=new Float32Array(N), tq=new Float32Array(N); for(let k=0;k<N;k++) hr[k]=roadY(src[k]*STEP);
     for(let pass=0;pass<14;pass++){ tq.set(hr); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; hr[k]=(tq[k]*4+tq[k-1]+tq[k+1]+tq[k-n]+tq[k+n])/8; } }

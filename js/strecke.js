@@ -458,15 +458,17 @@ function trifelsDef(segs, unit, f, kg){
   turtle(st,[['g',1],['b',-25,140],['g',1],['b',25,140],['g',1]],d1);
   const karren=[st.x+Math.cos(st.h)*rh, st.y+Math.sin(st.h)*rh];
   turtle(st,[['b',180,rh],['g',.001]],d2-d1);
-  const B=d3-d2, HP=Math.PI*18, LG=220, n=Math.max(1,Math.floor((B-3*Math.PI*10-40+HP)/(LG+HP))), ab=[['b',-90,20],['b',90,20]];
-  for(let i=0;i<n;i++){ ab.push(['g',1]); if(i<n-1) ab.push(['b',i%2?180:-180,18]); } ab.push(['b',n%2?-90:90,20],['g',.3]); // Kehren immer nach Osten
+  const B=d3-d2, HP=Math.PI*30, LG=220, n=Math.max(1,Math.floor((B-3*Math.PI*10-40+HP)/(LG+HP))), ab=[['b',-90,20],['b',90,20]];
+  for(let i=0;i<n;i++){ ab.push(['g',1]); if(i<n-1) ab.push(['b',i%2?180:-180,30]); } ab.push(['b',n%2?-90:90,20],['g',.3]); // Kehren immer nach Osten, 60 m Abstand (Geländeraster)
   turtle(st,ab,B);
   turtle(st,[['b',-10,300],['g',1],['b',10,300]],d4-d3);
-  const tal=[]; for(let i=0,m=Math.max(1,Math.round((dE+NACH-d4)/700));i<m;i++) tal.push(['g',1],['b',i%2?-18:22,420]);
+  // Tal in großen Schleifen hin und her (je ≈ 1,8 km, 400 m Abstand nach Süden): hält die Karte klein, damit das Geländeraster fein bleibt (≈ 8 m)
+  const tal=[], LT=dE+NACH-d4, m=Math.max(1,Math.round(LT/2430)); for(let i=0;i<m;i++){ tal.push(['g',1],['b',12,700],['g',1],['b',-12,700],['g',1]); if(i<m-1) tal.push(['b',i%2?-180:180,200]); }
   turtle(st,tal,dE+NACH-d4);
   let e=0, lo=0; for(const s of out){ e+=s.len*s.g/100; lo=Math.min(lo,e); }
-  const jagd=segs.filter(s=>/Jagd/.test(s.label)).map(s=>dT(s.t0));
+  const jagd=segs.filter(s=>/Jagd/.test(s.label)).map(s=>dT(s.t0)), lichtung=[]; for(let a=d4+1900;a<dE-300;a+=2600) lichtung.push(['wiese',a,a+320]);
   return {name:'Trifels · Queichtal', start:'Burgwald unter dem Trifels', finish:'Queichtal', startElev:330, plainElev:330+lo-25, gpx:'trifels', ma:true, planbar:true,
-    poly:st.P, segs:out, zones:[['wiese',d1-15,d2+15],['ort',d4-70,d4+80,{fach:.8,gewaende:.5,geh:.4,luecke:.3,licht:0}],['wiese',d4+80,1e9]],
-    breite:[[d1-15,d2+15,7]], belag:[['pflaster',d1,d2,.5]],
+    poly:st.P, segs:out, zones:[['wiese',d1-15,d2+15],['ort',d4-70,d4+80,{fach:.8,gewaende:.5,geh:.4,luecke:.3,licht:0}],['wiese',d4+80,d4+380],...lichtung], // sonst Pfälzerwald, im Tal ein paar Lichtungen
+    breite:[[-50,d1-15,4.4],[d1-15,d2+15,7],[d2+15,1e9,4.4]], // schmaler Weg wie auf Berwartstein, Vorburg breit
+    belag:[['erde',-50,d1,0],['pflaster',d1,d2,.5],['erde',d2,d4-70,0],['pflaster',d4-70,d4+80,.5],['erde',d4+80,1e9,0]], // keine Straße: Sandweg, Kopfstein in der Vorburg und am Wirtshaus
     orte:{loewenherz:dT(75), hof:[d1,d2], karren, burg:[karren[0],karren[1]-rh-55], wirtshaus:d4, jagd, ziel:dE}}; } // Meter für Welt und Ereignisse (Schritt 3–5)
