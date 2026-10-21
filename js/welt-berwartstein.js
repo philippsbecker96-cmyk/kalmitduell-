@@ -147,19 +147,47 @@ function blaseTex(txt){ return frakturTex(512,190,g=>{ const gr=g.createRadialGr
   for(const w of txt.split(' ')){ const t=z?z+' '+w:w; if(g.measureText(t).width>450&&z){ Z.push(z); z=w; } else z=t; } Z.push(z); Z.forEach((l,i)=>g.fillText(l,256,76+(i-(Z.length-1)/2)*44)); }); }
 // Warnkasten oben im Bild (Pergament, siehe css/style.css), blendet nach ein paar Sekunden aus
 function warnKasten(txt){ let el=document.getElementById('pergament'); if(!el){ el=document.createElement('div'); el.id='pergament'; document.body.appendChild(el); }
-  el.textContent=txt; el.classList.add('zeig'); clearTimeout(warnKasten.t); warnKasten.t=setTimeout(()=>el.classList.remove('zeig'),4500); }
+  el.textContent=txt; el.classList.add('zeig'); clearTimeout(warnKasten.t); warnKasten.t=setTimeout(()=>el.classList.remove('zeig'),4000); }
 // Zielbanner: Stoff mit „ZIEL“ und zwei kleinen Löwen
 function zielTex(){ return canvasTex(512,96,g=>{ g.fillStyle='#efe4c8'; g.fillRect(0,0,512,96); g.strokeStyle='#9b1b1b'; g.lineWidth=10; g.strokeRect(5,5,502,86);
   g.fillStyle='#141414'; g.fillRect(14,14,68,68); g.fillRect(430,14,68,68); loewe(g,48,48,62); loewe(g,464,48,62);
   g.fillStyle='#7a1414'; g.font='700 64px Georgia, "Times New Roman", serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText('ZIEL',256,52); }); }
 
+// ---- Drache: rot mit goldenem Bauch, Hörner, Rückenzacken, Pfeilschwanz, Flughäute; blickt nach +z, etwa 15 m lang und 14 m Spannweite ----
+function drachenModell(){ const D=new THREE.Group(), K=new THREE.Group(); D.add(K); const rot=lam('#b3201a'), dunkel=lam('#7a1410'), gold=lam('#e0a040'), horn=lam('#e8dcc0');
+  const kugel=(r,m,x,y,z,sx=1,sy=1,sz=1,P=K)=>{ const o=new THREE.Mesh(new THREE.SphereGeometry(r,12,9),m); o.position.set(x,y,z); o.scale.set(sx,sy,sz); P.add(o); return o; };
+  const kegel=(r,h,m,x,y,z,rx,P=K)=>{ const o=new THREE.Mesh(new THREE.ConeGeometry(r,h,6),m); o.position.set(x,y,z); o.rotation.x=rx; P.add(o); return o; };
+  kugel(1,rot,0,0,0,1.1,1,2.6); kugel(1,gold,0,-.28,.1,.95,.78,2.35); // Rumpf, Bauch
+  for(let i=0;i<5;i++){ const t=i/4; kugel(.56-.12*t,rot,0,.5+t*2.1,2.2+t*1.9); kugel(.45-.1*t,gold,0,.3+t*2.1,2.35+t*1.95,1,.8,1); } // Hals
+  const kopf=new THREE.Group(); kopf.position.set(0,2.85,4.4); K.add(kopf);
+  const sch=new THREE.Mesh(new THREE.BoxGeometry(.75,.6,1.05),rot); kopf.add(sch); const sn=new THREE.Mesh(new THREE.BoxGeometry(.52,.36,.95),rot); sn.position.set(0,-.06,.9); kopf.add(sn);
+  const kiefer=new THREE.Group(); kiefer.position.set(0,-.28,.25); kopf.add(kiefer); const kf=new THREE.Mesh(new THREE.BoxGeometry(.46,.12,1.15),dunkel); kf.position.z=.6; kiefer.add(kf);
+  for(const s of [-1,1]){ kegel(.09,1,horn,s*.24,.42,-.45,-2.2,kopf); kegel(.06,.5,horn,s*.38,.25,-.2,-2.0,kopf); kugel(.08,new THREE.MeshBasicMaterial({color:'#ffd23a'}),s*.33,.16,.3,1,.7,1,kopf); } // Hörner, gelbe Augen
+  for(let i=0;i<4;i++) kegel(.08,.28,horn,0,-.23,.55+i*.2,Math.PI,kopf).scale.z=.6; // Zähne
+  const maul=new THREE.Object3D(); maul.position.set(0,-.12,1.45); kopf.add(maul);
+  for(let i=0;i<9;i++) kegel(.18,.6,dunkel,0,1.0-Math.abs(i-4)*.05,1.6-i*.55,-.4); for(let i=0;i<4;i++) kegel(.13,.42,dunkel,0,.5+i*.5,2.5+i*.5,-.5); // Rückenzacken
+  const schw=[]; let P=K; for(let i=0;i<9;i++){ const g=new THREE.Group(); g.position.z=i?-.7:-2.3; P.add(g); kugel(.48-i*.045,rot,0,0,-.35,1,1,1.25,g); if(i%2===0) kegel(.08,.3,dunkel,0,.42-i*.04,-.35,-.4,g); schw.push(g); P=g; }
+  const sp=new THREE.Mesh(new THREE.ConeGeometry(.42,.9,4),dunkel); sp.rotation.x=-Math.PI/2; sp.scale.y=.25; sp.position.z=-1.1; P.add(sp); // Pfeilspitze
+  const haut=new THREE.MeshLambertMaterial({color:'#c22a20',side:THREE.DoubleSide,transparent:true,opacity:.94}), fluegel=[];
+  for(const s of [-1,1]){ const W=new THREE.Group(); W.position.set(s*.8,.75,.7); K.add(W); const A=[s*3,.45,-.4], F=[[s*7.2,.25,-1.6],[s*6.1,-.1,-3.3],[s*4.1,-.3,-4.3]], B=[s*.2,0,-2.6], O=[0,0,0];
+    const kn=(a,b,r)=>{ const c=cyl(r,dunkel); place(c,a,b); W.add(c); }; kn(O,A,.11); for(const f of F) kn(A,f,.06); kegel(.1,.5,horn,A[0],A[1]+.25,A[2],0,W); // Knochen, Daumenkralle
+    const pts=[A,F[0],F[1], A,F[1],F[2], A,F[2],B, A,B,O].flat(), g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(pts),3)); g.computeVertexNormals(); W.add(new THREE.Mesh(g,haut)); fluegel.push({W,s}); }
+  const beine=[]; for(const [x,z] of [[.7,1.3],[-.7,1.3],[.8,-1.4],[-.8,-1.4]]){ const B=new THREE.Group(); B.position.set(x,-.55,z); K.add(B); const c=cyl(.17,rot,.12); place(c,[0,0,0],[0,-1.25,.15]); B.add(c);
+    for(const dx of [-.12,0,.12]) kegel(.05,.25,horn,dx,-1.3,.35,Math.PI/2,B); beine.push(B); }
+  return {D,K,kopf,kiefer,maul,schw,fluegel,beine}; }
+// ---- Rabe: schwarz, schlagende Flügel, blickt nach +z ----
+function rabeModell(){ const G=new THREE.Group(), sw=lam('#141418'), sn=lam('#2a2a2e'), b=new THREE.Mesh(new THREE.SphereGeometry(.25,8,6),sw); b.scale.set(.7,.6,1.4); G.add(b);
+  const k=new THREE.Mesh(new THREE.SphereGeometry(.15,8,6),sw); k.position.set(0,.1,.36); G.add(k); const s=new THREE.Mesh(new THREE.ConeGeometry(.05,.22,5),sn); s.rotation.x=Math.PI/2; s.position.set(0,.08,.56); G.add(s);
+  const sz=new THREE.Mesh(new THREE.BoxGeometry(.24,.03,.32),sw); sz.position.set(0,0,-.45); G.add(sz); const F=[];
+  for(const x of [-1,1]){ const W=new THREE.Group(); W.position.set(x*.12,.08,0); G.add(W); const f=new THREE.Mesh(new THREE.BoxGeometry(.9,.02,.36),sw); f.position.x=x*.45; W.add(f); F.push({W,s:x}); }
+  G.scale.setScalar(1.6); return {G,F}; }
 // ---- Aufbau (aus build3D) ----
 function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=new THREE.Quaternion(), sc=new THREE.Vector3(), ps=new THREE.Vector3(), cc=new THREE.Color(), up=new THREE.Vector3(0,1,0), eu=new THREE.Euler();
   const inst=(geo,mat,list,fn)=>{ if(!list.length) return null; const im=new THREE.InstancedMesh(geo,mat,list.length);
     list.forEach((o,i)=>{ cc.set('#ffffff'); fn(o,i); m4.compose(ps,qq,sc); im.setMatrixAt(i,m4); im.setColorAt(i,cc); }); im.instanceMatrix.needsUpdate=true; if(im.instanceColor) im.instanceColor.needsUpdate=true; world.add(im); return im; };
   const box=(P,w,h,d,mat,x,y,z,ry=0)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); o.position.set(x,y,z); o.rotation.y=ry; P.add(o); return o; };
   const rw=d=>roadW(R,d)/2, fr=d=>{ const [px,py]=posAt(R,d), h=headingAt(R,d); return {px,py,h,nx:-Math.sin(h),ny:Math.cos(h)}; };
-  const A=anim.burg={nebel:[], rad:null, wasser:null, burg:null, leute:[], fahnen:[], flammen:[], winker:[], volk:null, raeuber:null, schuetze:null, rauch:[], ferkel:null, schmied:null, huehner:[], pferde:[]};
+  const A=anim.burg={drache:null, raben:[], flucht:0, nebel:[], rad:null, wasser:null, burg:null, leute:[], fahnen:[], flammen:[], winker:[], volk:null, raeuber:null, schuetze:null, rauch:[], ferkel:null, schmied:null, huehner:[], pferde:[]};
   const holz=lam('#6b4a32'), holzD=lam('#4e3626'), dach=hMat('burgDach',()=>{ const t=dachTex('#a8442c'); t.wrapS=t.wrapT=THREE.RepeatWrapping; return new THREE.MeshLambertMaterial({map:t, side:THREE.DoubleSide}); });
   const sand=new THREE.MeshLambertMaterial({map:burgQuader()}), FT=felsTex(), fels=new THREE.MeshLambertMaterial({map:FT});
 
@@ -290,15 +318,18 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
       const t=canvasTex(128,48,g=>{ g.fillStyle='#e9dcbc'; g.fillRect(0,0,128,48); g.strokeStyle='#5a3a26'; g.lineWidth=5; g.strokeRect(2,2,124,44); g.fillStyle='#5a2a1a'; g.font='700 30px Georgia, serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText('ZOLL',64,26); });
       const sg=new THREE.Mesh(new THREE.PlaneGeometry(1.2,.45),new THREE.MeshLambertMaterial({map:t})); sg.position.set(-.6,2.35,1.44); G.add(sg);
       const fa=box(G,.08,1.1,.08,holz,1.7,2.9,1.2); fa.rotation.z=-.2; } // kleine Fahnenstange
-    // Schlagbaum hochgeklappt, rot-weiß
+    // Schlagbaum rot-weiß quer über den Weg, geht erst 20 m vor dem Fahrer hoch (siehe poseBurg)
     { const p=at(5.5,1.4), G=new THREE.Group(); G.position.set(p.x,p.y,p.z); G.rotation.y=zuStr(p); world.add(G); box(G,.22,1.2,.22,holzD,0,.6,0);
-      const st=canvasTex(8,64,g=>{ for(let y=0;y<64;y+=16){ g.fillStyle='#c62f24'; g.fillRect(0,y,8,8); g.fillStyle='#f2ece0'; g.fillRect(0,y+8,8,8); } }), pole=cyl(.06,new THREE.MeshLambertMaterial({map:st}));
-      place(pole,[0,1.15,0],[0,4.6,1.6]); G.add(pole); }
+      const Lb=2*rw(ZOLL.d+5.5)+2.2, st=canvasTex(8,64,g=>{ for(let y=0;y<64;y+=16){ g.fillStyle='#c62f24'; g.fillRect(0,y,8,8); g.fillStyle='#f2ece0'; g.fillRect(0,y+8,8,8); } }), pole=cyl(.06,new THREE.MeshLambertMaterial({map:st}));
+      st.wrapS=st.wrapT=THREE.RepeatWrapping; st.repeat.set(1,Lb/3.8); const dreh=new THREE.Group(); dreh.position.y=1.15; G.add(dreh); place(pole,[0,0,0],[0,0,Lb]); dreh.add(pole);
+      box(G,.18,1,.18,holzD,0,.5,Lb-.15); A.zoll={dreh,k:0,d:ZOLL.d+5.5}; } // Gabelstütze am anderen Wegrand
     const zp=at(-.5,3.4), bp=at(-2.6,2.9);
     const z=mensch(zp,bp,'#2f4a66','#2a2a30',k=>{ const b=new THREE.Mesh(new THREE.CylinderGeometry(.16,.15,.07,12),M('#7a1f1f')); b.position.set(0,.2,-.02); b.rotation.x=-.2; k.add(b); }); // Zöllner mit rotem Barett
     const zb=box(z.arme[1],.18,.24,.05,M('#6b3a20'),0,-.62,.12); zb.rotation.x=-.5; z.arme[1].rotation.x=-.7; // hält das Zollbuch
     const b=mensch(bp,zp,'#8a6a44','#5b4a36',HUT.stroh); // Bauer mit Strohhut
     A.leute.push({z,b});
+    const zs=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex('Gute Fahrt, edler Pedalritter!'),transparent:true,depthWrite:false})); const zr=at(-.5,1.2); zs.scale.set(6.2,1.92,1); zs.position.set(zr.x,zp.y+2.9,zr.z); // etwas kleiner, Richtung Fahrbahn versetzt zs.visible=false; world.add(zs);
+    Object.assign(A.zoll,{z,sp:zs,ry:z.G.rotation.y,w:0,rufT:0,rief:false}); // Zöllner ruft dem Fahrer zu
     // Pferd vor dem Heukarren, am Wegrand in Fahrtrichtung
     { const p=at(-7,2.5), G=new THREE.Group(); G.position.set(p.x,p.y,p.z); G.rotation.y=-p.h; world.add(G); const fell=M('#7a5232'), mahne=M('#2e2018'), dk=M('#4e3423');
       const pf=new THREE.Group(); pf.position.x=2.3; G.add(pf);
@@ -468,6 +499,8 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
     const L=[mensch(at(-2.2),bl,'#6b2a24','#2a2a2a',nasal,{aermel:'#e6dccb'}), mensch(at(0),bl,'#3f6b3a','#3a3020',k=>{ nasal(k); },{aermel:'#3f6b3a'}), mensch(at(2.2),bl,'#2a2a2c','#4a3a2a',k=>{ HUT.kapuze(k); k.children[k.children.length-1].material=M('#1e1e20'); },{aermel:'#7a1f1f'})];
     kragen(L[0],'#5a4128'); kragen(L[1],'#6b4a2e'); kragen(L[2],'#1e1e20'); waffe(L[0].arme[1],.9); waffe(L[1].arme[1],.3); waffe(L[2].arme[1],.3);
     const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex('Her mit euren Gulden, wenn euch euer Leben lieb ist!'),transparent:true,depthWrite:false})), p=at(0); sp.scale.set(8.3,2.56,1); sp.position.set(p.x,p.y+3.1,p.z); sp.visible=false; world.add(sp);
+    const ab=(da,du)=>{ const f=fr(K.d+da), u=rw(K.d+da)+2+du, x=f.px+f.nx*K.s*u, z=f.py+f.ny*K.s*u; return {x,y:terrainAt(x,z),z}; }; // Gebüsch hinter und neben den Räubern
+    for(const [da,du,r] of [[-4.6,.2,1.1],[-3.4,1.7,1],[-1.1,2,1.2],[1.2,1.9,1.1],[3.3,1.6,1],[4.7,.3,1.15],[0,3,1.3],[-2.4,3.2,.9]]){ const p=ab(da,du), b=new THREE.Mesh(new THREE.IcosahedronGeometry(r,0),M(da*du%2<1?'#3f6b32':'#4d7a3a')); b.position.set(p.x,p.y+r*.35,p.z); b.scale.y=.7; b.rotation.y=da; world.add(b); }
     A.raeuber={L,d:K.d,sp,droh:sp.material.map,staun:blaseTex('Bei allen Heiligen … der hat den Teufel in den Waden!'),staunT:0,lastD:-1e9}; }
   // ---------- Bogenschütze oben auf dem Felsentor: zielt, schießt einmal pro Vorbeifahrt, der Pfeil steckt vor oder neben dem Vorderrad im Weg ----------
   { const td=R.felsen.tor, tf=fr(td), T={d:td}, p={x:tf.px,y:roadY(td)+11.7,z:tf.py}, m=mensch(p,{x:p.x,z:p.z+1},'#7a3f1c','#2a2a2a',k=>{ const h=new THREE.Mesh(new THREE.ConeGeometry(.15,.34,10),M('#2f9a3a')); h.position.set(0,.27,-.03); h.rotation.x=-.3; k.add(h);
@@ -481,6 +514,13 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
     pfeil.visible=false; world.add(pfeil); // Vorlage (wird für jeden Schuss kopiert)
     A.schuetze={m,T,pfeil,pfeile:[],flug:null,schuss:false,zug:0}; }
 
+  // ---------- Drache (anfangs unsichtbar) und Raben am Bergfried: Schwarm kreist, drei sitzen auf dem Palasdach ----------
+  { const Dr=drachenModell(); Dr.D.visible=false; world.add(Dr.D); const fl=canvasTex(64,64,g=>{ const gr=g.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.4,'rgba(255,255,255,.7)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,64,64); });
+    const feuer=[]; for(let i=0;i<80;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:fl,color:'#ffb347',transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,opacity:0})); s.visible=false; world.add(s); feuer.push({s,v:new THREE.Vector3(),life:0,max:1}); }
+    A.drache={...Dr, zust:'weg', t:0, feuer, feuerT:0, naechst:0}; const rab=[];
+    for(let i=0;i<9;i++){ const r=rabeModell(); A.burg.add(r.G); rab.push({...r, ang:i/9*6.3, rad:9+i%3*4, hoe:56+i%4*2.5, v:.5+(i%3)*.12, ph:i, sitz:null}); }
+    for(const x of [-6,-2.5,1]){ const r=rabeModell(); A.burg.add(r.G); rab.push({...r, ang:0, rad:12, hoe:58, v:.55, ph:x, sitz:new THREE.Vector3(x,24.15,3.5)}); }
+    A.raben=rab; A.flucht=0; }
   // ---------- Morgennebel: Schwaden im Tal, im Wald und unter der Burg (blenden aus, wenn man hindurchfährt) ----------
   { const puff=canvasTex(128,128,g=>{ for(let i=0;i<16;i++){ const x=28+Math.random()*72, y=38+Math.random()*52, r=16+Math.random()*28, gr=g.createRadialGradient(x,y,0,x,y,r); gr.addColorStop(0,'rgba(255,255,255,.5)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.beginPath(); g.arc(x,y,r,0,7); g.fill(); } });
     const q=rng(55), plainY=(R.def.plainElev??R.startElev-60)-R.startElev, C=R.burgPos;
@@ -493,9 +533,15 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
     for(let i=0;i<30;i++){ const a=q()*6.3, rr=170+q()*250, x=C.x+Math.cos(a)*rr, z=C.y+Math.sin(a)*rr; add(x,terrainAt(x,z)+4+q()*12,z,60+q()*80,.4); } } // Burg ragt aus dem Nebel
 }
 // ---- Bewegung (jeden Frame im Rennen): Wasser fließt, Mühlrad dreht sich, Nebel blendet in der Nähe aus ----
-function poseBurg(dt){ const A=anim.burg, t=performance.now()/1000, cp=camera.position;
+function poseBurg(dt){ const A=anim.burg, t=performance.now()/1000, cp=camera.position; burgDrache(dt,t);
   for(const L of A.leute){ L.b.arme[1].rotation.x=-.5-.45*Math.max(0,Math.sin(t*2.3)); L.b.arme[0].rotation.x=-.25*Math.max(0,Math.sin(t*1.7+1)); L.b.kopf.rotation.y=.15*Math.sin(t*1.3); // Bauer erzählt mit Händen
     L.z.kopf.rotation.x=.12*Math.max(0,Math.sin(t*2.9)); L.z.arme[0].rotation.z=-.12-.1*Math.sin(t*.8); if(L.pferd) L.pferd.children[0].rotation.x=.02*Math.sin(t*1.1); } // Zöllner nickt, Pferd atmet
+  // Zollstation: Schlagbaum hoch, sobald ein Fahrer 20 m davor ist, danach wieder runter; der Zöllner dreht sich um, winkt und ruft
+  if(A.zoll){ const Z=A.zoll, nah=d=>d>Z.d-20&&d<Z.d+6, auf=nah(me.d)||(opp.active&&nah(opp.d)); Z.k=Math.min(1,Math.max(0,Z.k+(auf?dt:-dt*.7))); Z.dreh.rotation.x=-1.35*bSm(Z.k);
+    if(me.d<Z.d-60) Z.rief=false; if(!Z.rief&&me.d>Z.d-36&&me.d<Z.d){ Z.rief=true; Z.rufT=5.5; } Z.rufT=Math.max(0,Z.rufT-dt); // ruft 5,5 s lang
+    const ruf=Z.rufT>0, P=Z.z.G.position; Z.sp.visible=ruf; Z.w=Math.min(1,Math.max(0,Z.w+(ruf?dt*2:-dt))); const w=bSm(Z.w);
+    const dw=((Math.atan2(cp.x-P.x,cp.z-P.z)-Z.ry+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI; Z.z.G.rotation.y=Z.ry+dw*w;
+    if(w>0){ Z.z.arme[0].rotation.x=-w*(1.9+.5*Math.sin(t*7)); Z.z.arme[0].rotation.z=-.12-w*.3; Z.z.kopf.rotation.x*=1-w; } }
   for(const F of A.fahnen) F.f.rotation.y=Math.PI/2+.35*Math.sin(t*2.1+F.ph)+.15*Math.sin(t*3.7+F.ph*2); // Fahnen wehen
   for(const f of A.flammen) f.scale.set(1,.8+.35*Math.abs(Math.sin(t*9+f.position.z+f.position.x)),1);
   for(const R2 of A.rauch){ const k=(t*.25+R2.ph)%1; R2.sp.position.set(R2.a+k*1.5,R2.y+k*6,R2.u+Math.sin(t+R2.ph*6)*.4); R2.sp.scale.setScalar(.8+k*2.6); R2.sp.material.opacity=.45*(1-k); } // Rauch steigt und verweht
@@ -505,8 +551,8 @@ function poseBurg(dt){ const A=anim.burg, t=performance.now()/1000, cp=camera.po
   if(A.volk&&Math.hypot(cp.x-A.volk.mitte.x,cp.z-A.volk.mitte.z)<260) poseVolk(t,false);
   const ich=riders3d[myKey];
   // Wegelagerer: drohen und schwingen die Waffen; fährst du mit über 4 W/kg vorbei, hüllt sie eine Staubwolke ein und sie staunen
-  if(A.raeuber){ const Q=A.raeuber, md=me.d; if(md<Q.lastD-30||md<Q.d-200) Q.staunT=0;
-    if(Q.lastD<Q.d-150&&md>=Q.d-150) warnKasten('Habt Acht! Dort im Gehölz lauern finstere Gestalten …');
+  if(A.raeuber){ const Q=A.raeuber, md=me.d; if(md<Q.lastD-30||md<Q.d-200){ Q.staunT=0; Q.warn=false; }
+    if(!Q.warn&&md<Q.d-30&&md>=Q.d-30-Math.max(me.v,3)*3){ Q.warn=true; warnKasten('Habt Acht! Dort im Gehölz lauern finstere Gestalten …'); } // 3 s bevor die Sprechblase (ab 30 m) auftaucht
     if(Q.lastD<Q.d&&md>=Q.d&&ich&&ich.wS>4){ Q.staunT=7; Q.kamT=0; Q.sp.material.map=Q.staun; for(const m of Q.L){ const P=m.G.position; for(let i=0;i<70;i++){ const a=Math.random()*6.3, v=1+Math.random()*2.5;
         partSpawn(parts.dust,P.x+(Math.random()-.5)*2,P.y+.2+Math.random()*1.6,P.z+(Math.random()-.5)*2,Math.cos(a)*v,.4+Math.random()*.8,Math.sin(a)*v,2.2+Math.random(),Math.random()<.5?'#b98466':'#a8765a'); } } }
     Q.lastD=md; if(Q.staunT>0) Q.staunT-=dt; else Q.sp.material.map=Q.droh; Q.sp.visible=Q.staunT>0||(md>Q.d-30&&md<Q.d+12); const gr=Q.kamT!=null?2:1.6; Q.sp.scale.set(5.2*gr,1.6*gr,1); // erst ab 30 m, beim Schulterblick doppelt so groß
@@ -540,7 +586,48 @@ function poseVolk(t,alle){ const P=anim.burg.volk, m=new THREE.Matrix4(), q=new 
       m.compose(p,q,s.set(1,1,1)); P.arm.setMatrixAt(i*2+(sx>0?1:0),m); if(alle) P.arm.setColorAt(i*2+(sx>0?1:0),c.set(o.c)); } });
   for(const im of [P.body,P.head,P.arm,...P.hut.filter(Boolean)]){ im.instanceMatrix.needsUpdate=true; if(alle&&im.instanceColor) im.instanceColor.needsUpdate=true; } }
 // Kamera (aus rennen.js, nach der normalen Kamera): beim Einstauben 6 s Schulterblick zurück auf die Wegelagerer, dann wieder hinter den Fahrer
-function burgKamera(dt){ const Q=anim.burg.raeuber, ich=riders3d[myKey]; if(!Q||Q.kamT==null||!ich) return; Q.kamT+=dt; const T=6; if(Q.kamT>T){ Q.kamT=null; return; }
+function burgKamera(dt){ const Q=anim.burg.raeuber, ich=riders3d[myKey]; endKamera();
+  if(!Q||Q.kamT==null||!ich) return; Q.kamT+=dt; const T=6; if(Q.kamT>T){ Q.kamT=null; return; }
   const w=bSm(Q.kamT/.6)*bSm((T-Q.kamT)/.7), rp=ich.g.position, bc=Q.L[1].G.position, hd=headingAt(R,me.d), fx=Math.cos(hd), fz=Math.sin(hd), sx=bc.x-rp.x, sz=bc.z-rp.z, sl=Math.hypot(sx,sz)||1;
   const pos=new THREE.Vector3(rp.x+fx*5-sx/sl*2.5, rp.y+2.4, rp.z+fz*5-sz/sl*2.5), look=new THREE.Vector3(bc.x, rp.y+1.1, bc.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz);
   camera.position.lerp(pos,w); camera.lookAt(now.lerp(look,w)); }
+// Drache und Raben (aus poseBurg): ab 3,5 km (Führender) Überflug zur Burg, Kreisen über dem Bergfried, beim ersten Zieleinlauf Landung auf der Turmspitze mit Feuerstößen
+const BF={x:13,y:53,z:-1}, KR=46; // Spitze des Bergfried-Dachs in Burg-Koordinaten, Kreisradius des Drachen
+function burgDrache(dt,t){ const A=anim.burg, Q=A.drache, G=A.burg, ich=riders3d[myKey]; if(!Q||!G||!ich) return;
+  const lead=Math.max(me.d, opp.active?opp.d:-1e9), fertig=me.done||(opp.active&&opp.done), D=Q.D, mitte=new THREE.Vector3(BF.x,BF.y+3,BF.z), ziel=new THREE.Vector3();
+  const bez=(a,b,c,k)=>a.clone().multiplyScalar((1-k)*(1-k)).addScaledVector(b,2*(1-k)*k).addScaledVector(c,k*k);
+  if(Q.zust!=='weg'&&lead<3300){ Q.zust='weg'; D.visible=false; world.attach(D); D.scale.setScalar(1); } // neue Runde/neues Rennen
+  if(Q.zust==='weg'&&lead>=3500&&!fertig){ const hd=headingAt(R,me.d), f=new THREE.Vector3(Math.cos(hd),0,Math.sin(hd)), l=new THREE.Vector3(-Math.sin(hd),0,Math.cos(hd)), p=ich.g.position;
+    const lp=G.worldToLocal(p.clone()); Q.ang=Math.atan2(lp.z-BF.z,lp.x-BF.x); const st=(dd,h)=>{ const [x,z]=posAt(R,me.d+dd); return new THREE.Vector3(x,roadY(me.d+dd)+h,z); }; // Punkte über der Straße vor dir
+    const ende=G.localToWorld(new THREE.Vector3(BF.x+Math.cos(Q.ang)*KR,mitte.y,BF.z+Math.sin(Q.ang)*KR));
+    Q.kurve=new THREE.CatmullRomCurve3([p.clone().addScaledVector(f,-70).addScaledVector(l,12).add(new THREE.Vector3(0,28,0)), st(-5,9), st(22,4.5), st(50,5), st(80,9), st(110,22), ende]); // von hinten über dich, tief über die Fahrbahn, dann Steigflug
+    Q.T=Q.kurve.getLength()/22; Q.t=0; Q.zust='anflug'; D.visible=true; }
+  let flap=0, gleit=false;
+  if(Q.zust==='anflug'){ Q.t+=dt; const k=Math.min(1,Q.t/Q.T), p=Q.kurve.getPointAt(k), n=Q.kurve.getPointAt(Math.min(1,k+.005)); D.position.copy(p); if(k<1) D.lookAt(n); flap=Math.sin(t*5.5)*.6;
+    if(k>=1){ G.attach(D); Q.zust='kreis'; } }
+  else if(Q.zust==='kreis'){ Q.ang+=dt*.3; D.scale.lerp(new THREE.Vector3(1.3,1.3,1.3),Math.min(1,dt)); /* über der Burg etwas größer */ const pos=new THREE.Vector3(BF.x+Math.cos(Q.ang)*KR,mitte.y+4*Math.sin(t*.4),BF.z+Math.sin(Q.ang)*KR);
+    D.position.copy(pos); ziel.set(BF.x+Math.cos(Q.ang+.1)*KR,pos.y,BF.z+Math.sin(Q.ang+.1)*KR); D.lookAt(G.localToWorld(ziel)); D.rotateZ(-.35); gleit=true; flap=Math.sin(t*2.2)*.35*Math.max(0,Math.sin(t*.5));
+    if(fertig){ Q.zust='landen'; Q.t=0; Q.a=D.position.clone(); Q.b=new THREE.Vector3(BF.x,BF.y+14,BF.z+12); Q.c=new THREE.Vector3(BF.x,BF.y+1.55,BF.z); A.flucht=t; } }
+  else if(Q.zust==='landen'){ Q.t+=dt; const k=Math.min(1,Q.t/4), p=bez(Q.a,Q.b,Q.c,bSm(k)); D.position.copy(p); D.scale.lerp(new THREE.Vector3(1,1,1),Math.min(1,dt*2)); flap=Math.sin(t*7)*.7;
+    if(k<.97){ ziel.copy(bez(Q.a,Q.b,Q.c,Math.min(1,bSm(k)+.02))); ziel.y=Math.max(ziel.y,p.y-.5); D.lookAt(G.localToWorld(ziel)); } else D.rotation.set(0,0,0);
+    if(k>=1){ Q.zust='sitzt'; Q.feuerT=1.8; Q.naechst=t+9; } }
+  else if(Q.zust==='sitzt'){ if(t>Q.naechst){ Q.feuerT=1.5; Q.naechst=t+8+Math.random()*4; } }
+  // Haltung: Flügel schlagen bzw. halb angelegt, Beine im Flug angezogen, Schwanz pendelt, beim Feuern Kopf hoch und Maul auf
+  const sitzt=Q.zust==='sitzt', fe=Q.feuerT>0; for(const F of Q.fluegel){ F.W.rotation.z=F.s*(sitzt?(fe?.15:.75):flap+(gleit?.05:0)); F.W.rotation.y=sitzt&&!fe?-F.s*.9:0; }
+  for(const B of Q.beine) B.rotation.x=sitzt||Q.zust==='landen'&&Q.t>3?0:-1.1; Q.schw.forEach((s,i)=>{ s.rotation.y=.14*Math.sin(t*2-i*.5); s.rotation.x=sitzt?.12:.02*Math.sin(t*3-i); });
+  Q.kopf.rotation.x=fe?-.55:sitzt?-.15+.08*Math.sin(t*.8):.1; Q.kiefer.rotation.x=fe?.55:.05;
+  // Feuerstoß: Funken aus dem Maul, werden größer und verglühen von Gelb nach Rot
+  const wp=new THREE.Vector3(), wd=new THREE.Vector3(); if(fe){ Q.feuerT-=dt; Q.maul.getWorldPosition(wp); Q.maul.getWorldDirection(wd); Q.emit=(Q.emit||0)+dt*55;
+    while(Q.emit>=1){ Q.emit--; const F=Q.feuer.find(f=>f.life<=0); if(!F) break; F.p=(F.p||new THREE.Vector3()).copy(wp); F.s.position.copy(wp); F.v.copy(wd).multiplyScalar(13+Math.random()*5).add(new THREE.Vector3((Math.random()-.5)*2.5,(Math.random()-.5)*2.5,(Math.random()-.5)*2.5)); F.life=F.max=.8+Math.random()*.4; F.s.visible=true; } }
+  for(const F of Q.feuer){ if(F.life<=0) continue; F.life-=dt; if(F.life<=0){ F.s.visible=false; continue; } const k=1-F.life/F.max; F.p.addScaledVector(F.v,dt); F.s.position.copy(F.p); // eigene Position, weil kxFrame Sprite-Höhen zurücksetzt F.v.multiplyScalar(1-dt*1.2); F.v.y+=dt*3;
+    F.s.scale.setScalar(.8+k*4.5); F.s.material.opacity=.95*(1-k); F.s.material.color.setRGB(1,.85-.6*k,.35-.3*k); }
+  // Raben: kreisen um den Bergfried; landet der Drache, stieben sie auseinander und kommen nach 25 s zurück, die Sitzenden fliegen mit los
+  const weg=A.flucht&&t-A.flucht<25?bSm((t-A.flucht)/3)*(1-bSm((t-A.flucht-18)/7)):0;
+  for(const r of A.raben){ if(r.sitz&&!r.los&&!(weg>0||Q.zust==='landen')){ r.G.position.copy(r.sitz); r.G.rotation.set(0,r.ph,0); for(const F of r.F) F.W.rotation.z=F.s*.1; continue; }
+    if(r.sitz&&!r.los){ r.los=true; r.ang=Math.atan2(r.sitz.z-BF.z,r.sitz.x-BF.x); }
+    r.ang+=dt*r.v*(1+weg); const rr=r.rad*(1+weg*2.5), y=r.hoe+weg*14+1.5*Math.sin(t*.7+r.ph), p=new THREE.Vector3(BF.x+Math.cos(r.ang)*rr,y,BF.z+Math.sin(r.ang)*rr), n=new THREE.Vector3(BF.x+Math.cos(r.ang+.1)*rr,y,BF.z+Math.sin(r.ang+.1)*rr);
+    r.G.position.copy(p); r.G.lookAt(G.localToWorld(n)); r.G.rotateZ(-.3); for(const F of r.F) F.W.rotation.z=F.s*.6*Math.sin(t*(9+r.ph%3)+r.ph); } }
+// Kamera im Zieleinlauf: auf den letzten 100 m und nach dem Ziel höher und schräg nach oben, damit Bergfried, Dach und der landende Drache im Bild sind
+function endKamera(){ const A=anim.burg; if(!A||!A.burg) return; const w=bSm((me.d-(R.len-100))/80); if(w<=0) return;
+  const top=A.burg.localToWorld(new THREE.Vector3(BF.x,BF.y+2,BF.z)), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz);
+  camera.position.y+=3*w; camera.lookAt(now.lerp(top,.5*w)); }
