@@ -8,7 +8,7 @@ const KAMP=[
     items:[S_('Einfahren',8,50,60),{k:'r',n:5,items:[S_('Locker',3,65),S_('Elwetritsche-Jagd',0.5,85)]},S_('Grundlage',5,65),S_('Ausfahren',5,50)],
     hart:[S_('Einfahren',8,50,65),{k:'r',n:5,items:[S_('Locker',3,75),S_('Elwetritsche-Jagd',0.5,117)]},S_('Grundlage',5,78),S_('Ausfahren',5,50)],
     start:[{bild:'💰🏰',titel:'Gold für den Trifels',text:'Du bist [ein einfacher Bauer|eine einfache Bäuerin] aus der Gegend und suchst Arbeit. Auf dem Trifels wird gerade das Lösegeld für Richard Löwenherz abgeladen – und es heißt, der Burgherr sucht Leute, die das Gold sicher nach Speyer bringen.'},
-      {bild:'🤴',at:TRIFELS_T.rauf+6,titel:'Audienz beim Burgherrn',text:'„Für so ein Unterfangen brauche ich Leute, denen ich wirklich vertrauen kann – und die etwas taugen. Beweise es: Besiege Hans von Trotha auf Burg Berwartstein. Der Weg dorthin ist weit und beschwerlich.“'}],
+      {bild:'🤴',at:TRIFELS_T.rauf+25,titel:'Audienz beim Burgherrn',text:'„Für so ein Unterfangen brauche ich Leute, denen ich wirklich vertrauen kann – und die etwas taugen. Beweise es: Besiege Hans von Trotha auf Burg Berwartstein. Der Weg dorthin ist weit und beschwerlich.“'}],
     ende:[{bild:'🐦🍺',titel:'Wette gewonnen',text:'Dein neuer Knappe radelt mit der gefangenen Elwetritsche im Sack zurück zum Wirtshaus, um seine 10 Gulden einzustreichen.'},
       {bild:'🤝',titel:'Bis morgen!',text:'Ihr verabredet euch im Gasthaus an der Straße Richtung Teufelstisch. Dort geht die Reise weiter.'}]},
   {id:'teufelstisch', nr:2, titel:'Teufelstisch – Wette mit dem Teufel', ort:'Hinterweidenthal', bald:true},

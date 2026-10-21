@@ -95,7 +95,7 @@ function buildTrifels(){ const T=R.tri, hy=T.hofY, [kx,ky]=T.karren, [bx,by]=T.b
   { const H=T.wirt; if(H){ const tx=Math.cos(H.h), tz=Math.sin(H.h), nx=-Math.sin(H.h)*H.side, nz=Math.cos(H.h)*H.side, a=H.dep/2, b=-(H.w/2-.9), eis=lam('#2a2826');
       const W=new THREE.Group(); W.position.set(H.x-nx*a+tx*b, roadY(H.d)+.15+3.3, H.y-nz*a+tz*b); W.rotation.y=Math.atan2(nz,-nx); world.add(W); // lokal: +x von der Wand zur Straße
       box(W,1.3,.05,.05,eis,.65,0,0); const t=frakturTex(256,180,g=>{ g.fillStyle='#5a2a1c'; g.fillRect(0,0,256,180); g.strokeStyle='#d9a62b'; g.lineWidth=7; g.strokeRect(6,6,244,168); g.fillStyle='#e8c24a'; g.textAlign='center'; g.textBaseline='middle';
-        g.font='54px '+FRAKTUR; g.fillText('Wirtshaus',128,74,232); g.font='26px '+FRAKTUR; g.fillText('Wein · Bier · Speis',128,138,220); }); // Name noch offen (KAMPAGNE.md)
+        g.font='26px '+FRAKTUR; g.fillText('Wirtshaus',128,36,220); g.font='60px '+FRAKTUR; g.fillText('Zack Zack',128,94,236); g.font='24px '+FRAKTUR; g.fillText('Wein · Bier · Speis',128,148,220); }); // Name vom Nutzer
       const pl=new THREE.Mesh(new THREE.BoxGeometry(1,.7,.04),[holzD,holzD,holzD,holzD,new THREE.MeshLambertMaterial({map:t}),new THREE.MeshLambertMaterial({map:t})]); pl.position.set(.85,-.45,0); W.add(pl); } }
 
   // ---------- Laternen am Weg: Holzpfahl mit Laterne, leuchten in der Dämmerung (am Wirtshaus und im Tal) ----------
@@ -175,15 +175,18 @@ function buildTrifelsLeute(T,hy){ const A=anim.tri={reiter:[], traeger:null, kpf
   const wachen=[wache(-1.5,1.4,0),wache(1.5,-.4,0)]; wachen.forEach(speer); // gehen links und rechts neben dem Wagen mit
   A.karren={K,raeder,wachen,s:0,ph:0};
   // Burgherr: langes Gewand, pelzbesetzter Mantel, steht am Karren und blickt zur Straße
-  const W0=T.weg[3], bd=T.hof[0]+6, bp=wegPos(bd,-(roadW(R,bd)/2+1.6)), bv=wegPos(bd-14,0), bh=trMensch({lang:'#3a4f8a',mantel:'#6a1f2a',bart:'#5a4632',haar:'#5a4632'}); bh.G.position.set(bp.x,terrainAt(bp.x,bp.z),bp.z); bh.G.rotation.y=Math.atan2(bv.x-bp.x,bv.z-bp.z); world.add(bh.G); // an der Einfahrt in die Vorburg, links, blickt dir entgegen
-  const bl=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(kText(TRI_RUF_TXT)),transparent:true,depthWrite:false})); bl.scale.set(7.4,2.3,1); bl.position.set(bp.x,bh.G.position.y+3.1,bp.z); bl.visible=false; world.add(bl);
+  const W0=T.weg[3], bd=(T.hof[0]+T.hof[1])/2-7, bp=wegPos(bd,-(roadW(R,bd)/2+1.6)), bv=wegPos(bd-14,0), bh=trMensch({lang:'#3a4f8a',mantel:'#6a1f2a',bart:'#5a4632',haar:'#5a4632'}); bh.G.position.set(bp.x,terrainAt(bp.x,bp.z),bp.z); bh.G.rotation.y=Math.atan2(bv.x-bp.x,bv.z-bp.z); world.add(bh.G); // links am Scheitel der Kehre, kurz vor der Abzweigung des Burgwegs, blickt dir entgegen
+  for(const da of [-1.5,1.5]){ const w=trMensch({kittel:'#c8302a',aermel:'#e9b22e',hose:'#2f4a35'}), hb=new THREE.Mesh(new THREE.SphereGeometry(.15,10,8),lam('#8a8d93')); hb.position.set(0,.12,-.045); w.kopf.add(hb); speer(w);
+    const p=wegPos(bd+da,-(roadW(R,bd)/2+1.9)); w.G.position.set(p.x,terrainAt(p.x,p.z),p.z); w.G.rotation.y=bh.G.rotation.y; world.add(w.G); } // zwei Wachen neben ihm
+  const bl=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(kText(TRI_RUF_TXT)),transparent:true,depthWrite:false})); bl.scale.set(11,3.4,1); bl.position.set(bp.x,bh.G.position.y+3.7,bp.z); // groß, gut lesbar beim Vorbeifahren bl.visible=false; world.add(bl);
   A.burgherr={m:bh,blase:bl};
   for(const [dx,dz,ry] of [[-5.5,-1,.4],[-5.8,.2,-.3]]){ const t=truhe(world,W0.x+dx,0,W0.z+dz,ry); t.position.y=terrainAt(t.position.x,t.position.z); } // zwei abgeladene Truhen dort const pz=new THREE.Mesh(new THREE.TorusGeometry(.25,.06,6,14),lam('#e8e0d0')); pz.rotation.x=Math.PI/2; pz.position.y=1.5; bh.G.add(pz);
   // Löwenherz mit Gefolge: Richard vorn, Bannerträger mit der Löwenfahne, drei Ritter mit eigenen Wappen
   const L=[[0,{rock:0,kette:1,krone:1,bart:'#8a7a68'},0,'#c8202a'],[1,{rock:0,kette:1},0,null],[2,{rock:1,kette:1},1,null],[3,{rock:2,kette:1},2,null],[4,{rock:3,kette:1},3,null]];
   for(const [i,mo,sk,fb] of L){ const p=trPferd({fell:i%2?'#2a201a':'#3a2a22',schabracke:sk,federbusch:fb||(i===0?null:'#efeae0')}), m=trMensch(mo); trReiter(p,m); world.add(p.G);
     if(i===1){ const st=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,3.6,6),holz); st.position.set(.25,1.5,.1); m.G.add(st); const f=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.8),new THREE.MeshLambertMaterial({map:canvasTex(160,116,g=>wappenMal(g,160,116,0)),side:THREE.DoubleSide})); f.position.set(.25,2.9,-.55); f.rotation.y=Math.PI/2; m.G.add(f); A.fahne=f; }
-    A.reiter.push({p,m,ab:i*5.5,u:i%2?-.9:-2.2,ph:i*1.3}); } } // Kolonne: alle 5,5 m einer, versetzt auf der linken Straßenhälfte
+    A.reiter.push({p,m,ab:i*5.5,u:(i%2?.15:-.15),ph:i*1.3}); }
+  const ru=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(kText(TRI_BEISEITE)),transparent:true,depthWrite:false})); ru.scale.set(7.4,2.3,1); ru.visible=false; world.add(ru); A.ruf=ru; } // Kolonne: alle 5,5 m einer, mitten auf dem Weg · Ruf des Bannerträgers
 
 // ---- Bewegung (jeden Frame): Gefolge reitet dir auf dem Anstieg entgegen und vorbei, Träger, Pferde nicken ----
 const TRI_V=3.2; // Trab der Reiter, m/s
@@ -194,6 +197,8 @@ function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=
     r.p.G.position.set(P.x,y,P.z); r.p.G.rotation.set(0,-P.h-Math.PI/2,0); // lokal +z gegen die Fahrtrichtung: reitet bergab
     if(lauf) r.ph+=dt*TRI_V*2.6*simSpeed(); const s=Math.sin(r.ph), a=lauf?1:0; r.p.beine.forEach((b,i)=>b.rotation.x=.55*a*(i===0||i===3?s:-s)); r.p.hals.rotation.x=.08*a*Math.sin(r.ph*2)+.03*Math.sin(t*.9+r.ab);
     r.m.G.position.y=1.1+.05*a*Math.abs(Math.sin(r.ph)); }
+  A.d0=d0; // für triSpur
+  if(A.ruf){ const g=d0-me.d, an=race.state==='run'&&g<48&&g>2, b=A.reiter[1].p.G.position; A.ruf.visible=an; if(an){ A.ruf.position.set(b.x,b.y+5.2,b.z); const tx=kText(TRI_BEISEITE); if(A.rufTx!==tx){ A.rufTx=tx; A.ruf.material.map=blaseTex(tx); A.ruf.material.needsUpdate=true; } } }
   if(A.fahne) A.fahne.rotation.x=.12*Math.sin(t*2.3);
   // Burgherr: hebt die Hand und spricht dich an, kurz bevor die Audienz-Tafel kommt
   const B=A.burgherr; if(B){ const an=race.state==='run'&&rt>=TRI_RUF[0]&&rt<TRI_RUF[1]; B.blase.visible=an; if(an){ const tx=kText(TRI_RUF_TXT); if(B.txt!==tx){ B.txt=tx; B.blase.material.map=blaseTex(tx); B.blase.material.needsUpdate=true; } } B.m.arme[1].rotation.x+=((an?-2.4:0)-B.m.arme[1].rotation.x)*Math.min(1,dt*4); B.m.kopf.rotation.y=.15*Math.sin(t*.6); }
@@ -205,7 +210,11 @@ function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=
     A.kpferd.beine.forEach((bb,k)=>bb.rotation.x=.4*am*(k===0||k===3?sn:-sn)); A.kpferd.hals.rotation.x=.06*Math.sin(lauf?C.ph*2:t*.7);
     for(const w of C.wachen){ w.beine[0].rotation.x=.45*am*sn; w.beine[1].rotation.x=-.45*am*sn; } } }
 const KARREN_TRI=1.2; // Schritt des Goldkarrens, m/s
-const TRI_RUF=[TRIFELS_T.rauf-14, TRIFELS_T.rauf+6], TRI_RUF_TXT='Halt! Ihr seid doch [der Bursche, der|die Magd, die] sich für das Gold meldet?'; // Workout-Zeit (s): Burgherr ruft dich an; danach Audienz-Tafel (at in kampagne.js)
+const TRI_BEISEITE='Beiseite mit Euch, [Bauer|Bäuerin]! Platz für den König von England!';
+// Spur (aus rennen.js): vor dem Gefolge in der Mitte, ab 28 m an den rechten Rand ausweichen, bis der Letzte vorbei ist
+function triSpur(d,t){ const A=anim.tri; if(!A||A.d0==null||race.state!=='run') return t; const g=A.d0-d, L=A.reiter.length?A.reiter[A.reiter.length-1].ab:0; if(g>70||g+L<-6) return t;
+  const H=roadW(R,d)/2-.55, mitte=bSm((70-g)/15), rechts=bSm((32-g)/6)*bSm((g+L+6)/5); return t+(0-t)*mitte*(1-rechts)+(H-t)*rechts; }
+const TRI_RUF=[TRIFELS_T.rauf+2, TRIFELS_T.rauf+12], TRI_RUF_TXT='Halt! Ihr seid doch [der Bursche, der|die Magd, die] sich für das Gold meldet?'; // Workout-Zeit (s): Burgherr ruft dich an; danach Audienz-Tafel (at in kampagne.js)
 // Kamera (aus draw): schaut kurz zum Burgherrn, während er dich anspricht (wie beim Zöllner)
 function trifelsKamera(dt){ const B=anim.tri&&anim.tri.burgherr, ich=riders3d[myKey]; if(!B||!ich||race.state!=='run') return; const rt=race.t, a=TRI_RUF[0]+6, b=TRI_RUF[1]+1; if(rt<a||rt>b) return;
   const w=.75*bSm((rt-a)/1.2)*bSm((b-rt)/1.2), p=B.m.G.position, look=new THREE.Vector3(p.x,p.y+1.6,p.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz); camera.lookAt(now.lerp(look,w)); }
