@@ -4,6 +4,10 @@
    Umgesetzt beim Zeichnen (Vertex-Shader): jeder Punkt wird abhängig vom Gelände unter ihm verschoben, Bäume und Häuser behalten ihre Form. */
 const KX={k:2.5, r1:120, r2:450, on:false, uK:{value:0}, uC:{value:new THREE.Vector2()}, uRef:{value:0}, uHt:{value:null}, uG:{value:new THREE.Vector4()}, uN:{value:new THREE.Vector2(1,1)}};
 function kxWt(dist){ const t=Math.min(1,Math.max(0,(dist-KX.r1)/(KX.r2-KX.r1))); return 1-t*t*(3-2*t); }
+// Höhe wie das Gelände-Mesh sie zeichnet: zwei Dreiecke je Rasterzelle, Diagonale von (i+1,j) nach (i,j+1) – terrainAt mischt dagegen bilinear
+function triAt(x,z,arr){ const gx=(x-TER.x0)/TER.res, gz=(z-TER.z0)/TER.res;
+  const i=Math.max(0,Math.min(TER.nx-2,Math.floor(gx))), j=Math.max(0,Math.min(TER.nz-2,Math.floor(gz))), fx=Math.min(1,Math.max(0,gx-i)), fz=Math.min(1,Math.max(0,gz-j)), h=arr||TER.h, n=TER.nx;
+  const a=h[j*n+i], b=h[j*n+i+1], c=h[(j+1)*n+i], d=h[(j+1)*n+i+1]; return fx+fz<=1 ? a+(b-a)*fx+(c-a)*fz : d+(c-d)*(1-fx)+(b-d)*(1-fz); }
 function visOff(x,z){ if(!KX.on) return 0; const w=kxWt(Math.hypot(x-KX.uC.value.x,z-KX.uC.value.y)); return w>0?(KX.k-1)*w*(terrainAt(x,z,TER.hr)-KX.uRef.value):0; }
 const visRoadY=d=>{ const [x,z]=posAt(R,d); return roadY(d)+visOff(x,z); };
 const KX_GLSL=`uniform float uKx; uniform vec2 uKc; uniform float uKref; uniform sampler2D uKht; uniform vec4 uKg; uniform vec2 uKn;
@@ -37,6 +41,21 @@ function kxSetup(){ KX.on=!!(R&&(R.kalmit||R.def.steil)); KX.uK.value=0; anim.kx
   walk(world); }
 function kxFrame(){ if(!KX.on) return; const [cx,cz]=posAt(R,me.d); KX.uC.value.set(cx,cz); KX.uRef.value=terrainAt(cx,cz,TER.hr); KX.uK.value=KX.k-1;
   anim.kxSpr.forEach(s=>s.o.position.y=s.y+visOff(s.o.position.x,s.o.position.z)); }
+/* Test-Helfer (Konsole): __luecken(grenze=0.8) prüft alle 2 m quer über Fahrbahn und Bankett gegen das gezeichnete Gelände (ohne Überhöhung – die hebt Straße und Gelände gleich an).
+   „sticht durch“: Gelände liegt über dem Belag · „Kante schwebt“: an der Bankettkante liegt das Gelände mehr als grenze m tiefer (man sieht von der Seite unter die Straße) */
+window.__luecken=(grenze=.8)=>{ if(!TER.hr) return console.log('Nur auf Kalmit und Berwartstein');
+  const A=[], last={}; let falt=0;
+  const add=(art,i,wo,v,schl)=>{ const c=last[art]; if(c&&c.i>=i-1){ c.i=i; c.bis=i*STEP; if(schl(v,c.wert)){ c.wert=v; c.wo=wo; } } else A.push(last[art]={art,i,von:i*STEP,bis:i*STEP,wo,wert:v}); };
+  for(let i=1;i<R.xs.length-1;i++){ const d=i*STEP, hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), rw=roadW(R,d)/2, ry=roadY(d);
+    let dh=headingAt(R,d+STEP)-headingAt(R,d-STEP); dh=Math.abs(Math.atan2(Math.sin(dh),Math.cos(dh))); if(dh*(rw+.9)>2*STEP) falt++; // Kurvenradius kleiner als halbe Breite: Innenkante faltet sich
+    const g=(a,l)=>ry+l-triAt(R.xs[i]+nx*a,R.ys[i]+nz*a); // Abstand Belag–Gelände an Querposition a
+    for(const [a,l,wo] of [[0,.12,'Mitte'],[rw/2,.12,'Fahrbahn rechts'],[-rw/2,.12,'Fahrbahn links'],[rw,.12,'Rand rechts'],[-rw,.12,'Rand links'],[rw+.9,.05,'Bankett rechts'],[-rw-.9,.05,'Bankett links']]){
+      const v=g(a,l); if(v<0) add('sticht durch',i,wo,v,(v,w)=>v<w); }
+    for(const [s,wo] of [[1,'rechts'],[-1,'links']]){ const v=g(s*(rw+.9),.05); if(v>grenze) add('Kante schwebt '+wo,i,wo,v,(v,w)=>v>w); } }
+  console.table(A.map(s=>({art:s.art, von:s.von, bis:s.bis, wo:s.wo, m:+s.wert.toFixed(2)})));
+  const n=a=>A.filter(s=>s.art.startsWith(a)).length;
+  console.log(`Gelände ${STR_UNTER} m unter der Straße · ${n('sticht')}× sticht durch · ${n('Kante')}× Kante über ${grenze} m · Innenkante faltet an ${falt} Punkten`); return A; };
+let STR_UNTER=0.2; // so tief liegt das Gelände (Rasterpunkte bis 12 m neben der Mitte) unter der Straße
 const lam=c=>new THREE.MeshLambertMaterial({color:c});
 
 function textSprite(lines, {bg='#ffffff', fg='#1a1a1a', accent='#b5523b', w=3, border=true}={}){
@@ -93,7 +112,7 @@ function build3D(){
   const tmp=new Float32Array(N);
   for(let pass=0;pass<12;pass++){ tmp.set(h); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; if(dist[k]<12) continue;
       h[k]=(tmp[k]*2+tmp[k-1]+tmp[k+1]+tmp[k-n]+tmp[k+n])/6; } }
-  for(let k=0;k<N;k++) if(dist[k]<12) h[k]=roadY(src[k]*STEP)-0.6;
+  for(let k=0;k<N;k++) if(dist[k]<12) h[k]=roadY(src[k]*STEP)-STR_UNTER;
   TER.vbw=null; TER.bach=BG?burgGelaende(h,src,dist):null; // Burg: Bachbett und ebene Vorburg
   // Höhe der nächstgelegenen Straßenstelle je Geländepunkt (geglättet) – danach richtet sich die Überhöhung, damit die Straße quer nicht kippt
   { const hr=new Float32Array(N), tq=new Float32Array(N); for(let k=0;k<N;k++) hr[k]=roadY(src[k]*STEP);

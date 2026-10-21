@@ -23,10 +23,24 @@ Alles in `welt-kalmit.js`, danach komplett zurückgesetzt:
 
 Ergebnis: Die Lücken waren teilweise noch da, und die Straße wirkte dick und aufgesetzt, auch im Flachen. Die Ursache für den dicken Eindruck ist nicht geklärt; die abgeschwächte Böschung hätte im Flachen eigentlich nicht entstehen sollen. Vermutlich wirken alle diese Änderungen nur auf die Form ohne Überhöhung und treffen Ursache 4 nicht.
 
-## Nächster Schritt: Ursache eingrenzen
-An einer Stelle mit Lücke in der Browser-Konsole `KX.k=1` eingeben. Das schaltet die Überhöhung aus und wirkt ab dem nächsten Bild, zurück mit `KX.k=2.5`. Von derselben Stelle je einen Screenshot mit und ohne Überhöhung machen.
-- **Lücke verschwindet:** Ursache 4. Lösungsideen:
-  - in Kehren schwächer überhöhen (z. B. `KX.k` abhängig von der Krümmung)
-  - die Anhebung für Straße und Gelände aus derselben ungeglätteten Höhe berechnen
-  - das Gelände im Umkreis der Überhöhung feiner unterteilen
-- **Lücke bleibt:** Ursachen 1–3. Dann gezielt nur an den betroffenen Stellen ansetzen, nicht entlang der ganzen Strecke.
+## Messung (Okt. 2026) und Stand
+Konsolen-Helfer `__luecken(grenze=0.8)` in `welt-kalmit.js`: prüft alle 2 m quer über Fahrbahn und Bankett das gezeichnete Gelände (`triAt` = Dreiecke wie das Mesh). Meldet „sticht durch“ (Gelände über dem Belag) und „Kante schwebt“ (Gelände an der Bankettkante mehr als `grenze` m tiefer) sowie Punkte, an denen sich die Innenkante faltet.
+
+Ergebnisse:
+- **Ursache 4 (Überhöhung) ist es nicht.** Bilineare und Dreiecks-Rechnung der Anhebung unterscheiden sich höchstens um 0,04 m, weil `TER.hr` stark geglättet ist. Eine Umstellung des Shaders auf Dreiecke wurde getestet und wieder entfernt.
+- Innenkante faltet sich nirgends.
+- **Hauptursache ist Ursache 2:** Das Gelände lag bis 12 m neben der Mitte überall 0,6 m unter der Straße. Die Straße ist ein dünnes Band ohne Seitenwand und schwebte also überall ~0,65 m, an Hängen bis 1,5 m. In Kehren sieht man von der Seite darunter.
+- Absenkung jetzt `STR_UNTER` (oben in `welt-kalmit.js`), von 0,6 auf **0,2** m gesenkt. Messung (Kante über 0,8 m, Strecke in m):
+
+| `STR_UNTER` | Kalmit sticht / Kante | Berwartstein sticht / Kante |
+|---|---|---|
+| 0,6 | 0 / 7626 m, max 1,55 | 0 / 4818 m |
+| 0,4 | 0 / 2182 m | 0 / 1014 m |
+| 0,2 | 0 / 556 m, max 1,20 | 0 / 312 m |
+| 0,1 | 1× (−0,06) / 236 m | 1× (−0,02) / 208 m |
+
+  Die größten Werte auf Berwartstein (bis 9 m) sind die beiden Holzbrücken (992–1010 m, Zugbrücke 5490–5524 m), also gewollt.
+- Nicht geprüft: Stichstraßen/Abzweigungen (`stY` mit `TER.hr+.13`, `abY`) – die lagen bisher sicher über dem 0,6 m tieferen Gelände.
+
+## Nächster Schritt
+Im Spiel ansehen, ob die Kehren mit 0,2 m gut aussehen und nirgends Gelände durch Straße, Stichstraßen oder Bankett schaut. Für die restlichen Stellen (Kante > 0,8 m, Liste mit `__luecken()`): schräge Böschung in Bankettfarbe von der Bankettkante nach außen unten, nur dort – keine senkrechte Wand (die wirkte beim alten Versuch vermutlich dick).
