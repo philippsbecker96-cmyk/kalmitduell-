@@ -2,7 +2,7 @@
 
 Neuer Spielmodus: Kampagne aus 4 Missionen im Mittelalter. Jede Mission ist ein Anfänger-Workout von 30–45 min, alle Leistungen in % der FTP (`kd-ftp`). Die Welt folgt dem Workout: Ereignisse (Drache, Teufel, Verfolger) starten mit dem jeweiligen Intervall, nicht an einer festen Stelle der Strecke. Arbeitsregeln aus `CLAUDE.md` gelten. Workouts sind Entwürfe und werden noch mit dem Nutzer abgestimmt.
 
-**Stand 21.10.2026:** Schritt 1 (Gerüst) gebaut, siehe „Umsetzung“.
+**Stand 21.10.2026:** Schritt 1 (Gerüst) gebaut und vom Nutzer getestet, siehe „Umsetzung“. Datei für die Trifels-Welt angelegt (`js/welt-trifels.js`, noch leer).
 
 ## Rahmengeschichte
 Auf den Trifels wurden riesige Mengen Gold geschafft, das Lösegeld für Richard Löwenherz, der nun abzieht. Das Gold soll zur Kaiserpfalz nach Speyer, um dort sicher verwahrt zu werden. Du bietest dich dem Burgherrn des Trifels (fiktiv, Name offen) für den Transport an. Er braucht dafür Leute, denen er wirklich vertrauen kann und die fähig sind, und stellt dich auf die Probe: Besiege Hans von Trotha, der auf Burg Berwartstein residiert und durch seinen Drachen vom Drachenfels (bei Busenberg) als übermächtig gilt. Der Weg dorthin ist weit und beschwerlich. Die Reise führt durchs Tal: Annweiler → Hinterweidenthal → Dahn → Erlenbach/Berwartstein. Trothas Handlanger (Teufel, Ritter) stellen sich dir unterwegs in den Weg, im Finale lässt er als letzten Trumpf den Damm der Wieslauter brechen.
@@ -23,6 +23,7 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 - **Zwei Stufen Leicht/Hart** (Knöpfe im Kampagnen-Block, gespeichert): gleiche Struktur und Dauer, eigene Werte je Mission. Richtwerte für Hart: kurze Intervalle ×1,35–1,4, lockere Phasen/Grundlage ×1,15–1,2 (gedeckelt bei ≈75–78 %), Ein-/Ausfahren (fast) gleich; bei längeren Intervallen (3–5 min) etwas niedriger. Geschafft zählt für beide Stufen.
 - **Menü:** eigener Modus „Kampagne“ neben Anstieg, Rundstrecke usw. Missionen werden nacheinander freigeschaltet. Nur allein, nicht online.
 - **Tafel-Stil gemischt:** Szenen mit Ort als Standbild aus der 3D-Welt mit Pergament-Textfeld; Gesprächsszenen (z. B. Burgherr) als gezeichnete Canvas-Tafel: Bild der Figur + Erzähltext / Sprechblase, einfacher flacher Comic-Stil. Später durch eigene Bilder ersetzbar. Tafeln liegen über dem ganzen Bild, darunter fährt die Figur weiter.
+- **Tafelbilder:** die Emojis sind nur Platzhalter. Die richtigen Bilder kommen erst in Schritt 5, wenn Welt und Figuren stehen (Standbilder brauchen Burg, Karren, Knappe). Gezeichnete Figuren sollen genauso aussehen wie ihre 3D-Version (Burgherr auf der Tafel = Burgherr im Spiel).
 - **Vorausberechnung der Strecke:** wie bei Space/Insel (`spaceDef`, `islandDef`, `genEntry` in `strecke.js`): Workout in 2-s-Schritten, aus FTP und Gewicht per `vSteady` die Strecke je Schritt. Anders als dort kommt die Steigung von der Strecke (vorgegeben), nicht aus der Intensität. Orte (Begegnungen, Wirtshaus, Jagdstellen, Ziel) hängen an Zeitpunkten und werden an die berechneten Meter gesetzt; die Welt baut ihre Szenen dort und bei geänderter FTP/Gewicht neu (Schlüssel wie bei Space). Mission endet mit dem Workout, das Ziel liegt dort. Weicht man ab, warten Ereignisse auf den Fahrer. Mehraufwand ≈ 1–2 Tage.
 
 ## Der Knappe (fester Baustein aller Missionen)
@@ -61,7 +62,7 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
   - Westlicher Felssporn: kleine Fachwerkhäuschen ganz vorn.
   - Vorburg unterhalb der Mauern: Holzhütten und Schuppen, hier die Goldkarren-Szene.
   - Farben: rötlicher Sandstein, Moos auf den Mauern, graue Dächer, Herbstwald grün/gelb/orange.
-- **Mit Inspiration vom Nutzer (noch offen):** Knappe (Aussehen).
+- **Mit Inspiration vom Nutzer (noch offen):** Knappe (Aussehen) – spätestens für Schritt 4 (Figuren) nötig.
 - **Elwetritsche (Entwurf nach Nutzer-Bildern):** dicker runder Körper (Gelb/Orange, Bauch heller), großer gelb-oranger Entenschnabel (etwas zu groß, leicht offen), große Glupschaugen auf kurzen Stielen, struppiger Federschopf, kleine Stummelflügel, buschiger regenbogenbunter Schwanz, dünne rote Hühnerbeine mit großen Krallenfüßen. Wirkung freundlich-albern, nicht gruselig. Bewegung: watschelnd-hüpfendes Rennen mit Flügelflattern, Augen wackeln nach, Schulterblick und Zunge raus.
 - **Neu, frei gestaltbar:** Burgherr, Löwenherz mit Gefolge zu Pferd, Goldtransport (Ochsenkarren mit Goldhaufen/Truhen, Wachen), Glühwürmchen.
 - **Aus Vorhandenem:** Wirtshaus (`haus()`, Schild wie `R.wirt`), Dorfleute (`welt-dorf.js`), Abfahrt durch den Burgwald (Kiefern, Felsen, Unterholz aus Berwartstein), Queichtal mit Bach, Nebel und Abendlicht.
@@ -101,11 +102,11 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 - Knappe: Figur + Holzrad, Abstandslogik (zurückfallen/aufholen je nach Workout-Block), Sprüche pro Block. Aufwand klein bis mittel, Esel wäre der größte Einzelposten.
 
 ## Umsetzung
-1. ✅ **Gerüst** (`js/kampagne.js`): Modus `kamp` im Menü (`MODES` in `strecke.js`, `openMode` in `lobby.js`) läuft intern als Training (`race.mode='train'`, `race.kamp`=Mission) – ERG, Workout-Anzeige, Ergebnis aus `training.js`. Hooks: `curSegs`/`curUnit`/`woKind`, `renderWo` (blendet Workout-Editor aus, FTP bleibt), `trainFinish` → `kampFertig`, `loop` → `kampTick`. Missionen in `KAMP` (Workout-`items`, `start`-/`ende`-Tafeln, `bald` = noch nicht gebaut), Texte mit `[Bauer|Bäuerin]`. Tafeln `#kampTafel` mit Emoji-Platzhalterbild. Spielstand `kd-kampagne` `{stand, done, sel}`. Platzhalter-Strecke: Berwartstein in Dauerschleife (`KAMP_STRECKE`).
-2. Vorausberechnung und Trifels-Strecke als Linie, Orte an Zeitpunkten.
-3. Welt Trifels: Burg, Vorburg, Abfahrt, Tal, Wirtshaus.
-4. Figuren: Knappe, Elwetritsche, Löwenherz mit Gefolge, Goldkarren, Burgherr (Tafel).
-5. Ablauf, Ereignisse und Texte; Tafelbilder als Canvas-Zeichnung bzw. 3D-Standbild.
+1. ✅ **Gerüst** (`js/kampagne.js`): Modus `kamp` im Menü (`MODES` in `strecke.js`, `openMode` in `lobby.js`) läuft intern als Training (`race.mode='train'`, `race.kamp`=Mission) – ERG, Workout-Anzeige, Ergebnis aus `training.js`. Hooks: `curSegs`/`curUnit`/`woKind`, `renderWo` (blendet Workout-Editor aus, FTP bleibt), `trainFinish` → `kampFertig`, `loop` → `kampTick`. Missionen in `KAMP` (Workout-`items`, `start`-/`ende`-Tafeln, `bald` = noch nicht gebaut), Texte mit `[Bauer|Bäuerin]`. Tafeln `#kampTafel` mit Emoji-Platzhalterbild. Spielstand `kd-kampagne` `{stand, done, sel}`. Platzhalter-Strecke: Berwartstein in Dauerschleife (`KAMP_STRECKE`). **Vom Nutzer getestet:** Kacheln, Auswahl Bauer/Bäuerin, Leicht/Hart, Intervalle und Ende funktionieren; Tafelstil und Lesbarkeit (25 s) passen.
+2. Vorausberechnung und Trifels-Strecke als Linie, Orte an Zeitpunkten: Strecke als `trifelsDef` in `strecke.js` (ähnlich `berwartsteinDef`), Länge und Orte aus FTP, Gewicht und Stufe; erst mit schlichtem Gelände/Wald testen (Audienz-Tafel während der Vorburg-Schleife, nach dem Einfahren unten am Wirtshaus). Kommt vor der Welt, weil die Welt ihre Szenen an die berechneten Meter setzt.
+3. Welt Trifels in eigener Datei `js/welt-trifels.js` (angelegt, noch leer; eigene Datei, damit sie den Berwartstein-Dateien anderer Sitzungen nicht in die Quere kommt): Burg, Vorburg mit Hütten, Abfahrt, Tal, Wirtshaus.
+4. Figuren: Knappe (Aussehen vom Nutzer nötig), Elwetritsche, Löwenherz mit Gefolge, Goldkarren, Burgherr (Tafel).
+5. Ablauf, Ereignisse und Texte; Tafelbilder als Canvas-Zeichnung (Personen) bzw. 3D-Standbild (Orte) statt der Emoji-Platzhalter.
 
 ## Offene Fragen
 - **Berwartstein und Vorausberechnung:** Berwartstein ist 5,57 km fest gebaut, bei Anfängertempo ≈ 12–15 min. Für Mission 4 braucht es mehr Strecke (z. B. Anfahrt durchs Tal davor) und Szenen, die sich an die berechneten Meter anpassen.
