@@ -327,12 +327,12 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
   // Mensch: Beine, Kittel, Arme an Schultergelenken, Kopf mit Hut; blickt nach lokal +z · o.lang: Gewand bis zum Boden (Mönch, Bäuerin, Königspaar) · o.rock: Waffenrock über dem Kettenhemd (Wachen)
   const M=c=>lam(c), bretter=hMat('bretter',()=>new THREE.MeshLambertMaterial({map:canvasTex(64,64,g=>{ for(let x=0;x<64;x+=8){ const v=.8+Math.random()*.3; g.fillStyle=`rgb(${118*v|0},${84*v|0},${54*v|0})`; g.fillRect(x,0,8,64); g.fillStyle='rgba(30,18,10,.55)'; g.fillRect(x+7,0,1,64); } })}));
   const mensch=(p,blick,kittel,hose,hut,o={})=>{ const G=new THREE.Group(); G.position.set(p.x,p.y,p.z); G.rotation.y=Math.atan2(blick.x-p.x,blick.z-p.z); world.add(G); const haut=M('#e8c09a');
-    for(const z of [-.09,.09]){ if(!o.lang) box(G,.12,.75,.12,M(hose),z,.38,0); box(G,.13,.1,.22,M('#3e2a1c'),z,.05,.04); }
+    const beine=[]; for(const z of [-.09,.09]){ const b=new THREE.Group(); b.position.set(z,.76,0); G.add(b); beine.push(b); if(!o.lang) box(b,.12,.75,.12,M(hose),0,-.38,0); box(b,.13,.1,.22,M('#3e2a1c'),0,-.71,.04); } // Beine drehen in der Hüfte (Gehen, Sitzen)
     const k=new THREE.Mesh(o.lang?new THREE.CylinderGeometry(.18,.3,1.38,10):new THREE.CylinderGeometry(.18,.27,.95,10),M(kittel)); k.position.y=o.lang?.74:.95; G.add(k); box(G,.4,.06,.32,M(o.guertel||'#4a3222'),0,.78,0);
     if(o.rock){ const r=new THREE.Mesh(new THREE.CylinderGeometry(.2,.29,.8,10),M(o.rock)); r.position.y=.98; G.add(r); const b=new THREE.Mesh(new THREE.CylinderGeometry(.295,.295,.07,10),M(o.band||'#d9a62b')); b.position.y=.6; G.add(b); }
     const arme=[]; for(const x of [-.23,.23]){ const a=new THREE.Group(); a.position.set(x,1.38,0); G.add(a); const c=new THREE.Mesh(new THREE.CylinderGeometry(.055,.05,.58,6),M(o.aermel||kittel)); c.position.y=-.29; a.add(c);
       const hd=new THREE.Mesh(new THREE.SphereGeometry(.055,6,5),haut); hd.position.y=-.6; a.add(hd); a.rotation.z=x<0?-.12:.12; arme.push(a); }
-    const kopf=new THREE.Group(); kopf.position.y=1.5; G.add(kopf); const hk=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),haut); hk.position.y=.1; kopf.add(hk); hut(kopf); return {G,arme,kopf}; };
+    const kopf=new THREE.Group(); kopf.position.y=1.5; G.add(kopf); const hk=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),haut); hk.position.y=.1; kopf.add(hk); hut(kopf); return {G,arme,kopf,beine}; };
   // Hüte und Kopfbedeckungen
   const HUT={stroh:k=>{ const r=new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,.02,14),M('#d6bf72')); r.position.y=.18; k.add(r); const c=new THREE.Mesh(new THREE.CylinderGeometry(.12,.13,.13,12),M('#cdb265')); c.position.y=.25; k.add(c); },
     tuch:k=>{ const t=new THREE.Mesh(new THREE.SphereGeometry(.14,10,8,0,Math.PI*2,0,Math.PI*.6),M('#efe8d6')); t.position.set(0,.11,-.01); t.rotation.x=-.25; k.add(t); },
@@ -599,6 +599,7 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
       inst(wg,new THREE.MeshLambertMaterial({color:'#fff',side:THREE.DoubleSide}),wim,o=>{ ps.set(...o.p); qq.setFromAxisAngle(up,o.ry); sc.set(1,1,1); cc.set(['#c62f24','#e2b33a','#1f4e8c','#f2ece0'][o.c]); }); } }
 
   buildDorf({mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst,fr,rw,A,ps,qq,sc,cc,up}); // Dorfleben in Erlenbach (welt-dorf.js)
+  buildUnterwegs({mensch,HUT,box,M,holz,holzD,bretter,A}); // Pferdekarren, Fußgänger, Betrunkener (welt-unterwegs.js)
 
   // ---------- Burgwald am Hang: Pfad mit Geländer, Felsnasen mit Moos, Mauerrest, umgestürzter Stamm, Holzunterstand, Brennholz, Reh ----------
   { const P=R.burgPfad, D=R.burgDeko, V=R.vb, W=(a,u)=>({x:V.x+V.ex*a+V.nx*u, z:V.y+V.ey*a+V.ny*u}), pm=Object.assign(lam('#9a7556'),{side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3});
@@ -707,7 +708,7 @@ function poseBurg(dt){ const A=anim.burg, t=performance.now()/1000, cp=camera.po
       F.pf.position.copy(pos).addScaledVector(dir,k<1?0:-.3); F.pf.lookAt(F.pf.position.clone().add(dir));
       if(k>=1){ for(let i=0;i<18;i++) partSpawn(parts.dust,F.b.x,F.b.y+.05,F.b.z,(Math.random()-.5)*1.6,.5+Math.random()*.7,(Math.random()-.5)*1.6,1.2,'#b98466'); S2.flug=null; } } } // Einschlag: kleine Staubwolke
   if(A.burg){ const B=A.burg.position, e=Math.hypot(camera.position.x-B.x,camera.position.z-B.z); A.burg.scale.setScalar(1+.8*bSm((e-300)/900)); } // von weitem bis 1,8-mal so groß, ab 300 m echte Größe
-  poseFest(t,cp); poseDorf(t,dt,cp);
+  poseFest(t,cp); poseDorf(t,dt,cp); poseUnterwegs(t,dt,cp);
   if(A.reh){ const Rh=A.reh, P=Rh.G.position, w=bSm((45-Math.hypot(cp.x-P.x,cp.z-P.z))/15); Rh.hals.rotation.z=(1-w)*(-2+.15*Math.sin(t*1.3))+w*.1; Rh.ohr.forEach((o,i)=>o.rotation.z=.4*Math.max(0,Math.sin(t*2.3+i*2))**8); } // Reh äst, schaut auf, wenn man naht
   if(A.wasser) A.wasser.offset.y+=dt*.5; if(A.rad) A.rad.rotation.z-=dt*.9;
   const k=race.tod==='tag'?1:.55; for(const o of A.nebel) o.sp.material.opacity=o.base*k*bSm((o.sp.position.distanceTo(cp)-o.s*.3)/(o.s*.7)); }
@@ -737,7 +738,7 @@ function poseVolk(t,alle){ const P=anim.burg.volk, m=new THREE.Matrix4(), q=new 
       m.compose(p,q,s.set(1,1,1)); P.arm.setMatrixAt(i*2+(sx>0?1:0),m); if(alle) P.arm.setColorAt(i*2+(sx>0?1:0),c.set(o.c)); } });
   for(const im of [P.body,P.head,P.arm,...P.hut.filter(Boolean)]){ im.instanceMatrix.needsUpdate=true; if(alle&&im.instanceColor) im.instanceColor.needsUpdate=true; } }
 // Kamera (aus rennen.js, nach der normalen Kamera): beim Einstauben 6 s Schulterblick zurück auf die Wegelagerer, dann wieder hinter den Fahrer
-function burgKamera(dt){ const Q=anim.burg.raeuber, ich=riders3d[myKey]; endKamera(); startKamera(dt);
+function burgKamera(dt){ const Q=anim.burg.raeuber, ich=riders3d[myKey]; endKamera(); startKamera(dt); unterwegsKamera(dt);
   if(!Q||Q.kamT==null||!ich) return; Q.kamT+=dt; const T=6; if(Q.kamT>T){ Q.kamT=null; return; }
   const w=bSm(Q.kamT/.6)*bSm((T-Q.kamT)/.7), rp=ich.g.position, bc=Q.L[1].G.position, hd=headingAt(R,me.d), fx=Math.cos(hd), fz=Math.sin(hd), sx=bc.x-rp.x, sz=bc.z-rp.z, sl=Math.hypot(sx,sz)||1;
   const pos=new THREE.Vector3(rp.x+fx*5-sx/sl*2.5, rp.y+2.4, rp.z+fz*5-sz/sl*2.5), look=new THREE.Vector3(bc.x, rp.y+1.1, bc.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz);
