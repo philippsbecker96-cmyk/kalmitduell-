@@ -8,6 +8,16 @@ const DORF_PLATZ=[[1,0,20,22],[-1,0,20,22],[-1,72,98,10],[-1,108,113,8],[-1,139,
 function prepDorf(r,fr,rw){ const S=r.S, pp=[]; for(const [s,a,b,t] of DORF_PLATZ) for(let d=a; d<=b; d+=3) for(let u=1; u<=t; u+=3){ const f=fr(d), o=rw(d)+(zOpt(r,d).geh??SIDEWALK)+u; pp.push([f.px+f.nx*s*o, f.py+f.ny*s*o]); }
   const weg=o=>pp.some(([x,y])=>Math.abs(o.x-x)<2.8&&Math.abs(o.y-y)<2.8&&Math.hypot(o.x-x,o.y-y)<2.8); for(const k of ['tree','rock','bush','block','konif','zaun','grass']) S[k]=S[k].filter(o=>!weg(o)); }
 
+// Lücken im Dorf begrünen (aus prepBurg): Obstbäumchen, Holunder- und Haselbüsche, Grasbüschel auf den Wiesenstücken zwischen und hinter den Häusern – Gassen, Kirchplatz und Häuser bleiben frei, die Plätze der Szenen räumt prepDorf danach wieder
+function dorfGruen(r,fr,rw){ const S=r.S, q=rng(2024), Z=r.zones.find(z=>z[0]==='ort'), geh=Z[3].geh??SIDEWALK, K=r.kirche;
+  const frei=(x,y,d,s,u)=>!S.house.some(h=>Math.abs(h.x-x)<20&&Math.hypot(h.x-x,h.y-y)<Math.max(h.w,h.dep)/2+2.5)&&!r.gassen.some(g=>g.s===s&&Math.abs(g.d-d)<g.w/2+1.5&&u<g.len+3)
+    &&!S.tree.some(t=>Math.abs(t.x-x)<4&&Math.abs(t.y-y)<4)&&!(K&&Math.hypot(K.x-x,K.y-y)<22);
+  for(const s of [-1,1]) for(let d=Z[1]+2; d<Z[2]+8; d+=4.5) for(let u=2.5; u<32; u+=4.5){ if(q()>.3) continue; const dd=d+(q()-.5)*3, uu=u+(q()-.5)*3, f=fr(dd), o=rw(dd)+geh+uu, x=f.px+f.nx*s*o, y=f.py+f.ny*s*o;
+    if(!frei(x,y,dd,s,uu)) continue; const k=q();
+    if(k<.4) S.tree.push({x, y, s:1.2+q()*.8, c:q(), pine:false, ht:3, fruit:q()<.7}); // Apfel, Birne, Zwetschge
+    else if(k<.85){ S.bush.push({x, y, s:.7+q()*.6, c:q(), tree:q()<.3}); if(q()<.5) S.bush.push({x:x+1.2, y:y+.6, s:.5+q()*.4, c:q(), tree:false}); } // Holunder, Hasel
+    else for(let i=0;i<3;i++) S.grass.push({x:x+(q()-.5)*2, y:y+(q()-.5)*2, s:1+q()*.6, c:q(), r:q()*6}); } }
+
 function buildDorf(K){ const {mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst,fr,rw,A,ps,qq,sc,cc,up}=K, q=rng(4711), D=A.dorf={tiere:[], leute:[], tuecher:[], katzen:[], bienen:[], gaense:[], enten:[], dampf:[]};
   const at=(s,d,u)=>{ const f=fr(d), o=rw(d)+(zOpt(R,d).geh??SIDEWALK)+u, x=f.px+f.nx*s*o, z=f.py+f.ny*s*o; return {x, y:u<.6?roadY(d)+.15:terrainAt(x,z), z, h:f.h, s, d}; }; // u: Meter neben dem Gehweg
   const grp=p=>{ const G=new THREE.Group(); G.position.set(p.x,p.y,p.z); G.rotation.y=Math.atan2(-Math.sin(p.h)*-p.s, Math.cos(p.h)*-p.s); world.add(G); return G; }; // lokal: +z zur Straße

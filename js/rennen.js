@@ -61,7 +61,7 @@ function draw(dt){
     camS.roll=(camS.roll||0)+(rollT-(camS.roll||0))*Math.min(1,dt*3); if(Math.abs(camS.roll)>1e-4) camera.rotateZ(camS.roll); camShake(dt,vC); }
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
   sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vC); regenFx(race.paused?0:dt); luftFx(race.paused?0:dt,theirs,opp.active&&race.draft&&!me.done?me.draftR||0:0); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);
-  for(const r of [mine,theirs]){ const dist=camera.position.distanceTo(r.g.position), ds=Math.max(1,dist/14); r.tag.scale.set(1.9*ds,.475*ds,1); r.tag.visible=dist>6; } // Namensschild bleibt auch aus der Ferne lesbar
+  for(const r of [mine,theirs]){ const dist=camera.position.distanceTo(r.g.position), ds=Math.max(1,dist/14); r.tag.scale.set(1.9*ds,.475*ds,1); r.tag.visible=dist>6&&!R.def.burg; } // Namensschild (nicht auf Berwartstein) bleibt auch aus der Ferne lesbar
   renderer.render(scene,camera);
   ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H); miniMap(); miniProfile();
 }
@@ -267,7 +267,7 @@ function pyroStart(){ const A=anim.stadium; if(A && A.sb && !A.replay) takeRepla
 function onFinish(){
   pyroStart();
   send({t:'s',d:raceLen(),v:0,w:0,done:true,ft:me.time,vf:me.vf,avg:me.wkgSum/Math.max(1,me.time)}); finishCheck();
-  beep(523,.15); setTimeout(()=>beep(659,.15),160); setTimeout(()=>beep(784,.4),320);
+  if(!R.def.burg){ beep(523,.15); setTimeout(()=>beep(659,.15),160); setTimeout(()=>beep(784,.4),320); } // Zielfanfare (nicht auf Berwartstein: dort speit der Drache)
   $('banner').textContent=R.kalmit?'GIPFEL!':'ZIEL!'; setTimeout(()=>$('banner').textContent='',2500); setSlope(0);
   const B=anim.burg; if(B&&B.drache){ const tok={}; B.ergWarten=tok; B.drache.ergFeuer=false; setTimeout(()=>{ if(B.ergWarten===tok){ B.ergWarten=null; showResult(); } },25000); } // Berwartstein: Ergebnis erst nach dem Feuerstoß des Drachen (burgDrache), 25 s als Sicherheit
   else setTimeout(showResult,R.stadium?6000:1500);

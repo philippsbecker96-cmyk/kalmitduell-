@@ -3,6 +3,10 @@
 const BACH={a:600, b:1320, x:1000}; // Bach neben der Straße: von, bis (m), Querung unter der Holzbrücke
 const VB={tor:5528, br:[5490,5524], ml:20, mb:22, ae:62}; // Torturm (m) und Zugbrücke über den Halsgraben; danach Zielgerade über die Turnierwiese · Ringmauer: links, rechts hinten (m neben der Achse), Rückwand (m hinter dem Ziel)
 const FEST={s:-1, d0:23, d1:42}; // Bauernfest links am Start: von, bis (m), in der Lücke vor dem ersten Haus
+const SCHEUNE={d:33, u:19, L:26, T:12, H:7, F:9};
+const FRIEDHOF={d0:-9, d1:12, u0:21, u1:40}; // Friedhof links neben dem Vorlauf, schräg hinter Fest und Scheune: von, bis (m, auch vor dem Start), Abstand vom Gehweg // Zehntscheune hinter dem Fest: Mitte (m), Vorderwand (m neben dem Gehweg), Länge, Tiefe, Wandhöhe, Dachhöhe
+// Zusatz-Szenen abschotten: ein Fehler darin lässt nur diese Szene ausfallen (Meldung in der Konsole), die Strecke läuft weiter
+const AUS=new Set(); function sicher(name,fn){ if(AUS.has(name)) return; try{ fn(); }catch(e){ AUS.add(name); console.error(`Berwartstein: ${name} ausgefallen`,e); } }
 const ZOLL={d:4575, s:-1}; // Zollstation am Übergang Waldweg → Kopfstein, bergseitig (links)
 // Leute am Weg [m, Seite, Art, Abstand vom Straßenrand]: Bauern und Bäuerinnen im Dorf und im Tal, Mönche im Wald
 const VOLK_WEG=[[80,1,'bauer',.35],[160,-1,'baeuerin',.35],[270,1,'bauer',.35],[330,-1,'baeuerin',.35],[490,1,'bauer',2],[565,-1,'baeuerin',2],[780,-1,'bauer',2],[1170,1,'baeuerin',2.2],[1765,1,'moench',2],[1769,1,'moench',3],[2670,-1,'bauer',2.2],[3620,-1,'moench',2],[4320,1,'baeuerin',2.2]];
@@ -56,9 +60,14 @@ function prepBurg(r){ const S=r.S, q=rng(321), rw=d=>roadW(r,d)/2, frei=[]; // f
   { const f=fr(ZOLL.d-3), o=rw(ZOLL.d)+5; frei.push([f.px+f.nx*ZOLL.s*o, f.py+f.ny*ZOLL.s*o, 13]); } // Platz für Zollhaus, Karren und Pferd
   // Burg 50 m hinter dem Ziel (Palas-Front 40 m), drumherum die ebene Vorburg
   { const f=fr(r.len); r.burgPos={x:f.px+Math.cos(f.h)*50, y:f.py+Math.sin(f.h)*50, h:f.h}; frei.push([r.burgPos.x,r.burgPos.y,85]); }
+  dorfGruen(r,fr,rw); // Lücken im Dorf mit Obstbäumchen und Büschen füllen (welt-dorf.js)
+  prepUnterwegs(r,fr,rw,frei); // Plätze für Badehaus, Gänse, Wäscherinnen, Minnesänger, Bettler (welt-unterwegs.js)
   for(const k of ['tree','rock','bush','block','konif']) S[k]=S[k].filter(o=>!frei.some(([x,y,m])=>Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m&&Math.hypot(o.x-x,o.y-y)<m));
   // Bauernfest links am Start: Platz bis 18 m neben der Straße freiräumen (auch Gartenzäune, Grasbüschel)
-  { const fp=[]; for(let d=FEST.d0; d<=FEST.d1; d+=3) for(let u=1; u<=18; u+=3){ const f=fr(d), o=rw(d)+(zOpt(r,d).geh??SIDEWALK)+u; fp.push([f.px+f.nx*FEST.s*o, f.py+f.ny*FEST.s*o]); }
+  { const fp=[], C=SCHEUNE; for(let d=FEST.d0; d<=FEST.d1; d+=3) for(let u=1; u<=18; u+=3){ const f=fr(d), o=rw(d)+(zOpt(r,d).geh??SIDEWALK)+u; fp.push([f.px+f.nx*FEST.s*o, f.py+f.ny*FEST.s*o]); }
+    for(let d=C.d-C.L/2-6; d<=C.d+C.L/2+4; d+=3) for(let u=C.u-1; u<=C.u+C.T+5; u+=3){ const f=fr(C.d), g=fr(d), o=rw(C.d)+(zOpt(r,C.d).geh??SIDEWALK)+u; fp.push([g.px+f.nx*FEST.s*o, g.py+f.ny*FEST.s*o]); } // Scheune mit Leiterwagen und Holzstapel
+    { const F=FRIEDHOF, f=fr(3), o0=rw(3)+(zOpt(r,3).geh??SIDEWALK); for(let d=F.d0-3; d<=F.d1+3; d+=3) for(let u=F.u0-2; u<=F.u1+3; u+=3){ const a=d-3, o=o0+u; fp.push([f.px+Math.cos(f.h)*a+f.nx*FEST.s*o, f.py+Math.sin(f.h)*a+f.ny*FEST.s*o]); } } // Friedhof (Achse bei 3 m, gerade weitergeführt)
+    const zuNah=h=>h.side===FEST.s&&h.su===40&&Math.abs(h.d-C.d)<C.L/2+10; S.house=S.house.filter(h=>!zuNah(h)); r.hinter=r.hinter.filter(h=>!zuNah(h)); // Häuser der zweiten Reihe dort weg
     prepDorf(r,fr,rw); const imFest=o=>fp.some(([x,y])=>Math.hypot(o.x-x,o.y-y)<2.8); for(const k of ['tree','rock','bush','block','konif','zaun','lamp','post','grass']) S[k]=S[k].filter(o=>!imFest(o)); S.tor=S.tor.filter(o=>o.side!==FEST.s||o.d>FEST.d1+2); }
   // Burgwald: der Hang um die Ringmauer dicht bewachsen – Kiefern, Fichten, Buchen und Eichen, dunkles Unterholz, Farne, Felsbrocken; Pfad mit Geländer, Felsnasen, Mauerrest, Reh
   { const V=r.vb, q2=rng(77), W=(a,u)=>({x:V.x+V.ex*a+V.nx*u, y:V.y+V.ey*a+V.ny*u}), AE=V.L+VB.ae, C=r.burgPos;
@@ -163,13 +172,14 @@ function friesTex(){ const t=canvasTex(256,32,g=>{ g.fillStyle='#4e3626'; g.fill
 // Frakturschrift (UnifrakturMaguntia): Textur sofort zeichnen und neu zeichnen, sobald die Schrift geladen ist
 function frakturTex(w,h,draw){ const t=canvasTex(w,h,draw); if(document.fonts&&document.fonts.load) document.fonts.load('40px UnifrakturMaguntia').then(()=>{ const g=t.image.getContext('2d'); g.clearRect(0,0,w,h); draw(g,w,h); t.needsUpdate=true; }).catch(()=>{}); return t; }
 const FRAKTUR='"UnifrakturMaguntia", Georgia, serif';
-// Sprechblase als Pergament: gelbliches Papier mit dunklem Rand, Spitze nach unten, Text in Fraktur
-function blaseTex(txt){ return frakturTex(512,190,g=>{ const gr=g.createRadialGradient(256,72,20,256,72,280); gr.addColorStop(0,'#f4e6c4'); gr.addColorStop(.65,'#e8d3a2'); gr.addColorStop(1,'#c9a86a');
+// Sprechblase als Pergament: gelbliches Papier mit dunklem Rand, Spitze nach unten, Text in Fraktur; deko(g) zeichnet zusätzlich etwas aufs Papier
+function blaseTex(txt,deko){ return frakturTex(512,190,g=>{ const gr=g.createRadialGradient(256,72,20,256,72,280); gr.addColorStop(0,'#f4e6c4'); gr.addColorStop(.65,'#e8d3a2'); gr.addColorStop(1,'#c9a86a');
   g.fillStyle=gr; g.strokeStyle='#7a5530'; g.lineWidth=5; g.beginPath(); g.moveTo(22,10); for(let x=22;x<=490;x+=24) g.lineTo(x,8+Math.sin(x*.7)*2.5); g.quadraticCurveTo(506,10,504,40); g.lineTo(504,118); g.quadraticCurveTo(506,142,480,142);
   g.lineTo(286,142); g.lineTo(256,182); g.lineTo(242,142); g.lineTo(32,142); g.quadraticCurveTo(6,142,8,116); g.lineTo(8,38); g.quadraticCurveTo(6,10,22,10); g.closePath(); g.fill(); g.stroke();
   g.fillStyle='rgba(120,80,30,.12)'; for(let i=0;i<40;i++){ g.beginPath(); g.arc(20+Math.random()*472,16+Math.random()*120,2+Math.random()*7,0,7); g.fill(); } // Flecken
+  if(deko) deko(g); // z. B. Notenschlüssel (Minnesänger), Text dann schmaler
   g.fillStyle='#3b2412'; g.font='38px '+FRAKTUR; g.textAlign='center'; g.textBaseline='middle'; const Z=[]; let z='';
-  for(const w of txt.split(' ')){ const t=z?z+' '+w:w; if(g.measureText(t).width>450&&z){ Z.push(z); z=w; } else z=t; } Z.push(z); Z.forEach((l,i)=>g.fillText(l,256,76+(i-(Z.length-1)/2)*44)); }); }
+  for(const w of txt.split(' ')){ const t=z?z+' '+w:w; if(g.measureText(t).width>(deko?340:450)&&z){ Z.push(z); z=w; } else z=t; } Z.push(z); Z.forEach((l,i)=>g.fillText(l,256,76+(i-(Z.length-1)/2)*44)); }); }
 // Warnkasten oben im Bild (Pergament, siehe css/style.css), blendet nach ein paar Sekunden aus
 function warnKasten(txt){ let el=document.getElementById('pergament'); if(!el){ el=document.createElement('div'); el.id='pergament'; document.body.appendChild(el); }
   el.textContent=txt; el.classList.add('zeig'); clearTimeout(warnKasten.t); warnKasten.t=setTimeout(()=>el.classList.remove('zeig'),4000); }
@@ -207,7 +217,7 @@ function rabeModell(){ const G=new THREE.Group(), sw=lam('#141418'), sn=lam('#2a
   for(const x of [-1,1]){ const W=new THREE.Group(); W.position.set(x*.12,.08,0); G.add(W); const f=new THREE.Mesh(new THREE.BoxGeometry(.9,.02,.36),sw); f.position.x=x*.45; W.add(f); F.push({W,s:x}); }
   G.scale.setScalar(1.6); return {G,F}; }
 // ---- Aufbau (aus build3D) ----
-function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=new THREE.Quaternion(), sc=new THREE.Vector3(), ps=new THREE.Vector3(), cc=new THREE.Color(), up=new THREE.Vector3(0,1,0), eu=new THREE.Euler();
+function buildBurg(){ AUS.clear(); const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=new THREE.Quaternion(), sc=new THREE.Vector3(), ps=new THREE.Vector3(), cc=new THREE.Color(), up=new THREE.Vector3(0,1,0), eu=new THREE.Euler();
   const inst=(geo,mat,list,fn)=>{ if(!list.length) return null; const im=new THREE.InstancedMesh(geo,mat,list.length);
     list.forEach((o,i)=>{ cc.set('#ffffff'); fn(o,i); m4.compose(ps,qq,sc); im.setMatrixAt(i,m4); im.setColorAt(i,cc); }); im.instanceMatrix.needsUpdate=true; if(im.instanceColor) im.instanceColor.needsUpdate=true; world.add(im); return im; };
   const box=(P,w,h,d,mat,x,y,z,ry=0)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat); o.position.set(x,y,z); o.rotation.y=ry; P.add(o); return o; };
@@ -526,6 +536,69 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
   for(const [d,s2,art,o] of VOLK_WEG){ const f=fr(d), u=rw(d)+o, x=f.px+f.nx*s2*u, z=f.py+f.ny*s2*u, p={x,y:o<1?roadY(d)+.15:terrainAt(x,z),z}, bl={x:f.px,z:f.py};
     const m=art==='moench'?mensch(p,bl,'#5a4128','#3a2a1c',HUT.kapuze,{lang:1,guertel:'#e8e0cc'}):art==='baeuerin'?mensch(p,bl,['#8a3b2e','#3f6b4a','#6b5a8a'][d%3],'#3a2a1c',HUT.tuch,{lang:1}):mensch(p,bl,['#8a6a44','#6b7a4a','#7a5a3a'][d%3],'#5b4a36',HUT.stroh);
     A.winker.push({m,x,z,ph:d}); }
+  // ---------- Zehntscheune hinter dem Bauernfest: riesig und hoch, dunkle Bretter mit Balkenwerk, Strohdach, offenes Tor mit Heu, Ladeluken mit Lastbalken; daneben Leiterwagen, Strohballen, Holzstapel ----------
+  sicher('Scheune',()=>{ const C=SCHEUNE, s=FEST.s, f=fr(C.d), o=rw(C.d)+(zOpt(R,C.d).geh??SIDEWALK)+C.u+C.T/2, x=f.px+f.nx*s*o, z=f.py+f.ny*s*o, L=C.L, T=C.T, H=C.H, y0=.2;
+    const G=new THREE.Group(); G.position.set(x,terrainAt(x,z),z); G.rotation.y=Math.atan2(-Math.sin(f.h)*-s, Math.cos(f.h)*-s); world.add(G); // lokal: +z zur Straße, x längs der Straße
+    const BT=canvasTex(64,64,g=>{ for(let x=0;x<64;x+=8){ const v=.75+Math.random()*.3; g.fillStyle=`rgb(${74*v|0},${54*v|0},${38*v|0})`; g.fillRect(x,0,8,64); g.fillStyle='rgba(15,8,4,.6)'; g.fillRect(x+7,0,1,64); }
+      for(let i=0;i<50;i++){ g.fillStyle='rgba(20,12,6,.3)'; g.fillRect(Math.random()*64,Math.random()*64,1,3+Math.random()*9); } }); // dunkle, verwitterte Bretter
+    const brett=(rx,ry)=>{ const t=BT.clone(); t.needsUpdate=true; t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(rx,ry); return new THREE.MeshLambertMaterial({map:t}); }, balk=M('#2b1d12'), heu=M('#d8c070');
+    const ST=canvasTex(128,128,g=>{ g.fillStyle='#a08a55'; g.fillRect(0,0,128,128); for(let y=0;y<128;y+=8){ g.fillStyle='rgba(60,45,20,.35)'; g.fillRect(0,y+6,128,2); }
+      for(let i=0;i<500;i++){ const v=Math.random(); g.fillStyle=v<.5?'rgba(200,180,120,.5)':'rgba(90,70,35,.4)'; g.fillRect(Math.random()*128,Math.random()*128,1,4+Math.random()*7); } }); ST.wrapS=ST.wrapT=THREE.RepeatWrapping; ST.repeat.set(.5,.6); // Stroh in Lagen
+    box(G,L+.4,3.2,T+.4,sand,0,y0-1.6,0); // Sandsteinsockel bis unters Gelände
+    const tw=6.4, th=5.8; // Tor
+    box(G,L,H,.3,brett(L/3,H/3),0,y0+H/2,-T/2); for(const sx of [-1,1]) box(G,.3,H,T,brett(T/3,H/3),sx*L/2,y0+H/2,0);
+    for(const sx of [-1,1]) box(G,(L-tw)/2,H,.3,brett((L-tw)/6,H/3),sx*(L+tw)/4,y0+H/2,T/2); box(G,tw,H-th,.3,brett(tw/3,(H-th)/3),0,y0+th+(H-th)/2,T/2);
+    for(let i=0;i<=8;i++){ const px=-L/2+i*L/8; if(Math.abs(px)<tw/2+.1) continue; for(const sz of [-1,1]) box(G,.4,H,.45,balk,px,y0+H/2,sz*(T/2+.05)); } // Ständer
+    for(const sz of [-1,1]) for(const sx of [-1,1]) box(G,.45,H,.4,balk,sx*(L/2+.05),y0+H/2,sz*(T/2-.2));
+    for(const yy of [2.8,H-.2]){ box(G,L+.1,.32,.45,balk,0,y0+yy,-T/2-.05); for(const sx of [-1,1]){ box(G,.45,.32,T,balk,sx*(L/2+.05),y0+yy,0); if(yy<th) box(G,(L-tw)/2,.32,.45,balk,sx*(L+tw)/4,y0+yy,T/2+.05); } } box(G,L+.1,.32,.45,balk,0,y0+H-.2,T/2+.05); // Riegel
+    for(const sx of [-1,1]) for(let i=0;i<4;i++){ const px=sx*(tw/2+1.3+i*2.6); const k=box(G,.25,3.4,.3,balk,px,y0+4.6,T/2+.1); k.rotation.z=sx*.6*(i%2?1:-1); } // Kopfbänder
+    box(G,tw+.8,.5,.5,balk,0,y0+th+.25,T/2+.1); // Torsturz
+    // Tor offen: zwei Flügel mit Z-Strebe; drinnen dunkel, Heu bis unters Dach
+    for(const sx of [-1,1]){ const fl=new THREE.Group(); fl.position.set(sx*tw/2,y0,T/2+.2); G.add(fl); fl.rotation.y=sx<0?-1.8:1.8; // weit nach außen aufgeschlagen
+      box(fl,tw/2,th,.15,brett(1,2),-sx*tw/4,th/2,0); for(const yy of [.6,th-.6]) box(fl,tw/2,.25,.22,balk,-sx*tw/4,yy,0); const zs=box(fl,.22,th*1.05,.22,balk,-sx*tw/4,th/2,0); zs.rotation.z=sx*.5; }
+    box(G,L-.6,.1,T-.6,M('#4a3a26'),0,y0+.05,0); box(G,L-.8,H-.4,.05,M('#1c130b'),0,y0+H/2,-T/2+.25); // Lehmboden, dunkle Rückwand innen
+    for(const [hx,hy,hz,sx,sy,sz] of [[-3,1.6,-3,3.5,2,2.6],[2.5,1.4,-3.4,3,1.7,2.2],[-.5,3.4,-3.8,3.2,1.4,1.8],[6,1.2,-2.5,2,1.3,2],[-7,1.3,-2,2.4,1.4,2.4]]){ const h=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),heu); h.position.set(hx,y0+hy,hz); h.scale.set(sx,sy,sz); G.add(h); }
+    // Strohdach (First längs), Firstwulst, Giebel in Brettern
+    const rf=new THREE.Mesh(dachGeo(L,T,L+1.8,T+2,C.F),[new THREE.MeshLambertMaterial({map:ST,side:THREE.DoubleSide}),brett(T/3,C.F/3)]); rf.position.y=y0+H; G.add(rf);
+    const fw=new THREE.Mesh(new THREE.CylinderGeometry(.45,.45,L+1.8,10),M('#8a7548')); fw.rotation.z=Math.PI/2; fw.position.y=y0+H+C.F+.05; G.add(fw);
+    // Ladeluken in beiden Giebeln mit Lastbalken, Seilrolle und Seil, Heu schaut heraus
+    for(const sx of [-1,1]){ const gx=sx*(L/2+.03), ly=y0+H+2.2; box(G,.06,2.4,2,M('#1c130b'),gx,ly,0); box(G,.3,.3,2.6,balk,gx+sx*.05,ly+1.3,0); box(G,.3,.3,2.6,balk,gx+sx*.05,ly-1.3,0);
+      const lb=box(G,2.6,.35,.35,balk,gx+sx*1.1,ly+2.6,0); const ro=new THREE.Mesh(new THREE.TorusGeometry(.22,.06,6,12),M('#5a4128')); ro.position.set(gx+sx*2.2,ly+2.3,0); G.add(ro);
+      const se=cyl(.025,M('#c9b28a')); place(se,[gx+sx*2.42,ly+2.3,0],[gx+sx*2.42,ly-1.4,0]); G.add(se); const hu=new THREE.Mesh(new THREE.IcosahedronGeometry(.8,1),heu); hu.scale.set(.9,.6,1.1); hu.position.set(gx,ly-1,0); G.add(hu); }
+    // Daneben: Leiterwagen mit Heu (Startseite), Strohballen am Tor, Holzstapel an der Zielseite
+    { const W=new THREE.Group(); W.position.set(-L/2-3.2,y0,3); W.rotation.y=.25; G.add(W); box(W,3.2,.14,1.5,holz,0,1,0); for(const zz of [-.78,.78]){ for(const yy of [1.35,1.85]) box(W,3.4,.08,.08,holz,0,yy,zz); for(let i=-3;i<=3;i++) box(W,.06,.9,.06,holz,i*.5,1.45,zz); }
+      for(const [wx,wz] of [[-1.1,.85],[-1.1,-.85],[1.1,.85],[1.1,-.85]]){ const r=new THREE.Mesh(new THREE.TorusGeometry(.5,.06,5,16),holzD); r.position.set(wx,.52,wz); W.add(r); for(let i=0;i<4;i++){ const sp=box(W,.04,.98,.04,holz,wx,.52,wz); sp.rotation.z=i/4*Math.PI; } }
+      const dh=cyl(.05,holz); place(dh,[1.6,.9,0],[3.4,.5,0]); W.add(dh); const hm=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),heu); hm.scale.set(1.8,.8,.9); hm.position.y=1.8; W.add(hm); }
+    for(const [bx,by,bz,r] of [[-tw/2-2,.3,T/2+1.2,.1],[-tw/2-3.3,.3,T/2+1.1,-.1],[-tw/2-2.6,.9,T/2+1.15,.05],[tw/2+2.2,.3,T/2+1.1,.2]]){ const b=box(G,1.2,.6,.65,heu,bx,y0+by,bz); b.rotation.y=r; }
+    for(let i=0;i<4;i++) for(let j=0;j<7-i;j++){ const l=cyl(.17,M(['#6b4a32','#7a5a3a','#5a3e28'][(i+j)%3])); l.scale.y=2.4; l.rotation.z=Math.PI/2; l.position.set(L/2+1.4,y0+.2+i*.32,-T/2+1.5+j*.36+i*.18); G.add(l); } // Holzstapel an der Seitenwand, Scheite quer
+  });
+  // ---------- Friedhof links neben dem Vorlauf: Sandsteinmauer mit Torbogen, Kapelle mit Glockentürmchen, alte Linde, Eiben, schiefe Kreuze, Grabsteine, frisches Grab mit Schaufel ----------
+  sicher('Friedhof',()=>{ const F=FRIEDHOF, s=FEST.s, f=fr(3), dm=(F.d0+F.d1)/2-3, um=(F.u0+F.u1)/2, o=rw(3)+(zOpt(R,3).geh??SIDEWALK)+um, BX=F.d1-F.d0, BZ=F.u1-F.u0;
+    const x=f.px+Math.cos(f.h)*dm+f.nx*s*o, z=f.py+Math.sin(f.h)*dm+f.ny*s*o, G=new THREE.Group(); G.position.set(x,terrainAt(x,z),z); G.rotation.y=Math.atan2(-Math.sin(f.h)*-s, Math.cos(f.h)*-s); world.add(G); G.updateMatrixWorld(); // lokal: +z zur Straße
+    const v=new THREE.Vector3(), yAt=(lx,lz)=>{ v.set(lx,0,lz); G.localToWorld(v); return terrainAt(v.x,v.z)-G.position.y; }, q=rng(66);
+    const stein=M('#b89a82'), grau=M('#9a948c'), erde=M('#5a4128'), gruen=M('#3f6b32'), dunkel=M('#24402a');
+    // Mauer in Stücken, folgt dem Gelände; Lücke vorn für das Tor
+    const mauer=(x0,z0,x1,z1)=>{ const L=Math.hypot(x1-x0,z1-z0), n=Math.ceil(L/2); for(let i=0;i<n;i++){ const a=(i+.5)/n, mx=x0+(x1-x0)*a, mz=z0+(z1-z0)*a, y=yAt(mx,mz); box(G,L/n+.05,1.6,.5,sand,mx,y+.3,mz,-Math.atan2(z1-z0,x1-x0)); box(G,L/n+.1,.12,.62,stein,mx,y+1.16,mz,-Math.atan2(z1-z0,x1-x0)); } };
+    const hx=BX/2, hz=BZ/2; mauer(-hx,-hz,hx,-hz); mauer(-hx,-hz,-hx,hz); mauer(hx,-hz,hx,hz); mauer(-hx,hz,-1.3,hz); mauer(1.3,hz,hx,hz);
+    { const y=yAt(0,hz); for(const sx of [-1,1]) box(G,.6,2.3,.7,sand,sx*1.3,y+.95,hz); const bo=new THREE.Mesh(new THREE.TorusGeometry(1.3,.22,6,12,Math.PI),sand); bo.position.set(0,y+2.1,hz); G.add(bo); // Torbogen mit Dächlein und Kreuz
+      for(const k of [-1,1]){ const dd=box(G,1.7,.06,.9,dach,k*.6,y+3.5,hz); dd.rotation.z=k*-.6; } box(G,.08,.5,.08,holzD,0,y+4.1,hz); box(G,.3,.08,.08,holzD,0,y+4.2,hz); }
+    // Kapelle hinten links mit Glockentürmchen
+    { const cx=-hx+4.5, cz=-hz+4.5, y=yAt(cx,cz); box(G,5,7,6.5,sand,cx,y+1.5,cz); const rf=new THREE.Mesh(dachGeo(6.5,5,7.3,5.8,3.4),[dach,sand]); rf.rotation.y=Math.PI/2; rf.position.set(cx,y+5,cz); G.add(rf);
+      box(G,1.3,2.2,.06,M('#2b2420'),cx,y+1.1,cz+3.26); const tb=new THREE.Mesh(new THREE.CylinderGeometry(.65,.65,.06,12,1,false,0,Math.PI),M('#2b2420')); tb.rotation.set(Math.PI/2,0,Math.PI/2); tb.position.set(cx,y+2.2,cz+3.27); G.add(tb); // Tür mit Rundbogen
+      box(G,1.2,1.6,1.2,bretter,cx,y+9,cz+2.2); const tz=new THREE.Mesh(new THREE.ConeGeometry(1.05,1.8,4),dach); tz.rotation.y=Math.PI/4; tz.position.set(cx,y+10.7,cz+2.2); G.add(tz);
+      const gl=new THREE.Mesh(new THREE.CylinderGeometry(.2,.32,.45,10),M('#b8862a')); gl.position.set(cx,y+8.9,cz+2.2); G.add(gl); box(G,.08,.8,.08,holzD,cx,y+12,cz+2.2); box(G,.45,.08,.08,holzD,cx,y+12.15,cz+2.2); } // Glocke, Kreuz auf der Spitze
+    // Alte Linde in der Mitte, zwei dunkle Eiben
+    { const y=yAt(2,-1.5), st=cyl(.55,M('#4e3a2a'),.4); place(st,[2,y,-1.5],[2,y+5,-1.5]); G.add(st);
+      for(const [kx,ky,kz,r] of [[2,y+8,-1.5,4.6],[-.5,y+7,-.5,3.2],[4.6,y+7.2,-2.6,3.4],[1.5,y+9.6,-3,3],[3.5,y+6.4,.8,2.6]]){ const k=new THREE.Mesh(new THREE.IcosahedronGeometry(r,1),M(q()<.5?'#4f7a36':'#5a8640')); k.position.set(kx,ky,kz); k.scale.y=.85; G.add(k); } }
+    for(const [ex,ez] of [[hx-3,-hz+3],[hx-2.5,hz-3.5]]){ const y=yAt(ex,ez), e=new THREE.Mesh(new THREE.SphereGeometry(1.3,10,8),dunkel); e.scale.set(1,2.4,1); e.position.set(ex,y+2.6,ez); G.add(e); }
+    // Gräber in Reihen: Hügel, Holzkreuz oder Grabstein, schief gestellt
+    for(let r2=0;r2<3;r2++) for(let i=0;i<6;i++){ const gx=-hx+8.5+i*1.9+(q()-.5)*.4, gz=-hz+6+r2*4.2; if(Math.hypot(gx-2,gz+1.5)<2.2||q()<.15) continue; const y=yAt(gx,gz);
+      const h=new THREE.Mesh(new THREE.SphereGeometry(1,8,6),q()<.6?gruen:M('#4e5a30')); h.scale.set(.5,.22,1); h.position.set(gx,y,gz); G.add(h);
+      const K=new THREE.Group(); K.position.set(gx,y,gz-1.05); K.rotation.set((q()-.5)*.35,(q()-.5)*.4,(q()-.5)*.3); G.add(K);
+      if(q()<.55){ box(K,.1,1.1,.1,holzD,0,.55,0); box(K,.55,.09,.09,holzD,0,.8,0); } else { box(K,.6,.75,.15,grau,0,.37,0); const ob=new THREE.Mesh(new THREE.CylinderGeometry(.3,.3,.15,12,1,false,0,Math.PI),grau); ob.rotation.set(Math.PI/2,0,Math.PI/2); ob.position.y=.75; K.add(ob); } }
+    { const gx=hx-4.5, gz=hz-4, y=yAt(gx,gz), h=new THREE.Mesh(new THREE.SphereGeometry(1,8,6),erde); h.scale.set(.65,.35,1.15); h.position.set(gx,y,gz); G.add(h); // frisches Grab, Schaufel steckt drin
+      const sf=cyl(.03,holz); place(sf,[gx+.9,y+.1,gz],[gx+1.1,y+1.4,gz+.2]); G.add(sf); const bl=box(G,.28,.35,.04,M('#6a6e72'),gx+.88,y+.05,gz-.01); bl.rotation.z=.15; box(G,.08,1.2,.08,holzD,gx,y+.6,gz-1.2); box(G,.5,.08,.08,holzD,gx,y+.85,gz-1.2); }
+  });
   // ---------- Bauernfest links am Start: Tanzbaum mit Reigen, Musikanten, Gaukler, Tanzbär mit Bärenführer, Festtafel mit Zechern, Bierfass, Wimpelketten, Kinder ----------
   { const s=FEST.s, at=(d,u)=>{ const f=fr(d), o=rw(d)+(zOpt(R,d).geh??SIDEWALK)+u, x=f.px+f.nx*s*o, z=f.py+f.ny*s*o; return {x,y:terrainAt(x,z),z,h:f.h}; }; // u: Meter neben dem Gehweg
     const grp=p=>{ const G=new THREE.Group(); G.position.set(p.x,p.y,p.z); G.rotation.y=Math.atan2(-Math.sin(p.h)*-s, Math.cos(p.h)*-s); world.add(G); return G; }; // lokal: +z zur Straße, +x Richtung Ziel
@@ -598,8 +671,8 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
         for(let i=0;i<8;i++){ const c=cyl(.012,M('#3a2a1c')); place(c,pt(i/8),pt((i+1)/8)); world.add(c); } for(let k=.06;k<.97;k+=.6/L) wim.push({p:pt(k),ry,c:wim.length%4}); }
       inst(wg,new THREE.MeshLambertMaterial({color:'#fff',side:THREE.DoubleSide}),wim,o=>{ ps.set(...o.p); qq.setFromAxisAngle(up,o.ry); sc.set(1,1,1); cc.set(['#c62f24','#e2b33a','#1f4e8c','#f2ece0'][o.c]); }); } }
 
-  buildDorf({mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst,fr,rw,A,ps,qq,sc,cc,up}); // Dorfleben in Erlenbach (welt-dorf.js)
-  buildUnterwegs({mensch,HUT,box,M,holz,holzD,bretter,A}); // Pferdekarren, Fußgänger, Betrunkener (welt-unterwegs.js)
+  sicher('Dorfleben',()=>buildDorf({mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst,fr,rw,A,ps,qq,sc,cc,up})); // Dorfleben in Erlenbach (welt-dorf.js)
+  sicher('Unterwegs',()=>buildUnterwegs({mensch,HUT,box,M,holz,holzD,bretter,dach,sand,A})); // Pferdekarren, Fußgänger, Betrunkener (welt-unterwegs.js)
 
   // ---------- Burgwald am Hang: Pfad mit Geländer, Felsnasen mit Moos, Mauerrest, umgestürzter Stamm, Holzunterstand, Brennholz, Reh ----------
   { const P=R.burgPfad, D=R.burgDeko, V=R.vb, W=(a,u)=>({x:V.x+V.ex*a+V.nx*u, z:V.y+V.ey*a+V.ny*u}), pm=Object.assign(lam('#9a7556'),{side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-3});
@@ -671,7 +744,7 @@ function buildBurg(){ const B=R.bach, WL=R.bachWl, m4=new THREE.Matrix4(), qq=ne
     for(let i=0;i<16;i++){ const a=q()*6.3, rr=65+q()*80, x=C.x+Math.cos(a)*rr, z=C.y+Math.sin(a)*rr; add(x,terrainAt(x,z)+2+q()*5,z,28+q()*30,.32); } } // Burg ragt aus dem Nebel, Schwaden zwischen den Bäumen am Burghang
 }
 // ---- Bewegung (jeden Frame im Rennen): Wasser fließt, Mühlrad dreht sich, Nebel blendet in der Nähe aus ----
-function poseBurg(dt){ const A=anim.burg, t=performance.now()/1000, cp=camera.position; burgDrache(dt,t);
+function poseBurg(dt){ const A=anim.burg, t=performance.now()/1000, cp=camera.position; sicher('Drache',()=>burgDrache(dt,t));
   for(const L of A.leute){ L.b.arme[1].rotation.x=-.5-.45*Math.max(0,Math.sin(t*2.3)); L.b.arme[0].rotation.x=-.25*Math.max(0,Math.sin(t*1.7+1)); L.b.kopf.rotation.y=.15*Math.sin(t*1.3); // Bauer erzählt mit Händen
     L.z.kopf.rotation.x=.12*Math.max(0,Math.sin(t*2.9)); L.z.arme[0].rotation.z=-.12-.1*Math.sin(t*.8); if(L.pferd) L.pferd.children[0].rotation.x=.02*Math.sin(t*1.1); } // Zöllner nickt, Pferd atmet
   // Zollstation: Schlagbaum hoch, sobald ein Fahrer 20 m davor ist, danach wieder runter; der Zöllner dreht sich um, winkt und ruft
@@ -689,8 +762,7 @@ function poseBurg(dt){ const A=anim.burg, t=performance.now()/1000, cp=camera.po
   if(A.volk&&Math.hypot(cp.x-A.volk.mitte.x,cp.z-A.volk.mitte.z)<260) poseVolk(t,false);
   const ich=riders3d[myKey];
   // Wegelagerer: drohen und schwingen die Waffen; fährst du mit über 4 W/kg vorbei, hüllt sie eine Staubwolke ein und sie staunen
-  if(A.raeuber){ const Q=A.raeuber, md=me.d; if(md<Q.lastD-30||md<Q.d-200){ Q.staunT=0; Q.warn=false; }
-    if(!Q.warn&&md<Q.d-30&&md>=Q.d-30-Math.max(me.v,3)*3){ Q.warn=true; warnKasten('Habt Acht! Dort im Gehölz lauern finstere Gestalten …'); } // 3 s bevor die Sprechblase (ab 30 m) auftaucht
+  if(A.raeuber){ const Q=A.raeuber, md=me.d; if(md<Q.lastD-30||md<Q.d-200) Q.staunT=0; // gewarnt wird jetzt von Bauern am Weg (welt-unterwegs.js)
     if(Q.lastD<Q.d&&md>=Q.d&&ich&&ich.wS>4){ Q.staunT=7; Q.kamT=0; Q.sp.material.map=Q.staun; for(const m of Q.L){ const P=m.G.position; for(let i=0;i<70;i++){ const a=Math.random()*6.3, v=1+Math.random()*2.5;
         partSpawn(parts.dust,P.x+(Math.random()-.5)*2,P.y+.2+Math.random()*1.6,P.z+(Math.random()-.5)*2,Math.cos(a)*v,.4+Math.random()*.8,Math.sin(a)*v,2.2+Math.random(),Math.random()<.5?'#b98466':'#a8765a'); } } }
     Q.lastD=md; if(Q.staunT>0) Q.staunT-=dt; else Q.sp.material.map=Q.droh; Q.sp.visible=Q.staunT>0||(md>Q.d-30&&md<Q.d+12); const gr=Q.kamT!=null?2:1.6; Q.sp.scale.set(5.2*gr,1.6*gr,1); // erst ab 30 m, beim Schulterblick doppelt so groß
@@ -708,7 +780,7 @@ function poseBurg(dt){ const A=anim.burg, t=performance.now()/1000, cp=camera.po
       F.pf.position.copy(pos).addScaledVector(dir,k<1?0:-.3); F.pf.lookAt(F.pf.position.clone().add(dir));
       if(k>=1){ for(let i=0;i<18;i++) partSpawn(parts.dust,F.b.x,F.b.y+.05,F.b.z,(Math.random()-.5)*1.6,.5+Math.random()*.7,(Math.random()-.5)*1.6,1.2,'#b98466'); S2.flug=null; } } } // Einschlag: kleine Staubwolke
   if(A.burg){ const B=A.burg.position, e=Math.hypot(camera.position.x-B.x,camera.position.z-B.z); A.burg.scale.setScalar(1+.8*bSm((e-300)/900)); } // von weitem bis 1,8-mal so groß, ab 300 m echte Größe
-  poseFest(t,cp); poseDorf(t,dt,cp); poseUnterwegs(t,dt,cp);
+  sicher('Fest',()=>poseFest(t,cp)); sicher('Dorfleben',()=>poseDorf(t,dt,cp)); poseUnterwegs(t,dt,cp);
   if(A.reh){ const Rh=A.reh, P=Rh.G.position, w=bSm((45-Math.hypot(cp.x-P.x,cp.z-P.z))/15); Rh.hals.rotation.z=(1-w)*(-2+.15*Math.sin(t*1.3))+w*.1; Rh.ohr.forEach((o,i)=>o.rotation.z=.4*Math.max(0,Math.sin(t*2.3+i*2))**8); } // Reh äst, schaut auf, wenn man naht
   if(A.wasser) A.wasser.offset.y+=dt*.5; if(A.rad) A.rad.rotation.z-=dt*.9;
   const k=race.tod==='tag'?1:.55; for(const o of A.nebel) o.sp.material.opacity=o.base*k*bSm((o.sp.position.distanceTo(cp)-o.s*.3)/(o.s*.7)); }
@@ -738,7 +810,7 @@ function poseVolk(t,alle){ const P=anim.burg.volk, m=new THREE.Matrix4(), q=new 
       m.compose(p,q,s.set(1,1,1)); P.arm.setMatrixAt(i*2+(sx>0?1:0),m); if(alle) P.arm.setColorAt(i*2+(sx>0?1:0),c.set(o.c)); } });
   for(const im of [P.body,P.head,P.arm,...P.hut.filter(Boolean)]){ im.instanceMatrix.needsUpdate=true; if(alle&&im.instanceColor) im.instanceColor.needsUpdate=true; } }
 // Kamera (aus rennen.js, nach der normalen Kamera): beim Einstauben 6 s Schulterblick zurück auf die Wegelagerer, dann wieder hinter den Fahrer
-function burgKamera(dt){ const Q=anim.burg.raeuber, ich=riders3d[myKey]; endKamera(); startKamera(dt); unterwegsKamera(dt);
+function burgKamera(dt){ const Q=anim.burg.raeuber, ich=riders3d[myKey]; endKamera(); sicher('Start-Kamera',()=>startKamera(dt)); sicher('Rempler-Kamera',()=>unterwegsKamera(dt));
   if(!Q||Q.kamT==null||!ich) return; Q.kamT+=dt; const T=6; if(Q.kamT>T){ Q.kamT=null; return; }
   const w=bSm(Q.kamT/.6)*bSm((T-Q.kamT)/.7), rp=ich.g.position, bc=Q.L[1].G.position, hd=headingAt(R,me.d), fx=Math.cos(hd), fz=Math.sin(hd), sx=bc.x-rp.x, sz=bc.z-rp.z, sl=Math.hypot(sx,sz)||1;
   const pos=new THREE.Vector3(rp.x+fx*5-sx/sl*2.5, rp.y+2.4, rp.z+fz*5-sz/sl*2.5), look=new THREE.Vector3(bc.x, rp.y+1.1, bc.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz);

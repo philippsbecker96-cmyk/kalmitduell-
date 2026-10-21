@@ -333,10 +333,10 @@ function build3D(){
       const list=bl.filter(o=>o.t===ti); inst(new THREE.PlaneGeometry(2.35,.8), new THREE.MeshBasicMaterial({map:tex, side:THREE.DoubleSide}), list, o=>{ ps.set(o.bx,o.y+.62,o.bz); slopeQ(o.h,o.g,o.s>0); sc.set(1,1,1); }); }); }
 
   // ---------- Schilder, Start, Ziel ----------
-  for(let k=1;k*1000<R.len;k++){ const d=k*1000, hd=headingAt(R,d), sp=textSprite([`km ${k}`,`${de(gradeAt(d+1),0)} %`],{w:1.6});
+  for(let k=1;!R.def.burg&&k*1000<R.len;k++){ const d=k*1000, hd=headingAt(R,d), sp=textSprite([`km ${k}`,`${de(gradeAt(d+1),0)} %`],{w:1.6});
     sp.position.set(R.xs[d/STEP|0]-Math.sin(hd)*(ROAD_W/2+1.6), roadY(d)+1.9, R.ys[d/STEP|0]+Math.cos(hd)*(ROAD_W/2+1.6)); world.add(sp);
     const post=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,1.2,5), lam('#666')); post.position.set(sp.position.x, roadY(d)+0.7, sp.position.z); world.add(post); }
-  R.kehren.forEach((d,i)=>{ const [x,z]=posAt(R,d), sp=textSprite([`Kehre ${i+1}`],{w:3.2,bg:'#f6f3ea'}); sp.position.set(x, roadY(d)+5.5, z); world.add(sp); });
+  if(!R.def.burg) R.kehren.forEach((d,i)=>{ const [x,z]=posAt(R,d), sp=textSprite([`Kehre ${i+1}`],{w:3.2,bg:'#f6f3ea'}); sp.position.set(x, roadY(d)+5.5, z); world.add(sp); });
   const arch=(d,draw,ch=80,bh=1.1)=>{ const [x,z]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d), half=ROAD_W/2+0.6;
     const ph=4.4+bh; for(const s of [-1,1]){ const p=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,ph,8), lam('#222')); p.position.set(x+nx*half*s, y+ph/2, z+nz*half*s); world.add(p); }
     const b=new THREE.Mesh(new THREE.PlaneGeometry(half*2+.4,bh), new THREE.MeshBasicMaterial({map:canvasTex(512,ch,draw), side:THREE.DoubleSide}));
