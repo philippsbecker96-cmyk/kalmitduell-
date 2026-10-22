@@ -4,6 +4,17 @@ Neuer Spielmodus: Kampagne aus 4 Missionen im Mittelalter. Jede Mission ist ein 
 
 **Stand 21.10.2026:** Schritt 1 (Gerüst) gebaut und vom Nutzer getestet, siehe „Umsetzung“. Datei für die Trifels-Welt angelegt (`js/welt-trifels.js`, noch leer).
 
+## So trägst du Ideen ein
+1. **Richtige Stelle:** zur Mission, in die die Idee gehört; gilt sie für alle Missionen, unter „Bausteine“; bist du noch unsicher, unter „Offene Fragen“.
+2. **Markieren:** davor „**Idee (Nutzer, neu):**“, damit man sieht, was noch nicht besprochen ist.
+3. **Wo und wann:** Mission, Abschnitt des Workouts oder Ort (z. B. „Jagd 3“, „am Wirtshaus“, „nach Friedels Abschied“).
+4. **Wer und was:** wer kommt vor, was passiert, was soll der Fahrer sehen oder hören.
+5. **Wie wichtig:** „muss“, „wäre schön“ oder „nur mal notiert“.
+6. **Texte, Gedichte und Lieder:** ganz reinkopieren und „so übernehmen“ dazuschreiben (dann bleiben Dialekt und Schreibung unverändert); einzelne Strophen oder Zeilen markieren, wenn nur ein Teil rein soll. Nur den Namen hinschreiben, wenn ich selbst etwas im Stil schreiben soll. Bei neueren Liedern oder Gedichten (Urheber seit weniger als 70 Jahren tot) nur ein paar Zeilen, weil das Spiel über GitHub Pages öffentlich ist.
+7. **Selbst einsprechen?** Dazuschreiben, dann kommt es in die Aufnahmeliste.
+8. **Was es nicht sein soll:** wenn du etwas ausdrücklich nicht willst, auch das kurz notieren (z. B. „kein Sound“, „nicht zu lang“).
+9. **Kurz reicht:** Stichworte genügen, offene Punkte kläre ich mit dir vor dem Bauen. Umgesetzt wird erst, wenn du es sagst.
+
 ## Rahmengeschichte
 Auf den Trifels wurden riesige Mengen Gold geschafft, das Lösegeld für Richard Löwenherz, der nun abzieht. Das Gold soll zur Kaiserpfalz nach Speyer, um dort sicher verwahrt zu werden. Du bietest dich dem Burgherrn des Trifels (fiktiv, Name offen) für den Transport an. Er braucht dafür Leute, denen er wirklich vertrauen kann und die fähig sind, und stellt dich auf die Probe: Besiege Hans von Trotha, der auf Burg Berwartstein residiert und durch seinen Drachen vom Drachenfels (bei Busenberg) als übermächtig gilt. Der Weg dorthin ist weit und beschwerlich. Die Reise führt durchs Tal: Annweiler → Hinterweidenthal → Dahn → Erlenbach/Berwartstein. Trothas Handlanger (Teufel, Ritter) stellen sich dir unterwegs in den Weg, im Finale lässt er als letzten Trumpf den Damm der Wieslauter brechen.
 - Story-Szenen (Eröffnung, Zwischenszenen, Abschluss) als cartoonhafte Bild-/Texttafeln.
