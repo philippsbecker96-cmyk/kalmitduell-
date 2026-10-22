@@ -6,7 +6,7 @@ Friedel spricht dich in der Blase mit deinem Fahrernamen an – in der Aufnahme 
 Fehlt eine Datei, bleibt es still und die Sprechblase kommt wie bisher – man kann also nach und nach aufnehmen.
 
 Tipps: ruhiger Raum, Handy ca. 20 cm vom Mund, vor und nach dem Satz kurz Stille lassen (wird nicht mitgezählt, aber nicht zu viel).
-Texte stehen im Code in `js/welt-trifels.js` (`TRI_RUF_TXT`, `TRI_AUD_TXT`, `TRI_BEISEITE`, `TRI_SPOTT`, `TRI_TXT`) – ändert sich ein Text dort, bitte hier mit ändern.
+Texte stehen im Code in `js/welt-trifels.js` (`TRI_RUF_TXT`, `TRI_AUD_TXT`, `TRI_BEISEITE`, `TRI_SPOTT`, `TRI_TXT`) und `js/welt-trifels-leben.js` (`TRI_FUHR_TXT`) – ändert sich ein Text dort, bitte hier mit ändern.
 
 ## Anstieg zum Trifels
 
@@ -29,13 +29,25 @@ Texte stehen im Code in `js/welt-trifels.js` (`TRI_RUF_TXT`, `TRI_AUD_TXT`, `TRI
 | `burgherr_05` | Burgherr | Audienz | Der Weg dorthin ist weit und beschwerlich. |
 | `burgherr_06` | Burgherr | Abschied (segnet) | Gott mit Euch! |
 
+## Abfahrt: Fuhrwerk (Bauer auf dem Kutschbock, rauscht von hinten heran)
+
+| Datei | Wann | Text |
+|---|---|---|
+| `fuhrmann_01` | fährt neben dir | Un wie? |
+| `fuhrmann_02` | ebenso | Hoschs gheert? In Lautre treden se jetz all wie verrickt gege so'n Ledderball … Fußball nenne se des. |
+| `fuhrmann_03` | ebenso | Ke Ahnung, was des schun wia sei soll, awwer wennd mich frogsch, henn die Leit heitzudach eh all en Sprung. |
+| `fuhrmann_04` | ebenso | Ä Stadion wolle se uffem Betzeberch defor sogar baue. Ä Stadion! Gläbsch des? |
+| `fuhrmann_05_bauer` | nach kurzer Pause | Oich gsprächich bischd jo nid grad … Kriegsch die Zäh nid ausenanner, Großer? |
+| `fuhrmann_05_baeuerin` | ebenso | Oich gsprächich bischd jo nid grad … Kriegsch die Zäh nid ausenanner, Großi? |
+| `fuhrmann_06` | danach, dann fährt er davon | Alla hopp, ich muss weida, in deim Schneggetempo brauch ich jo bis iwwermoie, bis ich dehääm bin. |
+
 ## Wirtshaus „Zack Zack“
 
 | Datei | Wer | Wann | Text |
 |---|---|---|---|
 | `dorfmann_01` | Dorfmann | Wette | Zeh Gulde, dass du heit owend kä Elwetritsch fangsch! |
 | `friedel_01` | Friedel | Wette | Des wer ma mo sehe! |
-| `dorfweib_01` | Dorfweib | lacht | Dem Bu henn se ah ä mo zu oft hochgeworfe… |
+| `dorfweib_01` | Dorfweib | lacht | Den Bu henn se ah ä mo zu oft hochgeworfe… |
 | `dorfweib_02` | Dorfweib | lacht | …un ä mo zu wenich uffgfange. |
 | `friedel_02` | Friedel | dreht sich zu dir | Du fahrschd doch a noch Siede, gell? |
 | `friedel_03` | Friedel | ebenso | Kinnsch ma do vielleicht helfe? Allä trau ich mich ned in de Wald… |
@@ -88,4 +100,4 @@ Je Jagd: Ankündigung, Anfeuern, (Jagd 1–4) Zurückfallen, am Ende Entwischt b
 | `friedel_ende2` | ebenso | Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell? |
 | `friedel_ende3` | ebenso | Hosch enner gud bei mer! |
 
-**Zusammen:** 48 Dateien (45 Sätze, davon 3 doppelt für Bauer/Bäuerin).
+**Zusammen:** 55 Dateien (51 Sätze, davon 4 doppelt für Bauer/Bäuerin).
