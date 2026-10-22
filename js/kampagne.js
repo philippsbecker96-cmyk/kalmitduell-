@@ -21,6 +21,13 @@ function kampLoad(){ try{ const o=JSON.parse(localStorage.getItem('kd-kampagne')
 let KST=kampLoad();
 const kampSave=()=>{ try{ localStorage.setItem('kd-kampagne',JSON.stringify(KST)); }catch(e){} };
 const kampFrei=m=>!m.bald && (m.nr===1 || KST.done.includes(KAMP[m.nr-2].id)); // nacheinander freigeschaltet
+// ---- Sperre: Kampagne noch in Arbeit, nur mit Code spielbar (Freischaltung je Gerät in kd-kampagne.code) ----
+const kampOffen=()=>!!KST.code;
+function kampSperre(){ const b=document.querySelector('.mode[data-m="kamp"]'); if(!b) return; b.classList.toggle('zu',!kampOffen());
+  let t=b.querySelector('.zuTag'); if(!kampOffen()&&!t){ t=document.createElement('em'); t.className='zuTag'; t.textContent='🔒 In Arbeit'; b.prepend(t); } else if(kampOffen()&&t) t.remove(); }
+function kampCode(){ const c=prompt('Die Kampagne ist noch in Arbeit.\nCode zum Freischalten:'); if(c==null) return false;
+  if(btoa(c.trim())==='LjExMDQ='){ KST.code=true; kampSave(); kampSperre(); return true; } alert('Falscher Code.'); return false; }
+kampSperre();
 const kampMission=()=>KAMP.find(m=>m.id===KST.sel&&kampFrei(m))||KAMP[0];
 const kText=s=>s.replace(/\[([^|\]]*)\|([^\]]*)\]/g,(_,a,b)=>KST.stand==='baeuerin'?b:a);
 // Workout der Mission; Einfahren/Ausfahren mindestens so lang wie die Tafeln

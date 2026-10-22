@@ -97,6 +97,7 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 - **Fang bei Jagd 5:** „Ich hab se!!! Ich hab des Scheißding! Zeh Gulde, aller!!!“
 - **Ende (vor den Ende-Tafeln):** „Isch muss glei zurick ind Wertschaft, die werren gucken… Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell?“
 - **Tafeln** (Start: Gold für den Trifels, Audienz; Ende: Wette gewonnen, Bis morgen!) stehen in `KAMP` in `kampagne.js`.
+- **Sperre (vom Nutzer gewünscht):** Kampagne ist noch in Arbeit – Kachel im Menü angegraut mit „🔒 In Arbeit“, spielbar nur mit Code (`kampCode`/`kampSperre` in `kampagne.js`, Freischaltung je Gerät in `kd-kampagne` als `code:true`). Zum Veröffentlichen `kampOffen` auf `true` setzen.
 - **Wasgau-Karte oben rechts** (vom Nutzer gewünscht: viel Grün, Burgen- und Felssymbole, Lage nur grob): in Missionen statt der Minimap (`kampKarte`/`karteBg` in `kampagne.js`, Hintergrund einmal gemalt). Pfälzerwald aus Baumkronen, Queich und Wieslauter mit Wiesentälern, Reiseweg gestrichelt (`KARTE_WEG`), Orte in `KARTE_ORT`: Trifels, Teufelstisch, Jungfernsprung, Berwartstein (Missionen: aktuelle leuchtet gelb, geschaffte mit Haken) und Lindelbrunn, Drachenfels (mit Drachenflügel), Weißenburg. Dein Punkt wandert bis zum Ziel-Meter auf dem Weg zur nächsten Station. **Noch vom Nutzer anzusehen.**
 - **Wirtshaus:** „Zack Zack“ (vom Nutzer), Schild am Ausleger.
 

@@ -186,6 +186,8 @@ input[type=checkbox]{accent-color:var(--acc)}
 .mode{background:var(--g-soft);border:1px solid var(--g-line);border-radius:18px;transition:background .15s,border-color .15s,transform .15s}
 .mode:hover{background:var(--g-hover);border-color:rgba(255,255,255,.34);transform:translateY(-2px)}
 .mode svg{background:rgba(0,0,0,.26);border-radius:12px}
+.mode.zu{position:relative;opacity:.55;filter:grayscale(.75)}.mode.zu:hover{transform:none}
+.mode .zuTag{position:absolute;top:12px;right:12px;font:600 13px Barlow,sans-serif;font-style:normal;background:rgba(0,0,0,.55);color:#fff;border-radius:20px;padding:3px 10px}
 .rcard,.route,.tod,.sea,.kst{background:var(--g-soft);border:1px solid var(--g-line);border-radius:14px}
 .rcard.sel,.route.sel,.tod.sel,.sea.sel,.kst.sel{background:rgba(255,122,69,.12);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
 .route.soon{border:1px dashed rgba(255,255,255,.22)}

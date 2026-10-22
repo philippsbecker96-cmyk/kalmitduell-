@@ -46,7 +46,7 @@ function openMode(m){
   const first=kp?null:ROUTES.find(r=>r.mode===m); // Kampagne: Strecke setzt renderRouteList if(first && routeId!==first.id && race.role!=='guest'){ routeId=first.id; setRoute(first.def); }
   $('modeScreen').style.display='none'; $('cfgScreen').style.display=''; renderRouteList(); sendCfg();
 }
-document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>openMode(b.dataset.m));
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{ if(b.dataset.m==='kamp'&&!kampOffen()&&!kampCode()) return; openMode(b.dataset.m); }); // Kampagne nur mit Code (kampagne.js)
 // Zurück zur Modus-Auswahl (oben und unten); als Gast verlässt man damit den Raum
 $('btnBack').onclick=$('btnBack2').onclick=()=>{ if(race.role==='guest'){ quitToLobby(); return; } $('cfgScreen').style.display='none'; $('modeScreen').style.display=''; scrollTo(0,0); };
 const setLaps=n=>{ race.laps=Math.max(1,Math.min(30,n)); $('lapsV').textContent=race.laps; renderRouteList(); sendCfg(); };
