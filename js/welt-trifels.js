@@ -448,8 +448,9 @@ function poseFriedel(dt,t,rt){ const A=anim.tri, F=A.friedel, T=R.tri; if(!F) re
   F.steher.G.visible=F.rad.visible=vorher; A.ich.bauer.G.visible=A.ich.baeuerin.G.visible=false; ichM.G.visible=A.ich.rad.visible=szene; if(szene&&ich) ich.g.visible=false; // in der Szene stehst du neben deinem Rad
   if(vorher){ F.d=T.wirtD+2.4; F.r.lane=roadW(R,F.d)/2-.6; putRider(F.r,F.d,0); F.r.g.visible=false; }
   else { const jj=K.J.findIndex(j=>rt>=j.t0&&rt<j.t0+j.dur), heim=rt>=K.heim;
-    if(heim){ F.d-=6*lauf; F.crank+=6*lauf*2.4; }
-    else { const want=jj>=0&&jj<4?-36:-1.3, vr=clampN((want-(F.d-me.d))*.6,-2.6,1.6); F.d+=Math.max(0,me.v+vr)*lauf; F.crank+=Math.max(0,me.v+vr)*lauf*2.4; }
+    let fv=6; if(heim) F.d-=6*lauf;
+    else { const want=jj>=0&&jj<4?-36:-1.3, vr=clampN((want-(F.d-me.d))*.6,-2.6,1.6); fv=Math.max(0,me.v+vr); F.d+=fv*lauf; }
+    F.crank+=fv>.3?75/60*2*Math.PI*lauf:0; // immer 75 U/min, egal wie schnell – im Stand stehen die Kurbeln
     const ml=ich&&ich.lane!=null?ich.lane:0, u=heim?-H:(ml-1.25<-H?ml+1.25:ml-1.25); F.r.lane=F.r.lane==null?u:F.r.lane+(u-F.r.lane)*Math.min(1,dt*2);
     putRider(F.r,F.d,F.crank); if(heim) F.r.g.rotation.y+=Math.PI; F.r.g.visible=!(heim&&F.d<me.d-150); }
   // Elwetritsche: taucht mit jeder Jagd 34 m vor dir auf, rennt im Zickzack davon, du holst auf; kurz vor Schluss schlägt sie einen Haken ins Gebüsch – bei der letzten springt sie in Friedels Sack
