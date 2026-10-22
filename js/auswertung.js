@@ -3,6 +3,11 @@ race.speed=1;
 $('testOn').onchange=()=>{ race.test=$('testOn').checked; };
 document.querySelectorAll('#speedBox button').forEach(b=>b.onclick=()=>{ race.speed=+b.dataset.s; document.querySelectorAll('#speedBox button').forEach(x=>x.classList.toggle('sel',x===b)); b.blur(); });
 
+// Sprung im Training (Testmodus): Workout-Zeit als min:s oder Minuten eingeben, Enter – auf geplanten Strecken (Kampagne, Space, Insel) springt auch der Fahrer an den Meter dieser Zeit
+$('sprungT').onkeydown=e=>{ e.stopPropagation(); if(e.key!=='Enter') return; const v=e.target.value.trim(), m=v.match(/^(\d+(?:[.,]\d+)?)(?::(\d{1,2}))?$/); e.target.blur();
+  if(!m||race.state!=='run'||race.mode!=='train'||me.done) return; const t=Math.min((race.woT||0)-1, m[2]!=null?parseInt(m[1])*60+ +m[2]:parseFloat(m[1].replace(',','.'))*60); // „7:25“ = min:s, „7“ oder „7,5“ = Minuten
+  race.t=Math.max(0,t); race.sprung=true; if(R.def.planbar||R.ring) me.d=planD(race.t); camS.init=false;
+  const F=anim.tri&&anim.tri.friedel; if(F) F.d=me.d-1.3; flash('Gesprungen auf '+Math.floor(race.t/60)+':'+String(Math.floor(race.t%60)).padStart(2,'0')); };
 /* ---------- Fotofinish: beide innerhalb einer Sekunde im Ziel ---------- */
 const fmtMs=s=>{ const m=Math.floor(s/60), x=s-m*60; return `${m}:${x.toFixed(3).padStart(6,'0').replace('.',',')}`; };
 function finishCheck(){

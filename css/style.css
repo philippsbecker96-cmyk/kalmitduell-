@@ -144,6 +144,7 @@ select{font:600 15px Barlow,sans-serif;padding:7px 8px;border-radius:8px;border:
 #mIntRow button{padding:6px 10px;font-size:15px;background:#14241c;border:2px solid transparent}
 #mIntRow button.sel{border-color:var(--sky1);background:#1f3a2c}
 #speedBox button.sel{border-color:var(--sky1);background:#1f3a2c}
+#sprungT{width:62px;padding:5px 6px;font-size:15px;background:#14241c;color:inherit;border:1px solid var(--g-line);border-radius:6px;text-align:center}
 #btnMenu{position:fixed;right:140px;bottom:96px;z-index:6;display:none;background:rgba(29,51,40,.92);border:2px solid var(--pine);font-size:17px;padding:10px 18px}
 #btnPause{position:fixed;right:14px;bottom:96px;z-index:6;display:none;background:rgba(29,51,40,.92);border:2px solid var(--pine);font-size:17px;padding:10px 18px}
 #pause{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:13;background:rgba(18,32,25,.72)}

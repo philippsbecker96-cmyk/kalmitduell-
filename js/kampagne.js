@@ -95,15 +95,24 @@ function karteBg(box){ const c=document.createElement('canvas'), S=box*DPR; c.wi
       [[-7,4],[-2,6],[4,5],[9,4]].forEach(([dx,h])=>{ g.fillStyle='#efe3c4'; g.fillRect(x+dx*s-2.5,y-h,5,h); g.strokeRect(x+dx*s-2.5,y-h,5,h); g.fillStyle='#b23a2a'; g.beginPath(); g.moveTo(x+dx*s-3.2,y-h); g.lineTo(x+dx*s,y-h-3.5); g.lineTo(x+dx*s+3.2,y-h); g.fill(); });
       turm(x+1*s,y-6,3.5,7,true); } }; // Weißenburg (Kloster und Stadt)
   KARTE_ORT.forEach(o=>{ const [x,y]=P(o.p); sym[o.sym](x,y,(o.s||1)*1.3); });
+  const tritsch=(x,y,s,f)=>{ g.save(); g.translate(x,y); g.scale(f*s,s); g.lineWidth=1/s; g.strokeStyle='#2e1c10'; // Elwetritsche: rundlicher Vogel mit Geweih, Schnabel, langen Beinen
+    const gr=g.createRadialGradient(0,-6,0,0,-6,9); gr.addColorStop(0,'rgba(255,220,120,.45)'); gr.addColorStop(1,'rgba(255,220,120,0)'); g.fillStyle=gr; g.fillRect(-9,-15,18,18); // leiser Schein
+    g.beginPath(); g.moveTo(-1.5,-2); g.lineTo(-2.2,0); g.moveTo(1.5,-2); g.lineTo(2.2,0); g.stroke(); // Beine
+    g.fillStyle='#9a6a3c'; g.beginPath(); g.ellipse(-.5,-4.5,4.2,3,0,0,7); g.fill(); g.stroke(); g.beginPath(); g.moveTo(-4.4,-5.5); g.lineTo(-7,-7.5); g.lineTo(-4.2,-3.6); g.fill(); g.stroke(); // Bauch, Schwanzfedern
+    g.beginPath(); g.arc(3.2,-8.2,2.1,0,7); g.fill(); g.stroke(); g.fillStyle='#e8a23a'; g.beginPath(); g.moveTo(5,-8.8); g.lineTo(7.4,-8); g.lineTo(5,-7.3); g.fill(); // Kopf, Schnabel
+    g.beginPath(); g.moveTo(2.6,-10); g.lineTo(2,-12.6); g.lineTo(1,-13.4); g.moveTo(2,-12.6); g.lineTo(2.9,-13.8); g.moveTo(3.8,-10.1); g.lineTo(4.6,-12.5); g.lineTo(5.6,-13.2); g.stroke(); // Geweih
+    g.fillStyle='#111'; g.fillRect(3.6,-8.9,.9,.9); g.restore(); };
+  [[.71,.25,1,-1],[.47,.375,.85,1],[.30,.24,.95,-1]].forEach(([u,v,s,f])=>tritsch(u*box,v*box,s,f)); // zwischen Trifels und Teufelstisch
   g.restore();
   g.font="400 25px 'UnifrakturMaguntia', Georgia, serif"; g.textAlign='center'; g.lineWidth=4; g.strokeStyle='rgba(15,40,18,.85)'; g.strokeText('Wasgau',box/2,30); g.fillStyle='#f1e7c4'; g.fillText('Wasgau',box/2,30);
   g.strokeStyle='#183a1e'; g.lineWidth=3; g.beginPath(); g.roundRect?g.roundRect(1.5,1.5,box-3,box-3,12):g.rect(1.5,1.5,box-3,box-3); g.stroke();
   g.strokeStyle='rgba(220,240,180,.35)'; g.lineWidth=1; g.beginPath(); g.roundRect?g.roundRect(4.5,4.5,box-9,box-9,9):g.rect(4.5,4.5,box-9,box-9); g.stroke();
   return c; }
+function kampHakenAb(){ const z=R&&R.tri&&R.tri.gast?R.tri.gast.d:R&&(R.def&&R.def.orte&&R.def.orte.ziel||R.len); return (z||1e9)-120; } // Haken der laufenden Mission erst kurz vor dem Ziel (Mission 1: Gasthaus)
 function kampKarte(x0,y0,box){ const m=race.kamp, g=ctx, P=([u,v])=>[x0+u*box,y0+v*box];
   if(KARTE.key!==box+'|'+DPR){ KARTE.c=karteBg(box); KARTE.key=box+'|'+DPR; } g.drawImage(KARTE.c,x0,y0,box,box);
   g.textAlign='center'; g.lineJoin='round';
-  KARTE_ORT.forEach(o=>{ const k=o.id&&KAMP.find(q=>q.id===o.id), fertig=k&&KST.done.includes(k.id), jetzt=k&&k===m, [x,y]=P([o.p[0]+(o.lx||0),o.p[1]]);
+  KARTE_ORT.forEach(o=>{ const k=o.id&&KAMP.find(q=>q.id===o.id), jetzt=k&&k===m, fertig=k&&(jetzt?me.done||me.d>=kampHakenAb():KST.done.includes(k.id)), [x,y]=P([o.p[0]+(o.lx||0),o.p[1]]);
     g.font=(k?'700 11px':'600 9.5px')+" Barlow, sans-serif"; g.lineWidth=3; g.strokeStyle='rgba(12,32,14,.9)'; const ty=y+(k?13:11); g.strokeText(o.n,x,ty);
     g.fillStyle=jetzt?'#ffd95a':fertig?'#e9f5d0':k?(kampFrei(k)&&!k.bald?'#f1e7c4':'rgba(241,231,196,.6)'):'rgba(230,240,215,.75)'; g.fillText(o.n,x,ty);
     if(fertig){ g.strokeStyle='#1f4a22'; g.lineWidth=4; g.beginPath(); g.moveTo(x+12,y-8); g.lineTo(x+15,y-4); g.lineTo(x+21,y-12); g.stroke(); g.strokeStyle='#ffd95a'; g.lineWidth=2; g.stroke(); } // Haken
@@ -113,4 +122,5 @@ function kampKarte(x0,y0,box){ const m=race.kamp, g=ctx, P=([u,v])=>[x0+u*box,y0
   const ziel=R&&(R.def&&R.def.orte&&R.def.orte.ziel||R.len); let r=(ziel?Math.min(1,Math.max(0,me.d/ziel)):0)*L, px=W_[0][0], py=W_[0][1];
   for(let j=1;j<W_.length;j++){ if(r<=sl[j]){ const f=sl[j]?r/sl[j]:0; px=W_[j-1][0]+(W_[j][0]-W_[j-1][0])*f; py=W_[j-1][1]+(W_[j][1]-W_[j-1][1])*f; break; } r-=sl[j]; px=W_[j][0]; py=W_[j][1]; }
   g.fillStyle=RIDERS[myKey].dot; g.strokeStyle='#fff'; g.lineWidth=2.2; g.beginPath(); g.arc(px,py,5.5,0,7); g.fill(); g.stroke(); }
-function kampFertig(){ const m=race.kamp; if(m&&!KST.done.includes(m.id)){ KST.done.push(m.id); kampSave(); } kampTafel(null); }
+function kampFertig(){ const m=race.kamp; if(m&&!race.sprung&&!KST.done.includes(m.id)){ // im Testmodus vorgespult: zählt nicht als geschafft
+    KST.done.push(m.id); kampSave(); } kampTafel(null); }
