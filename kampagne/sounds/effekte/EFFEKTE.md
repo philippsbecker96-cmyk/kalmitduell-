@@ -33,7 +33,7 @@ Vor jedem neuen Ton wird erst gefragt.
 | `musik/thema.mp3` | 43 s | Erkennungsmelodie: Countdown, Kamerafahrt, erste Tafeln – aus, sobald das Gefolge zu hören ist (spätestens 38 s) |
 | `musik/taverne.mp3` | 30 s | Schleife: Abfahrt nach dem Fuhrwerk bis 100 m vor das Wirtshaus · am Wirtshaus (bis 90 m) · Heimweg nach Friedels Abschied (still bei den drei Elwetritschen) · Gasthaus im Ziel (bis 130 m, lauter, je näher) |
 | `musik/jagd.mp3` | 32 s | jede Jagd von vorn, ab dem Antritt bis zum Haken bzw. Sprung in den Sack |
-| `effekte/unheimlich.mp3` | 32 s | Wald nach Jagd 1–3, um Friedels Angst-Spruch |
+| `effekte/unheimlich.mp3` | 32 s | Wald nach Jagd 1–3, um Friedels Angst-Spruch · nach Jagd 4 leiser zwischen Laternen-Spruch und Wildschwein |
 | `musik/ankunft.mp3` | 15 s | einmal mit den Ende-Tafeln (Taverne pausiert so lange) |
 
 Fehlt noch: `truhe.mp3` (Wache stellt in der Kamerafahrt eine Truhe ab).

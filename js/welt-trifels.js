@@ -472,13 +472,26 @@ function poseFriedel(dt,t,rt){ const A=anim.tri, F=A.friedel, T=R.tri; if(!F) re
     const uF=A.uF; camOverride={pos:mix(at(dw-10,-rw+.5,2.6),at(dw+5.5,-rw+.5,1.9)), look:mix(at(dw,uF-1,1.3),at(dw-.4,uF-1.4,1.4))}; A.camAn=true; }
   else if(A.camAn){ if(!A.aud) camOverride=null; A.camAn=false; camS.init=false; }
   const akt=K?K.L.filter(s=>rt>=s.t0&&rt<s.t1):[], el=document.getElementById('triSag'); let unten=''; const sp=w=>akt.some(x=>x.wer===w), zs=K?rt-K.tS:-1;
-  { const D=A.dorf.dorfmann, W=A.dorf.dorfweib, hand=zs>=1&&zs<11, lacht=sp('dorfweib');
-    if(D) D.m.arme[0].rotation.x+=((hand?-1.3:sp('dorfmann')?-.6:0)-D.m.arme[0].rotation.x)*Math.min(1,dt*5);
-    if(W){ W.m.G.rotation.z=lacht?.07*Math.sin(t*16):0; W.m.arme[0].rotation.x=W.m.arme[1].rotation.x=lacht?-.5-.2*Math.sin(t*12):-.9; }
-    for(const m of A.dorfAlle) if(!(D&&m===D.m)&&!(W&&m===W.m)) m.arme[1].rotation.x+=((lacht?-2.4:-.9)-m.arme[1].rotation.x)*Math.min(1,dt*4); // Krüge hoch
-    const fm=F.steher, ziel=zs>=19?ichM.G.position:D?D.m.G.position:null; fm.arme[1].rotation.x+=((zs>=7&&zs<11?-1.3:0)-fm.arme[1].rotation.x)*Math.min(1,dt*5); // Handschlag
+  { const D=A.dorf.dorfmann, W=A.dorf.dorfweib, hand=zs>=1&&zs<11, lacht=sp('dorfweib'), fm=F.steher, k5=Math.min(1,dt*5);
+    // Leben in der Gruppe: jeder verlagert das Gewicht in eigenem Takt, dreht sich halb zum Sprecher und schaut ihn an, sonst blickt er umher
+    const spr=akt.find(x=>x.wer==='friedel'||A.dorf[x.wer]), sP=spr?(spr.wer==='friedel'?fm.G.position:A.dorf[spr.wer].m.G.position):fm.G.position;
+    const leben=(m,i,dreh)=>{ const u=m.G.userData; if(u.ry0==null){ u.ry0=m.G.rotation.y; u.ph=i*1.9+.5; } const ph=u.ph, w=Math.sin(t*(.45+i*.07)+ph), mp=m.G.position;
+      m.G.rotation.z=.035*w; m.beine[0].rotation.x=.07*w; m.beine[1].rotation.x=-.07*w;
+      const selbst=sP===mp, a=Math.atan2(sP.x-mp.x,sP.z-mp.z); if(dreh) m.G.rotation.y+=angDiff(u.ry0+.45*angDiff(a,u.ry0),m.G.rotation.y)*Math.min(1,dt*1.5);
+      const ky=selbst?.3*Math.sin(t*.7+ph):clampN(angDiff(a,m.G.rotation.y),-1,1)+.15*Math.sin(t*.4+ph*2); m.kopf.rotation.y+=(ky-m.kopf.rotation.y)*Math.min(1,dt*(1.5+i*.4)); m.kopf.rotation.x=.05*Math.sin(t*1.1+ph); };
+    A.dorfAlle.forEach((m,i)=>leben(m,i,true)); leben(fm,4,false); if(szene) leben(ichM,5,false);
+    const trinkt=(i,per)=>((t+i*3.1)%per)<1.7; // Krug an den Mund, Kopf in den Nacken
+    if(D){ const tr=!hand&&!sp('dorfmann')&&trinkt(0,9); D.m.arme[0].rotation.x+=((hand?-1.3:sp('dorfmann')?-.7+.45*Math.sin(t*4.2):-.15)-D.m.arme[0].rotation.x)*k5; // redet mit der Hand
+      D.m.arme[1].rotation.x+=((tr?-2.7:-.9)-D.m.arme[1].rotation.x)*Math.min(1,dt*4); if(tr) D.m.kopf.rotation.x=-.35; D.m.G.rotation.x=sp('dorfmann')?.08:0; } // beugt sich beim Wetten vor
+    if(W){ W.m.G.rotation.z+=lacht?.07*Math.sin(t*16):0; W.m.G.rotation.x=lacht?.14+.08*Math.sin(t*7):0; W.m.arme[0].rotation.x=W.m.arme[1].rotation.x=lacht?-.5-.2*Math.sin(t*12):-.9+.08*Math.sin(t*.8); } // biegt sich vor Lachen
+    A.dorfAlle.forEach((m,i)=>{ if(D&&m===D.m||W&&m===W.m) return; const tr=!lacht&&trinkt(i,7+i*2.5); m.arme[1].rotation.x+=((lacht?-2.4:tr?-2.7:-.9)-m.arme[1].rotation.x)*Math.min(1,dt*4); if(tr) m.kopf.rotation.x=-.35; // Krüge hoch beim Lachen, sonst trinken sie ab und zu
+      if(lacht&&i===3) m.G.rotation.z+=.05*Math.sin(t*14); // lacht mit
+      const kr=i===2&&((t+4)%11)<1.3; m.arme[0].rotation.x+=((kr?-2.9:-.1+.06*Math.sin(t*.9+i))-m.arme[0].rotation.x)*Math.min(1,dt*4); if(kr) m.arme[0].rotation.z=-.5; else m.arme[0].rotation.z=-.12; }); // kratzt sich am Kopf
+    // Friedel: Handschlag zur Wette, redet mit der freien Hand, zeigt auf dich, wenn er um Hilfe bittet; du nickst zum Schluss
+    const ziel=zs>=19?ichM.G.position:D?D.m.G.position:null; fm.arme[1].rotation.x+=((zs>=7&&zs<11?-1.3:0)-fm.arme[1].rotation.x)*k5; // Handschlag
+    fm.arme[0].rotation.x+=((sp('friedel')?(zs>=19&&zs<23?-1.45:-.6+.4*Math.sin(t*3.6)):0)-fm.arme[0].rotation.x)*k5;
     if(ziel){ const a=Math.atan2(ziel.x-fm.G.position.x,ziel.z-fm.G.position.z); fm.G.rotation.y+=angDiff(a,fm.G.rotation.y)*Math.min(1,dt*3); }
-    if(szene){ const fp=fm.G.position; ichM.G.rotation.y=Math.atan2(fp.x-ichM.G.position.x,fp.z-ichM.G.position.z); } }
+    if(szene){ const fp=fm.G.position; ichM.G.rotation.y=Math.atan2(fp.x-ichM.G.position.x,fp.z-ichM.G.position.z); if(zs>=27) ichM.kopf.rotation.x=.18*Math.max(0,Math.sin((zs-27)*5)); } }
   for(const w of ['dorfmann','dorfweib']){ const D=A.dorf[w]; if(!D) continue; const s=akt.find(x=>x.wer===w); D.blase.visible=!!s; if(s){ triBlaseText(D.blase,kText(s.txt)); const k=D.m.G.position.clone(); k.y+=2.4; triBlaseUeber(D.blase,k,null); } }
   { const s=akt.find(x=>x.wer==='friedel'), B=F.blase, wo=vorher?F.steher.G:F.r.g; let im=false; const p=wo.position.clone(); p.y+=2.9; if(s&&wo.visible){ const q=p.clone().project(camera); im=q.z<1&&Math.abs(q.x)<.9&&Math.abs(q.y)<.9&&camera.position.distanceTo(p)<45; }
     B.visible=!!s&&im; if(B.visible){ triBlaseText(B,kText(s.txt)); triBlaseUeber(B,p,vorher?null:ich&&ich.g); } if(s&&!im) unten='Friedel: '+kText(s.txt); }

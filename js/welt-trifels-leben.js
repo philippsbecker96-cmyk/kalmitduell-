@@ -220,8 +220,9 @@ function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race
   // Jagdmusik: setzt mit dem Antritt ein, endet mit dem Haken (bei der letzten mit dem Sprung in den Sack), jede Jagd von vorn
   let jm=0; if(run&&K){ const k=K.J.findIndex(j=>rt>=j.t0-.3&&rt<j.t0+j.dur), j=K.J[k]; if(j){ const tau=rt-j.t0; if(einmal('jm'+k,true)) triMusikNeu('jagd'); jm=tau<(k===K.J.length-1?25.6:25.3)?1:0; } }
   triMusik('jagd',an?jm:0,dt,false);
-  // Unheimlich: leise im Wald, wenn Friedel nach Jagd 1–3 Angst bekommt (32 s um seinen Spruch)
+  // Unheimlich: leise im Wald, wenn Friedel nach Jagd 1–3 Angst bekommt (32 s um seinen Spruch), nach Jagd 4 noch leiser zwischen Laternen-Spruch und Wildschwein
   let uh=0; if(run&&K) K.J.slice(0,3).forEach((j,k)=>{ const x=rt-(j.t0+132); if(x>=0&&x<32){ uh=1; if(einmal('uh'+k,true)) triMusikNeu('unheimlich'); } });
+  if(run&&K&&K.J[3]){ const x=rt-(K.J[3].t0+52); if(x>=0&&x<32){ uh=.6; if(einmal('uh3',true)) triMusikNeu('unheimlich'); } }
   triMusik('unheimlich',an?uh:0,dt,false);
   // Gemütlich (taverne): Abfahrt nach dem Fuhrwerk bis vor das Wirtshaus, am Wirtshaus und am Gasthaus im Ziel (lauter, je näher), Heimweg nach Friedels Abschied – still bei den drei Elwetritschen und während der Ankunfts-Musik
   let gm=0; if(run&&K){ if(rt>=triFuhrT()+TRI_FUHR.ab+4&&me.d<T.wirtD-100) gm=1; if(rt>=K.heim+2&&!(E&&!E.fertig&&me.d>T.tritsch-60)) gm=1; }
