@@ -158,3 +158,51 @@ function poseTrifelsLeben(dt,t,rt){ const A=anim.tri, L=A.leben, T=R.tri; if(!L)
         e.beine.forEach((b,j)=>b.rotation.x=lauft?(j?1:-1)*.9*Math.sin(t*20+e.ph):0); e.K.rotation.z=lauft?.15*Math.sin(t*20+e.ph):0;
         e.fluegel.forEach((w,j)=>w.rotation.z=(j?-1:1)*(an&&s<Z.wirr+1?.5+.5*Math.sin(t*28+e.ph):0));
         e.kopf.rotation.x=!an?.7*Math.max(0,Math.sin(t*1.7+e.ph*2))**3:-.25; e.augen.forEach(a=>a.scale.y=an?1.5:1); e.zunge.visible=i===2&&f>0; }); } } }
+
+// ---- Geräusche (kampagne/sounds/effekte/, über <audio>, da file://): Schleifen werden leiser, je weiter die Kamera weg ist; Einzeltöne einmal je Ereignis (A.ton) ----
+const TRI_TON='kampagne/sounds/effekte/', TRI_TON_VOL={wagen:.5,hufe:.7,kettenhemd:.3,wiehern:.7,sturz:.9,glocken:.6,peitsche:.8,wirtshaus:.6,grillen:.35,fluegel:.7,elwetritsch_schrei:.8,gackern:.6,schwein:.8,rascheln_gebuesch:.7};
+const triLoops={}; let triTonVor=null;
+function triEins(n,v=1,rate=1){ if(v<.02) return; try{ const a=new Audio(TRI_TON+n+'.mp3'); a.volume=clampN(v*TRI_TON_VOL[n],0,1); a.preservesPitch=false; a.playbackRate=rate; a.play().catch(()=>{}); }catch(e){} }
+function triLoop(k,n,ziel,dt){ let L=triLoops[k]; if(!L){ if(ziel<=0) return; const a=new Audio(TRI_TON+n+'.mp3'); a.loop=true; a.volume=0; L=triLoops[k]={a,n,v:0}; }
+  L.v+=(ziel-L.v)*Math.min(1,dt*3); if(ziel<=0&&L.v<.01){ L.v=0; if(!L.a.paused) L.a.pause(); return; } L.a.volume=clampN(L.v*TRI_TON_VOL[n],0,1); if(L.a.paused) L.a.play().catch(()=>{}); }
+function triTonAus(){ for(const k in triLoops){ triLoops[k].v=0; triLoops[k].a.pause(); } }
+const triFern=(p,max)=>p?clampN(1-camera.position.distanceTo(p)/max,0,1)**1.5:0; // 1 an der Kamera, 0 ab max m
+function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race.state==='run', an=(run||race.state==='count')&&!race.paused;
+  if(!triTonVor){ triTonVor=Object.keys(TRI_TON_VOL).map(n=>Object.assign(new Audio(TRI_TON+n+'.mp3'),{preload:'auto'})); } // vorladen, damit der erste Ton nicht hängt
+  if(race.state==='count'||!A.ton) A.ton={}; const O=A.ton, einmal=(k,b)=>b&&!O[k]&&(O[k]=1); // Einzeltöne: neues Rennen = alles zurück
+  const P=A.tonP||(A.tonP={}), fahrt=(k,G)=>{ const p=G.position, a=P[k], v=a&&dt>0?p.distanceTo(a)/dt:0; P[k]=p.clone(); return G.visible&&v>.3&&v<40; }; // bewegt sich das Ding gerade?
+  // Goldkarren (Kamerafahrt beim Countdown, später den Burgweg hinauf)
+  const C=A.karren; triLoop('karren','wagen',an&&C&&fahrt('k',C.K)?triFern(C.K.position,45):0,dt);
+  // Löwenherz' Gefolge: Hufe und Kettenhemden, solange sie reiten; Wiehern, wenn sie herankommen, und nach deinem Sturz; Richard schwingt sich in der Kamerafahrt aufs Pferd
+  let rf=0; if(an&&A.reiter.length&&fahrt('r',A.reiter[0].p.G)) for(const r of A.reiter) if(r.p.G.visible) rf=Math.max(rf,triFern(r.p.G.position,60));
+  triLoop('hufe','hufe',rf,dt); triLoop('kette','kettenhemd',rf,dt);
+  if(einmal('aufs',A.kt>=8.4&&A.kt<10)) triEins('wiehern',.6*Math.max(.3,triFern(A.koenig&&A.koenig.p.G.position,60)));
+  if(einmal('herbei',run&&A.d0!=null&&A.d0-me.d<35&&A.d0-me.d>0)) triEins('wiehern');
+  if(einmal('sturz',A.sturzS>=.45)) triEins('sturz'); if(einmal('sturzW',A.sturzS>=1.6)) triEins('wiehern',.8,.95);
+  // Audienz: „Gott mit Euch!“ – Glocken aus der Ferne
+  if(einmal('glocken',A.aud&&rt-TRI_AUD[0]>=31)) triEins('glocken');
+  // Fuhrwerk auf der Abfahrt: Hufe und Wagen, Peitsche, wenn er davonfährt · Heuwagen im Gegenverkehr
+  if(L){ const F=L.fuhre, f=an&&F&&fahrt('f',F.G)?triFern(F.G.position,50):0; triLoop('fhufe','hufe',f,dt); triLoop('fwagen','wagen',f,dt);
+    if(einmal('peitsche',F&&F.G.visible&&rt-triFuhrT()>=TRI_FUHR.ab+.8)) triEins('peitsche',Math.max(.3,triFern(F.G.position,60)));
+    const W=L.gegen.find(E=>E.art==='wagen'), w=an&&W&&W.G.visible?triFern(W.G.position,50):0; triLoop('ghufe','hufe',.7*w,dt); triLoop('gwagen','wagen',w,dt); }
+  // Wirtshaus „Zack Zack“: Stimmen aus der Stube, Hühner im Stall gackern ab und zu
+  const dw=T.wirtD, pw=wegPos(dw,0), pS=wegPos(dw+11,0), W3=new THREE.Vector3(pw.x,roadY(dw)+1.5,pw.z), S3=new THREE.Vector3(pS.x,roadY(dw+11)+.5,pS.z);
+  triLoop('wirt','wirtshaus',an?triFern(W3,80):0,dt);
+  if(an&&triFern(S3,35)>0&&t>(O.huhn||0)){ if(O.huhn) triEins('gackern',.6*triFern(S3,35),.9+Math.random()*.3); O.huhn=t+3+Math.random()*5; }
+  // Dämmerung: Grillen ab dem Ende der Wirtshaus-Szene, werden über 40 s lauter
+  triLoop('grillen','grillen',an&&run&&K?clampN((rt-K.tW-10)/40,0,1):0,dt);
+  // Elwetritsche-Jagden: Flattern beim Auftauchen und beim Haken, Schrei beim ersten Zunge-Rausstrecken (ab Jagd 2) und beim Sprung in den Sack, danach zappelt sie im Sack
+  if(run&&K){ const k=K.J.findIndex(j=>rt>=j.t0&&rt<j.t0+j.dur+1), j=K.J[k];
+    if(j){ const tau=rt-j.t0, letzt=k===K.J.length-1; if(einmal('auf'+k,tau>=0&&tau<3)) triEins('fluegel');
+      if(einmal('zunge'+k,k>0&&tau>=5.5&&tau<24)) triEins('elwetritsch_schrei',.7,1.15);
+      if(einmal('haken'+k,!letzt&&tau>=25)) triEins('fluegel',.8); if(einmal('busch'+k,!letzt&&tau>=26.5)) triEins('rascheln_gebuesch'); if(einmal('sack',letzt&&tau>=25.4)) triEins('elwetritsch_schrei'); }
+    const tF=K.J.length?K.J[K.J.length-1].t0+25.6:1e9, x=rt-tF-4, n=Math.floor(x/13), lok=x-n*13-n*5%4, Fr=A.friedel&&A.friedel.r.g;
+    if(x>0&&lok>0&&lok<.3&&O.zappel!==n){ O.zappel=n; if(Fr&&Fr.visible) triEins('elwetritsch_schrei',.45*triFern(Fr.position,40),.85+Math.random()*.3); } }
+  // Drei Elwetritsche im Ausfahren: Schreck mit Gackern und Flattern, wildes Gegacker beim Durcheinanderrennen, Schrei, als eine die Zunge rausstreckt
+  const E=L&&L.tritsch; if(E&&E.s>=0&&!E.fertig){ const s=E.s, Z=TRI_TRITSCH; if(einmal('tschreck',true)){ triEins('gackern',1,1.2); triEins('fluegel',.8); }
+    if(an&&s>Z.schreck&&s<Z.wirr+1&&t>(O.tgack||0)){ triEins('gackern',.7,.95+Math.random()*.45); O.tgack=t+.3+Math.random()*.35; }
+    if(einmal('thoch',s>=1.8)) triEins('fluegel',.7,1.1); if(einmal('tzunge',s>=Z.wirr+.1)) triEins('elwetritsch_schrei',.8,1.2); if(einmal('tbusch',s>=Z.wirr+.9)) triEins('rascheln_gebuesch',.8); }
+  // Reh mit Kitzen springt über den Weg ins Gebüsch · Wildschwein: Rascheln, wenn es aus dem Wald bricht, grunzt beim Rennen vor dir her, Rascheln, wenn es links abtaucht
+  const Rh=L&&L.reh; if(Rh&&Rh.s>=0&&Rh.s<9){ if(einmal('reh',true)) triEins('rascheln_gebuesch',.8); if(einmal('rehweg',Rh.s>=3.5)) triEins('rascheln_gebuesch',.6,1.1); }
+  const Sw=L&&L.sau; if(Sw&&Sw.s>=0&&!Sw.fertig){ const s=Sw.s, Z=TRI_SAU; if(einmal('saurein',true)) triEins('rascheln_gebuesch');
+    if(an&&s>1&&s<Z.raus+Z.ab&&t>(O.grunz||0)){ triEins('schwein',.9,.9+Math.random()*.2); O.grunz=t+1.6+Math.random()*1.8; } if(einmal('saurraus',s>=Z.raus+Z.ab*.6)) triEins('rascheln_gebuesch'); } }

@@ -37,7 +37,7 @@ function draw(dt){
   if(anim.stadium) poseStadium(performance.now()/1000);
   if(anim.space) poseSpace(dt, performance.now()/1000);
   if(anim.island) poseIsland(dt, performance.now()/1000);
-  if(anim.burg) poseBurg(dt); if(anim.tri) poseTrifels(dt); // Trifels: welt-trifels.js
+  if(anim.burg) poseBurg(dt); if(anim.tri) poseTrifels(dt); else triTonAus(); // Trifels: welt-trifels.js, Geräusche in welt-trifels-leben.js
   if(anim.autos) poseAutos(dt);
   // Kamera: hinten oben, läuft den Anstieg mit
   const focusD=me.d; let tx,ty,tz,lx,ly,lz;
