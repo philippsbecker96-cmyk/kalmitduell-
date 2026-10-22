@@ -437,7 +437,7 @@ function trackPt(d,u){ // Punkt auf der Bahn: d entlang, u quer von der Innenkan
 /* ================= Trifels (Kampagne, Mission 1): wird aus dem Workout berechnet ================= */
 // Wie Space: ein Streckenstück je 2 s Workout, Länge aus Watt, Gewicht und fester Steigung je Abschnitt. So liegen die Orte immer an derselben Workout-Zeit:
 // Anstieg durch den Burgwald → Kehre in der Vorburg um den Goldkarren (Audienz-Tafel) → Serpentinen-Abfahrt → Auslauf → Wirtshaus (Ende Einfahren) → flaches Queichtal
-const TRIFELS_T={rauf:150, rampe:30, hof:25, aus:60}; // s: Anstieg bis zur Vorburg (7 %, die letzten rampe s 10 %) · Kehre in der Vorburg (= eine Tafel) · flacher Auslauf vor dem Wirtshaus
+const TRIFELS_T={rauf:150, rampe:30, hof:25, audienz:36, aus:60, szene:30, sturz:77, liegen:7}; // sturz/liegen: ab 77 s liegst du 7 s neben dem Weg (Löwenherz' Gefolge drängt dich vom Rad) · audienz: Halt mitten in der Kehre vor dem Burgherrn (Szene, man steht) · szene: Halt am Wirtshaus vor dem Ende des Einfahrens (Zwischenszene, man steht) // s: Anstieg bis zur Vorburg (7 %, die letzten rampe s 10 %) · Kehre in der Vorburg (= eine Tafel) · flacher Auslauf vor dem Wirtshaus
 // Weg aus Stücken in [Ost, Süd], h=0 nach Norden: ['g',Anteil] gerade (teilt sich die Restlänge), ['b',Grad,Radius] Bogen (+ rechts, − links)
 function turtle(st,teile,L){ const lb=teile.reduce((a,t)=>a+(t[0]==='b'?Math.abs(t[1])*Math.PI/180*t[2]:0),0), fg=teile.reduce((a,t)=>a+(t[0]==='g'?t[1]:0),0), k=lb>L?L/lb:1, rest=Math.max(0,L-lb*k);
   const geh=(l,dh)=>{ st.h+=dh/2; st.x+=Math.sin(st.h)*l; st.y-=Math.cos(st.h)*l; st.h+=dh/2; st.P.push([st.x,st.y]); };
@@ -445,14 +445,14 @@ function turtle(st,teile,L){ const lb=teile.reduce((a,t)=>a+(t[0]==='b'?Math.abs
     else { const th=t[1]*Math.PI/180, r=t[2]*k, n=Math.max(2,Math.round(Math.abs(th)*r/2)); for(let i=0;i<n;i++) geh(Math.abs(th/n)*r,th/n); } } }
 function trifelsDef(segs, unit, f, kg){
   const DT=2, T=segs.reduce((a,s)=>a+s.dur,0), tW=segs[0]?segs[0].t0+segs[0].dur:300, Tr=TRIFELS_T, NACH=600;
-  const gAt=t=>t<Tr.rauf-Tr.rampe?7:t<Tr.rauf?10:t<Tr.rauf+Tr.hof?1.5:t<tW-Tr.aus?-5.5:t<tW?-1.5:.3+.6*Math.sin(t/110);
+  const tF=Tr.sturz, tF2=tF+Tr.liegen, tA=Tr.rauf+Tr.hof/2, tA2=tA+Tr.audienz, tS=tW-Tr.szene, gAt=t=>t<Tr.rauf-Tr.rampe?7:t<Tr.rauf?10:t<Tr.rauf+Tr.hof+Tr.audienz?1.5:t<tS-Tr.aus?-5.5:t<tS?-1.5:t<tW?0:.3+.6*Math.sin(t/110);
   const raw=[], cum=[0]; let si=0;
   for(let t=0;t<T;t+=DT){ while(si<segs.length-1 && t>=segs[si].t0+segs[si].dur) si++; const sg=segs[si], v=segVal(sg,Math.min(t+DT/2,sg.t0+sg.dur)), w=unit==='w'?v:v*f/100, g=gAt(t+DT/2);
-    raw.push({len:Math.round(vSteady(w,g,kg)*DT*100)/100, g, p:Math.round(unit==='w'?v/f*100:v)}); cum.push(cum[cum.length-1]+raw[raw.length-1].len); }
+    raw.push({len:t>=tS&&t<tW||t>=tA&&t<tA2||t>=tF&&t<tF2?.01:Math.round(vSteady(w,g,kg)*DT*100)/100, g, /* nach dem Sturz, beim Burgherrn und am Wirtshaus steht man */ p:Math.round(unit==='w'?v/f*100:v)}); cum.push(cum[cum.length-1]+raw[raw.length-1].len); }
   const out=raw.map((c,i)=>{ let s=0,n=0; for(let j=-4;j<=4;j++){ const o=raw[i+j]; if(o){ s+=o.g; n++; } } return {...c, g:Math.round(s/n*100)/100}; }); // Übergänge weich
   out.push({len:NACH,g:.3,p:-1}); // Reserve hinter dem Workout-Ende
   const dT=t=>{ const x=Math.max(0,Math.min(cum.length-1,t/DT)), i=Math.min(cum.length-2,Math.floor(x)); return cum[i]+(cum[i+1]-cum[i])*Math.max(0,x-i); };
-  const d1=dT(Tr.rauf), d2=dT(Tr.rauf+Tr.hof), d3=dT(tW-Tr.aus), d4=dT(tW), dE=cum[cum.length-1];
+  const d1=dT(Tr.rauf), d2=dT(Tr.rauf+Tr.hof+Tr.audienz), dA=dT(tA), d3=dT(tS-Tr.aus), d4=dT(tS), dE=cum[cum.length-1];
   // Linie: Anstieg nach Norden, Rechtskehre um den Karren, Serpentinen nach Osten den Hang hinab, dann ostwärts durchs Tal
   const st={x:0,y:0,h:0,P:[[0,0]]}, rh=Math.max(12,(d2-d1)/Math.PI);
   turtle(st,[['g',1],['b',-25,140],['g',1],['b',25,140],['g',1]],d1);
@@ -468,7 +468,8 @@ function trifelsDef(segs, unit, f, kg){
   let e=0, lo=0; for(const s of out){ e+=s.len*s.g/100; lo=Math.min(lo,e); }
   const jagd=segs.filter(s=>/Jagd/.test(s.label)).map(s=>dT(s.t0)), lichtung=[]; for(let a=d4+1900;a<dE-300;a+=2600) lichtung.push(['wiese',a,a+320]);
   return {name:'Trifels · Queichtal', start:'Burgwald unter dem Trifels', finish:'Queichtal', startElev:330, plainElev:330+lo-25, gpx:'trifels', ma:true, planbar:true,
-    poly:st.P, segs:out, zones:[['wiese',d1-15,d2+15],['ort',d4-70,d4+80,{fach:.8,gewaende:.5,geh:.4,luecke:.3,licht:0}],['wiese',d4+80,d4+380],...lichtung], // sonst Pfälzerwald, im Tal ein paar Lichtungen
+    halte:[[tF,tF2,dT(tF)],[tA,tA2,dA],[tS,tW,d4]], // [von s, bis s, Meter]: hier steht der Fahrer (training.js)
+    poly:st.P, segs:out, zones:[['ort',d4-70,d4+80,{fach:.8,gewaende:.5,geh:.4,luecke:.3,licht:0}],['wiese',d4+80,d4+380],...lichtung], // sonst Pfälzerwald (auch an der Burg), im Tal ein paar Lichtungen
     breite:[[-50,d1-15,4.4],[d1-15,d2+15,7],[d2+15,1e9,4.4]], // schmaler Weg wie auf Berwartstein, Vorburg breit
     belag:[['erde',-50,d1,0],['pflaster',d1,d2,.5],['erde',d2,d4-70,0],['pflaster',d4-70,d4+80,.5],['erde',d4+80,1e9,0]], // keine Straße: Sandweg, Kopfstein in der Vorburg und am Wirtshaus
-    orte:{loewenherz:dT(75), hof:[d1,d2], karren, burg:[karren[0],karren[1]-rh-55], wirtshaus:d4, jagd, ziel:dE}}; } // Meter für Welt und Ereignisse (Schritt 3–5)
+    orte:{loewenherz:dT(75), sturz:dT(tF), hof:[d1,d2], audienz:dA, karren, burg:[karren[0],karren[1]-rh-55], wirtshaus:d4, tS, tW, jagd, ziel:dE}}; } // Meter für Welt und Ereignisse (Schritt 3–5)

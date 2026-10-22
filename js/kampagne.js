@@ -1,16 +1,17 @@
 /* ================= Kampagne: Der Pedalritter im Wasgau ================= */
 // Läuft intern als Training (race.mode='train', race.kamp=Mission): ERG, Workout-Anzeige und Ergebnis kommen aus training.js. Konzept: KAMPAGNE.md
 // Zwei Stufen je Mission: items (leicht) und hart – gleiche Struktur, harte Abschnitte ×1,35–1,4, lockere ×1,15–1,2 (max. ≈78 %), Ein-/Ausfahren gleich.
-// Tafeln laufen fest 25 s, Start-Tafeln im Einfahren, Ende-Tafeln im Ausfahren. Texte: [Bauer|Bäuerin] wird je nach Auswahl ersetzt.
+// Tafeln laufen fest 25 s, Start-Tafeln im Einfahren, Ende-Tafeln im Ausfahren, Mitte-Tafeln zu einer aus dem Workout berechneten Zeit (at() → s oder null). Texte: [Bauer|Bäuerin] wird je nach Auswahl ersetzt.
 const KT_DAUER=25;
 const KAMP=[
   {id:'trifels', nr:1, titel:'Trifels – Die Elwetritsche-Wette', ort:'Burg Trifels · Annweiler · Queichtal', strecke:'trifels',
     items:[S_('Einfahren',8,50,60),{k:'r',n:5,items:[S_('Locker',3,65),S_('Elwetritsche-Jagd',0.5,85)]},S_('Grundlage',5,65),S_('Ausfahren',5,50)],
     hart:[S_('Einfahren',8,50,65),{k:'r',n:5,items:[S_('Locker',3,75),S_('Elwetritsche-Jagd',0.5,117)]},S_('Grundlage',5,78),S_('Ausfahren',5,50)],
     start:[{bild:'💰🏰',titel:'Gold für den Trifels',text:'Du bist [ein einfacher Bauer|eine einfache Bäuerin] aus der Gegend und suchst Arbeit. Auf dem Trifels wird gerade das Lösegeld für Richard Löwenherz abgeladen – und es heißt, der Burgherr sucht Leute, die das Gold sicher nach Speyer bringen.'},
-      {bild:'🤴',at:TRIFELS_T.rauf+25,titel:'Audienz beim Burgherrn',text:'„Für so ein Unterfangen brauche ich Leute, denen ich wirklich vertrauen kann – und die etwas taugen. Beweise es: Besiege Hans von Trotha auf Burg Berwartstein. Der Weg dorthin ist weit und beschwerlich.“'}],
-    ende:[{bild:'🐦🍺',titel:'Wette gewonnen',text:'Dein neuer Knappe radelt mit der gefangenen Elwetritsche im Sack zurück zum Wirtshaus, um seine 10 Gulden einzustreichen.'},
-      {bild:'🤝',titel:'Bis morgen!',text:'Ihr verabredet euch im Gasthaus an der Straße Richtung Teufelstisch. Dort geht die Reise weiter.'}]},
+      {bild:'⚔️🏰',at:TRIFELS_T.rauf+TRIFELS_T.hof/2+TRIFELS_T.audienz,titel:'Der Auftrag des Burgherrn',text:'Nur wer Hans von Trotha auf Burg Berwartstein bezwingt, darf das Gold nach Speyer geleiten. Den Raubritter aus dem Wasgau hasst die ganze Pfalz: Er überfällt Händler, presst den Bauern das Letzte ab und liegt in Fehde mit dem Kloster Weißenburg. Selbst der Bann des Papstes schert ihn nicht. Im Elsass nennt man ihn nur „Hans Trapp“, und die Kinder fürchten ihn wie den Leibhaftigen.'}], // nach der Audienz-Szene (welt-trifels.js)
+    mitte:[{bild:'🍺🌲',titel:'Auf zur Jagd',text:'Du hast dich bereit erklärt, Friedel zu helfen, eine Elwetritsche zu fangen. Gemeinsam macht ihr euch auf den Weg Richtung Wald.',at:()=>{ const S=race.woSegs||[]; return S[0]?S[0].t0+S[0].dur:null; }}, // nach dem Wirtshausgespräch (Ende des Einfahrens)
+      {bild:'🌙',titel:'Die erste gute Tat',text:'Die Elwetritsche sitzt im Sack, Friedel hat seine Wette gewonnen – und du einen treuen Knappen. Doch der Weg bis zum Gasthaus beim Teufelstisch ist noch weit, und die Nacht bricht herein. Dies war erst der Anfang einer langen Reise. Die wahren Gefahren lauern noch im Wasgau auf dich.',at:()=>{ const K=anim.tri&&anim.tri.sk; return K?K.heim+12:null; }}], // wenn Friedel umgekehrt und außer Sicht ist
+    ende:[{bild:'🤝',titel:'Bis morgen!',text:'Ihr verabredet euch im Gasthaus an der Straße Richtung Teufelstisch. Dort geht die Reise weiter.'}]},
   {id:'teufelstisch', nr:2, titel:'Teufelstisch – Wette mit dem Teufel', ort:'Hinterweidenthal', bald:true},
   {id:'dahn', nr:3, titel:'Dahn – Der Jungfernsprung', ort:'Dahner Felsenland', bald:true},
   {id:'berwartstein', nr:4, titel:'Berwartstein – Drache und Flut', ort:'Erlenbach · Burg Berwartstein', bald:true}];
@@ -50,7 +51,9 @@ function kampTafel(tf){ let el=$('kampTafel'); if(!tf){ el.classList.remove('zei
   el.classList.add('zeig'); el.querySelector('.kbar i').style.width=Math.min(100,tf.p*100)+'%'; }
 function kampTick(){ const m=race.kamp; if(!m||race.state!=='run'||me.done){ kampTafel(null); return; }
   const t=race.t, E=m.ende||[], e0=(race.woT||0)-E.length*KT_DAUER, j=Math.floor((t-e0)/KT_DAUER), s=kampStartZeiten(m).find(([t0])=>t>=t0&&t<t0+KT_DAUER);
+  const mi=s?null:(m.mitte||[]).map(tf=>[tf.at(),tf]).find(([t0])=>t0!=null&&t>=t0&&t<t0+KT_DAUER);
   if(s) kampTafel({...s[1],p:(t-s[0])/KT_DAUER});
+  else if(mi) kampTafel({...mi[1],p:(t-mi[0])/KT_DAUER});
   else if(t>=e0&&j<E.length) kampTafel({...E[j],p:(t-e0-j*KT_DAUER)/KT_DAUER});
   else kampTafel(null); }
 // Start-Tafeln: at = feste Workout-Zeit (s), sonst direkt nach der vorigen

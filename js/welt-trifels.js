@@ -4,9 +4,15 @@
 //   prepTrifels aus buildRoute (Plätze freiräumen) · trifelsGelaende aus build3D (ebene Vorburg, Burgberg) · buildTrifels aus build3D · poseTrifels aus draw (rennen.js)
 
 // ---- Vorbereitung (beim Streckenbau): Vorburg und Burgfelsen frei von Bäumen, Häuser am Wirtshaus mittelalterlich, Wirtshaus wählen ----
+const TRI_HUETTEN=[-.06,-.15,-.62,-.71,-.8,-.89]; // Hütten der Vorburg: Winkel (× π) um den Karrenplatz, Lücke für den Burgweg
 function prepTrifels(r){ const O=r.def.orte, S=r.S, q=rng(77), kf=r.kf, [kx,ky]=O.karren, [bx,by]=O.burg, rh=(O.hof[1]-O.hof[0])*kf/Math.PI;
-  r.tri={karren:O.karren, burg:O.burg, rh, hof:O.hof.map(d=>d*kf), wirtD:O.wirtshaus*kf, jagd:O.jagd.map(d=>d*kf), loewenherz:O.loewenherz*kf};
-  const frei=[[kx,ky,rh+26]]; for(let k=-4;k<=4;k++) frei.push([bx+k*14,by,30]); // Vorburg-Platz, Burgberg
+  r.tri={karren:O.karren, burg:O.burg, rh, hof:O.hof.map(d=>d*kf), aud:O.audienz*kf, sturz:O.sturz*kf, wirtD:O.wirtshaus*kf, tS:O.tS, tW:O.tW, jagd:O.jagd.map(d=>d*kf), loewenherz:O.loewenherz*kf};
+  // Burgwald bis an die Vorburg (vom Nutzer gewünscht), frei nur: Kisten in der Kehre, Burgfelsen, Hütten, Burgweg, Burgherr mit Wachen
+  const frei=[[kx,ky,13]]; for(let x=-62;x<=52;x+=10) frei.push([bx+x,by,15]);
+  for(const f of TRI_HUETTEN) frei.push([kx+Math.cos(Math.PI*f)*(rh+12), ky+Math.sin(Math.PI*f)*(rh+12), 7]);
+  { const x0=kx, z0=ky-rh-3, x2=bx+46, z2=by+17, cx=kx+40, cz=ky-rh-6; for(let i=0;i<=20;i++){ const t=i/20; frei.push([(1-t)*(1-t)*x0+2*(1-t)*t*cx+t*t*x2, (1-t)*(1-t)*z0+2*(1-t)*t*cz+t*t*z2, 5]); } }
+  { const bd=r.tri.aud+3, o=roadW(r,bd)/2+1.8; for(const da of [-2,0,2]){ const [px,py]=posAt(r,bd+da), h=headingAt(r,bd+da); frei.push([px+Math.sin(h)*o, py-Math.cos(h)*o, 3.5]); } }
+  { const sd=r.tri.sturz; for(let da=-14;da<=14;da+=4){ const [px,py]=posAt(r,sd+da), h=headingAt(r,sd+da); for(const o of [3.5,7]) frei.push([px-Math.sin(h)*(roadW(r,sd+da)/2+o), py+Math.cos(h)*(roadW(r,sd+da)/2+o), 3]); } } // Sturzstelle: rechts frei für Seitenkamera und Sturz
   // Dichter Pfälzerwald: zusätzliche Kiefern, Buchen und Unterholz im Wald, nie auf dem Weg oder auf benachbarten Kehren
   { const C=8, gr=new Map(), key=(x,y)=>Math.floor(x/C)+','+Math.floor(y/C); for(let i=0;i<r.xs.length;i+=2){ const k=key(r.xs[i],r.ys[i]); (gr.get(k)||gr.set(k,[]).get(k)).push(i); }
     const amWeg=(x,y,m)=>{ const cx=Math.floor(x/C), cy=Math.floor(y/C), w=Math.ceil(m/C); for(let a=-w;a<=w;a++) for(let b=-w;b<=w;b++){ const l=gr.get((cx+a)+','+(cy+b)); if(l) for(const i of l) if(Math.hypot(r.xs[i]-x,r.ys[i]-y)<m) return true; } return false; };
@@ -84,7 +90,7 @@ function buildTrifels(){ const T=R.tri, hy=T.hofY, [kx,ky]=T.karren, [bx,by]=T.b
   const bretter=new THREE.MeshLambertMaterial({map:canvasTex(64,64,g=>{ for(let x=0;x<64;x+=8){ const v=.8+Math.random()*.3; g.fillStyle=`rgb(${118*v|0},${84*v|0},${54*v|0})`; g.fillRect(x,0,8,64); g.fillStyle='rgba(30,18,10,.55)'; g.fillRect(x+7,0,1,64); } })});
   const huette=(a,o,w,d,hg)=>{ const x=Math.cos(a)*o, z=Math.sin(a)*o, H=new THREE.Group(); H.position.set(x,0,z); H.rotation.y=-a+Math.PI/2; V.add(H);
     box(H,w,hg,d,bretter,0,hg/2,0); const rf=new THREE.Mesh(gableGeo(w+.8,d+.8,1.8),q()<.5?ziegel:lam('#a8925c')); rf.position.y=hg; H.add(rf); box(H,1,1.9,.08,dunkel,0,.95,d/2+.02); };
-  for(const f of [-.06,-.15,-.62,-.71,-.8,-.89]){ const a=Math.PI*f+(q()-.5)*.06; huette(a,T.rh+10+q()*4,4+q()*2.5,3.5+q(),2.6+q()*.6); } // Nordseite unterhalb der Burg, Lücke für den Burgweg
+  for(const f of TRI_HUETTEN){ const a=Math.PI*f+(q()-.5)*.06; huette(a,T.rh+10+q()*4,4+q()*2.5,3.5+q(),2.6+q()*.6); } // Nordseite unterhalb der Burg, Lücke für den Burgweg
   for(let i=0;i<6;i++){ const a=(q()-.5)*1.2, r=4+q()*9, k=new THREE.Mesh(new THREE.BoxGeometry(.9,.9,.9),holz); k.position.set(Math.cos(a)*r*1.1+6,.45,Math.sin(a)*r*.6); k.rotation.y=q()*3; V.add(k); } // Kisten
   for(let i=0;i<3;i++){ const f=new THREE.Mesh(new THREE.CylinderGeometry(.45,.45,1,10),holzD); f.position.set(-6+i*1.1,.5,-5); V.add(f); } // Fässer
   for(let i=0;i<4;i++){ const hb=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,1.3,10),lam('#c9a85a')); hb.rotation.z=Math.PI/2; hb.position.set(-8+i*1.8,.8,4); V.add(hb); } // Heuballen
@@ -175,34 +181,35 @@ function buildTrifelsLeute(T,hy){ const A=anim.tri={reiter:[], traeger:null, kpf
   const wachen=[wache(-1.5,1.4,0),wache(1.5,-.4,0)]; wachen.forEach(speer); // gehen links und rechts neben dem Wagen mit
   A.karren={K,raeder,wachen,s:0,ph:0};
   // Burgherr: langes Gewand, pelzbesetzter Mantel, steht am Karren und blickt zur Straße
-  const W0=T.weg[3], bd=(T.hof[0]+T.hof[1])/2-7, bp=wegPos(bd,-(roadW(R,bd)/2+1.6)), bv=wegPos(bd-14,0), bh=trMensch({lang:'#3a4f8a',mantel:'#6a1f2a',bart:'#5a4632',haar:'#5a4632'}); bh.G.position.set(bp.x,terrainAt(bp.x,bp.z),bp.z); bh.G.rotation.y=Math.atan2(bv.x-bp.x,bv.z-bp.z); world.add(bh.G); // links am Scheitel der Kehre, kurz vor der Abzweigung des Burgwegs, blickt dir entgegen
+  const W0=T.weg[3], bd=T.aud+3, bp=wegPos(bd,-(roadW(R,bd)/2+1.6)), bv=wegPos(bd-14,0), bh=trMensch({lang:'#3a4f8a',mantel:'#6a1f2a',bart:'#5a4632',haar:'#5a4632'}); bh.G.position.set(bp.x,terrainAt(bp.x,bp.z),bp.z); bh.G.rotation.y=Math.atan2(bv.x-bp.x,bv.z-bp.z); world.add(bh.G); // links am Scheitel der Kehre, 3 m hinter dem Halt der Audienz, blickt dir entgegen
   for(const da of [-1.5,1.5]){ const w=trMensch({kittel:'#c8302a',aermel:'#e9b22e',hose:'#2f4a35'}), hb=new THREE.Mesh(new THREE.SphereGeometry(.15,10,8),lam('#8a8d93')); hb.position.set(0,.12,-.045); w.kopf.add(hb); speer(w);
     const p=wegPos(bd+da,-(roadW(R,bd)/2+1.9)); w.G.position.set(p.x,terrainAt(p.x,p.z),p.z); w.G.rotation.y=bh.G.rotation.y; world.add(w.G); } // zwei Wachen neben ihm
-  const bl=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(kText(TRI_RUF_TXT)),transparent:true,depthWrite:false})); bl.scale.set(11,3.4,1); bl.position.set(bp.x,bh.G.position.y+3.7,bp.z); // groß, gut lesbar beim Vorbeifahren bl.visible=false; world.add(bl);
-  A.burgherr={m:bh,blase:bl};
+  const bl=triBlase(), bq=wegPos(bd,-(roadW(R,bd)/2+3.4)); bl.position.set(bq.x,bh.G.position.y+4.3,bq.z); // feste Bildschirmgröße, nie verdeckt; hoch und etwas außen, damit sie nicht auf dem Fahrer liegt
+  A.burgherr={m:bh,blase:bl,ry:bh.G.rotation.y};
   for(const [dx,dz,ry] of [[-5.5,-1,.4],[-5.8,.2,-.3]]){ const t=truhe(world,W0.x+dx,0,W0.z+dz,ry); t.position.y=terrainAt(t.position.x,t.position.z); } // zwei abgeladene Truhen dort const pz=new THREE.Mesh(new THREE.TorusGeometry(.25,.06,6,14),lam('#e8e0d0')); pz.rotation.x=Math.PI/2; pz.position.y=1.5; bh.G.add(pz);
-  // Löwenherz mit Gefolge: Richard vorn, Bannerträger mit der Löwenfahne, drei Ritter mit eigenen Wappen
-  const L=[[0,{rock:0,kette:1,krone:1,bart:'#8a7a68'},0,'#c8202a'],[1,{rock:0,kette:1},0,null],[2,{rock:1,kette:1},1,null],[3,{rock:2,kette:1},2,null],[4,{rock:3,kette:1},3,null]];
-  for(const [i,mo,sk,fb] of L){ const p=trPferd({fell:i%2?'#2a201a':'#3a2a22',schabracke:sk,federbusch:fb||(i===0?null:'#efeae0')}), m=trMensch(mo); trReiter(p,m); world.add(p.G);
-    if(i===1){ const st=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,3.6,6),holz); st.position.set(.25,1.5,.1); m.G.add(st); const f=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.8),new THREE.MeshLambertMaterial({map:canvasTex(160,116,g=>wappenMal(g,160,116,0)),side:THREE.DoubleSide})); f.position.set(.25,2.9,-.55); f.rotation.y=Math.PI/2; m.G.add(f); A.fahne=f; }
-    A.reiter.push({p,m,ab:i*5.5,u:(i%2?.15:-.15),ph:i*1.3}); }
-  const ru=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(kText(TRI_BEISEITE)),transparent:true,depthWrite:false})); ru.scale.set(7.4,2.3,1); ru.visible=false; world.add(ru); A.ruf=ru; buildFriedel(T); } // Kolonne: alle 5,5 m einer, mitten auf dem Weg · Ruf des Bannerträgers
+  // Löwenherz mit Gefolge: ein Ritter reitet voraus, dahinter Bannerträger mit der Löwenfahne und ein Ritter, Richard in der Mitte zwischen zwei Rittern, zwei Ritter am Schluss – füllt fast den ganzen Weg
+  // [Rolle, Kleidung, Wappen, ab = Meter hinter dem Vorreiter, u = Spur]
+  const L=[['vor',{rock:3,kette:1},3,0,0],['banner',{rock:0,kette:1},0,6.5,-.75],['',{rock:1,kette:1},1,6.5,.75],['koenig',{rock:0,kette:1,krone:1,bart:'#8a7a68'},0,12,-.1],['',{rock:2,kette:1},2,12,-1.3],['',{rock:3,kette:1},3,12,1.05],['',{rock:1,kette:1},1,17.5,-.7],['',{rock:2,kette:1},2,17.5,.7]];
+  L.forEach(([rolle,mo,sk,ab,u],i)=>{ const p=trPferd({fell:i%2?'#2a201a':'#3a2a22',schabracke:sk,federbusch:rolle==='koenig'?'#c8202a':'#efeae0'}), m=trMensch(mo); trReiter(p,m); world.add(p.G);
+    if(rolle==='banner'){ const st=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,3.6,6),holz); st.position.set(.25,1.5,.1); m.G.add(st); const f=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.8),new THREE.MeshLambertMaterial({map:canvasTex(160,116,g=>wappenMal(g,160,116,0)),side:THREE.DoubleSide})); f.position.set(.25,2.9,-.55); f.rotation.y=Math.PI/2; m.G.add(f); A.fahne=f; }
+    A.reiter.push({p,m,ab,u,ph:i*1.3}); });
+  const ru=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(kText(TRI_BEISEITE)),transparent:true,depthWrite:false})); ru.scale.set(7.4,2.3,1); ru.visible=false; world.add(ru); A.ruf=ru; buildFriedel(T); } // Ruf des Vorreiters
 
 // ---- Bewegung (jeden Frame): Gefolge reitet dir auf dem Anstieg entgegen und vorbei, Träger, Pferde nicken ----
 const TRI_V=3.2; // Trab der Reiter, m/s
 function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=performance.now()/1000, rt=race.state==='run'?race.t:0;
-  // Begegnung bei T.loewenherz (Workout-Zeit 75 s): vorher kommen sie von der Vorburg herab, warten oben bis zum Start
-  const d0=Math.min(T.hof[0]-8, T.loewenherz+TRI_V*(75-rt)), lauf=race.state==='run'&&!race.paused&&d0<T.hof[0]-8;
+  // Begegnung: Richards Reihe (12 m hinter dem Vorreiter) ist beim Sturz (TRIFELS_T.sturz) genau neben dir; vorher kommen sie von der Vorburg herab, warten oben bis zum Start
+  const d0=Math.min(T.hof[0]-8, T.sturz-12+TRI_V*(TRIFELS_T.sturz-rt)), lauf=race.state==='run'&&!race.paused&&d0<T.hof[0]-8;
   for(const r of A.reiter){ const d=d0+r.ab, vis=d>-30&&d<T.hof[1]; r.p.G.visible=vis; if(!vis) continue; const P=wegPos(d,r.u), y=roadY(d);
     r.p.G.position.set(P.x,y,P.z); r.p.G.rotation.set(0,-P.h-Math.PI/2,0); // lokal +z gegen die Fahrtrichtung: reitet bergab
     if(lauf) r.ph+=dt*TRI_V*2.6*simSpeed(); const s=Math.sin(r.ph), a=lauf?1:0; r.p.beine.forEach((b,i)=>b.rotation.x=.55*a*(i===0||i===3?s:-s)); r.p.hals.rotation.x=.08*a*Math.sin(r.ph*2)+.03*Math.sin(t*.9+r.ab);
     r.m.G.position.y=1.1+.05*a*Math.abs(Math.sin(r.ph)); }
   A.d0=d0; // für triSpur
-  poseFriedel(dt,t,rt);
-  if(A.ruf){ const g=d0-me.d, an=race.state==='run'&&g<48&&g>2, b=A.reiter[1].p.G.position; A.ruf.visible=an; if(an){ A.ruf.position.set(b.x,b.y+5.2,b.z); const tx=kText(TRI_BEISEITE); if(A.rufTx!==tx){ A.rufTx=tx; A.ruf.material.map=blaseTex(tx); A.ruf.material.needsUpdate=true; } } }
+  triWanken(dt,t); poseSturz(dt,t,rt); poseAudienz(dt,t,rt); poseFriedel(dt,t,rt); trifelsLicht(rt);
+  if(A.ruf){ const g=d0-me.d, an=race.state==='run'&&g<48&&g>2, b=A.reiter[0].p.G.position; A.ruf.visible=an; if(an){ A.ruf.position.set(b.x,b.y+5.2,b.z); const tx=kText(TRI_BEISEITE); if(A.rufTx!==tx){ A.rufTx=tx; A.ruf.material.map=blaseTex(tx); A.ruf.material.needsUpdate=true; } } }
   if(A.fahne) A.fahne.rotation.x=.12*Math.sin(t*2.3);
-  // Burgherr: hebt die Hand und spricht dich an, kurz bevor die Audienz-Tafel kommt
-  const B=A.burgherr; if(B){ const an=race.state==='run'&&rt>=TRI_RUF[0]&&rt<TRI_RUF[1]; B.blase.visible=an; if(an){ const tx=kText(TRI_RUF_TXT); if(B.txt!==tx){ B.txt=tx; B.blase.material.map=blaseTex(tx); B.blase.material.needsUpdate=true; } } B.m.arme[1].rotation.x+=((an?-2.4:0)-B.m.arme[1].rotation.x)*Math.min(1,dt*4); B.m.kopf.rotation.y=.15*Math.sin(t*.6); }
+  // Burgherr: hebt die Hand und spricht dich an, kurz bevor die Audienz-Tafel kommt (Blase über seinem Kopf, aber nie auf deinem Fahrer)
+  const B=A.burgherr; if(B&&!A.aud){ const an=race.state==='run'&&rt>=TRI_RUF[0]&&rt<TRI_RUF[1]; B.blase.visible=an; if(an){ B.txt=kText(TRI_RUF_TXT); triBlaseText(B.blase,B.txt); const k=B.m.G.position.clone(); k.y+=2.6; triBlaseUeber(B.blase,k,riders3d[myKey]&&riders3d[myKey].g); } B.m.arme[1].rotation.x+=((an?-2.4:0)-B.m.arme[1].rotation.x)*Math.min(1,dt*4); B.m.arme[0].rotation.x+=(0-B.m.arme[0].rotation.x)*Math.min(1,dt*4); B.m.kopf.rotation.y=.15*Math.sin(t*.6); B.m.G.rotation.y+=angDiff(B.ry,B.m.G.rotation.y)*Math.min(1,dt*3); }
   // Goldkarren: wartet an der Abzweigung, ab 5 s vor der Vorburg (Workout-Zeit) im Schritt den Burgweg hinauf, fährt durchs Tor und verschwindet
   const C=A.karren; if(C&&T.weg){ const W=T.weg, L=T.wegL, s=Math.min(L+4, 6+Math.max(0,rt-(TRIFELS_T.rauf-5))*KARREN_TRI), lauf=race.state==='run'&&!race.paused&&s>6&&s<L+4;
     C.K.visible=s<L+3.5; let i=1; while(i<W.length-1&&W[i].L<s) i++; const a=W[i-1], b=W[i], f=Math.min(1,Math.max(0,(s-a.L)/Math.max(.01,b.L-a.L))), y=a.y+(b.y-a.y)*f-.17;
@@ -212,36 +219,77 @@ function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=
     for(const w of C.wachen){ w.beine[0].rotation.x=.45*am*sn; w.beine[1].rotation.x=-.45*am*sn; } } }
 const KARREN_TRI=1.2; // Schritt des Goldkarrens, m/s
 const TRI_BEISEITE='Beiseite mit Euch, [Bauer|Bäuerin]! Platz für den König von England!';
-// Spur (aus rennen.js): vor dem Gefolge in der Mitte, ab 28 m an den rechten Rand ausweichen, bis der Letzte vorbei ist
-function triSpur(d,t){ const A=anim.tri; if(!A||A.d0==null||race.state!=='run') return t; const g=A.d0-d, L=A.reiter.length?A.reiter[A.reiter.length-1].ab:0; if(g>70||g+L<-6) return t;
-  const H=roadW(R,d)/2-.55, mitte=bSm((70-g)/15), rechts=bSm((32-g)/6)*bSm((g+L+6)/5); return t+(0-t)*mitte*(1-rechts)+(H-t)*rechts; }
-const TRI_RUF=[TRIFELS_T.rauf+2, TRIFELS_T.rauf+12], TRI_RUF_TXT='Halt! Ihr seid doch [der Bursche, der|die Magd, die] sich für das Gold meldet?'; // Workout-Zeit (s): Burgherr ruft dich an; danach Audienz-Tafel (at in kampagne.js)
+// Spur (aus rennen.js): vor dem Gefolge in der Mitte, ab 32 m ganz an den rechten Rand gedrängt, bis der Letzte vorbei ist; beim Sturz rutschst du aufs Bankett
+function triSpur(d,t){ const A=anim.tri; if(!A||A.d0==null||race.state!=='run') return t; if(A.sturzS>=.4) return roadW(R,d)/2-.7; const g=A.d0-d, L=A.reiter.length?A.reiter[A.reiter.length-1].ab:0; if(g>70||g+L<-6) return t;
+  const H=roadW(R,d)/2-.3, mitte=bSm((70-g)/15), rechts=bSm((32-g)/6)*bSm((g+L+6)/5); return t+(0-t)*mitte*(1-rechts)+(H-t)*rechts; }
+// Wanken: reitet ein Pferd dicht an dir vorbei, kommt dein Holzrad ins Schwanken (Rollen r.wank und Lenken r.lenk, wirken in putRider), bis ±18°
+function triWanken(dt,t){ const A=anim.tri, ich=riders3d[myKey]; if(!ich) return; let e=0;
+  if(race.state==='run'&&A.d0!=null&&ich.lane!=null) for(const r of A.reiter){ const dd=Math.abs(A.d0+r.ab-me.d), lat=Math.abs(ich.lane-r.u); e+=bSm((4-dd)/2.5)*bSm((2.3-lat)/1); }
+  A.wankE=Math.max(Math.min(1,e),(A.wankE||0)-dt*.7); ich.wank=A.wankE*(.22*Math.sin(t*7.3)+.09*Math.sin(t*12.1)); ich.lenk=A.wankE*.18*Math.sin(t*5.1+1); }
+// Sturz: als Richards Reihe vorbeizieht, kippst du nach rechts an den Wegrand, ein Ritter spottet, du rappelst dich auf, klopfst den Staub ab, hebst das Rad auf und steigst wieder auf
+const TRI_SPOTT='Hoho, [Bauer|Bäuerin], das Radeln will gelernt sein!';
+function poseSturz(dt,t,rt){ const A=anim.tri, S=A.sturzF, ich=riders3d[myKey]; if(!S||!ich) return; const s=race.state==='run'?rt-TRIFELS_T.sturz:-1, an=s>=0&&s<TRIFELS_T.liegen, m=S[KST.stand==='baeuerin'?'baeuerin':'bauer'];
+  S.bauer.G.visible=S.baeuerin.G.visible=false; S.rad.visible=false; A.spott.visible=false;
+  const g=A.d0!=null?A.d0-me.d:99, L=A.reiter.length?A.reiter[A.reiter.length-1].ab:0; A.seitZ=race.state==='run'&&g<25&&(g+L>-3||an||s>=0&&s<TRIFELS_T.liegen+.5)?1:0; A.seitW=(A.seitW||0)+(A.seitZ-(A.seitW||0))*Math.min(1,dt*1.8); A.sturzS=an?s:-1; // Seitenkamera (trifelsKamera)
+  if(!an) return; const d=me.d, hd=headingAt(R,d), u=ich.lane||0, p=wegPos(d,u), y=roadY(d)+.05, ry=Math.atan2(Math.cos(hd),Math.sin(hd)), f=s<.55?(s/.55)**2:1;
+  if(s<3.2){ ich.wank=(ich.wank||0)+(1.45-(ich.wank||0))*f; ich.lenk=.25*f; } // fällt mit dem Rad um und bleibt liegen
+  else { ich.g.visible=false; const auf=bSm((s-3.2)/1.4), kl=s>4.6&&s<5.6?Math.sin((s-4.6)*Math.PI*4):0, hb=bSm((s-5.6)/.8); // aufrappeln, Staub abklopfen, Rad aufheben
+    if(s<6.4){ m.G.visible=true; m.G.position.set(p.x+Math.sin(hd)*.5,y,p.z-Math.cos(hd)*.5); m.G.rotation.set(0,ry,1.4*(1-auf)); m.arme[0].rotation.x=-.6*Math.abs(kl)-(s>5.6?.9*hb:0); m.arme[1].rotation.x=-.6*Math.abs(kl)-(s>5.6?.9*hb:0); m.kopf.rotation.x=s>4.6&&s<5.6?.35:0;
+      S.rad.visible=true; S.rad.position.set(p.x,roadY(d)+.12,p.z); S.rad.rotation.set(0,-hd,0); S.rad.children[0].rotation.x=1.45*(1-hb); }
+    else { ich.g.visible=true; ich.wank=0; ich.lenk=0; } } // wieder aufgestiegen
+  if(s>.45&&s<.5) for(let i=0;i<40;i++){ const a=Math.random()*Math.PI*2, v=.6+Math.random()*1.4; partSpawn(parts.dust,p.x+Math.sin(hd)*-.8,y+.15,p.z+Math.cos(hd)*.8,Math.cos(a)*v,.3+Math.random()*.6,Math.sin(a)*v,1.8,Math.random()<.5?'#b98466':'#a8765a'); } // Staubwolke
+  if(s>1.2&&s<5){ const r=A.reiter[A.reiter.length-1].p.G.position, k=r.clone(); k.y+=3.4; triBlaseText(A.spott,kText(TRI_SPOTT)); triBlaseUeber(A.spott,k,null); A.spott.visible=true; } }
+const TRI_RUF=[TRIFELS_T.rauf+2, TRIFELS_T.rauf+TRIFELS_T.hof/2], TRI_RUF_TXT='Halt! Ihr seid doch [der Bursche, der|die Magd, die] sich für das Gold meldet?'; // Workout-Zeit (s): Burgherr ruft dich an, bis du vor ihm hältst
+// Audienz (Workout-Zeit wie der Halt in trifelsDef): du steigst ab und verbeugst dich, der Burgherr spricht (Hochdeutsch), danach Tafel „Der Auftrag des Burgherrn“ (kampagne.js)
+const TRI_AUD=[TRIFELS_T.rauf+TRIFELS_T.hof/2, TRIFELS_T.rauf+TRIFELS_T.hof/2+TRIFELS_T.audienz];
+const TRI_AUD_TXT=[[2.5,'Ihr wollt also das Gold des Königs nach Speyer geleiten?','offen'],[9,'Für so ein Unterfangen brauche ich Leute, denen ich wirklich vertrauen kann – und die etwas taugen.','brust'],
+  [17.5,'Beweist es: Besiegt Hans von Trotha auf Burg Berwartstein!','zeig'],[25,'Der Weg dorthin ist weit und beschwerlich.','offen'],[31,'Gott mit Euch!','segen'],[35,null]]; // [ab s, Text, Geste]
+function poseAudienz(dt,t,rt){ const A=anim.tri, B=A.burgherr, V=A.ichV, ich=riders3d[myKey]; if(!B||!V) return; const s=race.state==='run'?rt-TRI_AUD[0]:-1, an=s>=0&&s<TRIFELS_T.audienz, k=Math.min(1,dt*4);
+  A.aud=an; const m=V[KST.stand==='baeuerin'?'baeuerin':'bauer']; V.bauer.G.visible=V.baeuerin.G.visible=false; m.G.visible=V.rad.visible=an; if(!an){ if(A.audCam){ camOverride=null; A.audCam=false; camS.init=false; } return; }
+  if(ich) ich.g.visible=false; // du stehst neben deinem Rad
+  const bp=B.m.G.position; m.G.rotation.y=Math.atan2(bp.x-m.G.position.x,bp.z-m.G.position.z); B.m.G.rotation.y+=angDiff(Math.atan2(m.G.position.x-bp.x,m.G.position.z-bp.z),B.m.G.rotation.y)*k;
+  // Verbeugung zu Beginn und beim Abschied: Oberkörper vor, Kopf gesenkt, Hand auf die Brust
+  const vb=Math.max(bSm((s-.6)/.8)*bSm((4.6-s)/.8), bSm((s-31.6)/.6)*bSm((34.6-s)/.6)); m.G.rotation.x=.42*vb; m.kopf.rotation.x=.45*vb; m.arme[1].rotation.x=-1.1*vb; m.arme[1].rotation.z=.12-.5*vb;
+  const z=TRI_AUD_TXT.filter(x=>s>=x[0]).pop(), ge=z&&z[1]?z[2]:'', tx=z&&z[1]?kText(z[1]):'';
+  B.blase.visible=!!tx; if(tx){ triBlaseText(B.blase,tx); const p=bp.clone(); p.y+=2.6; triBlaseUeber(B.blase,p,m.G); }
+  const a1=ge==='zeig'?-1.55:ge==='segen'?-2.4:ge==='offen'?-.7:0, a0=ge==='brust'?-1.2:ge==='offen'?-.5:0; // rechter Arm zeigt, segnet oder öffnet sich; linke Hand an die Brust
+  B.m.arme[1].rotation.x+=(a1-B.m.arme[1].rotation.x)*k; B.m.arme[0].rotation.x+=(a0-B.m.arme[0].rotation.x)*k; B.m.kopf.rotation.y=ge==='zeig'?-.5:.08*Math.sin(t*.8);
+  // Kamera: Totale von der Innenseite der Kehre (du, Burgherr, Wachen), ab dem Auftrag über deine Schulter auf den Burgherrn
+  const d=R.tri.aud, w=bSm((s-15.5)/2), at=(dd,u,y)=>{ const p=wegPos(dd,u); return [p.x,roadY(dd)+y,p.z]; }, rw=roadW(R,d)/2, mix=(a,b)=>a.map((v,i)=>v+(b[i]-v)*w);
+  camOverride={pos:mix(at(d-7,1.2,2.5),at(d+.3,-(rw-2.4),2)), look:mix(at(d+2.5,-(rw+.4),1.2),[bp.x,bp.y+1.55,bp.z])}; A.audCam=true; }
 // Kamera (aus draw): schaut kurz zum Burgherrn, während er dich anspricht (wie beim Zöllner)
-function trifelsKamera(dt){ const A=anim.tri, B=A&&A.burgherr, ich=riders3d[myKey]; if(!B||!ich||race.state!=='run') return; const rt=race.t, D=A.dorf&&A.dorf.dorfmann, tW=A.sk?A.sk.tW:1e9;
-  let a=TRI_RUF[0]+6, b=TRI_RUF[1]+1, p=B.m.G.position; if(D&&rt>=tW-9&&rt<=tW) [a,b,p]=[tW-9,tW,D.m.G.position]; if(rt<a||rt>b) return; // Burgherr, dann die Dorfleute am Wirtshaus
+function trifelsKamera(dt){ const A=anim.tri, B=A&&A.burgherr, ich=riders3d[myKey]; if(!B||!ich||race.state!=='run') return;
+  if(A.seitW>.002){ const w=bSm(A.seitW), u=ich.lane||0, ps=wegPos(me.d+2.2,u+5), pl=wegPos(me.d-1.2,u-1.4), yr=roadY(me.d), ys=Math.max(yr+1.7,terrainAt(ps.x,ps.z)+1.2), sh=A.sturzS>.45&&A.sturzS<.95?.18*(1-(A.sturzS-.45)/.5):0; // Gefolge: von rechts seitlich auf dich und die Pferde
+    const lk=new THREE.Vector3(camS.lx,camS.ly,camS.lz).lerp(new THREE.Vector3(pl.x,yr+1,pl.z),w); camera.position.lerp(new THREE.Vector3(ps.x+(Math.random()-.5)*sh,ys+(Math.random()-.5)*sh,ps.z),w); camera.lookAt(lk); }
+  const rt=race.t, a=TRI_RUF[0]+6, b=TRI_RUF[1]+1, p=B.m.G.position; if(rt<a||rt>b) return;
   const w=.75*bSm((rt-a)/1.2)*bSm((b-rt)/1.2), look=new THREE.Vector3(p.x,p.y+1.6,p.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz); camera.lookAt(now.lerp(look,w)); }
 
 // ---- Friedel, Wirtshaus-Szene, Elwetritsche-Jagden (Schritt 4/5) – Texte vom Nutzer, Übersicht in KAMPAGNE.md ----
-const TRI_TXT={dorfmann:'Zeh Guld, dass du heit owend kä Elwetritsch fangsch!', friedel1:'Des wer ma mo sehe!', dorfweib:'Dem Bu henn se ah ä mo zu oft hochgeworfe un ä mo zu wenich uffgfange.',
-  friedel2:'Ihr fahren doch a noch Siede, gell? Kinna ma do vielleicht helfe? Allä trau ich mich ned in de Wald…',
+const TRI_TXT={dorfmann:'Zeh Gulde, dass du heit owend kä Elwetritsch fangsch!', friedel1:'Des wer ma mo sehe!', dorfweib:['Dem Bu henn se ah ä mo zu oft hochgeworfe…','…un ä mo zu wenich uffgfange.'],
+  friedel2:['Ihr fahren doch a noch Siede, gell?','Kinna ma do vielleicht helfe? Allä trau ich mich ned in de Wald…'],
   ank:['Psst. Do vorne raschelts, [Herr|Herrin]!','Do is se widder!','Wie frech se uns aguckt, die mänt a, sie is de Kees!','Uffbasse, [Herr|Herrin], die is gscheit wie sunscht was.','Des is die letzscht Chance! Ich halt schummo de Sack uff, [Herr|Herrin]!'],
-  hopp:'Hopp, hopp, alleweil hemmer se!', zeh:'Noch zeh Herzschläch…', finf:'Noch finf!',
+  hopp:'Hopp, hopp, alleweil hemmer se!',
   zurueck:['Jetz warten doch bitte uff mich!','Mein Bock is oich longsam…','Mei Wade krampfen, [Herr|Herrin]!','Jetz warten doch bitte uff mich!'],
   weg:['Weg isse – ins Gebisch!',"Die hot uns d' Zung rausgstreckt, hosch des gsähne?",'Jetzt lacht se uns a noch aus!','Des gibts doch ned – schun widder!'],
-  angst:['Die beißen, die Sauviecher, ich schwörs!','Henn ihr des Geheul ghört? Des war bestimmt bloß de Wind…','Im Dunkle seht ma do hinnen Ache leichte, do werd ma ganz onnerschd.'],
-  lob:['Ihr treden wie de Deifel persönlich, ich gläb ich nenn eich Betzi ab jetzad!','So schnell bin ich noch nie gewesst!','Mit eich krieche ma noch so eh Vieh, ich spürs!'],
-  fang:'Ich hab se!!! Ich hab des Scheißding! Zeh Gulde, aller!!!', ende:'Isch muss glei zurick ind Wertschaft, die werren gucken… Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell?'};
+  angst:['Die beißen, die Sauviecher, ich schwörs!',['Henn ihr des Geheul ghört?','Des war bestimmt bloß de Wind…'],['Im Dunkle seht ma do hinnen Ache leichte…','…do werd ma ganz onnerschd.']],
+  lob:[['Ihr treden wie de Deifel persönlich!','Ich gläb ich nenn eich Betzi ab jetzad!'],'So schnell bin ich noch nie gewesst!','Mit eich krieche ma noch so eh Vieh, ich spürs!'],
+  fang:['Ich hab se!!! Ich hab des Scheißding!','Zeh Gulde, aller!!!'], ende:['Isch muss glei zurick ind Wertschaft, die werren gucken…','Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell?']};
 // Ablauf aus dem Workout: wer sagt wann was (Workout-Zeit in s) – Wirtshaus am Ende des Einfahrens, je Jagd Ankündigung, Anfeuern, Zurückfallen, Countdown, Entwischt/Fang, dazwischen Lob und Angst
-function triSkript(){ const S=race.woSegs||[], tW=S[0]?S[0].t0+S[0].dur:480, J=S.filter(s=>/Jagd/.test(s.label)), L=[], X=TRI_TXT, sag=(t0,dur,wer,txt)=>L.push({t0,t1:t0+dur,wer,txt});
-  sag(tW-15,7,'dorfmann',X.dorfmann); sag(tW-8,8,'dorfweib',X.dorfweib); sag(tW-1,5,'friedel',X.friedel1); sag(tW+6,11,'friedel',X.friedel2);
-  J.forEach((j,k)=>{ const a=j.t0; sag(a-7,7,'friedel',X.ank[k]); sag(a+3,5,'friedel',X.hopp); if(k<4) sag(a+10,6,'friedel',X.zurueck[k]); sag(a+18,4,'friedel',X.zeh); sag(a+24,3,'friedel',X.finf);
+function triSkript(){ const S=race.woSegs||[], tW=S[0]?S[0].t0+S[0].dur:480, tS=tW-TRIFELS_T.szene, J=S.filter(s=>/Jagd/.test(s.label)), L=[], X=TRI_TXT;
+  const sag=(t0,dur,wer,txt)=>{ if(Array.isArray(txt)) txt.forEach((x,i)=>L.push({t0:t0+dur*i/txt.length,t1:t0+dur*(i+1)/txt.length,wer,txt:x})); else L.push({t0,t1:t0+dur,wer,txt}); }; // lange Sprüche: mehrere Blasen nacheinander
+  sag(tS+1,6,'dorfmann',X.dorfmann); sag(tS+7,4,'friedel',X.friedel1); sag(tS+11,8,'dorfweib',X.dorfweib); sag(tS+19,11,'friedel',X.friedel2); // Zwischenszene am Wirtshaus
+  J.forEach((j,k)=>{ const a=j.t0; sag(a-7,7,'friedel',X.ank[k]); sag(a+3,5,'friedel',X.hopp); if(k<4) sag(a+10,6,'friedel',X.zurueck[k]);
     if(k<4) sag(a+j.dur+1,6,'friedel',X.weg[k]); else sag(a+j.dur-3,9,'friedel',X.fang);
-    if(k<3){ sag(a+70,7,'friedel',X.lob[k]); sag(a+140,8,'friedel',X.angst[k]); } });
-  const T=race.woT||0; sag(T-66,14,'friedel',X.ende); // vor den zwei Ende-Tafeln
-  return {L,tW,J,T}; }
+    if(k<3){ sag(a+70,8,'friedel',X.lob[k]); sag(a+140,9,'friedel',X.angst[k]); } });
+  const G=S.find(s=>s.label==='Grundlage'), T=race.woT||0, heim=G?G.t0+Math.round(G.dur*.55):T-52; sag(heim-15,14,'friedel',X.ende); // Abschied in der Grundlage, dann kehrt er um – das Ausfahren fährt man allein
+  return {L,tS,tW,J,T,heim}; }
 // Sprechblase in fester Bildschirmgröße (gut lesbar, auch von weitem)
-function triBlase(){ const s=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false,depthTest:false,sizeAttenuation:false})); s.scale.set(.5,.155,1); s.renderOrder=10; s.visible=false; world.add(s); return s; }
-function triBlaseText(s,txt){ if(s.userData.txt!==txt){ s.userData.txt=txt; if(s.material.map) s.material.map.dispose(); s.material.map=blaseTex(txt); s.material.needsUpdate=true; } }
+function triBlase(){ const s=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false,depthTest:false,sizeAttenuation:false})); s.scale.set(.62,.19,1); s.renderOrder=10; s.visible=false; world.add(s); return s; }
+// Blase auf dem Bildschirm über den Punkt p setzen; liegt sie auf dem Fahrer g, rückt sie über dessen Kopf (NDC: halbe Blasenhöhe aus scale und Brennweite)
+function triBlaseUeber(s,p,g){ const q=p.clone().project(camera); if(q.z>1) return; const e=camera.projectionMatrix.elements, hh=s.scale.y*e[5]/2, hw=s.scale.x*e[0]/2; let y=q.y+hh;
+  if(g&&g.visible){ const r=g.position.clone(); r.y+=2.2; const rq=r.project(camera); if(rq.z<1&&Math.abs(q.x-rq.x)<hw+.12) y=Math.max(y,rq.y+hh+.04); }
+  q.y=Math.min(.62-hh,y); q.x=clampN(q.x,-1+hw,1-hw); s.position.copy(q.unproject(camera)); } // oben bleibt Platz für die Anzeigen
+function triBlaseText(s,txt){ if(s.userData.txt!==txt){ s.userData.txt=txt; if(s.material.map) s.material.map.dispose(); s.material.map=blaseTex(txt); s.material.needsUpdate=true; s.scale.y=.19*(s.material.map.hf||1); } } // lange Texte: Blase höher
 
 // Elwetritsche nach den Vorlagen (vorlagen/elwetritsche/): dicker gelb-oranger Körper, großer Entenschnabel, Glupschaugen auf Stielen, Federschopf, Stummelflügel, bunter Schwanz, rote Beine; blickt nach +z
 function elwetritscheModell(){ const G=new THREE.Group(), K=new THREE.Group(); G.add(K); const L=c=>lam(c);
@@ -260,28 +308,59 @@ function elwetritscheModell(){ const G=new THREE.Group(), K=new THREE.Group(); G
   G.scale.setScalar(1.2); return {G,K,kopf,beine,fluegel,augen,zunge}; }
 
 // ---- Aufbau (aus buildTrifelsLeute): Friedel auf dem Holzrad mit Sack und Laterne, Dorfleute vor dem Wirtshaus, Elwetritsche ----
-function buildFriedel(T){ const A=anim.tri, M=c=>lam(c);
+function buildFriedel(T){ const A=anim.tri, M=c=>lam(c), haar=M('#b8452a'), haar2=M('#9c3a22');
   const r=makeRider('custom',{...LOOK_DEF.custom,name:'Friedel',build:.9,jersey:'#5d7a3a',sleeve:'#a8862e'},true); r.g.scale.setScalar(.95); r.tag.visible=false; world.add(r.g); // schmächtig, Wams grün
-  const haar=M('#b8452a'), haar2=M('#9c3a22'); for(let i=0;i<16;i++){ const a=Math.PI*(.45+i/15*1.1), l=.2+((i*37)%7)*.03, st=new THREE.Mesh(new THREE.BoxGeometry(.035,l,.05),i%2?haar:haar2); // lange zottelige rote Haare unter der Haube
+  for(let i=0;i<16;i++){ const a=Math.PI*(.45+i/15*1.1), l=.2+((i*37)%7)*.03, st=new THREE.Mesh(new THREE.BoxGeometry(.035,l,.05),i%2?haar:haar2); // lange zottelige rote Haare unter der Haube
     st.position.set(.04+Math.cos(a)*.13,.02-l/2+.04,Math.sin(a)*.13); st.rotation.set(Math.sin(a)*.25,0,Math.cos(a)*-.25); r.headG.add(st); }
   for(let i=0;i<4;i++){ const st=new THREE.Mesh(new THREE.BoxGeometry(.03,.07,.05),haar); st.position.set(.15,.1,(i-1.5)*.05); r.headG.add(st); } // Fransen vorn
   const sack=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),M('#c8b48a')); sack.scale.set(.9,1.1,.8); sack.position.set(-.32,1.15,-.12); r.body.add(sack); // Sack auf dem Rücken
   const la=new THREE.Mesh(new THREE.BoxGeometry(.12,.16,.12),lampGlowMat()); la.position.set(.62,.88,0); r.body.add(la); const lh=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.12,4),M('#2e2c2a')); lh.position.set(.62,.99,0); r.body.add(lh); // Laterne am Lenker
   A.friedel={r,sack,d:T.wirtD+1,crank:0,mode:'park',blase:triBlase()};
   // Dorfleute vor dem Wirtshaus „Zack Zack“ (rechts), mit Krügen, blicken zu Friedel
-  const H=T.wirt, dw=T.wirtD, rw=roadW(R,dw)/2, fp=wegPos(dw+1,rw-.6), krug=m=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(.05,.045,.13,8),M('#8a6a44')); k.position.y=-.66; m.arme[1].add(k); m.arme[1].rotation.x=-.9; };
-  const leut=[['dorfmann',{kittel:'#6b5a3a',hose:'#3a3020',haar:'#4a3222',bart:'#4a3222'},-2.5,1.4],['dorfweib',{lang:'#8a3a2a',haar:'#e8e0d0'},2.8,1.5],[null,{kittel:'#4a5a6a',hose:'#3a3a2a',haar:'#6a5236'},.4,2.6],[null,{kittel:'#7a3a3a',hose:'#2e2a24',haar:'#2e2420',bart:'#2e2420'},-.8,3.4]];
-  A.dorf={}; for(const [wer,o,da,uo] of leut){ const m=trMensch(o), p=wegPos(dw+da,rw+uo); m.G.position.set(p.x,terrainAt(p.x,p.z),p.z); m.G.rotation.y=Math.atan2(fp.x-p.x,fp.z-p.z); world.add(m.G); krug(m);
-    if(wer){ A.dorf[wer]={m,blase:triBlase()}; A.dorf[wer].blase.position.set(p.x,m.G.position.y+2.4,p.z); } }
+  const H=T.wirt, dw=T.wirtD, rw=roadW(R,dw)/2, uF=(()=>{ if(!H) return rw-.4; const [hx,hz]=posAt(R,H.d), hh=headingAt(R,H.d); return Math.min(rw-.2,(H.x-hx)*-Math.sin(hh)+(H.y-hz)*Math.cos(hh)-H.dep/2-.5); })(), // vor der Fassade auf dem Pflaster (die Fassade steht kaum neben dem Weg)
+    fp=wegPos(dw+.9,uF-1.1), krug=m=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(.05,.045,.13,8),M('#8a6a44')); k.position.y=-.66; m.arme[1].add(k); m.arme[1].rotation.x=-.9; };
+  const leut=[['dorfmann',{kittel:'#6b5a3a',hose:'#3a3020',haar:'#4a3222',bart:'#4a3222'},-2.5,-.2],['dorfweib',{lang:'#8a3a2a',haar:'#e8e0d0'},2.8,-.2],[null,{kittel:'#4a5a6a',hose:'#3a3a2a',haar:'#6a5236'},.4,0],[null,{kittel:'#7a3a3a',hose:'#2e2a24',haar:'#2e2420',bart:'#2e2420'},-.8,0]];
+  A.dorf={}; A.dorfAlle=[]; for(const [wer,o,da,uo] of leut){ const m=trMensch(o), p=wegPos(dw+da,uF+uo); m.G.position.set(p.x,roadY(dw+da)+.05,p.z); m.G.rotation.y=Math.atan2(fp.x-p.x,fp.z-p.z); world.add(m.G); krug(m); A.dorfAlle.push(m);
+    if(wer){ A.dorf[wer]={m,blase:triBlase()}; A.dorf[wer].blase.position.set(p.x,m.G.position.y+2.7,p.z); } }
+  // Zwischenszene: Friedel und du steht neben euren abgestellten Holzrädern (Fahrerfiguren dann ausgeblendet)
+  const rad=(d,u)=>{ const g=new THREE.Group(), b=new THREE.Group(); g.add(b); holzRad(b,M); const p=wegPos(d,u); g.position.set(p.x,roadY(d)+.12,p.z); g.rotation.y=-headingAt(R,d); world.add(g); return g; };
+  const steh=(o,d,u)=>{ const m=trMensch(o), p=wegPos(d,u); m.G.position.set(p.x,roadY(d)+.05,p.z); world.add(m.G); return m; };
+  const fs=steh({kittel:'#5d7a3a',aermel:'#ece3cf',hose:'#3b342e',haar:'#b8452a'},dw+.9,uF-1.1); for(let i=0;i<12;i++){ const a=-1.3+i/11*2.6, l=.2+((i*37)%7)*.03, st=new THREE.Mesh(new THREE.BoxGeometry(.035,l,.05),i%2?haar:haar2); st.position.set(Math.sin(a)*.13,.08-l/2,-Math.cos(a)*.13); st.rotation.set(-Math.cos(a)*.25,0,Math.sin(a)*.25); fs.kopf.add(st); } // rote Zotteln
+  { const sk=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),M('#c8b48a')); sk.scale.set(.9,1.1,.8); sk.position.set(0,1.25,-.27); fs.G.add(sk); }
+  const F=A.friedel; F.steher=fs; F.rad=rad(dw+2.4,uF-2.6);
+  const ichJ=lookOf(myKey).jersey, dA=T.aud, uA=-(roadW(R,dA)/2-.9), mv=o=>{ const m=steh(o,dA+1.8,uA); m.G.rotation.order='YXZ'; m.G.visible=false; return m; }; // Audienz: abgestiegen vor dem Burgherrn
+  { const dS=T.sturz, uS=roadW(R,dS)/2-.3, ms=o=>{ const m=steh(o,dS,uS); m.G.rotation.order='YXZ'; m.G.visible=false; return m; };
+    A.sturzF={bauer:ms({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'}), baeuerin:ms({lang:'#7a4a3a',haar:'#6b4a2e'}), rad:rad(dS,uS)}; A.sturzF.rad.visible=false; A.spott=triBlase(); } // Sturz: aufstehende Figur und liegendes Rad
+  A.ichV={bauer:mv({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'}), baeuerin:mv({lang:'#7a4a3a',haar:'#6b4a2e'}), rad:rad(dA-.6,uA+1.1)}; A.ichV.rad.visible=false;
+  A.ich={bauer:steh({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'},dw-1.4,uF-2.2), baeuerin:steh({lang:'#7a4a3a',haar:'#6b4a2e'},dw-1.4,uF-2.2), rad:rad(dw-3,uF-2.9)}; A.uF=uF;
   A.elw=elwetritscheModell(); A.elw.G.visible=false; world.add(A.elw.G);
+  A.elw.licht=new THREE.PointLight(0xffc860,0,9,2); A.elw.licht.position.y=.8; A.elw.G.add(A.elw.licht); F.licht=new THREE.PointLight(0xffd27a,0,12,2); F.licht.position.set(.62,1,0); r.body.add(F.licht); // leuchten in der Dunkelheit
+  A.elwMats=[]; A.elw.G.traverse(o=>{ if(o.material&&!A.elwMats.includes(o.material)) A.elwMats.push(o.material); });
   if(!document.getElementById('triSag')){ const el=document.createElement('div'); el.id='triSag'; document.body.appendChild(el); } } // Friedels Worte, wenn er nicht im Bild ist
+
+// ---- Sonnenuntergang über die Mission: Nachmittag am Burgherrn, goldener Spätnachmittag am Wirtshaus, Dämmerung im Wald, am Ende des Ausfahrens Nacht und Abblende ----
+// Stufe k: 0 Nachmittag · 1 Spätnachmittag · 2 Dämmerung · 3 Nacht; Werte je Stufe, dazwischen überblendet
+const TRI_LICHT={sun:[0xffd6a0,0xff9452,0xff5e3a,0x4a3a6a], sunI:[1.25,1.4,.55,.06], sunY:[.6,.2,.04,-.08], hemi:[0xc8d0e2,0x9c9ccc,0x5c6494,0x232a48], boden:[0x5a5a3a,0x40302a,0x2a2228,0x0c0c12], hemiI:[.74,.76,.52,.3],
+  bg:[0xf4d0a2,0xf0a873,0x7a5a72,0x121828], himmel:[0xffffff,0xffffff,0x9a7a92,0x262c46], fern:[1,1,.7,.42]};
+function trifelsLicht(rt){ const A=anim.tri; if(!A||race.rain) return; const K=race.state==='run'?A.sk:null, cv=renderer.domElement;
+  let k=0; if(K){ const J=K.J, tR=TRI_RUF[1], P=[[0,0],[tR,.15],[K.tW,1],[J[0]?J[0].t0:K.tW+200,1.5],[J.length?J[J.length-1].t0+J[J.length-1].dur:K.heim,2.2],[K.T,3]];
+    for(let i=1;i<P.length;i++) if(rt<P[i][0]){ const [a,ka]=P[i-1],[b,kb]=P[i]; k=ka+(kb-ka)*clampN((rt-a)/Math.max(1,b-a),0,1); break; } else k=P[i][1]; }
+  const i=Math.min(2,Math.floor(k)), f=k-i, c=(n,o)=>(o||new THREE.Color()).set(TRI_LICHT[n][i]).lerp(new THREE.Color(TRI_LICHT[n][i+1]),f), z=n=>TRI_LICHT[n][i]+(TRI_LICHT[n][i+1]-TRI_LICHT[n][i])*f;
+  c('sun',sun.color); sun.intensity=z('sunI'); c('hemi',hemi.color); c('boden',hemi.groundColor); hemi.intensity=z('hemiI'); const sy=z('sunY'); SUN_DIR.set(-1,sy,.42).normalize(); sunDisc(sy>-.03);
+  if(SUNS) SUNS.forEach((s,j)=>s.material.opacity=(j?1:.75)*clampN((sy+.03)/.1,0,1));
+  c('bg',scene.background); scene.fog.color.copy(scene.background); c('himmel',sky.material.color); if(R.fog0) scene.fog.far=R.fog0[1]*z('fern');
+  const dk=clampN(k-1,0,2)/2; if(A.elw.licht){ A.elw.licht.intensity=2.2*dk; A.friedel.licht.intensity=1.6*dk; } // Elwetritsche glimmt, Friedels Laterne leuchtet
+  for(const m of A.elwMats||[]) if(m.emissive) m.emissive.copy(m.color).multiplyScalar(.55*dk);
+  const ab=K?clampN((rt-(K.T-8))/8,0,1):0, fl=ab>0?`brightness(${(1-ab).toFixed(3)})`:''; if(cv.style.filter!==fl) cv.style.filter=fl; } // letzte 8 s: Bild blendet ab, bleibt schwarz bis zum Ergebnis
 
 // ---- Bewegung (aus poseTrifels) ----
 function poseFriedel(dt,t,rt){ const A=anim.tri, F=A.friedel, T=R.tri; if(!F) return; const run=race.state==='run', lauf=run&&!race.paused?dt*simSpeed():0;
   if(run&&A.skS!==race.woSegs){ A.sk=triSkript(); A.skS=race.woSegs; } const K=run?A.sk:null, ich=riders3d[myKey], H=roadW(R,me.d)/2-.5;
   // Friedel: wartet am Wirtshaus, fährt ab Ende des Einfahrens mit, fällt in den Jagden 1–4 zurück (bei der letzten hält er den Sack bereit), am Ende kehrt er um
-  if(!K||rt<K.tW-1){ F.d=T.wirtD+1; F.mode='park'; F.r.lane=roadW(R,F.d)/2-.6; putRider(F.r,F.d,F.crank); F.r.g.visible=true; }
-  else { const jj=K.J.findIndex(j=>rt>=j.t0&&rt<j.t0+j.dur), heim=rt>=K.T-52;
+  const vorher=!K||rt<K.tW, szene=!!K&&rt>=K.tS&&rt<K.tW, ichM=A.ich[KST.stand==='baeuerin'?'baeuerin':'bauer'];
+  F.steher.G.visible=F.rad.visible=vorher; A.ich.bauer.G.visible=A.ich.baeuerin.G.visible=false; ichM.G.visible=A.ich.rad.visible=szene; if(szene&&ich) ich.g.visible=false; // in der Szene stehst du neben deinem Rad
+  if(vorher){ F.d=T.wirtD+2.4; F.r.lane=roadW(R,F.d)/2-.6; putRider(F.r,F.d,0); F.r.g.visible=false; }
+  else { const jj=K.J.findIndex(j=>rt>=j.t0&&rt<j.t0+j.dur), heim=rt>=K.heim;
     if(heim){ F.d-=6*lauf; F.crank+=6*lauf*2.4; }
     else { const want=jj>=0&&jj<4?-36:-1.3, vr=clampN((want-(F.d-me.d))*.6,-2.6,1.6); F.d+=Math.max(0,me.v+vr)*lauf; F.crank+=Math.max(0,me.v+vr)*lauf*2.4; }
     const ml=ich&&ich.lane!=null?ich.lane:0, u=heim?-H:(ml-1.25<-H?ml+1.25:ml-1.25); F.r.lane=F.r.lane==null?u:F.r.lane+(u-F.r.lane)*Math.min(1,dt*2);
@@ -297,9 +376,19 @@ function poseFriedel(dt,t,rt){ const A=anim.tri, F=A.friedel, T=R.tri; if(!F) re
   E.G.visible=ev;
   // Sack: nach dem Fang dick und zappelig
   const voll=K&&K.J.length&&rt>K.J[K.J.length-1].t0+25.6; F.sack.scale.set(voll?1.35+.08*Math.sin(t*13):.9, voll?1.45:1.1, voll?1.2:.8); if(voll) F.sack.rotation.z=.15*Math.sin(t*9);
-  // Sprechen: Dorfleute über dem Kopf, Friedel über dem Kopf wenn im Bild, sonst unten im Bild
-  const akt=K?K.L.filter(s=>rt>=s.t0&&rt<s.t1):[], el=document.getElementById('triSag'); let unten='';
-  for(const w of ['dorfmann','dorfweib']){ const D=A.dorf[w]; if(!D) continue; const s=akt.find(x=>x.wer===w); D.blase.visible=!!s; if(s) triBlaseText(D.blase,kText(s.txt)); D.m.arme[0].rotation.x=s?-.6-.3*Math.sin(t*5):0; }
-  { const s=akt.find(x=>x.wer==='friedel'), B=F.blase; let im=false; if(s&&F.r.g.visible){ const p=F.r.g.position.clone(); p.y+=2.3; B.position.copy(p); const q=p.clone().project(camera); im=q.z<1&&Math.abs(q.x)<.9&&Math.abs(q.y)<.9&&camera.position.distanceTo(p)<45; }
-    B.visible=!!s&&im; if(B.visible) triBlaseText(B,kText(s.txt)); if(s&&!im) unten='Friedel: '+kText(s.txt); }
+  // Zwischenszene am Wirtshaus: zwei feste Kamera-Einstellungen auf der Fahrbahn, nicht in den Häusern daneben (Gruppe, dann näher auf Friedel und dich), Handschlag zur Wette, das Dorfweib lacht, Krüge hoch, Friedel dreht sich zu dir
+  if(szene){ const dw=T.wirtD, rw=roadW(R,dw)/2, k=bSm((rt-K.tS-17)/2), at=(d,u,y)=>{ const p=wegPos(d,u); return [p.x,roadY(d)+y,p.z]; }, mix=(a,b)=>a.map((v,i)=>v+(b[i]-v)*k);
+    const uF=A.uF; camOverride={pos:mix(at(dw-10,-rw+.5,2.6),at(dw+5.5,-rw+.5,1.9)), look:mix(at(dw,uF-1,1.3),at(dw-.4,uF-1.4,1.4))}; A.camAn=true; }
+  else if(A.camAn){ if(!A.aud) camOverride=null; A.camAn=false; camS.init=false; }
+  const akt=K?K.L.filter(s=>rt>=s.t0&&rt<s.t1):[], el=document.getElementById('triSag'); let unten=''; const sp=w=>akt.some(x=>x.wer===w), zs=K?rt-K.tS:-1;
+  { const D=A.dorf.dorfmann, W=A.dorf.dorfweib, hand=zs>=1&&zs<11, lacht=sp('dorfweib');
+    if(D) D.m.arme[0].rotation.x+=((hand?-1.3:sp('dorfmann')?-.6:0)-D.m.arme[0].rotation.x)*Math.min(1,dt*5);
+    if(W){ W.m.G.rotation.z=lacht?.07*Math.sin(t*16):0; W.m.arme[0].rotation.x=W.m.arme[1].rotation.x=lacht?-.5-.2*Math.sin(t*12):-.9; }
+    for(const m of A.dorfAlle) if(!(D&&m===D.m)&&!(W&&m===W.m)) m.arme[1].rotation.x+=((lacht?-2.4:-.9)-m.arme[1].rotation.x)*Math.min(1,dt*4); // Krüge hoch
+    const fm=F.steher, ziel=zs>=19?ichM.G.position:D?D.m.G.position:null; fm.arme[1].rotation.x+=((zs>=7&&zs<11?-1.3:0)-fm.arme[1].rotation.x)*Math.min(1,dt*5); // Handschlag
+    if(ziel){ const a=Math.atan2(ziel.x-fm.G.position.x,ziel.z-fm.G.position.z); fm.G.rotation.y+=angDiff(a,fm.G.rotation.y)*Math.min(1,dt*3); }
+    if(szene){ const fp=fm.G.position; ichM.G.rotation.y=Math.atan2(fp.x-ichM.G.position.x,fp.z-ichM.G.position.z); } }
+  for(const w of ['dorfmann','dorfweib']){ const D=A.dorf[w]; if(!D) continue; const s=akt.find(x=>x.wer===w); D.blase.visible=!!s; if(s){ triBlaseText(D.blase,kText(s.txt)); const k=D.m.G.position.clone(); k.y+=2.4; triBlaseUeber(D.blase,k,null); } }
+  { const s=akt.find(x=>x.wer==='friedel'), B=F.blase, wo=vorher?F.steher.G:F.r.g; let im=false; if(s&&wo.visible){ const p=wo.position.clone(); p.y+=2.9; const q=p.clone().project(camera); im=q.z<1&&Math.abs(q.x)<.9&&Math.abs(q.y)<.9&&camera.position.distanceTo(p)<45; }
+    B.visible=!!s&&im; if(B.visible){ triBlaseText(B,kText(s.txt)); triBlaseUeber(B,p,vorher?null:ich&&ich.g); } if(s&&!im) unten='Friedel: '+kText(s.txt); }
   if(el){ if(unten){ el.textContent=unten; el.classList.add('zeig'); } else el.classList.remove('zeig'); } }

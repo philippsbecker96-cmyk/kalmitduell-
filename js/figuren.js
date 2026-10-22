@@ -206,8 +206,8 @@ const ownLane=k=>{ const q=laneKey(k); return R.stadium?(q==='becker'?1.3:2.7):R
 function putRider(r,d,crank){
   const hd=headingAt(R,d), u=r.lane;
   if(R.stadium){ const p=trackPt(d,u); r.g.position.set(p[0],p[1]+0.03,p[2]); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(-R.outSign*bankAt(d),0,0); }
-  else if(KX.on){ const [x,z]=posAt(R,d), px=x-Math.sin(hd)*u, pz=z+Math.cos(hd)*u; r.g.position.set(px, roadY(d)+visOff(px,pz)+0.12, pz); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(r.lean||0,0,Math.atan((visRoadY(d+1.5)-visRoadY(d-1.5))/3)); }
-  else { const [x,z]=posAt(R,d); r.g.position.set(x-Math.sin(hd)*u, roadY(d)+0.12, z+Math.cos(hd)*u); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(r.lean||0,0,Math.atan((R.island?0:R.space&&d>=0&&d<=R.len?segOf(d).vg:gradeAt(d))/100)); } poseRider(r,crank);
+  else if(KX.on){ const [x,z]=posAt(R,d), px=x-Math.sin(hd)*u, pz=z+Math.cos(hd)*u; r.g.position.set(px, roadY(d)+visOff(px,pz)+0.12, pz); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set((r.lean||0)+(anim.tri&&r.wank||0),0,Math.atan((visRoadY(d+1.5)-visRoadY(d-1.5))/3)); if(anim.tri&&r.lenk) r.g.rotation.y+=r.lenk; } // wank/lenk: Trifels, Pferde reiten dicht vorbei, Sturz
+  else { const [x,z]=posAt(R,d); r.g.position.set(x-Math.sin(hd)*u, roadY(d)+0.12, z+Math.cos(hd)*u); r.g.rotation.set(0,-hd+(anim.tri&&r.lenk||0),0); r.tilt.rotation.set((r.lean||0)+(anim.tri&&r.wank||0),0,Math.atan((R.island?0:R.space&&d>=0&&d<=R.len?segOf(d).vg:gradeAt(d))/100)); } poseRider(r,crank);
 }
 function smoothHeading(d){ let sx=0,sz=0; for(let k=-4;k<=4;k++){ const h=headingAt(R,d+k*3); sx+=Math.cos(h); sz+=Math.sin(h); } return Math.atan2(sz,sx); }
 // Krümmung (rad/m, positiv = Kurve zur Spur +u) · Kurvenlage atan(v²·κ/g), höchstens 40°

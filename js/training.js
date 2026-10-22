@@ -103,8 +103,9 @@ function planNudge(dt,sg){ const end=sg.t0+sg.dur, ahead=planD(end)-planD(race.t
 function trainStep(dt,P,wkg){
   if(me.done){ if(me.free){ const d0=me.d; step(me,P,weight(),dt,me.draftR); me.dist+=me.d-d0; if(me.d>=R.len) me.d-=R.ring; } return; } // Space/Insel: nach dem Workout frei weiterfahren
   const sg=woSeg(race.t); me.tgt=sg.free?0:toW(segVal(sg,race.t),race.woUnit)*woK();
-  const d0=me.d; step(me,P,weight(),dt,me.draftR); me.dist+=me.d-d0;
-  if((R.ring||R.def.planbar) && $('ergOn').checked && !sg.free) planNudge(dt,sg); // Space/Insel/Trifels mit ERG: Position leicht nachführen, damit Intervallende und Farbwechsel zusammenfallen
+  const d0=me.d, halt=R.def.halte&&R.def.halte.find(h=>race.t>=h[0]&&race.t<h[1]); // Kampagne: Halt (z. B. Wirtshaus-Szene) – man tritt weiter, steht aber
+  if(halt){ me.v=0; me.d=halt[2]*R.kf; } else { step(me,P,weight(),dt,me.draftR); me.dist+=me.d-d0; }
+  if((R.ring||R.def.planbar) && $('ergOn').checked && !sg.free && !halt) planNudge(dt,sg); // Space/Insel/Trifels mit ERG: Position leicht nachführen, damit Intervallende und Farbwechsel zusammenfallen
   if(R.ring){ const Lw=R.goal; if(d0<Lw && me.d>=Lw && !me.done) flash(R.island?'Strandbar erreicht – weiter rund ums Atoll':'Raumstation erreicht – weiter in der Umlaufbahn'); if(me.d>=R.len) me.d-=R.ring; }
   else if(!R.loop && me.d>=R.len){ me.d-=R.len; camS.init=false; me.lap=(me.lap||0)+1; flash(`Zurück zum Start – Runde ${me.lap+1}`); }
   me.time=race.t; me.wkgSum+=wkg*dt; me.wSum+=P*dt; me.maxWkg=Math.max(me.maxWkg,wkg);

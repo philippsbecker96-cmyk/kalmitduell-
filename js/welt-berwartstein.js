@@ -173,13 +173,15 @@ function friesTex(){ const t=canvasTex(256,32,g=>{ g.fillStyle='#4e3626'; g.fill
 function frakturTex(w,h,draw){ const t=canvasTex(w,h,draw); if(document.fonts&&document.fonts.load) document.fonts.load('40px UnifrakturMaguntia').then(()=>{ const g=t.image.getContext('2d'); g.clearRect(0,0,w,h); draw(g,w,h); t.needsUpdate=true; }).catch(()=>{}); return t; }
 const FRAKTUR='"UnifrakturMaguntia", Georgia, serif';
 // Sprechblase als Pergament: gelbliches Papier mit dunklem Rand, Spitze nach unten, Text in Fraktur; deko(g) zeichnet zusätzlich etwas aufs Papier
-function blaseTex(txt,deko){ return frakturTex(512,190,g=>{ const gr=g.createRadialGradient(256,72,20,256,72,280); gr.addColorStop(0,'#f4e6c4'); gr.addColorStop(.65,'#e8d3a2'); gr.addColorStop(1,'#c9a86a');
-  g.fillStyle=gr; g.strokeStyle='#7a5530'; g.lineWidth=5; g.beginPath(); g.moveTo(22,10); for(let x=22;x<=490;x+=24) g.lineTo(x,8+Math.sin(x*.7)*2.5); g.quadraticCurveTo(506,10,504,40); g.lineTo(504,118); g.quadraticCurveTo(506,142,480,142);
-  g.lineTo(286,142); g.lineTo(256,182); g.lineTo(242,142); g.lineTo(32,142); g.quadraticCurveTo(6,142,8,116); g.lineTo(8,38); g.quadraticCurveTo(6,10,22,10); g.closePath(); g.fill(); g.stroke();
-  g.fillStyle='rgba(120,80,30,.12)'; for(let i=0;i<40;i++){ g.beginPath(); g.arc(20+Math.random()*472,16+Math.random()*120,2+Math.random()*7,0,7); g.fill(); } // Flecken
+// Mehr als drei Zeilen: die Blase wird je Zeile 44 px höher (t.hf = Höhe/190, damit Sprites ihr Seitenverhältnis anpassen können)
+function blaseTex(txt,deko){ const zeilen=g=>{ g.font='38px '+FRAKTUR; const Z=[]; let z=''; for(const w of txt.split(' ')){ const t=z?z+' '+w:w; if(g.measureText(t).width>(deko?340:450)&&z){ Z.push(z); z=w; } else z=t; } Z.push(z); return Z; };
+  const E=Math.max(0,zeilen(document.createElement('canvas').getContext('2d')).length-3)*44, H=190+E;
+  const t=frakturTex(512,H,g=>{ const gr=g.createRadialGradient(256,72+E/2,20,256,72+E/2,280+E/2); gr.addColorStop(0,'#f4e6c4'); gr.addColorStop(.65,'#e8d3a2'); gr.addColorStop(1,'#c9a86a'); const u=142+E;
+  g.fillStyle=gr; g.strokeStyle='#7a5530'; g.lineWidth=5; g.beginPath(); g.moveTo(22,10); for(let x=22;x<=490;x+=24) g.lineTo(x,8+Math.sin(x*.7)*2.5); g.quadraticCurveTo(506,10,504,40); g.lineTo(504,u-24); g.quadraticCurveTo(506,u,480,u);
+  g.lineTo(286,u); g.lineTo(256,u+40); g.lineTo(242,u); g.lineTo(32,u); g.quadraticCurveTo(6,u,8,u-26); g.lineTo(8,38); g.quadraticCurveTo(6,10,22,10); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle='rgba(120,80,30,.12)'; for(let i=0;i<40;i++){ g.beginPath(); g.arc(20+Math.random()*472,16+Math.random()*(120+E),2+Math.random()*7,0,7); g.fill(); } // Flecken
   if(deko) deko(g); // z. B. Notenschlüssel (Minnesänger), Text dann schmaler
-  g.fillStyle='#3b2412'; g.font='38px '+FRAKTUR; g.textAlign='center'; g.textBaseline='middle'; const Z=[]; let z='';
-  for(const w of txt.split(' ')){ const t=z?z+' '+w:w; if(g.measureText(t).width>(deko?340:450)&&z){ Z.push(z); z=w; } else z=t; } Z.push(z); Z.forEach((l,i)=>g.fillText(l,256,76+(i-(Z.length-1)/2)*44)); }); }
+  g.fillStyle='#3b2412'; g.textAlign='center'; g.textBaseline='middle'; const Z=zeilen(g); Z.forEach((l,i)=>g.fillText(l,256,76+E/2+(i-(Z.length-1)/2)*44)); }); t.hf=H/190; return t; }
 // Warnkasten oben im Bild (Pergament, siehe css/style.css), blendet nach ein paar Sekunden aus
 function warnKasten(txt){ let el=document.getElementById('pergament'); if(!el){ el=document.createElement('div'); el.id='pergament'; document.body.appendChild(el); }
   el.textContent=txt; el.classList.add('zeig'); clearTimeout(warnKasten.t); warnKasten.t=setTimeout(()=>el.classList.remove('zeig'),4000); }
