@@ -19,6 +19,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `js/training.js` – Workouts, FTP-Tests
 - `js/welt-trifels.js` – Welt für Kampagnen-Mission 1 (Burg Trifels, Vorburg, Queichtal), noch leer – Plan in `KAMPAGNE.md`
 - `js/kampagne.js` – Kampagne „Der Pedalritter im Wasgau“ (Konzept `KAMPAGNE.md`): Missionen `KAMP`, läuft intern als Training (`race.kamp`), Story-Tafeln `kampTick`, Spielstand
+- `kampagne/sounds/` – eigene Aufnahmen für die Kampagne: `dialoge/mission1/` (Aufnahmeliste `DIALOGE.md`: Dateiname je Sprechblase), `effekte/` (`EFFEKTE.md`); Abspielen noch nicht eingebaut (über `<audio>`, da `file://`)
 - `js/auswertung.js` – Testmodus, Fotofinish, Aufzeichnung, Ergebnis, TCX-Export
 - `js/lobby.js` – Lobby, Fahrer-Editor, Lobby-Hintergrund
 - `js/online.js` – PeerJS-Raumcode, Sync mit dem Gegner
