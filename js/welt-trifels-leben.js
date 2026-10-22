@@ -160,15 +160,21 @@ function poseTrifelsLeben(dt,t,rt){ const A=anim.tri, L=A.leben, T=R.tri; if(!L)
         e.kopf.rotation.x=!an?.7*Math.max(0,Math.sin(t*1.7+e.ph*2))**3:-.25; e.augen.forEach(a=>a.scale.y=an?1.5:1); e.zunge.visible=i===2&&f>0; }); } } }
 
 // ---- Geräusche (kampagne/sounds/effekte/, über <audio>, da file://): Schleifen werden leiser, je weiter die Kamera weg ist; Einzeltöne einmal je Ereignis (A.ton) ----
-const TRI_TON='kampagne/sounds/effekte/', TRI_TON_VOL={wagen:.5,hufe:.7,kettenhemd:.3,wiehern:.7,sturz:.9,glocken:.6,peitsche:.8,wirtshaus:.6,grillen:.35,fluegel:.7,elwetritsch_schrei:.8,gackern:.6,schwein:.8,rascheln_gebuesch:.7};
+const TRI_TON='kampagne/sounds/effekte/', TRI_TON_VOL={wagen:.5,hufe:.7,kettenhemd:.3,wiehern:.7,sturz:.9,glocken:.6,peitsche:.8,wirtshaus:.6,grillen:.35,fluegel:.7,elwetritsch_schrei:.8,gackern:.6,schwein:.8,rascheln_gebuesch:.7,elwetritschegefangen:.9,fanfare:.7};
+const TRI_MUSIK={thema:['musik/thema',.45], jagd:['musik/jagd',.5,2], ankunft:['musik/ankunft',.45], taverne:['musik/taverne',.35], unheimlich:['effekte/unheimlich',.4]}; // [Datei ab kampagne/sounds/, Lautstärke, Blende je s (sonst .45 = gut 2 s)]
 const triLoops={}; let triTonVor=null;
 function triEins(n,v=1,rate=1){ if(v<.02) return; try{ const a=new Audio(TRI_TON+n+'.mp3'); a.volume=clampN(v*TRI_TON_VOL[n],0,1); a.preservesPitch=false; a.playbackRate=rate; a.play().catch(()=>{}); }catch(e){} }
 function triLoop(k,n,ziel,dt){ let L=triLoops[k]; if(!L){ if(ziel<=0) return; const a=new Audio(TRI_TON+n+'.mp3'); a.loop=true; a.volume=0; L=triLoops[k]={a,n,v:0}; }
   L.v+=(ziel-L.v)*Math.min(1,dt*3); if(ziel<=0&&L.v<.01){ L.v=0; if(!L.a.paused) L.a.pause(); return; } L.a.volume=clampN(L.v*TRI_TON_VOL[n],0,1); if(L.a.paused) L.a.play().catch(()=>{}); }
+// Musik: blendet über 2–3 s ein und aus; ohne Schleife (loop=false) spielt sie einmal bis zum Ende, neu = von vorn (triMusikNeu)
+function triMusik(n,ziel,dt,loop=true){ const M=TRI_MUSIK[n]; let L=triLoops['m'+n]; if(!L){ if(ziel<=0) return; const a=new Audio('kampagne/sounds/'+M[0]+'.mp3'); a.loop=loop; a.volume=0; L=triLoops['m'+n]={a,v:0}; }
+  L.v+=Math.sign(ziel-L.v)*Math.min(Math.abs(ziel-L.v),dt*(M[2]||.45)); if(ziel<=0&&L.v<.01){ L.v=0; if(!L.a.paused) L.a.pause(); return; } if(L.a.ended) return; L.a.volume=clampN(L.v*M[1],0,1); if(L.a.paused) L.a.play().catch(()=>{}); }
+function triMusikNeu(n){ const L=triLoops['m'+n]; if(L){ L.a.pause(); L.a.currentTime=0; L.v=0; } }
 function triTonAus(){ for(const k in triLoops){ triLoops[k].v=0; triLoops[k].a.pause(); } }
 const triFern=(p,max)=>p?clampN(1-camera.position.distanceTo(p)/max,0,1)**1.5:0; // 1 an der Kamera, 0 ab max m
 function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race.state==='run', an=(run||race.state==='count')&&!race.paused;
-  if(!triTonVor){ triTonVor=Object.keys(TRI_TON_VOL).map(n=>Object.assign(new Audio(TRI_TON+n+'.mp3'),{preload:'auto'})); } // vorladen, damit der erste Ton nicht hängt
+  if(!triTonVor){ triTonVor=Object.keys(TRI_TON_VOL).map(n=>TRI_TON+n).concat(Object.values(TRI_MUSIK).map(m=>'kampagne/sounds/'+m[0])).map(f=>Object.assign(new Audio(f+'.mp3'),{preload:'auto'})); } // vorladen, damit der erste Ton nicht hängt
+  if(race.state==='count'&&!A.tonNeu){ for(const n in TRI_MUSIK) triMusikNeu(n); } A.tonNeu=race.state==='count'; // neues Rennen: Musik von vorn
   if(race.state==='count'||!A.ton) A.ton={}; const O=A.ton, einmal=(k,b)=>b&&!O[k]&&(O[k]=1); // Einzeltöne: neues Rennen = alles zurück
   const P=A.tonP||(A.tonP={}), fahrt=(k,G)=>{ const p=G.position, a=P[k], v=a&&dt>0?p.distanceTo(a)/dt:0; P[k]=p.clone(); return G.visible&&v>.3&&v<40; }; // bewegt sich das Ding gerade?
   // Goldkarren (Kamerafahrt beim Countdown, später den Burgweg hinauf)
@@ -177,6 +183,7 @@ function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race
   let rf=0; if(an&&A.reiter.length&&fahrt('r',A.reiter[0].p.G)) for(const r of A.reiter) if(r.p.G.visible) rf=Math.max(rf,triFern(r.p.G.position,60));
   triLoop('hufe','hufe',rf,dt); triLoop('kette','kettenhemd',rf,dt);
   if(einmal('aufs',A.kt>=8.4&&A.kt<10)) triEins('wiehern',.6*Math.max(.3,triFern(A.koenig&&A.koenig.p.G.position,60)));
+  if(einmal('fanfare',run&&A.d0!=null&&A.d0-me.d<75&&A.d0-me.d>0)) triEins('fanfare'); // Vorreiter, kurz bevor er „Platz für den König“ ruft
   if(einmal('herbei',run&&A.d0!=null&&A.d0-me.d<35&&A.d0-me.d>0)) triEins('wiehern');
   if(einmal('sturz',A.sturzS>=.45)) triEins('sturz'); if(einmal('sturzW',A.sturzS>=1.6)) triEins('wiehern',.8,.95);
   // Audienz: „Gott mit Euch!“ – Glocken aus der Ferne
@@ -195,7 +202,7 @@ function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race
   if(run&&K){ const k=K.J.findIndex(j=>rt>=j.t0&&rt<j.t0+j.dur+1), j=K.J[k];
     if(j){ const tau=rt-j.t0, letzt=k===K.J.length-1; if(einmal('auf'+k,tau>=0&&tau<3)) triEins('fluegel');
       if(einmal('zunge'+k,k>0&&tau>=5.5&&tau<24)) triEins('elwetritsch_schrei',.7,1.15);
-      if(einmal('haken'+k,!letzt&&tau>=25)) triEins('fluegel',.8); if(einmal('busch'+k,!letzt&&tau>=26.5)) triEins('rascheln_gebuesch'); if(einmal('sack',letzt&&tau>=25.4)) triEins('elwetritsch_schrei'); }
+      if(einmal('haken'+k,!letzt&&tau>=25)) triEins('fluegel',.8); if(einmal('busch'+k,!letzt&&tau>=26.5)) triEins('rascheln_gebuesch'); if(einmal('sack',letzt&&tau>=25.4)) triEins('elwetritschegefangen'); }
     const tF=K.J.length?K.J[K.J.length-1].t0+25.6:1e9, x=rt-tF-4, n=Math.floor(x/13), lok=x-n*13-n*5%4, Fr=A.friedel&&A.friedel.r.g;
     if(x>0&&lok>0&&lok<.3&&O.zappel!==n){ O.zappel=n; if(Fr&&Fr.visible) triEins('elwetritsch_schrei',.45*triFern(Fr.position,40),.85+Math.random()*.3); } }
   // Drei Elwetritsche im Ausfahren: Schreck mit Gackern und Flattern, wildes Gegacker beim Durcheinanderrennen, Schrei, als eine die Zunge rausstreckt
@@ -205,4 +212,19 @@ function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race
   // Reh mit Kitzen springt über den Weg ins Gebüsch · Wildschwein: Rascheln, wenn es aus dem Wald bricht, grunzt beim Rennen vor dir her, Rascheln, wenn es links abtaucht
   const Rh=L&&L.reh; if(Rh&&Rh.s>=0&&Rh.s<9){ if(einmal('reh',true)) triEins('rascheln_gebuesch',.8); if(einmal('rehweg',Rh.s>=3.5)) triEins('rascheln_gebuesch',.6,1.1); }
   const Sw=L&&L.sau; if(Sw&&Sw.s>=0&&!Sw.fertig){ const s=Sw.s, Z=TRI_SAU; if(einmal('saurein',true)) triEins('rascheln_gebuesch');
-    if(an&&s>1&&s<Z.raus+Z.ab&&t>(O.grunz||0)){ triEins('schwein',.9,.9+Math.random()*.2); O.grunz=t+1.6+Math.random()*1.8; } if(einmal('saurraus',s>=Z.raus+Z.ab*.6)) triEins('rascheln_gebuesch'); } }
+    if(an&&s>1&&s<Z.raus+Z.ab&&t>(O.grunz||0)){ triEins('schwein',.9,.9+Math.random()*.2); O.grunz=t+1.6+Math.random()*1.8; } if(einmal('saurraus',s>=Z.raus+Z.ab*.6)) triEins('rascheln_gebuesch'); }
+  // ---- Musik ----
+  const km=race.kamp, e0=km?(race.woT||0)-(km.ende||[]).length*KT_DAUER:1e9, G=T.gast, gp=G?new THREE.Vector3(G.x,roadY(G.d)+1.5,G.y):null, ank=run&&rt>=e0&&rt<e0+16; // e0: Ende-Tafeln
+  // Erkennungsmelodie: Countdown, Kamerafahrt und erste Tafeln, aus, sobald das Gefolge zu hören ist
+  triMusik('thema',an&&(race.state==='count'||rt<38)&&rf<=0?1:0,dt,false);
+  // Jagdmusik: setzt mit dem Antritt ein, endet mit dem Haken (bei der letzten mit dem Sprung in den Sack), jede Jagd von vorn
+  let jm=0; if(run&&K){ const k=K.J.findIndex(j=>rt>=j.t0-.3&&rt<j.t0+j.dur), j=K.J[k]; if(j){ const tau=rt-j.t0; if(einmal('jm'+k,true)) triMusikNeu('jagd'); jm=tau<(k===K.J.length-1?25.6:25.3)?1:0; } }
+  triMusik('jagd',an?jm:0,dt,false);
+  // Unheimlich: leise im Wald, wenn Friedel nach Jagd 1–3 Angst bekommt (32 s um seinen Spruch)
+  let uh=0; if(run&&K) K.J.slice(0,3).forEach((j,k)=>{ const x=rt-(j.t0+132); if(x>=0&&x<32){ uh=1; if(einmal('uh'+k,true)) triMusikNeu('unheimlich'); } });
+  triMusik('unheimlich',an?uh:0,dt,false);
+  // Gemütlich (taverne): Abfahrt nach dem Fuhrwerk bis vor das Wirtshaus, am Wirtshaus und am Gasthaus im Ziel (lauter, je näher), Heimweg nach Friedels Abschied – still bei den drei Elwetritschen und während der Ankunfts-Musik
+  let gm=0; if(run&&K){ if(rt>=triFuhrT()+TRI_FUHR.ab+4&&me.d<T.wirtD-100) gm=1; if(rt>=K.heim+2&&!(E&&!E.fertig&&me.d>T.tritsch-60)) gm=1; }
+  gm=Math.max(gm,triFern(W3,90),triFern(gp,130)); if(ank) gm=0; triMusik('taverne',an?gm:0,dt);
+  // Ankunft: mit den Ende-Tafeln einmal das kurze Stück
+  if(einmal('ankunft',ank)) triMusikNeu('ankunft'); triMusik('ankunft',an&&ank?1:0,dt,false); }

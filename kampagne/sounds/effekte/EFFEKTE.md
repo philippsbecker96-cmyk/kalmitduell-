@@ -20,9 +20,21 @@ Vor jedem neuen Ton wird erst gefragt.
 | `gackern.mp3` | 1 s | Hühner im Stall am Wirtshaus alle 3–8 s · drei Elwetritsche im Ausfahren (Schreck, wildes Durcheinander) |
 | `grillen.mp3` | 2 min | Schleife: ab dem Ende der Wirtshaus-Szene, über 40 s lauter, bis zum Ende |
 | `fluegel.mp3` | 5 s | Elwetritsche taucht auf und schlägt den Haken · eine der drei im Ausfahren flattert hoch |
-| `elwetritsch_schrei.mp3` | 3 s | Elwetritsche streckt erstmals die Zunge raus (ab Jagd 2) · Sprung in den Sack · Zappeln im Sack (leise) · Zunge im Ausfahren |
+| `elwetritsch_schrei.mp3` | 3 s | Elwetritsche streckt erstmals die Zunge raus (ab Jagd 2) · Zappeln im Sack (leise) · Zunge im Ausfahren |
+| `elwetritschegefangen.mp3` | 1,4 s | Jagd 5: Elwetritsche landet in Friedels Sack |
 | `rascheln_gebuesch.mp3` | 1 s | Elwetritsche verschwindet im Gebüsch (Jagd 1–4) · Reh springt über den Weg · Wildschwein bricht aus dem Wald und taucht links ab · Elwetritsche im Ausfahren hauen ab |
 | `schwein.mp3` | 0,5 s | Wildschwein grunzt alle 2–3 s, solange es vor dir herrennt |
+| `fanfare.mp3` | 8 s | Vorreiter des Gefolges ist 75 m vor dir, kurz bevor er „Platz für den König“ ruft |
+
+## Musik Mission 1 (`../musik/`, Lautstärke in `TRI_MUSIK`, blendet ein und aus)
+
+| Datei | Länge | Wann |
+|---|---|---|
+| `musik/thema.mp3` | 43 s | Erkennungsmelodie: Countdown, Kamerafahrt, erste Tafeln – aus, sobald das Gefolge zu hören ist (spätestens 38 s) |
+| `musik/taverne.mp3` | 30 s | Schleife: Abfahrt nach dem Fuhrwerk bis 100 m vor das Wirtshaus · am Wirtshaus (bis 90 m) · Heimweg nach Friedels Abschied (still bei den drei Elwetritschen) · Gasthaus im Ziel (bis 130 m, lauter, je näher) |
+| `musik/jagd.mp3` | 32 s | jede Jagd von vorn, ab dem Antritt bis zum Haken bzw. Sprung in den Sack |
+| `effekte/unheimlich.mp3` | 32 s | Wald nach Jagd 1–3, um Friedels Angst-Spruch |
+| `musik/ankunft.mp3` | 15 s | einmal mit den Ende-Tafeln (Taverne pausiert so lange) |
 
 Fehlt noch: `truhe.mp3` (Wache stellt in der Kamerafahrt eine Truhe ab).
 Noch offen (Ideen): Gänse schnattern, Käuzchen.
