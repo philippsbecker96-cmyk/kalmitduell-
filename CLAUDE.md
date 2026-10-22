@@ -39,4 +39,5 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - Offene Verschönerungspläne (Landschaft, Gebäude, Licht): `PLAENE.md`.
 - Plan für Rennen mit bis zu 4 Fahrern (Bots und online): `MEHRSPIELER.md`.
 - Konzept Kampagne (4 Mittelalter-Missionen im Wasgau, Workouts nach FTP): `KAMPAGNE.md`.
+- Leistung/Effizienz (Messwerte, wie voll Strecken werden dürfen, offene Optimierungen; Messwerkzeug `node werkzeuge/messen.mjs [strecke] [meter,…]`): `EFFIZIENZ.md`.
 - Lücken zwischen Straße und Gelände in steilen Kehren (gelöst mit `STR_UNTER` und Schulter, Messhelfer `__luecken()`, Verlauf): `STRASSENLUECKEN.md`.
