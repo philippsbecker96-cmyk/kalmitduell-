@@ -1,6 +1,6 @@
 /* ================= Kampagne Mission 1: Leben am Wirtshaus und unterwegs (Trifels) =================
    Baulücken am Wirtshaus mit Misthaufen, Schweinekoben, Hühnerstall, Strohhaufen (Hof-Baukasten aus welt-dorf.js), Gänseherde quert in der Wirtshaus-Szene die Gasse,
-   Fuhrwerk auf der Abfahrt (Bauer rauscht von hinten heran, plaudert über den Fußball in Lautre, fährt davon), Gegenverkehr zwischen Wirtshaus und Jagd 1 (Magd, Bauer, Heuwagen, Mönch), Reh mit zwei Kitzen nach Jagd 1, Wildschwein quert nach Jagd 4 von rechts nach links und läuft vor dir her (Friedel: TRI_TXT.sau).
+   Fuhrwerk auf der Abfahrt (Bauer rauscht von hinten heran, plaudert über den Fußball in Lautre, fährt davon), Gegenverkehr zwischen Wirtshaus und Jagd 1 (Magd, Bauer, Heuwagen, Mönch), Reh mit zwei Kitzen nach Jagd 1, Wildschwein quert nach Jagd 4 von rechts nach links und läuft vor dir her (Friedel: TRI_TXT.sau), drei Elwetritsche auf dem Weg im Ausfahren (sehen dich, rennen wild im Kreis durcheinander, hauen ab).
    prepTrifelsLeben aus prepTrifels · buildTrifelsLeben aus buildTrifels · poseTrifelsLeben aus poseTrifels · triGegenSpur aus triSpur (Heuwagen und Fuhrwerk: rechts Platz machen) */
 const TRI_LUECKEN=[[-1,-21,'mist'],[1,-29,'koben'],[1,11,'stall'],[-1,9,'gaense'],[-1,36,'stroh']]; // [Seite, Meter ab Wirtshaus, Szene]: das Haus dort fällt weg
 const TRI_GEGEN_ART=['magd','bauer','wagen','moench'], TRI_GEGEN_V={wagen:2, sonst:1.3}; // Gegenverkehr in der Reihenfolge von TRIFELS_T.gegen, m/s
@@ -9,11 +9,11 @@ const TRI_FUHR={vor:7, ab:40, weg:10}, TRI_FUHR_TXT=[[0,3,'Un wie?'],[3.5,10,"Ho
   [26.5,32,'Oich gsprächich bischd jo nid grad … Kriegsch die Zäh nid ausenanner, [Großer|Großi]?'],[32.5,39.5,'Alla hopp, ich muss weida, in deim Schneggetempo brauch ich jo bis iwwermoie, bis ich dehääm bin.']]; // Fuhrwerk, s ab Sprechbeginn: vor = rauscht heran, ab = winkt ab und fährt davon, weg = bis verschwunden · Blasen [von, bis, Text], vor dem letzten Satz eine Pause
 const triFuhrT=()=>{ const S=race.woSegs||[], tW=S[0]?S[0].t0+S[0].dur:480, Z=TRIFELS_T; return (Z.rauf+Z.hof/2+Z.audienz+tW-Z.szene)/2; }; // Workout-Zeit: Mitte der Abfahrt zwischen Burgherr und Wirtshaus
 const TRI_GANS={da:10, n:6, von:3, bis:17};
-const TRI_SAU={rein:3, raus:12, ab:4, ende:17}; // Wildschwein, s ab Auftauchen: bis rein auf den Weg, ab raus nach links (dauert ab), ende verschwunden // Gänse queren 10 m hinter dem Wirtshaus, Szene-Sekunde 3 bis 17 (von der rechten in die linke Lücke)
+const TRI_SAU={rein:3, raus:12, ab:4, ende:17}, TRI_TRITSCH={sieht:28, nah:8, schreck:.5, wirr:3.2, ende:8}; // Wildschwein, s ab Auftauchen: bis rein auf den Weg, ab raus nach links (dauert ab), ende verschwunden // Elwetritsche: sehen dich auf sieht m, weichen nie näher als nah m zurück, s ab Schreck: hochspringen, bis wirr im Kreis durcheinander, dann ab ins Gebüsch, ende verschwunden // Gänse queren 10 m hinter dem Wirtshaus, Szene-Sekunde 3 bis 17 (von der rechten in die linke Lücke)
 
 // ---- Vorbereitung: Häuser für die Lücken herausnehmen, Wege für Reh und Wildschwein frei von Bäumen ----
 function prepTrifelsLeben(r){ const T=r.tri, S=r.S, O=r.def.orte, kf=r.kf, dw=T.wirtD; T.luecken=[];
-  T.gegen=(O.gegen||[]).map(([t,d])=>[t,d*kf]); T.reh=O.reh!=null?O.reh*kf:null; T.sau=O.sau!=null?O.sau*kf:null;
+  T.gegen=(O.gegen||[]).map(([t,d])=>[t,d*kf]); T.reh=O.reh!=null?O.reh*kf:null; T.sau=O.sau!=null?O.sau*kf:null; T.tritsch=O.tritsch!=null?O.tritsch*kf:null;
   for(const [s,da,art] of TRI_LUECKEN){ const h=S.house.filter(h=>h.side===s&&h!==T.wirt&&h.su==null).sort((a,b)=>Math.abs(a.d-dw-da)-Math.abs(b.d-dw-da))[0]; if(!h||Math.abs(h.d-dw-da)>9) continue;
     S.house.splice(S.house.indexOf(h),1); T.luecken.push({x:h.x, y:h.y, h:h.h, side:s, d:h.d, w:h.w, dep:h.dep, art});
     const imHof=o=>o.side===s&&Math.abs(o.d-h.d)<h.w/2+1.5; S.tor=S.tor.filter(o=>!imHof(o)); S.ranke=S.ranke.filter(o=>!imHof(o));
@@ -21,6 +21,7 @@ function prepTrifelsLeben(r){ const T=r.tri, S=r.S, O=r.def.orte, kf=r.kf, dw=T.
   const frei=[], weg=(d,u,m)=>{ const [px,py]=posAt(r,d), h=headingAt(r,d); frei.push([px-Math.sin(h)*u, py+Math.cos(h)*u, m]); };
   if(T.reh!=null) for(let u=-20;u<=16;u+=3) weg(T.reh,u,4); // Reh quert von rechts nach links
   if(T.sau!=null){ for(let d=T.sau-16;d<=T.sau;d+=4) for(const u of [4,7,10]) weg(d,u,2.5); for(let d=T.sau+70;d<=T.sau+130;d+=4) for(const u of [-4,-7,-10]) weg(d,u,2.5); } // rechts herein, links hinaus // Wildschwein läuft rechts am Rand mit, dreht ab
+  if(T.tritsch!=null) for(let d=T.tritsch-5;d<=T.tritsch+60;d+=4) for(const u of [-5,-8,-11,-14,6,9,12]) weg(d,u,2.5); // Elwetritsche: links und rechts ins Gebüsch
   for(const k of ['tree','bush','rock']) S[k]=S[k].filter(o=>!frei.some(([x,y,m])=>Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m&&Math.hypot(o.x-x,o.y-y)<m)); }
 
 // Vierbeiner mit beweglichen Beinen (Reh, Kitz, Wildschwein), lokal +x nach vorn, Hufe auf y=0
@@ -90,7 +91,11 @@ function buildTrifelsLeben(T){ const A=anim.tri, q=rng(905), M=c=>lam(c), holz=M
     L.fuhre={G,...W,blase:triBlase(),ph:0,off:-99,dAlt:null}; }
   // Reh mit zwei Kitzen, Wildschwein
   if(T.reh!=null){ L.reh={tiere:[triReh(false),triReh(true),triReh(true)], s:-1, fertig:false}; L.reh.tiere.forEach(r=>{ r.G.visible=false; world.add(r.G); }); }
-  if(T.sau!=null){ const S=triSau(); S.G.visible=false; world.add(S.G); L.sau={S, s:-1, fertig:false, d:0, u:0}; } }
+  if(T.sau!=null){ const S=triSau(); S.G.visible=false; world.add(S.G); L.sau={S, s:-1, fertig:false, d:0, u:0}; }
+  // Drei Elwetritsche: Fell glimmt leicht, Augen leuchten im Laternenlicht
+  if(T.tritsch!=null) L.tritsch={s:-1, fertig:false, c:T.tritsch, tiere:[1.15,1,.9].map(g=>{ const E=elwetritscheModell(); E.G.traverse(o=>{ if(!o.material||!o.material.color) return; const c=o.material.color;
+    o.material=c.getHexString()==='f6f4ee'?new THREE.MeshBasicMaterial({color:'#fff4d0'}):new THREE.MeshLambertMaterial({color:c,emissive:c.clone().multiplyScalar(.25)}); });
+    E.G.scale.setScalar(1.2*g); E.G.visible=false; world.add(E.G); return {...E, ph:q()*6, pd:null, rot:0}; })}; }
 
 // ---- Ausweichen: dem Heuwagen und dem Fuhrwerk rechts Platz machen (Friedel fährt links neben dir mit) ----
 function triGegenSpur(d,t){ const L=anim.tri&&anim.tri.leben; if(!L) return t; const W=L.gegen.find(E=>E.art==='wagen'&&E.G.visible), F=L.fuhre; let rechts=0;
@@ -136,4 +141,20 @@ function poseTrifelsLeben(dt,t,rt){ const A=anim.tri, L=A.leben, T=R.tri; if(!L)
       const u1=rw+6+(.35*Math.sin(s*.8)-rw-6)*rein, u=u1+(-(rw+10)-u1)*raus; // rechts im Wald → Wegmitte (leicht pendelnd) → links hinaus
       if(s>Z.ende){ W.fertig=true; S.G.visible=false; } else { const p=wegPos(d,u); S.G.visible=true; S.G.position.set(p.x,bodenY(p.x,p.z)+.06*Math.abs(Math.sin(s*9)),p.z);
         if(W.pd!=null&&lauf>0){ const dd=d-W.pd, du=u-W.pu; if(Math.hypot(dd,du)>.01) W.rot=Math.atan2(du,Math.max(.01,dd)); } W.pd=d; W.pu=u; S.G.rotation.y=-p.h-(W.rot||0); // schaut in Laufrichtung
-        S.beine.forEach((b,j)=>b.rotation.z=(j%2?1:-1)*(j<2?1:-1)*.6*Math.sin(s*14)); S.kopf.rotation.z=.1*Math.sin(s*7); } } } }
+        S.beine.forEach((b,j)=>b.rotation.z=(j%2?1:-1)*(j<2?1:-1)*.6*Math.sin(s*14)); S.kopf.rotation.z=.1*Math.sin(s*7); } } }
+  // Drei Elwetritsche im Ausfahren: stehen pickend auf dem Weg, sehen dich, springen hoch, rennen wild im Kreis durcheinander und hauen ab (zwei links ins Gebüsch, eine streckt die Zunge raus, rennt vor dir her und biegt rechts ab)
+  if(L.tritsch&&!L.tritsch.fertig){ const E=L.tritsch, d0=T.tritsch, Z=TRI_TRITSCH, O=[[0,-.6],[1.4,.9],[-1.1,1.3]], RK=[1.3,1.7,1.1], WK=[4.2,-3.6,5]; // Abstände [d, u] · Kreise: Radius, Drehung rad/s (± = Richtung)
+    if(E.s<0&&me.d>d0-Z.sieht){ if(me.d<d0+5) E.s=0; else E.fertig=true; } if(E.s>=0){ E.s+=lauf; E.c=Math.max(E.c,me.d+Z.nah); } const s=E.s, an=s>=0;
+    if(E.fertig||s>Z.ende||me.d<d0-150){ for(const e of E.tiere) e.G.visible=false; if(s>Z.ende) E.fertig=true; }
+    else { const rw=roadW(R,d0)/2;
+      E.tiere.forEach((e,i)=>{ let dd=O[i][0], uu=O[i][1], y=0; const lauft=an&&s>=Z.schreck, f=Math.max(0,s-Z.wirr);
+        if(an){ const a=WK[i]*Math.max(0,Math.min(s,Z.wirr)-Z.schreck); dd+=RK[i]*Math.sin(a); uu+=(i===1?-1:1)*RK[i]*(1-Math.cos(a)); // im Kreis
+          if(s<Z.schreck) y=.4*Math.sin(Math.PI*s/Z.schreck); if(i===2&&s>1.8&&s<2.4) y=.7*Math.sin(Math.PI*(s-1.8)/.6); // Schreck, eine flattert hoch
+          if(i===0) uu-=6*f; else if(i===1){ uu-=5*f; dd+=3*f; } else { dd+=9*Math.min(f,2); uu+=6*Math.max(0,f-2); } // Flucht
+          if(Math.abs(uu)>rw+12){ e.G.visible=false; return; } } // im Gebüsch verschwunden
+        const d=E.c+dd, p=wegPos(d,uu); e.G.visible=true; e.G.position.set(p.x,bodenY(p.x,p.z)+y+(lauft?.05*Math.abs(Math.sin(t*16+e.ph)):0),p.z);
+        if(an&&e.pd!=null&&lauf>0){ const dD=d-e.pd, dU=uu-e.pu; if(Math.hypot(dD,dU)>.005) e.rot=Math.atan2(dU,dD); } e.pd=d; e.pu=uu;
+        e.G.rotation.y=-p.h-(!an?e.ph+.3*Math.sin(t*.4+e.ph):s<Z.schreck?Math.PI:e.rot)+Math.PI/2; // Modell blickt nach +z · beim Schreck zu dir
+        e.beine.forEach((b,j)=>b.rotation.x=lauft?(j?1:-1)*.9*Math.sin(t*20+e.ph):0); e.K.rotation.z=lauft?.15*Math.sin(t*20+e.ph):0;
+        e.fluegel.forEach((w,j)=>w.rotation.z=(j?-1:1)*(an&&s<Z.wirr+1?.5+.5*Math.sin(t*28+e.ph):0));
+        e.kopf.rotation.x=!an?.7*Math.max(0,Math.sin(t*1.7+e.ph*2))**3:-.25; e.augen.forEach(a=>a.scale.y=an?1.5:1); e.zunge.visible=i===2&&f>0; }); } } }

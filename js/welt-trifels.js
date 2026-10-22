@@ -348,8 +348,12 @@ function buildFriedel(T){ const A=anim.tri, M=c=>lam(c), haar=M('#b8452a'), haar
     st.position.set(.04+Math.cos(a)*.13,.02-l/2+.04,Math.sin(a)*.13); st.rotation.set(Math.sin(a)*.25,0,Math.cos(a)*-.25); r.headG.add(st); }
   for(let i=0;i<4;i++){ const st=new THREE.Mesh(new THREE.BoxGeometry(.03,.07,.05),haar); st.position.set(.15,.1,(i-1.5)*.05); r.headG.add(st); } // Fransen vorn
   const sack=new THREE.Mesh(new THREE.SphereGeometry(.18,10,8),M('#c8b48a')); sack.scale.set(.9,1.1,.8); sack.position.set(-.32,1.15,-.12); r.body.add(sack); // Sack auf dem Rücken
+  const raus=new THREE.Group(); raus.position.set(-.32,1.38,-.12); r.body.add(raus); const schn=new THREE.Group(), aug=new THREE.Group(); raus.add(schn,aug); // schaut beim Zappeln oben aus dem Sack
+  for(const [y,w,c] of [[.03,.09,'#f2c230'],[0,.08,'#e0a820']]){ const b=new THREE.Mesh(new THREE.BoxGeometry(w,.03,.16),M(c)); b.position.set(0,y,.06); b.rotation.x=-.5; schn.add(b); } // Entenschnabel
+  const st=new THREE.Mesh(new THREE.CylinderGeometry(.012,.015,.14,5),M('#e8862a')); st.position.y=.07; aug.add(st); const ap=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),new THREE.MeshBasicMaterial({color:'#fff4d0'})); ap.position.y=.15; aug.add(ap);
+  const pu=new THREE.Mesh(new THREE.SphereGeometry(.02,6,4),lam('#151515')); pu.position.set(.03,.15,0); aug.add(pu); schn.visible=aug.visible=false; // Augenstiel
   const la=new THREE.Mesh(new THREE.BoxGeometry(.12,.16,.12),lampGlowMat()); la.position.set(.62,.88,0); r.body.add(la); const lh=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.12,4),M('#2e2c2a')); lh.position.set(.62,.99,0); r.body.add(lh); // Laterne am Lenker
-  A.friedel={r,sack,d:T.wirtD+1,crank:0,mode:'park',blase:triBlase()};
+  A.friedel={r,sack,raus:{G:raus,schn,aug},d:T.wirtD+1,crank:0,mode:'park',blase:triBlase()};
   // Dorfleute vor dem Wirtshaus „Zack Zack“ (rechts), mit Krügen, blicken zu Friedel
   const H=T.wirt, dw=T.wirtD, rw=roadW(R,dw)/2, uF=(()=>{ if(!H) return rw-.4; const [hx,hz]=posAt(R,H.d), hh=headingAt(R,H.d); return Math.min(rw-.2,(H.x-hx)*-Math.sin(hh)+(H.y-hz)*Math.cos(hh)-H.dep/2-.5); })(), // vor der Fassade auf dem Pflaster (die Fassade steht kaum neben dem Weg)
     fp=wegPos(dw+.9,uF-1.1), krug=m=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(.05,.045,.13,8),M('#8a6a44')); k.position.y=-.66; m.arme[1].add(k); m.arme[1].rotation.x=-.9; };
@@ -423,16 +427,18 @@ function buildGasthaus(T){ const A=anim.tri, G=T.gast, holz=lam('#4e3626'), box=
   // Wirt: Schürze, Laterne in der rechten Hand, steht vor der Tür und winkt dir mit der linken
   const wirt=trMensch({kittel:'#6b4a2e',aermel:'#ece3cf',hose:'#3a3020',haar:'#8a8a86',bart:'#8a8a86'}); box(wirt.G,.36,.7,.04,lam('#e8e0d0'),0,.95,.25); // Schürze
   const lat=new THREE.Mesh(new THREE.BoxGeometry(.16,.22,.16),glow); lat.position.y=-.78; wirt.arme[1].add(lat); wirt.arme[1].rotation.x=-.35; const wl=new THREE.PointLight(0xffc870,1.4,10,2); wl.position.y=-.78; wirt.arme[1].add(wl);
-  const wp=loc(.6,0,5.6); wirt.G.position.set(wp.x,bodenY(wp.x,wp.z),wp.z); wirt.G.rotation.y=H.rotation.y; world.add(wirt.G);
+  const wp=loc(.6,0,5.6), wp0=loc(0,0,4.3); wp.y=bodenY(wp.x,wp.z); wp0.y=y0; wirt.G.position.copy(wp0); wirt.G.rotation.y=H.rotation.y; world.add(wirt.G);
   // Teufelstisch: Sandsteinsäule mit breiter Felsplatte obendrauf, hebt sich als Silhouette vom Nachthimmel ab
   const [tx,tz]=T.tisch, F=new THREE.Group(), fm=lam('#6a3a2c'), fm2=lam('#5a2e24'); F.position.set(tx,terrainAt(tx,tz)-2,tz); F.rotation.y=.4; world.add(F);
   [[5.2,6,4.6,0,3,0,.05],[4.4,5.5,4,.3,8.5,.2,-.08],[4.8,5,4.3,-.2,13.6,-.1,.06],[3.8,3.6,3.4,.1,17.6,.1,0]].forEach(([w,h,d,x,y,z,r],i)=>{ const b=box(F,w,h,d,i%2?fm2:fm,x,y,z); b.rotation.y=r*3; b.rotation.z=r; });
   const pt=box(F,17,2.8,10.5,fm,0,20.6,0); pt.rotation.z=.04; box(F,13,.9,8,fm2,-.4,19,.3); for(const [x,z,s] of [[6,4,2.6],[-5,-4,2],[4,-5,1.6]]){ const b=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),fm2); b.position.set(x,s*.6,z); F.add(b); } // Platte und Brocken am Fuß
-  A.gast={H,sc,rauch,kp,wirt,mats:[mf,ms]}; }
+  A.gast={H,sc,rauch,kp,wirt,wp,wp0,mats:[mf,ms]}; }
 function poseGasthaus(dt,t){ const A=anim.tri, G=A.gast; if(!G) return; const dk=A.dk||0, nah=R.tri.gast.d-me.d;
   G.sc.material.opacity=.75*dk; for(const m of G.mats) m.emissive.setScalar(.35+.65*dk); // in der Nacht leuchtet alles kräftiger
   G.rauch.forEach((s,i)=>{ const f=((t*.16+i/8)%1); s.position.set(G.kp.x+f*2.2,G.kp.y+f*7,G.kp.z+f*1.2); s.scale.setScalar(1.2+f*3.5); s.material.opacity=.35*Math.sin(f*Math.PI)*(.3+.7*(1-dk*.5)); });
-  const w=G.wirt, wink=nah<70&&nah>-15; w.arme[0].rotation.x+=((wink?-2.6:0)-w.arme[0].rotation.x)*Math.min(1,dt*4); w.arme[0].rotation.z=wink?-.35-.35*Math.sin(t*7):-.12; w.kopf.rotation.y=.12*Math.sin(t*.7); } // winkt, wenn du dich näherst
+  const w=G.wirt, wink=nah<70&&nah>-15, k=bSm((300-nah)/25), geht=k>0&&k<1, hoch=k>=1&&!wink&&nah>0, ws=geht?Math.sin(t*6):0; w.G.position.copy(G.wp0).lerp(G.wp,k); w.beine[0].rotation.x=.5*ws; w.beine[1].rotation.x=-.5*ws; // tritt ab 300 m aus der Tür
+  w.arme[1].rotation.x+=((hoch?-2.5:-.35)-w.arme[1].rotation.x)*Math.min(1,dt*3); // hebt die Laterne, bis er winkt
+  w.arme[0].rotation.x+=((wink?-2.6:0)-w.arme[0].rotation.x)*Math.min(1,dt*4); w.arme[0].rotation.z=wink?-.35-.35*Math.sin(t*7):-.12; w.kopf.rotation.y=.12*Math.sin(t*.7); } // winkt, wenn du dich näherst (Laterne wieder unten)
 
 // ---- Bewegung (aus poseTrifels) ----
 function poseFriedel(dt,t,rt){ const A=anim.tri, F=A.friedel, T=R.tri; if(!F) return; const run=race.state==='run', lauf=run&&!race.paused?dt*simSpeed():0;
@@ -455,8 +461,11 @@ function poseFriedel(dt,t,rt){ const A=anim.tri, F=A.friedel, T=R.tri; if(!F) re
       const blick=(tau%8>5.5)&&tau<24&&k>0; E.kopf.rotation.y=blick?Math.PI*.85:0; E.zunge.visible=blick&&k>=1; // schaut frech zurück, ab Jagd 2 mit Zunge
       E.beine[0].rotation.x=.7*Math.sin(tau*18); E.beine[1].rotation.x=-.7*Math.sin(tau*18); E.fluegel.forEach((w,i)=>w.rotation.z=(i?-1:1)*(.3+.5*Math.abs(Math.sin(tau*14)))); E.augen.forEach((a,i)=>a.rotation.z=.25*Math.sin(t*11+i)); E.K.rotation.z=.12*Math.sin(tau*9); } }
   E.G.visible=ev;
-  // Sack: nach dem Fang dick und zappelig
-  const voll=K&&K.J.length&&rt>K.J[K.J.length-1].t0+25.6; F.sack.scale.set(voll?1.35+.08*Math.sin(t*13):.9, voll?1.45:1.1, voll?1.2:.8); if(voll) F.sack.rotation.z=.15*Math.sin(t*9);
+  // Sack: nach dem Fang dick, zappelt alle 13–17 s heftig (2,6 s, abwechselnd schaut Schnabel oder Augenstiel raus), Friedel schlingert und dreht sich nach dem Sack um
+  const tF=K&&K.J.length?K.J[K.J.length-1].t0+25.6:1e9, voll=rt>tF, x=rt-tF-4, n=Math.floor(x/13), lok=x-n*13-n*5%4, anf=voll&&x>0&&lok>0&&lok<2.6?Math.sin(Math.PI*lok/2.6):0, z=.04+.16*anf;
+  F.sack.scale.set(voll?1.35+z*Math.sin(t*13):.9, voll?1.45+z*.8*Math.sin(t*17):1.1, voll?1.2+z*Math.sin(t*11+1):.8); F.sack.rotation.z=voll?(.05+.3*anf)*Math.sin(t*9):0; F.sack.position.x=-.32+.05*anf*Math.sin(t*15);
+  F.raus.schn.visible=anf>.4&&n%2===0; F.raus.aug.visible=anf>.4&&n%2===1; F.raus.G.rotation.z=.35*Math.sin(t*12); F.raus.G.position.y=1.32+.08*anf;
+  F.r.wank=.12*anf*Math.sin(t*6.5); F.r.lenk=.08*anf*Math.sin(t*4.7+1); F.r.headG.rotation.y=1.1*anf;
   // Zwischenszene am Wirtshaus: zwei feste Kamera-Einstellungen auf der Fahrbahn, nicht in den Häusern daneben (Gruppe, dann näher auf Friedel und dich), Handschlag zur Wette, das Dorfweib lacht, Krüge hoch, Friedel dreht sich zu dir
   if(szene){ const dw=T.wirtD, rw=roadW(R,dw)/2, k=bSm((rt-K.tS-17)/2), at=(d,u,y)=>{ const p=wegPos(d,u); return [p.x,roadY(d)+y,p.z]; }, mix=(a,b)=>a.map((v,i)=>v+(b[i]-v)*k);
     const uF=A.uF; camOverride={pos:mix(at(dw-10,-rw+.5,2.6),at(dw+5.5,-rw+.5,1.9)), look:mix(at(dw,uF-1,1.3),at(dw-.4,uF-1.4,1.4))}; A.camAn=true; }
