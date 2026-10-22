@@ -6,13 +6,15 @@
 // ---- Vorbereitung (beim Streckenbau): Vorburg und Burgfelsen frei von Bäumen, Häuser am Wirtshaus mittelalterlich, Wirtshaus wählen ----
 const TRI_HUETTEN=[-.06,-.15,-.62,-.71,-.8,-.89]; // Hütten der Vorburg: Winkel (× π) um den Karrenplatz, Lücke für den Burgweg
 function prepTrifels(r){ const O=r.def.orte, S=r.S, q=rng(77), kf=r.kf, [kx,ky]=O.karren, [bx,by]=O.burg, rh=(O.hof[1]-O.hof[0])*kf/Math.PI;
-  r.tri={karren:O.karren, burg:O.burg, rh, hof:O.hof.map(d=>d*kf), aud:O.audienz*kf, sturz:O.sturz*kf, wirtD:O.wirtshaus*kf, tS:O.tS, tW:O.tW, jagd:O.jagd.map(d=>d*kf), loewenherz:O.loewenherz*kf};
+  r.tri={karren:O.karren, burg:O.burg, rh, hof:O.hof.map(d=>d*kf), aud:O.audienz*kf, sturz:O.sturz*kf, ziel:O.ziel*kf, wirtD:O.wirtshaus*kf, tS:O.tS, tW:O.tW, jagd:O.jagd.map(d=>d*kf), loewenherz:O.loewenherz*kf};
   // Burgwald bis an die Vorburg (vom Nutzer gewünscht), frei nur: Kisten in der Kehre, Burgfelsen, Hütten, Burgweg, Burgherr mit Wachen
   const frei=[[kx,ky,13]]; for(let x=-62;x<=52;x+=10) frei.push([bx+x,by,15]);
   for(const f of TRI_HUETTEN) frei.push([kx+Math.cos(Math.PI*f)*(rh+12), ky+Math.sin(Math.PI*f)*(rh+12), 7]);
   { const x0=kx, z0=ky-rh-3, x2=bx+46, z2=by+17, cx=kx+40, cz=ky-rh-6; for(let i=0;i<=20;i++){ const t=i/20; frei.push([(1-t)*(1-t)*x0+2*(1-t)*t*cx+t*t*x2, (1-t)*(1-t)*z0+2*(1-t)*t*cz+t*t*z2, 5]); } }
   { const bd=r.tri.aud+3, o=roadW(r,bd)/2+1.8; for(const da of [-2,0,2]){ const [px,py]=posAt(r,bd+da), h=headingAt(r,bd+da); frei.push([px+Math.sin(h)*o, py-Math.cos(h)*o, 3.5]); } }
   { const sd=r.tri.sturz; for(let da=-14;da<=14;da+=4){ const [px,py]=posAt(r,sd+da), h=headingAt(r,sd+da); for(const o of [3.5,7]) frei.push([px-Math.sin(h)*(roadW(r,sd+da)/2+o), py+Math.cos(h)*(roadW(r,sd+da)/2+o), 3]); } } // Sturzstelle: rechts frei für Seitenkamera und Sturz
+  { const zd=r.tri.ziel+10, [px,py]=posAt(r,zd), h=headingAt(r,zd), o=roadW(r,zd)/2+7; r.tri.gast={d:zd, x:px-Math.sin(h)*o, y:py+Math.cos(h)*o, h, o}; frei.push([r.tri.gast.x,r.tri.gast.y,13]); // Gasthaus „Zum Teufelstisch“ rechts am Ziel
+    const tx=px+Math.cos(h)*380-Math.sin(h)*60, ty=py+Math.sin(h)*380+Math.cos(h)*60; r.tri.tisch=[tx,ty]; frei.push([tx,ty,26]); } // Teufelstisch auf einer Kuppe dahinter
   // Dichter Pfälzerwald: zusätzliche Kiefern, Buchen und Unterholz im Wald, nie auf dem Weg oder auf benachbarten Kehren
   { const C=8, gr=new Map(), key=(x,y)=>Math.floor(x/C)+','+Math.floor(y/C); for(let i=0;i<r.xs.length;i+=2){ const k=key(r.xs[i],r.ys[i]); (gr.get(k)||gr.set(k,[]).get(k)).push(i); }
     const amWeg=(x,y,m)=>{ const cx=Math.floor(x/C), cy=Math.floor(y/C), w=Math.ceil(m/C); for(let a=-w;a<=w;a++) for(let b=-w;b<=w;b++){ const l=gr.get((cx+a)+','+(cy+b)); if(l) for(const i of l) if(Math.hypot(r.xs[i]-x,r.ys[i]-y)<m) return true; } return false; };
@@ -27,7 +29,8 @@ function prepTrifels(r){ const O=r.def.orte, S=r.S, q=rng(77), kf=r.kf, [kx,ky]=
 function trifelsGelaende(h,src,dist){ const T=R.tri, n=TER.nx, res=TER.res, [kx,ky]=T.karren, [bx,by]=T.burg, hy=roadY((T.hof[0]+T.hof[1])/2)-.45, rp=T.rh+14; T.hofY=hy+.45;
   for(let k=0;k<h.length;k++){ const x=(k%n)*res+TER.x0, z=((k/n)|0)*res+TER.z0, dk=Math.hypot(x-kx,z-ky);
     if(dk<rp+30) h[k]+=(hy-h[k])*bSm((rp+30-dk)/30); // eben (auch anheben, sonst schwebt der Kram am Rand)
-    const e=Math.hypot((x-bx)/50,(z-by)/20); if(e<2.2){ const top=hy+8*bSm((2.2-e)/1.3); if(top>h[k]) h[k]=top; } }
+    const e=Math.hypot((x-bx)/50,(z-by)/20); if(e<2.2){ const top=hy+8*bSm((2.2-e)/1.3); if(top>h[k]) h[k]=top; }
+    if(T.tisch){ const dt=Math.hypot(x-T.tisch[0],z-T.tisch[1]); if(dt<170) h[k]+=42*bSm((170-dt)/150); } } // Kuppe unter dem Teufelstisch
   // Burgweg: zweigt am Scheitel der Kehre ab und führt in einem Bogen nach Nordosten hinauf zum Torbau (Burg lokal x 46, z 15,5, Boden 6,5 m über der Vorburg)
   const x0=kx, z0=ky-T.rh-3, x2=bx+46, z2=by+17, cx=kx+40, cz=ky-T.rh-6, W=[]; let L=0;
   for(let i=0;i<=40;i++){ const s=i/40, x=(1-s)*(1-s)*x0+2*(1-s)*s*cx+s*s*x2, z=(1-s)*(1-s)*z0+2*(1-s)*s*cz+s*s*z2; if(W.length) L+=Math.hypot(x-W[W.length-1].x,z-W[W.length-1].z); W.push({x,z,L}); }
@@ -105,9 +108,10 @@ function buildTrifels(){ const T=R.tri, hy=T.hofY, [kx,ky]=T.karren, [bx,by]=T.b
       const pl=new THREE.Mesh(new THREE.BoxGeometry(1,.7,.04),[holzD,holzD,holzD,holzD,new THREE.MeshLambertMaterial({map:t}),new THREE.MeshLambertMaterial({map:t})]); pl.position.set(.85,-.45,0); W.add(pl); } }
 
   // ---------- Laternen am Weg: Holzpfahl mit Laterne, leuchten in der Dämmerung (am Wirtshaus und im Tal) ----------
-  { const glow=lampGlowMat(), L=[]; for(let d=T.wirtD-60; d<R.len-80; d+=d<T.wirtD+200?30:140){ const [x,z]=posAt(R,d), hd=headingAt(R,d), s=(L.length%2?1:-1), o=roadW(R,d)/2+1.3; L.push({x:x-Math.sin(hd)*s*o, z:z+Math.cos(hd)*s*o, y:roadY(d)}); }
+  { const glow=lampGlowMat(), L=[]; for(let d=T.wirtD-60; d<R.len-80; d+=d<T.wirtD+200||d>T.ziel-420&&d<T.ziel+20?30:140){ const [x,z]=posAt(R,d), hd=headingAt(R,d), s=(L.length%2?1:-1), o=roadW(R,d)/2+1.3; L.push({x:x-Math.sin(hd)*s*o, z:z+Math.cos(hd)*s*o, y:roadY(d)}); }
     for(const p of L){ const st=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,2.2,5),holzD); st.position.set(p.x,p.y+1.1,p.z); world.add(st); const la=new THREE.Mesh(new THREE.BoxGeometry(.28,.38,.28),glow); la.position.set(p.x,p.y+2.35,p.z); world.add(la); } }
   buildTrifelsLeute(T,hy); // Goldkarren, Wachen, Burgherr, Löwenherz mit Gefolge
+  if(T.gast) buildGasthaus(T); // Ziel: Gasthaus „Zum Teufelstisch“ mit Wirt, Teufelstisch im Hintergrund
 }
 
 // ---- Figuren (Schritt 4): Mensch, Pferd mit Schabracke, Wappen ----
@@ -205,7 +209,7 @@ function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=
     if(lauf) r.ph+=dt*TRI_V*2.6*simSpeed(); const s=Math.sin(r.ph), a=lauf?1:0; r.p.beine.forEach((b,i)=>b.rotation.x=.55*a*(i===0||i===3?s:-s)); r.p.hals.rotation.x=.08*a*Math.sin(r.ph*2)+.03*Math.sin(t*.9+r.ab);
     r.m.G.position.y=1.1+.05*a*Math.abs(Math.sin(r.ph)); }
   A.d0=d0; // für triSpur
-  triWanken(dt,t); poseSturz(dt,t,rt); poseAudienz(dt,t,rt); poseFriedel(dt,t,rt); trifelsLicht(rt);
+  triWanken(dt,t); poseSturz(dt,t,rt); poseGasthaus(dt,t); poseAudienz(dt,t,rt); poseFriedel(dt,t,rt); trifelsLicht(rt);
   if(A.ruf){ const g=d0-me.d, an=race.state==='run'&&g<48&&g>2, b=A.reiter[0].p.G.position; A.ruf.visible=an; if(an){ A.ruf.position.set(b.x,b.y+5.2,b.z); const tx=kText(TRI_BEISEITE); if(A.rufTx!==tx){ A.rufTx=tx; A.ruf.material.map=blaseTex(tx); A.ruf.material.needsUpdate=true; } } }
   if(A.fahne) A.fahne.rotation.x=.12*Math.sin(t*2.3);
   // Burgherr: hebt die Hand und spricht dich an, kurz bevor die Audienz-Tafel kommt (Blase über seinem Kopf, aber nie auf deinem Fahrer)
@@ -230,7 +234,7 @@ function triWanken(dt,t){ const A=anim.tri, ich=riders3d[myKey]; if(!ich) return
 const TRI_SPOTT='Hoho, [Bauer|Bäuerin], das Radeln will gelernt sein!';
 function poseSturz(dt,t,rt){ const A=anim.tri, S=A.sturzF, ich=riders3d[myKey]; if(!S||!ich) return; const s=race.state==='run'?rt-TRIFELS_T.sturz:-1, an=s>=0&&s<TRIFELS_T.liegen, m=S[KST.stand==='baeuerin'?'baeuerin':'bauer'];
   S.bauer.G.visible=S.baeuerin.G.visible=false; S.rad.visible=false; A.spott.visible=false;
-  const g=A.d0!=null?A.d0-me.d:99, L=A.reiter.length?A.reiter[A.reiter.length-1].ab:0; A.seitZ=race.state==='run'&&g<25&&(g+L>-3||an||s>=0&&s<TRIFELS_T.liegen+.5)?1:0; A.seitW=(A.seitW||0)+(A.seitZ-(A.seitW||0))*Math.min(1,dt*1.8); A.sturzS=an?s:-1; // Seitenkamera (trifelsKamera)
+  const g=A.d0!=null?A.d0-me.d:99, L=A.reiter.length?A.reiter[A.reiter.length-1].ab:0; A.seitZ=race.state==='run'&&g<14&&(g+L>-3||an||s>=0&&s<TRIFELS_T.liegen+.5)?1:0; A.seitW=(A.seitW||0)+(A.seitZ-(A.seitW||0))*Math.min(1,dt*1.8); A.sturzS=an?s:-1; // Seitenkamera (trifelsKamera)
   if(!an) return; const d=me.d, hd=headingAt(R,d), u=ich.lane||0, p=wegPos(d,u), y=roadY(d)+.05, ry=Math.atan2(Math.cos(hd),Math.sin(hd)), f=s<.55?(s/.55)**2:1;
   if(s<3.2){ ich.wank=(ich.wank||0)+(1.45-(ich.wank||0))*f; ich.lenk=.25*f; } // fällt mit dem Rad um und bleibt liegen
   else { ich.g.visible=false; const auf=bSm((s-3.2)/1.4), kl=s>4.6&&s<5.6?Math.sin((s-4.6)*Math.PI*4):0, hb=bSm((s-5.6)/.8); // aufrappeln, Staub abklopfen, Rad aufheben
@@ -334,7 +338,8 @@ function buildFriedel(T){ const A=anim.tri, M=c=>lam(c), haar=M('#b8452a'), haar
   A.ichV={bauer:mv({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'}), baeuerin:mv({lang:'#7a4a3a',haar:'#6b4a2e'}), rad:rad(dA-.6,uA+1.1)}; A.ichV.rad.visible=false;
   A.ich={bauer:steh({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'},dw-1.4,uF-2.2), baeuerin:steh({lang:'#7a4a3a',haar:'#6b4a2e'},dw-1.4,uF-2.2), rad:rad(dw-3,uF-2.9)}; A.uF=uF;
   A.elw=elwetritscheModell(); A.elw.G.visible=false; world.add(A.elw.G);
-  A.elw.licht=new THREE.PointLight(0xffc860,0,9,2); A.elw.licht.position.y=.8; A.elw.G.add(A.elw.licht); F.licht=new THREE.PointLight(0xffd27a,0,12,2); F.licht.position.set(.62,1,0); r.body.add(F.licht); // leuchten in der Dunkelheit
+  A.elw.licht=new THREE.PointLight(0xffc860,0,9,2); world.add(A.elw.licht); F.licht=new THREE.PointLight(0xffd27a,0,12,2); world.add(F.licht); F.la=la; { const lm=lam('#d9d4c4'), lg=new THREE.Mesh(new THREE.BoxGeometry(.12,.16,.12),lm); lg.position.set(.62,.88,0); const lh=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.12,4),M('#2e2c2a')); lh.position.set(0,.11,0); lg.add(lh); A.meinL={m:lg,mat:lm,licht:new THREE.PointLight(0xffc870,0,15,2)}; world.add(A.meinL.licht); } // deine Öllaterne am Lenker, brennt ab Friedels Abschied (trifelsLicht)
+  // leuchten in der Dunkelheit; hängen direkt in der Welt (nie unsichtbar), sonst übersetzt three.js bei jedem Ein-/Ausblenden alle Shader neu
   A.elwMats=[]; A.elw.G.traverse(o=>{ if(o.material&&!A.elwMats.includes(o.material)) A.elwMats.push(o.material); });
   if(!document.getElementById('triSag')){ const el=document.createElement('div'); el.id='triSag'; document.body.appendChild(el); } } // Friedels Worte, wenn er nicht im Bild ist
 
@@ -349,9 +354,54 @@ function trifelsLicht(rt){ const A=anim.tri; if(!A||race.rain) return; const K=r
   c('sun',sun.color); sun.intensity=z('sunI'); c('hemi',hemi.color); c('boden',hemi.groundColor); hemi.intensity=z('hemiI'); const sy=z('sunY'); SUN_DIR.set(-1,sy,.42).normalize(); sunDisc(sy>-.03);
   if(SUNS) SUNS.forEach((s,j)=>s.material.opacity=(j?1:.75)*clampN((sy+.03)/.1,0,1));
   c('bg',scene.background); scene.fog.color.copy(scene.background); c('himmel',sky.material.color); if(R.fog0) scene.fog.far=R.fog0[1]*z('fern');
-  const dk=clampN(k-1,0,2)/2; if(A.elw.licht){ A.elw.licht.intensity=2.2*dk; A.friedel.licht.intensity=1.6*dk; } // Elwetritsche glimmt, Friedels Laterne leuchtet
+  const dk=clampN(k-1,0,2)/2; A.dk=dk; if(A.elw.licht){ const E=A.elw, F=A.friedel; E.licht.intensity=E.G.visible?2.2*dk:0; E.licht.position.copy(E.G.position); E.licht.position.y+=.8; F.licht.intensity=F.r.g.visible?1.6*dk:0; F.la.getWorldPosition(F.licht.position); } // Elwetritsche glimmt, Friedels Laterne leuchtet
+  { const L=A.meinL, ich=riders3d[myKey]; if(L&&ich){ if(L.m.parent!==ich.body) ich.body.add(L.m); const z=K?rt-K.heim-1:-1, fl=z<0?0:z<1.4?(Math.random()<.5?.2:1)*bSm(z/1.4):1; // nach Friedels Abschied anzünden: kurz flackern, dann ruhig
+    L.mat.emissive.setRGB(fl,.78*fl,.42*fl); L.licht.intensity=ich.g.visible?1.9*fl*(.92+.08*Math.sin(performance.now()/1000*13)):0; L.m.getWorldPosition(L.licht.position); const hd=headingAt(R,me.d); L.licht.position.x+=Math.cos(hd)*1.4; L.licht.position.z+=Math.sin(hd)*1.4; L.licht.position.y+=.4; } } // Licht leicht vor dir, damit auch der Weg hell wird
   for(const m of A.elwMats||[]) if(m.emissive) m.emissive.copy(m.color).multiplyScalar(.55*dk);
   const ab=K?clampN((rt-(K.T-8))/8,0,1):0, fl=ab>0?`brightness(${(1-ab).toFixed(3)})`:''; if(cv.style.filter!==fl) cv.style.filter=fl; } // letzte 8 s: Bild blendet ab, bleibt schwarz bis zum Ergebnis
+
+// ---- Gasthaus „Zum Teufelstisch“ am Ziel: Fachwerk, alle Fenster hell, offene Tür, Laternen am Hof, Lichtschein, Rauch, Wirt mit Laterne; Teufelstisch auf der Kuppe dahinter ----
+function gastTex(w,h,front,glow){ return canvasTex(w,h,g=>{ const B='#3e2a1c', bal=(x,y,ww,hh)=>{ g.fillStyle=B; g.fillRect(x,y,ww,hh); }, fen=[]; // glow: nur die Leuchtkarte (Fenster und Tür)
+  if(!glow){ g.fillStyle='#ece3cf'; g.fillRect(0,0,w,h); bal(0,0,w,9); bal(0,h/2-5,w,10); bal(0,h-9,w,9); for(let x=0;x<=w;x+=64) bal(Math.min(x,w-9),0,9,h);
+    g.strokeStyle=B; g.lineWidth=8; for(let x=0;x<w;x+=128){ g.beginPath(); g.moveTo(x+4,h/2); g.lineTo(x+60,8); g.moveTo(x+124,h/2); g.lineTo(x+68,8); g.stroke(); } } // Streben im Obergeschoss
+  else { g.fillStyle='#000'; g.fillRect(0,0,w,h); }
+  const xs=front?[64,160,352,448]:[w*.3,w*.7]; for(const x of xs){ fen.push([x,h*.25]); fen.push([x,h*.72]); } if(front) fen.push([256,h*.25]);
+  for(const [x,y] of fen){ if(glow){ const gr=g.createRadialGradient(x,y,4,x,y,34); gr.addColorStop(0,'#fff0b8'); gr.addColorStop(1,'#e8902e'); g.fillStyle=gr; g.fillRect(x-22,y-28,44,56); g.fillStyle='#000'; g.fillRect(x-2,y-28,4,56); g.fillRect(x-22,y-3,44,4); }
+    else { g.fillStyle='#5a3a22'; g.fillRect(x-26,y-32,52,64); g.fillStyle='#2a2018'; g.fillRect(x-22,y-28,44,56); } }
+  if(front){ if(glow){ g.fillStyle='#ffc060'; g.fillRect(232,h-96,48,87); } else { g.fillStyle='#5a3a22'; g.fillRect(226,h-104,60,95); g.fillStyle='#2a2018'; g.fillRect(232,h-96,48,87); } } }); } // offene Tür
+function buildGasthaus(T){ const A=anim.tri, G=T.gast, holz=lam('#4e3626'), box=(P,w,h,d,m,x,y,z)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); b.position.set(x,y,z); P.add(b); return b; };
+  const H=haus({w:13,dep:9,hgt:6.4,fw:true,wall:0,shut:0,roof:'#7c3a2c',kam:.78}), y0=roadY(G.d)+.1, mf=new THREE.MeshLambertMaterial({map:gastTex(512,256,1),emissiveMap:gastTex(512,256,1,1),emissive:0xffffff}), ms=new THREE.MeshLambertMaterial({map:gastTex(256,256,0),emissiveMap:gastTex(256,256,0,1),emissive:0xffffff});
+  H.children[0].material=[ms,ms,mf.clone(),mf.clone(),mf,mf]; H.children[0].material[2].emissive.set(0); H.children[0].material[3].emissive.set(0); // Front (+z, zur Straße) und Rückseite mit vielen Fenstern, Seiten mit zwei je Stockwerk
+  H.position.set(G.x,y0,G.y); H.rotation.y=Math.atan2(Math.sin(G.h),-Math.cos(G.h)); world.add(H); H.updateMatrixWorld(true); // +z schaut zum Weg
+  const loc=(lx,ly,lz)=>new THREE.Vector3(lx,ly,lz).applyMatrix4(H.matrixWorld);
+  // Wirtshausschild am Ausleger über der Tür
+  const W=new THREE.Group(); W.position.set(4.2,3.4,4.5); H.add(W); box(W,.05,.05,1.3,lam('#2a2826'),0,0,.65);
+  const t=frakturTex(256,180,g=>{ g.fillStyle='#3a1a14'; g.fillRect(0,0,256,180); g.strokeStyle='#d9a62b'; g.lineWidth=7; g.strokeRect(6,6,244,168); g.fillStyle='#e8c24a'; g.textAlign='center'; g.textBaseline='middle';
+    g.font='26px '+FRAKTUR; g.fillText('Gasthaus',128,34,220); g.font='44px '+FRAKTUR; g.fillText('Zum',128,74,236); g.fillText('Teufelstisch',128,114,236); g.font='22px '+FRAKTUR; g.fillText('Speis · Trank · Nachtlager',128,154,226); }); // Name vom Nutzer
+  const sm=new THREE.MeshBasicMaterial({map:t}), pl=new THREE.Mesh(new THREE.BoxGeometry(.04,.75,1.05),[sm,sm,holz,holz,holz,holz]); pl.position.set(0,-.5,.9); W.add(pl);
+  // Hof: zwei Laternenpfähle am Weg, Bank, Fässer, Licht an der Tür
+  const glow=lampGlowMat(), zL=G.o-(roadW(R,G.d)/2+1.1); for(const lx of [-6,6]){ box(H,.14,2.4,.14,holz,lx,1.2,zL); box(H,.3,.4,.3,glow,lx,2.5,zL); } // am Wegrand
+  box(H,2.4,.12,.5,holz,-3.5,.5,5.2); for(const lx of [-5.2,-4.4]){ const f=new THREE.Mesh(new THREE.CylinderGeometry(.35,.4,.9,10),lam('#6b4a32')); f.position.set(lx,.45,5.5); H.add(f); }
+  const tl=new THREE.PointLight(0xffb860,2.2,22,2); tl.position.copy(loc(0,2.4,5.6)); world.add(tl);
+  // Lichtschein: großer warmer Glanz ums Haus, von Weitem in der Dunkelheit zu sehen
+  const sc=new THREE.Sprite(new THREE.SpriteMaterial({map:canvasTex(128,128,g=>{ const gr=g.createRadialGradient(64,64,0,64,64,64); gr.addColorStop(0,'rgba(255,200,120,.9)'); gr.addColorStop(.4,'rgba(255,160,70,.35)'); gr.addColorStop(1,'rgba(255,140,60,0)'); g.fillStyle=gr; g.fillRect(0,0,128,128); }),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0}));
+  sc.scale.set(34,22,1); sc.position.copy(loc(0,4,3)); world.add(sc);
+  // Rauch aus dem Kamin
+  const km=H.children[2].children[0], kp=new THREE.Vector3(); km.getWorldPosition(kp); kp.y+=1; const rt=canvasTex(64,64,g=>{ const gr=g.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,'rgba(200,200,205,.7)'); gr.addColorStop(1,'rgba(200,200,205,0)'); g.fillStyle=gr; g.fillRect(0,0,64,64); });
+  const rauch=[]; for(let i=0;i<8;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:rt,transparent:true,depthWrite:false,opacity:0})); world.add(s); rauch.push(s); }
+  // Wirt: Schürze, Laterne in der rechten Hand, steht vor der Tür und winkt dir mit der linken
+  const wirt=trMensch({kittel:'#6b4a2e',aermel:'#ece3cf',hose:'#3a3020',haar:'#8a8a86',bart:'#8a8a86'}); box(wirt.G,.36,.7,.04,lam('#e8e0d0'),0,.95,.25); // Schürze
+  const lat=new THREE.Mesh(new THREE.BoxGeometry(.16,.22,.16),glow); lat.position.y=-.78; wirt.arme[1].add(lat); wirt.arme[1].rotation.x=-.35; const wl=new THREE.PointLight(0xffc870,1.4,10,2); wl.position.y=-.78; wirt.arme[1].add(wl);
+  const wp=loc(.6,0,5.6); wirt.G.position.set(wp.x,y0,wp.z); wirt.G.rotation.y=H.rotation.y; world.add(wirt.G);
+  // Teufelstisch: Sandsteinsäule mit breiter Felsplatte obendrauf, hebt sich als Silhouette vom Nachthimmel ab
+  const [tx,tz]=T.tisch, F=new THREE.Group(), fm=lam('#6a3a2c'), fm2=lam('#5a2e24'); F.position.set(tx,terrainAt(tx,tz)-2,tz); F.rotation.y=.4; world.add(F);
+  [[5.2,6,4.6,0,3,0,.05],[4.4,5.5,4,.3,8.5,.2,-.08],[4.8,5,4.3,-.2,13.6,-.1,.06],[3.8,3.6,3.4,.1,17.6,.1,0]].forEach(([w,h,d,x,y,z,r],i)=>{ const b=box(F,w,h,d,i%2?fm2:fm,x,y,z); b.rotation.y=r*3; b.rotation.z=r; });
+  const pt=box(F,17,2.8,10.5,fm,0,20.6,0); pt.rotation.z=.04; box(F,13,.9,8,fm2,-.4,19,.3); for(const [x,z,s] of [[6,4,2.6],[-5,-4,2],[4,-5,1.6]]){ const b=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),fm2); b.position.set(x,s*.6,z); F.add(b); } // Platte und Brocken am Fuß
+  A.gast={H,sc,rauch,kp,wirt,mats:[mf,ms]}; }
+function poseGasthaus(dt,t){ const A=anim.tri, G=A.gast; if(!G) return; const dk=A.dk||0, nah=R.tri.gast.d-me.d;
+  G.sc.material.opacity=.75*dk; for(const m of G.mats) m.emissive.setScalar(.35+.65*dk); // in der Nacht leuchtet alles kräftiger
+  G.rauch.forEach((s,i)=>{ const f=((t*.16+i/8)%1); s.position.set(G.kp.x+f*2.2,G.kp.y+f*7,G.kp.z+f*1.2); s.scale.setScalar(1.2+f*3.5); s.material.opacity=.35*Math.sin(f*Math.PI)*(.3+.7*(1-dk*.5)); });
+  const w=G.wirt, wink=nah<70&&nah>-15; w.arme[0].rotation.x+=((wink?-2.6:0)-w.arme[0].rotation.x)*Math.min(1,dt*4); w.arme[0].rotation.z=wink?-.35-.35*Math.sin(t*7):-.12; w.kopf.rotation.y=.12*Math.sin(t*.7); } // winkt, wenn du dich näherst
 
 // ---- Bewegung (aus poseTrifels) ----
 function poseFriedel(dt,t,rt){ const A=anim.tri, F=A.friedel, T=R.tri; if(!F) return; const run=race.state==='run', lauf=run&&!race.paused?dt*simSpeed():0;
@@ -389,6 +439,6 @@ function poseFriedel(dt,t,rt){ const A=anim.tri, F=A.friedel, T=R.tri; if(!F) re
     if(ziel){ const a=Math.atan2(ziel.x-fm.G.position.x,ziel.z-fm.G.position.z); fm.G.rotation.y+=angDiff(a,fm.G.rotation.y)*Math.min(1,dt*3); }
     if(szene){ const fp=fm.G.position; ichM.G.rotation.y=Math.atan2(fp.x-ichM.G.position.x,fp.z-ichM.G.position.z); } }
   for(const w of ['dorfmann','dorfweib']){ const D=A.dorf[w]; if(!D) continue; const s=akt.find(x=>x.wer===w); D.blase.visible=!!s; if(s){ triBlaseText(D.blase,kText(s.txt)); const k=D.m.G.position.clone(); k.y+=2.4; triBlaseUeber(D.blase,k,null); } }
-  { const s=akt.find(x=>x.wer==='friedel'), B=F.blase, wo=vorher?F.steher.G:F.r.g; let im=false; if(s&&wo.visible){ const p=wo.position.clone(); p.y+=2.9; const q=p.clone().project(camera); im=q.z<1&&Math.abs(q.x)<.9&&Math.abs(q.y)<.9&&camera.position.distanceTo(p)<45; }
+  { const s=akt.find(x=>x.wer==='friedel'), B=F.blase, wo=vorher?F.steher.G:F.r.g; let im=false; const p=wo.position.clone(); p.y+=2.9; if(s&&wo.visible){ const q=p.clone().project(camera); im=q.z<1&&Math.abs(q.x)<.9&&Math.abs(q.y)<.9&&camera.position.distanceTo(p)<45; }
     B.visible=!!s&&im; if(B.visible){ triBlaseText(B,kText(s.txt)); triBlaseUeber(B,p,vorher?null:ich&&ich.g); } if(s&&!im) unten='Friedel: '+kText(s.txt); }
   if(el){ if(unten){ el.textContent=unten; el.classList.add('zeig'); } else el.classList.remove('zeig'); } }

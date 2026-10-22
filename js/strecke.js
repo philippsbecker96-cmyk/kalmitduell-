@@ -463,13 +463,13 @@ function trifelsDef(segs, unit, f, kg){
   turtle(st,ab,B);
   turtle(st,[['b',-10,300],['g',1],['b',10,300]],d4-d3);
   // Tal in großen Schleifen hin und her (je ≈ 1,8 km, 400 m Abstand nach Süden): hält die Karte klein, damit das Geländeraster fein bleibt (≈ 8 m)
-  const tal=[], LT=dE+NACH-d4, m=Math.max(1,Math.round(LT/2430)); for(let i=0;i<m;i++){ tal.push(['g',1],['b',12,700],['g',1],['b',-12,700],['g',1]); if(i<m-1) tal.push(['b',i%2?-180:180,200]); }
-  turtle(st,tal,dE+NACH-d4);
+  const LT=Math.max(0,dE-350-d4), m=Math.max(1,Math.round(LT/2430)), tal=[]; for(let i=0;i<m;i++){ tal.push(['g',1],['b',12,700],['g',1],['b',-12,700],['g',1]); if(i<m-1) tal.push(['b',i%2?-180:180,200]); }
+  if(LT>1) turtle(st,tal,LT); turtle(st,[['g',.6],['b',-60,150],['g',.4]],dE+NACH-d4-LT); // die letzten 350 m geradeaus aufs Gasthaus „Zum Teufelstisch“ zu (sieht man von Weitem), dahinter Linksbogen
   let e=0, lo=0; for(const s of out){ e+=s.len*s.g/100; lo=Math.min(lo,e); }
   const jagd=segs.filter(s=>/Jagd/.test(s.label)).map(s=>dT(s.t0)), lichtung=[]; for(let a=d4+1900;a<dE-300;a+=2600) lichtung.push(['wiese',a,a+320]);
   return {name:'Trifels · Queichtal', start:'Burgwald unter dem Trifels', finish:'Queichtal', startElev:330, plainElev:330+lo-25, gpx:'trifels', ma:true, planbar:true,
     halte:[[tF,tF2,dT(tF)],[tA,tA2,dA],[tS,tW,d4]], // [von s, bis s, Meter]: hier steht der Fahrer (training.js)
-    poly:st.P, segs:out, zones:[['ort',d4-70,d4+80,{fach:.8,gewaende:.5,geh:.4,luecke:.3,licht:0}],['wiese',d4+80,d4+380],...lichtung], // sonst Pfälzerwald (auch an der Burg), im Tal ein paar Lichtungen
+    poly:st.P, segs:out, zones:[['ort',d4-70,d4+80,{fach:.8,gewaende:.5,geh:.4,luecke:.3,licht:0}],['wiese',d4+80,d4+380],...lichtung,['wiese',dE-450,dE+300]], // sonst Pfälzerwald (auch an der Burg), im Tal ein paar Lichtungen, Wiese ums Gasthaus am Ziel
     breite:[[-50,d1-15,4.4],[d1-15,d2+15,7],[d2+15,1e9,4.4]], // schmaler Weg wie auf Berwartstein, Vorburg breit
     belag:[['erde',-50,d1,0],['pflaster',d1,d2,.5],['erde',d2,d4-70,0],['pflaster',d4-70,d4+80,.5],['erde',d4+80,1e9,0]], // keine Straße: Sandweg, Kopfstein in der Vorburg und am Wirtshaus
     orte:{loewenherz:dT(75), sturz:dT(tF), hof:[d1,d2], audienz:dA, karren, burg:[karren[0],karren[1]-rh-55], wirtshaus:d4, tS, tW, jagd, ziel:dE}}; } // Meter für Welt und Ereignisse (Schritt 3–5)
