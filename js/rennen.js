@@ -67,13 +67,14 @@ function draw(dt){
 }
 function rightCol(){ // Abstand · Minimap · Leistung untereinander am rechten Rand
   let y=14; const g=$('gapBox'); if(opp.active && race.mode!=='train'){ g.style.display='block'; g.style.top=y+'px'; y+=g.offsetHeight+10; } else g.style.display='none';
-  const mmY=y; y+=240+10; const p=$('powBox'); p.style.display='block'; p.style.top=y+'px'; return mmY;
+  const mmY=y; y+=240+10; const p=$('powBox'); p.style.display=opp.active?'block':'none'; p.style.top=y+'px'; return mmY; // allein: Watt und W/kg stehen schon oben im HUD
 }
 function glassBox(x,y,w,h){ ctx.fillStyle='rgba(14,22,19,.6)'; ctx.strokeStyle='rgba(255,255,255,.15)'; ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect?ctx.roundRect(x+.5,y+.5,w-1,h-1,14):ctx.rect(x,y,w,h); ctx.fill(); ctx.stroke(); }
 function miniMap(){
   const box=240, x0=W-box-14, y0=rightCol();
   if(!R.mm){ let a=1e9,b=1e9,c=-1e9,d=-1e9; for(let i=0;i<R.xs.length;i++){ a=Math.min(a,R.xs[i]); b=Math.min(b,R.ys[i]); c=Math.max(c,R.xs[i]); d=Math.max(d,R.ys[i]); } R.mm={a,b,s:(box-28)/Math.max(c-a,d-b),w:c-a,h:d-b}; }
   const m=R.mm, ox=x0+(box-m.w*m.s)/2, oy=y0+(box-m.h*m.s)/2, P=(xx,yy)=>[ox+(xx-m.a)*m.s, oy+(yy-m.b)*m.s];
+  if(race.kamp){ kampKarte(x0,y0,box); return; } // Missionen: Wasgau-Karte statt Minimap (kampagne.js)
   glassBox(x0,y0,box,box);
   ctx.lineJoin='round'; ctx.lineCap='round';
   ctx.strokeStyle='#c9d6cc'; ctx.lineWidth=3; ctx.beginPath(); for(let i=0;i<R.xs.length;i+=3){ const [a,b]=P(R.xs[i],R.ys[i]); i?ctx.lineTo(a,b):ctx.moveTo(a,b); } ctx.stroke();
