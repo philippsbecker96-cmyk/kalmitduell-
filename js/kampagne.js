@@ -30,7 +30,7 @@ function kampCode(){ const c=prompt('Die Kampagne ist noch in Arbeit.\nCode zum 
   if(btoa(c.trim())==='LjExMDQ='){ KST.code=true; kampSave(); kampSperre(); return true; } alert('Falscher Code.'); return false; }
 kampSperre();
 const kampMission=()=>KAMP.find(m=>m.id===KST.sel&&kampFrei(m))||KAMP[0];
-const kText=s=>s.replace(/\[([^|\]]*)\|([^\]]*)\]/g,(_,a,b)=>KST.stand==='baeuerin'?b:a);
+const kText=s=>s.replace(/\[name\]/g,()=>(RIDERS[myKey]&&RIDERS[myKey].name)||'Fremder').replace(/\[([^|\]]*)\|([^\]]*)\]/g,(_,a,b)=>KST.stand==='baeuerin'?b:a); // [name] = Name des eigenen Fahrers
 // Workout der Mission; Einfahren/Ausfahren mindestens so lang wie die Tafeln
 function kampSegs(m){ const it=clone((KST.stufe==='hart'&&m.hart)||m.items||[]), a=it[0], z=it[it.length-1], nS=kampStartZeiten(m).reduce((a,[t0])=>Math.max(a,t0+KT_DAUER),0), nE=(m.ende||[]).length*KT_DAUER;
   if(a&&a.k==='s') a.dur=Math.max(a.dur,nS+(nS<=KT_DAUER*3?60:0)); if(z&&z.k==='s') z.dur=Math.max(z.dur,nE); return woFlat({items:it}); } // bei sehr wenigen Tafeln 1 min Einrollen dazu

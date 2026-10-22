@@ -270,14 +270,14 @@ function trifelsKamera(dt){ const A=anim.tri, B=A&&A.burgherr, ich=riders3d[myKe
 
 // ---- Friedel, Wirtshaus-Szene, Elwetritsche-Jagden (Schritt 4/5) – Texte vom Nutzer, Übersicht in KAMPAGNE.md ----
 const TRI_TXT={dorfmann:'Zeh Gulde, dass du heit owend kä Elwetritsch fangsch!', friedel1:'Des wer ma mo sehe!', dorfweib:['Dem Bu henn se ah ä mo zu oft hochgeworfe…','…un ä mo zu wenich uffgfange.'],
-  friedel2:['Ihr fahren doch a noch Siede, gell?','Kinna ma do vielleicht helfe? Allä trau ich mich ned in de Wald…'],
-  ank:['Psst. Do vorne raschelts, [Herr|Herrin]!','Do is se widder!','Wie frech se uns aguckt, die mänt a, sie is de Kees!','Uffbasse, [Herr|Herrin], die is gscheit wie sunscht was.','Des is die letzscht Chance! Ich halt schummo de Sack uff, [Herr|Herrin]!'],
+  friedel2:['Du fahrschd doch a noch Siede, gell?','Kinnsch ma do vielleicht helfe? Allä trau ich mich ned in de Wald…'],
+  ank:['Psst. Do vorne raschelts, [name]!','Do is se widder!','Wie frech se uns aguckt, die mänt a, sie is de Kees!','Uffbasse, [name], die is gscheit wie sunscht was.','Des is die letzscht Chance! Ich halt schummo de Sack uff, [name]!'],
   hopp:'Hopp, hopp, alleweil hemmer se!',
-  zurueck:['Jetz warten doch bitte uff mich!','Mein Bock is oich longsam…','Mei Wade krampfen, [Herr|Herrin]!','Jetz warten doch bitte uff mich!'],
+  zurueck:['Jetz wart doch bitte uff mich!','Mein Bock is oich longsam…','Mei Wade krampfen, [name]!','Jetz wart doch bitte uff mich!'],
   weg:['Weg isse – ins Gebisch!',"Die hot uns d' Zung rausgstreckt, hosch des gsähne?",'Jetzt lacht se uns a noch aus!','Des gibts doch ned – schun widder!'],
-  angst:['Die beißen, die Sauviecher, ich schwörs!',['Henn ihr des Geheul ghört?','Des war bestimmt bloß de Wind…'],['Im Dunkle seht ma do hinnen Ache leichte…','…do werd ma ganz onnerschd.']],
-  lob:[['Ihr treden wie de Deifel persönlich!','Ich gläb ich nenn eich Betzi ab jetzad!'],'So schnell bin ich noch nie gewesst!','Mit eich krieche ma noch so eh Vieh, ich spürs!'],
-  fang:['Ich hab se!!! Ich hab des Scheißding!','Zeh Gulde, aller!!!'], ende:['Isch muss glei zurick ind Wertschaft, die werren gucken…','Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell?']};
+  angst:['Die beißen, die Sauviecher, ich schwörs!',['Hosch du des Geheul ghört?','Des war bestimmt bloß de Wind…'],['Im Dunkle seht ma do hinnen Ache leichte…','…do werd ma ganz onnerschd.']],
+  lob:[['Du triddsch jo wie de Deifel persönlich!','Ich gläb ich nenn dich Betzi ab jetzad!'],'So schnell bin ich noch nie gewesst!','Mit dir zsamme kriech ich noch so eh Vieh, ich spürs!'],
+  fang:['Ich hab se!!! Ich hab des Scheißding!','Zeh Gulde, aller!!!'], ende:['Ich muss glei zurick ind Wertschaft, die werren gucken…','Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell?','Hosch enner gud bei mer, [name]!']};
 // Ablauf aus dem Workout: wer sagt wann was (Workout-Zeit in s) – Wirtshaus am Ende des Einfahrens, je Jagd Ankündigung, Anfeuern, Zurückfallen, Countdown, Entwischt/Fang, dazwischen Lob und Angst
 function triSkript(){ const S=race.woSegs||[], tW=S[0]?S[0].t0+S[0].dur:480, tS=tW-TRIFELS_T.szene, J=S.filter(s=>/Jagd/.test(s.label)), L=[], X=TRI_TXT;
   const sag=(t0,dur,wer,txt)=>{ if(Array.isArray(txt)) txt.forEach((x,i)=>L.push({t0:t0+dur*i/txt.length,t1:t0+dur*(i+1)/txt.length,wer,txt:x})); else L.push({t0,t1:t0+dur,wer,txt}); }; // lange Sprüche: mehrere Blasen nacheinander
@@ -285,7 +285,7 @@ function triSkript(){ const S=race.woSegs||[], tW=S[0]?S[0].t0+S[0].dur:480, tS=
   J.forEach((j,k)=>{ const a=j.t0; sag(a-7,7,'friedel',X.ank[k]); sag(a+3,5,'friedel',X.hopp); if(k<4) sag(a+10,6,'friedel',X.zurueck[k]);
     if(k<4) sag(a+j.dur+1,6,'friedel',X.weg[k]); else sag(a+j.dur-3,9,'friedel',X.fang);
     if(k<3){ sag(a+70,8,'friedel',X.lob[k]); sag(a+140,9,'friedel',X.angst[k]); } });
-  const G=S.find(s=>s.label==='Grundlage'), T=race.woT||0, heim=G?G.t0+Math.round(G.dur*.55):T-52; sag(heim-15,14,'friedel',X.ende); // Abschied in der Grundlage, dann kehrt er um – das Ausfahren fährt man allein
+  const G=S.find(s=>s.label==='Grundlage'), T=race.woT||0, heim=G?G.t0+Math.round(G.dur*.55):T-52; sag(heim-21,20,'friedel',X.ende); // Abschied in der Grundlage, dann kehrt er um – das Ausfahren fährt man allein
   return {L,tS,tW,J,T,heim}; }
 // Sprechblase in fester Bildschirmgröße (gut lesbar, auch von weitem)
 function triBlase(){ const s=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false,depthTest:false,sizeAttenuation:false})); s.scale.set(.62,.19,1); s.renderOrder=10; s.visible=false; world.add(s); return s; }
