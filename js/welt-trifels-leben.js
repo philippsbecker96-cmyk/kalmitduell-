@@ -52,7 +52,7 @@ function buildTrifelsLeben(T){ const A=anim.tri, q=rng(905), M=c=>lam(c), holz=M
   const K=hofKasten({box,M,holz,holzD,bretter,q,D}), L=A.leben={D, gaense:[], gegen:[], reh:null, sau:null};
   // Pferdewagen mit Kutscher (Heuwagen, Fuhrwerk), lokal +z nach vorn; Räder drehbar
   const wagen=(G,fell,o)=>{ const P=trPferd({fell}); P.G.position.z=2.3; G.add(P.G); box(G,1.5,.1,2.8,bretter,0,1,-.6); for(const x of [-.72,.72]) box(G,.06,.45,2.8,bretter,x,1.25,-.6);
-    const raeder=[[-.85,.3],[.85,.3],[-.85,-1.5],[.85,-1.5]].map(([x,z])=>{ const W=new THREE.Group(); W.position.set(x,.5,z); G.add(W); const r2=new THREE.Mesh(new THREE.TorusGeometry(.48,.05,5,16),holzD); r2.rotation.y=Math.PI/2; W.add(r2); for(let k=0;k<4;k++){ const sp=box(W,.03,.9,.03,holz,0,0,0); sp.rotation.x=k*Math.PI/4; } return W; });
+    const raeder=[[-.85,.3],[.85,.3],[-.85,-1.5],[.85,-1.5]].map(([x,z])=>{ const W=new THREE.Group(); W.position.set(x,.53,z); G.add(W); const r2=new THREE.Mesh(new THREE.TorusGeometry(.48,.05,5,16),holzD); r2.rotation.y=Math.PI/2; W.add(r2); for(let k=0;k<4;k++){ const sp=box(W,.03,.9,.03,holz,0,0,0); sp.rotation.x=k*Math.PI/4; } return W; });
     for(const x of [-.4,.4]){ const de=cyl(.04,holz); place(de,[x,1,.75],[x*.6,1.3,1.9]); G.add(de); } // Deichsel
     const m=trMensch(o); m.G.position.set(0,.55,.55); m.beine[0].rotation.x=m.beine[1].rotation.x=-1.4; m.arme[0].rotation.x=m.arme[1].rotation.x=-.9; G.add(m.G); return {pferd:P,raeder,m}; };
   // Baulücken: lokal +z zur Gasse, Ursprung in der Mitte des alten Hauses
@@ -109,7 +109,7 @@ function poseTrifelsLeben(dt,t,rt){ const A=anim.tri, L=A.leben, T=R.tri; if(!L)
       const s=geht?Math.sin(t*6):0; m.beine[0].rotation.x=.5*s; m.beine[1].rotation.x=-.5*s; m.arme[1].rotation.x=-.5-(geht?.4*Math.max(0,Math.sin(t*3)):0); } } // schwingt den Stecken
   // Gegenverkehr: kommt dir auf dem Weg entgegen (zu Fuß links neben dem Weg, der Wagen in der linken Hälfte)
   for(const E of L.gegen){ const d=E.d+E.v*(E.t-rt), vis=run&&Math.abs(d-me.d)<160&&d>me.d-25; E.G.visible=vis; E.dNow=d; if(!vis) continue;
-    const rw=roadW(R,d)/2, u=E.art==='wagen'?-(rw-1.15):-(rw+.7), p=wegPos(d,u); E.G.position.set(p.x,bodenY(p.x,p.z),p.z); E.G.rotation.y=-p.h-Math.PI/2;
+    const rw=roadW(R,d)/2, u=E.art==='wagen'?-(rw-1.15):-(rw+.7), p=wegPos(d,u); E.G.position.set(p.x,bodenY(p.x,p.z),p.z); E.G.rotation.set(Math.atan(gradeAt(d)/100),-p.h-Math.PI/2,0,'YXZ');
     E.ph+=lauf*E.v*2.6; const s=Math.sin(E.ph), g=d-me.d;
     if(E.pferd){ E.pferd.beine.forEach((b,i)=>b.rotation.x=.35*(i===0||i===3?s:-s)); E.pferd.hals.rotation.x=.06*Math.sin(E.ph*2); E.m.arme[1].rotation.x=g<14&&g>-3?-2.5+.3*Math.sin(t*9):-.9; } // Kutscher grüßt
     else { E.m.beine[0].rotation.x=.45*s; E.m.beine[1].rotation.x=-.45*s; E.m.G.position.y=.03*Math.abs(Math.sin(E.ph));
@@ -117,7 +117,7 @@ function poseTrifelsLeben(dt,t,rt){ const A=anim.tri, L=A.leben, T=R.tri; if(!L)
   // Fuhrwerk: rauscht auf der Abfahrt von hinten heran, fährt links neben dir her, der Bauer redet auf dich ein, winkt ab, knallt mit der Peitsche und fährt davon
   { const F=L.fuhre, Z=TRI_FUHR, s=rt-triFuhrT(), vis=!!F&&run&&s>-Z.vor&&s<Z.ab+Z.weg; if(F){ F.G.visible=vis; F.blase.visible=false; if(!vis) F.dAlt=null; }
     if(vis){ const off=-32*(1-bSm((s+Z.vor)/Z.vor))+1.4*Math.max(0,s-Z.ab)**2, d=me.d+off+.9, rw=roadW(R,d)/2, p=wegPos(d,-(rw-1.15)), v=F.dAlt!=null&&dt>0?Math.max(0,(d-F.dAlt)/dt):0; F.off=off; F.dAlt=d;
-      F.ph+=dt*v*.9; const sp=v>.5?Math.min(.7,.2+v*.04):0; F.G.position.set(p.x,roadY(d)+.02+(v>6?.04*Math.abs(Math.sin(F.ph*2)):0),p.z); F.G.rotation.y=Math.PI/2-p.h; // galoppiert, Wagen holpert
+      F.ph+=dt*v*.9; const sp=v>.5?Math.min(.7,.2+v*.04):0; F.G.position.set(p.x,bodenY(p.x,p.z)+(v>6?.04*Math.abs(Math.sin(F.ph*2)):0),p.z); F.G.rotation.set(-Math.atan(gradeAt(d)/100),Math.PI/2-p.h,0,'YXZ'); // galoppiert, Wagen holpert
       F.pferd.beine.forEach((b,i)=>b.rotation.x=sp*Math.sin(F.ph+(i<2?0:1.6)+(i%2)*.4)); F.pferd.hals.rotation.x=.1*sp*Math.sin(F.ph*2); for(const r of F.raeder) r.rotation.x+=dt*v/.48;
       const m=F.m, z=TRI_FUHR_TXT.find(([a,b])=>s>=a&&s<b), k=Math.min(1,dt*6); m.kopf.rotation.y+=((s>-1&&s<Z.ab+1.5?-1:0)-m.kopf.rotation.y)*Math.min(1,dt*4); // schaut zu dir (rechts)
       m.arme[0].rotation.x+=((z?-1.3+.35*Math.sin(t*5):s>=Z.ab-.5&&s<Z.ab+1.2?-1.6+.8*Math.sin(t*9):-.9)-m.arme[0].rotation.x)*k; // erzählt mit der Hand, winkt ab
