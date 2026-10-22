@@ -79,17 +79,17 @@ function poseUnterwegs(t,dt,cp){ const U=anim.burg.unterwegs; if(!U) return; con
   { const K=U.karren, vorne=Math.max(me.d,opp.active?opp.d:-1e9);
     if(vorne<KARREN.d0-200){ K.d=KARREN.d0; K.fahrt=false; } else if(!K.fahrt&&vorne>KARREN.d0-KARREN.los) K.fahrt=true;
     const v=K.fahrt&&K.d<KARREN.d1?KARREN.v:0, s=v*lauf; K.d+=s; K.amp+=((v>0&&lauf>0?1:0)-K.amp)*Math.min(1,dt*3); K.ph+=s*2.4;
-    const u=roadW(R,K.d)/2-.25, P=wegPos(K.d,u); K.W.position.set(P.x,roadY(K.d)+.02,P.z); K.W.rotation.set(0,-P.h,Math.atan(gradeAt(K.d)/100));
+    const u=roadW(R,K.d)/2-.25, P=wegPos(K.d,u); K.W.position.set(P.x,bodenY(P.x,P.z),P.z); K.W.rotation.set(0,-P.h,Math.atan(gradeAt(K.d)/100));
     for(const r of K.raeder) r.rotation.z-=s/.55; const a=K.amp, sn=Math.sin(K.ph);
     K.p.beine.forEach((b,i)=>b.rotation.z=.38*a*(i===0||i===3?sn:-sn)); K.p.hals.rotation.z=.06*a*Math.sin(K.ph*2)+.02*Math.sin(t*1.1); K.p.pf.position.y=.04*a*Math.abs(Math.sin(K.ph));
     K.ku.G.rotation.z=.05*a*Math.sin(K.ph*2+.6); K.ku.kopf.rotation.y=.25*Math.sin(t*.4); }
   // Fußgänger: hin und her am Wegrand, Beine und Arme schwingen; manche drehen den Kopf zu dir
   for(const G of U.geher){ G.d+=G.dir*G.v*dt; if(G.d>G.b){ G.d=G.b; G.dir=-1; } if(G.d<G.a){ G.d=G.a; G.dir=1; } G.ph+=dt*G.v*4.8;
-    const P=wegPos(G.d,G.s*(roadW(R,G.d)/2+.9)), y=terrainAt(P.x,P.z), ry=Math.atan2(Math.cos(P.h)*G.dir,Math.sin(P.h)*G.dir), sn=Math.sin(G.ph), m=G.m;
+    const P=wegPos(G.d,G.s*(roadW(R,G.d)/2+.9)), y=bodenY(P.x,P.z), ry=Math.atan2(Math.cos(P.h)*G.dir,Math.sin(P.h)*G.dir), sn=Math.sin(G.ph), m=G.m;
     m.G.position.set(P.x,y+.03*Math.abs(Math.cos(G.ph)),P.z); m.G.rotation.y=ry; m.beine[0].rotation.x=.45*sn; m.beine[1].rotation.x=-.45*sn;
     if(G.schwing[0]) m.arme[0].rotation.x=-.35*sn; if(G.schwing[1]) m.arme[1].rotation.x=.35*sn;
     if(G.schau){ const e=Math.hypot(cp.x-P.x,cp.z-P.z), w=bSm((16-e)/6), dw=((Math.atan2(cp.x-P.x,cp.z-P.z)-ry+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI; m.kopf.rotation.y=Math.max(-1.1,Math.min(1.1,dw))*w; }
-    if(G.gans){ const Q=wegPos(G.d+G.dir*.9,G.s*(roadW(R,G.d)/2+.45)); G.gans.T.position.set(Q.x,terrainAt(Q.x,Q.z),Q.z); G.gans.T.rotation.set(0,ry,.15*Math.sin(G.ph*1.5)); G.gans.kopf.position.z=.29+.05*Math.sin(G.ph*3); } }
+    if(G.gans){ const Q=wegPos(G.d+G.dir*.9,G.s*(roadW(R,G.d)/2+.45)); G.gans.T.position.set(Q.x,bodenY(Q.x,Q.z),Q.z); G.gans.T.rotation.set(0,ry,.15*Math.sin(G.ph*1.5)); G.gans.kopf.position.z=.29+.05*Math.sin(G.ph*3); } }
   sicher('Betrunkener',()=>poseBetr(t,dt,cp)); sicher('Gänse',()=>poseGaense(t,dt,cp)); sicher('Wäscherinnen',()=>poseWasch(t,dt,cp)); sicher('Badehaus',()=>poseBad(t,dt,cp)); sicher('Minnesänger',()=>poseSaenger(t,cp)); sicher('Bettler',()=>poseBettler(t,dt,cp)); sicher('Warnende Bauern',()=>poseWarn(t,dt,cp)); }
 
 // Betrunkener: torkelt über die Straße und nimmt einen Schluck; kommt der erste echte Fahrer, wankt er in dessen Spur, wird umgerempelt, landet am Rand auf dem Hosenboden und schimpft
@@ -116,7 +116,7 @@ function poseBetr(t,dt,cp){ const B=anim.burg.unterwegs.betr, D=BETR.d, w2=roadW
     const schimpf=B.blT>0||Math.hypot(cp.x-B.O.position.x,cp.z-B.O.position.z)<22; m.arme[0].rotation.x=schimpf?-2.5+.35*Math.sin(t*13):-.4; m.arme[0].rotation.z=-.2; m.arme[1].rotation.x=-.3; m.arme[1].rotation.z=.5; // schüttelt die Faust
     m.kopf.rotation.set(schimpf?-.15:.1,0,.15*Math.sin(t*1.5));
     if(H.t>.6){ const vw=Math.atan2(Math.cos(h),Math.sin(h)), dr=((vw-B.ry+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI; B.ry+=dr*Math.min(1,dt*2.5); } } // dreht sich im Sitzen dem Fahrer hinterher
-  const P=wegPos(D+a,B.u), y=Math.abs(B.u)<w2?roadY(D+a)+.02:terrainAt(P.x,P.z); B.O.position.set(P.x,y,P.z); B.O.rotation.y=B.ry;
+  const P=wegPos(D+a,B.u), y=bodenY(P.x,P.z); B.O.position.set(P.x,y,P.z); B.O.rotation.y=B.ry;
   B.blT=Math.max(0,B.blT-dt); const S=B.sp; S.visible=B.blT>0; if(S.visible){ const gr=B.kamT!=null?2:1.6; S.scale.set(5.2*gr,1.6*gr,1); S.position.set(P.x,y+1.3+.8*gr+visOff(P.x,P.z),P.z); } } // Unterkante über dem Kopf des Sitzenden
 
 // Kamera (aus burgKamera): Blick zurück wie bei den Wegelagerern – auf den Betrunkenen nach dem Rempler (mit kurzem Wackeln), auf den schimpfenden Bettler
@@ -154,7 +154,7 @@ function prepUnterwegs(r,fr,rw,frei){ const U=r.unterw={}, pt=(d,s,u)=>{ const f
 
 // ---- Aufbau (aus buildUnterwegs) ----
 function buildLeute(K){ const {mensch,HUT,box,M,holz,holzD,bretter,dach,sand,A}=K, U=A.unterwegs, Ru=R.unterw, O0={x:0,y:0,z:0};
-  const at=(d,s,u)=>{ const f=wegPos(d,s*(roadW(R,d)/2+u)); return {x:f.x, y:terrainAt(f.x,f.z), z:f.z, h:f.h}; }, strasse=d=>{ const f=wegPos(d,0); return {x:f.x,z:f.z}; }; // u: Meter neben dem Straßenrand
+  const at=(d,s,u)=>{ const f=wegPos(d,s*(roadW(R,d)/2+u)); return {x:f.x, y:bodenY(f.x,f.z), z:f.z, h:f.h}; }, strasse=d=>{ const f=wegPos(d,0); return {x:f.x,z:f.z}; }; // u: Meter neben dem Straßenrand
   const grp=(p,s)=>{ const G=new THREE.Group(); G.position.set(p.x,p.y,p.z); G.rotation.y=Math.atan2(-Math.sin(p.h)*-s, Math.cos(p.h)*-s); world.add(G); return G; }; // lokal: +z zur Straße
   const dbl=c=>new THREE.MeshLambertMaterial({color:c,side:THREE.DoubleSide});
   const blase=(txt,x,y,z,w=6.2)=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(txt),transparent:true,depthWrite:false})); sp.scale.set(w,w*.31,1); sp.position.set(x,y,z); sp.visible=false; world.add(sp); return sp; };
@@ -230,7 +230,7 @@ function buildLeute(K){ const {mensch,HUT,box,M,holz,holzD,bretter,dach,sand,A}=
     U.saenger={m,d:S.d,noten,P:m.G.getWorldPosition(new THREE.Vector3()),sp,tex}; }
 
   // ---------- Bettler vor der Burg: sitzt auf dem Pflaster am Rand, schaut den Kommenden entgegen, hält den Hut hin; wer vorbeifährt, ist ein Geizhals ----------
-  { const S=BETTLER, p=at(S.d,S.s,-.3); p.y=roadY(S.d)+.02; const m=mensch(p,strasse(S.d-6),'#6b5a44','#4a3a2a',HUT.kapuze,{aermel:'#5a4a36'}); sitzen(m,.16);
+  { const S=BETTLER, p=at(S.d,S.s,-.3); p.y=bodenY(p.x,p.z); const m=mensch(p,strasse(S.d-6),'#6b5a44','#4a3a2a',HUT.kapuze,{aermel:'#5a4a36'}); sitzen(m,.16);
     for(const [x,y,c] of [[.12,1.1,'#8a6a44'],[-.1,.7,'#4e3e2e']]) box(m.G,.12,.12,.02,M(c),x,y,.2); // Flicken
     const hu=new THREE.Group(); hu.position.set(0,-.66,.12); m.arme[1].add(hu); const kr=new THREE.Mesh(new THREE.CylinderGeometry(.13,.11,.12,10,1,true),dbl('#3a2e24')); kr.position.y=.04; hu.add(kr); const rd=new THREE.Mesh(new THREE.CylinderGeometry(.22,.22,.015,12),M('#3a2e24')); rd.position.y=-.02; hu.add(rd); // Hut umgedreht
     const kru=cyl(.03,holz); place(kru,[p.x+.4,p.y,p.z],[p.x+.5,p.y+1.2,p.z+.3]); world.add(kru); // Krücke
@@ -250,14 +250,14 @@ function poseGaense(t,dt,cp){ const G=anim.burg.unterwegs.gaense, D=G.d, w2=road
   G.last=me.d;
   for(const g of G.L){ if(J&&J.g===g) continue;
     const u=flucht?(g.u>=0?1:-1)*(w2+2.2+Math.abs(g.du)*.6):uc+g.du, du=u-g.u, k=Math.min(1,dt*(flucht?2.5:.8)), vel=Math.abs(du)*k/Math.max(dt,1e-3); g.u+=du*k; g.ph+=dt*(2+vel*6);
-    const P=wegPos(D+g.dd,g.u), dir=Math.sign(du)||1; g.T.position.set(P.x,Math.abs(g.u)<w2?roadY(D+g.dd)+.02:terrainAt(P.x,P.z),P.z); g.T.rotation.set(0,Math.atan2(-Math.sin(P.h)*dir,Math.cos(P.h)*dir),.12*Math.sin(g.ph*2)*Math.min(1,vel*2+.3));
+    const P=wegPos(D+g.dd,g.u), dir=Math.sign(du)||1; g.T.position.set(P.x,bodenY(P.x,P.z),P.z); g.T.rotation.set(0,Math.atan2(-Math.sin(P.h)*dir,Math.cos(P.h)*dir),.12*Math.sin(g.ph*2)*Math.min(1,vel*2+.3));
     g.hals.rotation.x=flucht?.2:.9*Math.max(0,Math.sin(t*.8+g.ph))**6; for(const [i,f] of g.fl.entries()) f.rotation.z=flucht?(i?1:-1)*(.5+.5*Math.sin(t*18+g.ph)):0; } // picken, auf der Flucht flattern
   G.magd.arme[1].rotation.x=-.6-.3*Math.max(0,Math.sin(t*1.3))**4; // Gänsemagd treibt mit dem Stecken
   if(!J) return;
   const g=J.g, hin=J.t<6; J.t+=dt; let ry;
   if(hin){ const L=(riders3d[myKey]||{}).lane||0; J.u+=(L-J.u)*Math.min(1,dt*2); J.d=Math.min(J.d+Math.min(8,Math.max(0,me.v*.93))*dt, me.d-1.5); ry=0; } // hinter dir her, fällt langsam zurück
   else { const ziel=uc+g.du; J.d=Math.max(D+g.dd,J.d-1.4*dt); J.u+=(ziel-J.u)*Math.min(1,dt); ry=Math.PI; if(J.d<=D+g.dd+.05){ g.u=J.u; G.jagd=null; } } // watschelt zurück zur Herde
-  const P=wegPos(J.d,J.u), y=Math.abs(J.u)<roadW(R,J.d)/2?roadY(J.d)+.02:terrainAt(P.x,P.z); g.ph+=dt*(hin?16:5);
+  const P=wegPos(J.d,J.u), y=bodenY(P.x,P.z); g.ph+=dt*(hin?16:5);
   g.T.position.set(P.x,y,P.z); g.T.rotation.set(0,Math.atan2(Math.cos(P.h),Math.sin(P.h))+ry,.15*Math.sin(g.ph));
   g.hals.rotation.x=hin?1.1:.1; for(const [i,f] of g.fl.entries()) f.rotation.z=hin?(i?1:-1)*(.6+.6*Math.sin(t*20)):0; } // Hals lang vorgestreckt, Flügel schlagen
 
@@ -301,7 +301,7 @@ function poseBettler(t,dt,cp){ const B=anim.burg.unterwegs.bettler, m=B.m; if(Ma
 function poseWarn(t,dt,cp){ const W=anim.burg.unterwegs.warn, s=WARN.s; if(me.d<WARN.d-300){ W.d=WARN.d; W.rufT=0; }
   const gap=W.d-me.d, steh=gap<35&&gap>-3, geh=!steh&&gap<160; if(steh) W.rufT=3; else W.rufT=Math.max(0,W.rufT-dt);
   const v=geh&&!race.paused?1.5:0; W.d-=v*dt; W.ph+=v*dt*4.8; const h=headingAt(R,W.d), ab=Math.atan2(-Math.cos(h),-Math.sin(h)), quer=Math.atan2(Math.sin(h)*s,-Math.cos(h)*s); // ab: bergab, quer: zur Straße
-  W.L.forEach((L,i)=>{ const m=L.m, P=wegPos(W.d+L.dd,s*(roadW(R,W.d)/2+L.u)), sn=Math.sin(W.ph+i*1.3); m.G.position.set(P.x,terrainAt(P.x,P.z)+(v?.03*Math.abs(Math.cos(W.ph+i*1.3)):0),P.z);
+  W.L.forEach((L,i)=>{ const m=L.m, P=wegPos(W.d+L.dd,s*(roadW(R,W.d)/2+L.u)), sn=Math.sin(W.ph+i*1.3); m.G.position.set(P.x,bodenY(P.x,P.z)+(v?.03*Math.abs(Math.cos(W.ph+i*1.3)):0),P.z);
     m.G.rotation.y=steh?quer:ab; m.beine[0].rotation.x=v?.45*sn:0; m.beine[1].rotation.x=v?-.45*sn:0;
     if(steh){ m.kopf.rotation.set(0,-.5*s,0); if(i===0) m.arme[0].rotation.set(0,0,-1.45*s+.1*Math.sin(t*6)); else { m.arme[1].rotation.set(-2.6,0,-.35); m.arme[0].rotation.set(-2.6,0,.35); m.kopf.rotation.z=.15*Math.sin(t*5); } } // zeigt den Berg hinauf · Hände vors Gesicht
     else { m.kopf.rotation.set(0,Math.max(0,Math.sin(t*.9+i*2))**8*2.4*(i?1:-1),0); if(i===0) m.arme[0].rotation.set(-.35*sn,0,-.12); else { m.arme[1].rotation.set(.35*sn,0,.12); m.arme[0].rotation.set(-.45,0,-.12); } } }); // schauen sich beim Gehen um

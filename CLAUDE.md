@@ -32,10 +32,11 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - Klassische `<script>`-Tags, keine ES-Module: alle Dateien teilen sich globale Variablen. Reihenfolge in `index.html` ist wichtig – Code, der beim Laden läuft, darf nur Funktionen aus derselben oder früheren Dateien aufrufen.
 - Code und Kommentare auf Deutsch, kompakter Stil (viele Anweisungen pro Zeile) beibehalten.
 - localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`, `kd-shake`, `kd-kampagne`.
+- Figuren und Gegenstände mit `bodenY(x,z)` aufstellen (`welt-kalmit.js`: sichtbarer Boden mit Fahrbahn, Bankett, Gehweg, Schulter und gezeichnetem Gelände), nicht mit `terrainAt` oder `roadY` – sonst stecken sie im Belag oder schweben am Hang. Große Gruppen am Hang Teil für Teil auf den Boden setzen. Absichtlich Eingegrabenes mit `userData.ohneBoden=true` markieren.
 
 ## Arbeitsweise
 - Sparsam mit Tokens: nur die betroffene Datei/den Abschnitt lesen (Abschnitte sind mit `/* ===== … */`- bzw. `// ---- … ----`-Kommentaren markiert, per grep finden), keine ganzen Dateien ohne Grund.
-- Nicht selbst im Browser auf Aussehen oder Spielgefühl testen – das macht der Nutzer. Erlaubt und erwünscht: nach Änderungen an Strecken/Welten der Selbsttest `node werkzeuge/selbsttest.mjs [strecke] [meter,…]` (Chrome headless, baut die Strecke, startet das Rennen, springt an die Meter, meldet nur Fehler aus der Konsole).
+- Nicht selbst im Browser auf Aussehen oder Spielgefühl testen – das macht der Nutzer. Erlaubt und erwünscht: nach Änderungen an Strecken/Welten der Selbsttest `node werkzeuge/selbsttest.mjs [strecke|trifels] [meter,…] [--boden]` (`--boden`: listet Versunkenes und Schwebendes, `__versunken()`) (Chrome headless, baut die Strecke, startet das Rennen, springt an die Meter, meldet nur Fehler aus der Konsole).
 - Berwartstein: Zusatz-Szenen laufen über `sicher(name,fn)` (welt-berwartstein.js) – ein Fehler darin lässt nur die Szene ausfallen und steht in der Konsole, die Strecke läuft weiter. Neue Szenen ebenso einbinden.
 - Commit-Nachrichten auf Deutsch. Remote: GitHub `philippsbecker96-cmyk/kalmitduell-`, Branch `main`.
 - Offene Verschönerungspläne (Landschaft, Gebäude, Licht): `PLAENE.md`.

@@ -99,6 +99,6 @@ function torTex(v){ return hausTex('t'+v,128,128,g=>{ const st=(x,y,w,h,c)=>{ g.
       g.fillStyle='#2a2a28'; for(let x=33;x<98;x+=6) g.fillRect(x,14,2,82); g.fillRect(30,60,68,2); g.strokeStyle='#2a2a28'; g.lineWidth=2; g.beginPath(); g.arc(64,46,22,Math.PI,0); g.stroke(); }
   }).map; }
 function hoftor(o){ const m=hMat('tor'+o.v,()=>new THREE.MeshLambertMaterial({map:torTex(o.v)})), s=hMat('tors'+o.v,()=>lam(o.v===2?'#8f5a48':o.v?'#e8dcc4':'#c9a184'));
-  const b=new THREE.Mesh(new THREE.BoxGeometry(o.w,3.2,.4),[s,s,s,s,m,m]); b.position.y=.8; return b; }
+  const b=new THREE.Mesh(new THREE.BoxGeometry(o.w,3.2,.4),[s,s,s,s,m,m]); b.position.y=.8; b.userData.ohneBoden=true; return b; } // steckt absichtlich 0,8 m im Boden
 // Straßenlaterne: Leuchtfläche unter dem Kopf, abends warm
 function lampGlowMat(){ return hMat('lampe',()=>{ const m=lam('#d9d4c4'); HAUS_GLOW.push({m,c:0xffd27a}); return m; }); }

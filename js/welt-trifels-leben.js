@@ -65,9 +65,10 @@ function buildTrifelsLeben(T){ const A=anim.tri, q=rng(905), M=c=>lam(c), holz=M
       K.huhn(G,.4,.62,bz+.95,1.6,'#f2ece0'); K.huhn(G,-.6,0,bz+1.6,.4,'#9a5a2a'); K.huhn(G,1.3,0,bz+2,2.8,'#c9733a'); K.huhn(G,-1.5,0,bz+2.6,-1,'#2e2a24');
       box(G,1.2,.15,.3,holzD,-1,.08,bz+2.4); K.strohhaufen(G,-2.6,0,bz+.4,.7); }
     else if(l.art==='gaense'){ box(G,1.6,.3,.5,holzD,-1.5,.15,-.5); const wa=new THREE.Mesh(new THREE.BoxGeometry(1.45,.02,.36),K.wasser); wa.position.set(-1.5,.28,-.5); G.add(wa); K.eimer(G,-.3,0,-.4); K.strohhaufen(G,2.4,0,-1.8,.6); } // Wassertrog
-    else if(l.art==='stroh'){ K.strohhaufen(G,-1.6,0,-1.2,1.2); K.handkarren(G,1.4,.4,.5); K.fass(G,2.6,0,-1.5); K.korb(G,.3,0,1.4,'#e0b33c'); } }
+    else if(l.art==='stroh'){ K.strohhaufen(G,-1.6,0,-1.2,1.2); K.handkarren(G,1.4,.4,.5); K.fass(G,2.6,0,-1.5); K.korb(G,.3,0,1.4,'#e0b33c'); }
+    G.updateMatrixWorld(true); const wp=new THREE.Vector3(); for(const o of G.children){ o.getWorldPosition(wp); o.position.y+=bodenY(wp.x,wp.z)-G.position.y; } } // jedes Teil auf den Boden (die Lücken liegen am Hang)
   // Fässer und Körbe an der Ecke des Wirtshauses
-  if(T.wirt){ const H=T.wirt, dd=H.d+H.w/2+.9, uF=A.uF??roadW(R,dd)/2, G=new THREE.Group(), p=wegPos(dd,uF+.5); G.position.set(p.x,roadY(dd)+.05,p.z); G.rotation.y=-p.h; world.add(G);
+  if(T.wirt){ const H=T.wirt, dd=H.d+H.w/2+.9, uF=A.uF??roadW(R,dd)/2, G=new THREE.Group(), p=wegPos(dd,uF+.5); G.position.set(p.x,bodenY(p.x,p.z),p.z); G.rotation.y=-p.h; world.add(G);
     K.fass(G,0,0,0); K.fass(G,.62,0,.1,.9); K.fass(G,.3,.68,.05,.8); K.korb(G,-.6,0,.2,'#7a9a3a'); }
   // Gänseherde mit Magd (wartet in der rechten Lücke, quert in der Szene, grast dann links)
   { const W=world; for(let i=0;i<TRI_GANS.n;i++){ const g=K.gans(W,0,0,i===2?'#9a9a8a':'#f2ece0'); L.gaense.push({...g, dd:(q()-.5)*3.2, lag:i*.7+q()*.4, uu:(q()-.5)*1.2, ph:q()*6}); }

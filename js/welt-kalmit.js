@@ -10,6 +10,34 @@ function triAt(x,z,arr){ const gx=(x-TER.x0)/TER.res, gz=(z-TER.z0)/TER.res;
   const a=h[j*n+i], b=h[j*n+i+1], c=h[(j+1)*n+i], d=h[(j+1)*n+i+1]; return fx+fz<=1 ? a+(b-a)*fx+(c-a)*fz : d+(c-d)*(1-fx)+(b-d)*(1-fz); }
 function visOff(x,z){ if(!KX.on) return 0; const w=kxWt(Math.hypot(x-KX.uC.value.x,z-KX.uC.value.y)); return w>0?(KX.k-1)*w*(terrainAt(x,z,TER.hr)-KX.uRef.value):0; }
 const visRoadY=d=>{ const [x,z]=posAt(R,d); return roadY(d)+visOff(x,z); };
+/* ---- Sichtbarer Boden: Gegenstände und Figuren mit bodenY(x,z) aufstellen, nicht mit terrainAt ----
+   terrainAt mischt bilinear und kennt keine Straße: am Hang liegt das gezeichnete Gelände (triAt) bis 30 cm anders, unter der Straße liegt es STR_UNTER tiefer.
+   bodenY: Fahrbahn (Belag +0,12), Bankett (+0,05), Gehweg (+0,22), eigene Flächen der Szenen (BODEN_FL, z. B. Burgweg), sonst gezeichnetes Gelände */
+const BODEN_FL=[]; // (x,z)=>Höhe oder null – Wege und Plätze, die eine Szene selbst zeichnet; wird mit der Welt geleert
+let BODEN_GITTER=null;
+function strasseBei(x,z){ const G=BODEN_GITTER&&BODEN_GITTER.xs===R.xs?BODEN_GITTER:(BODEN_GITTER={xs:R.xs,m:new Map()}), Z=16, k=(a,b)=>a*100003+b; // nächster Straßenpunkt (d, u = Meter neben der Mitte, + rechts)
+  if(!G.m.size) for(let i=0;i<R.xs.length-1;i++){ const q=k(Math.floor(R.xs[i]/Z),Math.floor(R.ys[i]/Z)); if(!G.m.has(q)) G.m.set(q,[]); G.m.get(q).push(i); }
+  const cx=Math.floor(x/Z), cz=Math.floor(z/Z); let best=null;
+  for(let a=-1;a<=1;a++) for(let b=-1;b<=1;b++) for(const i of G.m.get(k(cx+a,cz+b))||[]){ const ax=R.xs[i], az=R.ys[i], ex=R.xs[i+1]-ax, ez=R.ys[i+1]-az, l2=ex*ex+ez*ez||1, t=Math.min(1,Math.max(0,((x-ax)*ex+(z-az)*ez)/l2));
+    const px=ax+ex*t, pz=az+ez*t, e=Math.hypot(x-px,z-pz); if(!best||e<best.e){ const d=(i+t)*STEP, h=headingAt(R,d); best={e,d,u:(x-px)*-Math.sin(h)+(z-pz)*Math.cos(h)}; } }
+  return best; }
+function bodenY(x,z){ let y=triAt(x,z); const s=strasseBei(x,z);
+  if(s){ const rw=roadW(R,s.d)/2, a=Math.abs(s.u); let l=a<=rw?.12:a<=rw+.9?.05:null;
+    if(l===null&&a<=rw+5) for(const [art,za,zb,zo={}] of R.zones||[]) if(art==='ort'&&s.d>=za&&s.d<=zb&&(!zo.seite||zo.seite===Math.sign(s.u))&&a<=rw+(zo.geh??SIDEWALK)&&!(R.gehCut&&R.gehCut.some(c=>c[0]===Math.sign(s.u)&&s.d>=c[1]&&s.d<=c[2]))) l=.22;
+    if(l!==null) y=Math.max(y,roadY(s.d)+l);
+    else if(a<=rw+.9+SCH_B&&schulterAn(s.d)){ const t=(a-rw-.9)/SCH_B; y=Math.max(y,(roadY(s.d)+.03)*(1-t)+(y-SCH_T)*t); } } // Schulter: schräg vom Bankett bis unter das Gelände
+  for(const f of BODEN_FL){ const v=f(x,z); if(v!=null) y=Math.max(y,v); } return y; }
+/* Test-Helfer (Konsole/Selbsttest): __versunken(tol=0.06) sucht kleine Dinge direkt in der Welt (Figuren, Tiere, Kisten, Truhen …, bis 6 m groß), deren Unterkante
+   mehr als tol unter dem sichtbaren Boden (bodenY) liegt oder bis 0,6 m darüber schwebt; Gruppen über 2 m (Hof-Ecken, Wagen) Teil für Teil, da sie am Hang schräg stehen.
+   „unplatziert“: steht noch am Ursprung (0,0,0), also am Start. Absichtlich eingegraben: userData.ohneBoden=true. Meldet Meter und Seite an der Straße */
+window.__versunken=(tol=.06)=>{ const B=new THREE.Box3(), out=[];
+  const pruef=(o,nurTief)=>{ B.setFromObject(o); if(B.isEmpty()) return; const sx=B.max.x-B.min.x, sz=B.max.z-B.min.z, sy=B.max.y-B.min.y; if(Math.max(sx,sz)>6||sy>6||sy<.1) return;
+    const cx=(B.min.x+B.max.x)/2, cz=(B.min.z+B.max.z)/2, g=bodenY(cx,cz), v=B.min.y-g, null0=o.parent===world&&!o.position.x&&!o.position.y&&!o.position.z;
+    const s=strasseBei(cx,cz); if(!null0&&(!s||v<-20||v>=-tol&&(v<=tol||v>.6||nurTief))) return; // nur bis ≈ 30 m neben der Straße
+    out.push({art:null0?'unplatziert':v<0?'versunken':'schwebt', cm:Math.round(v*100), meter:s?Math.round(s.d):null, seite:s?+s.u.toFixed(1):null, groesse:`${sx.toFixed(1)}×${sz.toFixed(1)}×${sy.toFixed(1)}`, o}); };
+  for(const o of world.children){ if(!o.visible||o.isInstancedMesh||o.isSprite||o.isLight||o.userData.ohneBoden) continue; B.setFromObject(o); if(B.isEmpty()) continue;
+    if(o.isGroup&&Math.max(B.max.x-B.min.x,B.max.z-B.min.z)>2&&(o.position.x||o.position.z)) for(const c of o.children){ if(c.visible&&!c.userData.ohneBoden&&!c.isLight&&!c.isSprite) pruef(c,true); } else pruef(o,false); }
+  out.sort((a,b)=>a.meter-b.meter); console.table(out.map(({o,...r})=>r)); return out; };
 const KX_GLSL=`uniform float uKx; uniform vec2 uKc; uniform float uKref; uniform sampler2D uKht; uniform vec4 uKg; uniform vec2 uKn;
 float kxH(vec2 p){ vec2 g=clamp((p-uKg.xy)/uKg.z,vec2(0.0),uKn-1.001); vec2 i=floor(g), f=g-i;
   float a=texture2D(uKht,(i+vec2(0.5,0.5))/uKn).r, b=texture2D(uKht,(i+vec2(1.5,0.5))/uKn).r, c=texture2D(uKht,(i+vec2(0.5,1.5))/uKn).r, d=texture2D(uKht,(i+vec2(1.5,1.5))/uKn).r;
@@ -93,7 +121,7 @@ function build3D(){
   if(world){ scene.remove(world); world.traverse(o=>{ o.geometry&&o.geometry.dispose&&o.geometry.dispose(); for(const mt of [].concat(o.material||[], o.userData.dry||[], (o.userData.dry&&o.userData.dry.userData.wm)||[])){ mt.map&&mt.map.dispose&&mt.map.dispose(); mt.dispose&&mt.dispose(); } }); }
   hausReset();
   world=new THREE.Group(); scene.add(world);
-  anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; anim.burg=null; anim.tri=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
+  BODEN_FL.length=0; anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; anim.burg=null; anim.tri=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
   const sp=!!R.space; sky.visible=!sp; spaceSky.visible=sp; streaks.m.visible=false; scene.background.set(sp?SPACE_BG:HORIZON); scene.fog.color.set(sp?SPACE_BG:HORIZON);
   if(sp){ buildSpace(); return; }
   if(R.island){ buildIsland(); return; }

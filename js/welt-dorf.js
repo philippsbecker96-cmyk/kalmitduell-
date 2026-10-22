@@ -61,7 +61,7 @@ function hofKastenPose(D,t){ for(const T of D.tiere){ const ph=t+T.ph; if(T.art=
   for(const P of D.dampf){ const k=(t*.18+P.ph)%1; P.sp.position.set(P.x+k*.6,P.y+k*2.2,P.z); P.sp.scale.setScalar(.6+k*1.6); P.sp.material.opacity=.35*Math.sin(k*Math.PI); } }
 
 function buildDorf(K){ const {mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst,fr,rw,A,ps,qq,sc,cc,up}=K, q=rng(4711), D=A.dorf={tiere:[], leute:[], tuecher:[], katzen:[], bienen:[], gaense:[], enten:[], dampf:[]};
-  const at=(s,d,u)=>{ const f=fr(d), o=rw(d)+(zOpt(R,d).geh??SIDEWALK)+u, x=f.px+f.nx*s*o, z=f.py+f.ny*s*o; return {x, y:u<.6?roadY(d)+.15:terrainAt(x,z), z, h:f.h, s, d}; }; // u: Meter neben dem Gehweg
+  const at=(s,d,u)=>{ const f=fr(d), o=rw(d)+(zOpt(R,d).geh??SIDEWALK)+u, x=f.px+f.nx*s*o, z=f.py+f.ny*s*o; return {x, y:bodenY(x,z), z, h:f.h, s, d}; }; // u: Meter neben dem Gehweg
   const grp=p=>{ const G=new THREE.Group(); G.position.set(p.x,p.y,p.z); G.rotation.y=Math.atan2(-Math.sin(p.h)*-p.s, Math.cos(p.h)*-p.s); world.add(G); return G; }; // lokal: +z zur Straße
   const zuG=(G,m)=>{ G.add(m.G); return m; }, {mesh,kugel,geflecht,stroh,erde,hufe,wasser,korbM,vier,schwein,huhn,gans,katze,fass,korb,eimer,handkarren,strohhaufen,pfahl,puff,misthaufen,koben}=hofKasten({box,M,holz,holzD,bretter,q,D});
   const blase=(txt,p,hy,w=6.2)=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(txt),transparent:true,depthWrite:false})); sp.scale.set(w,w*.31,1); sp.position.set(p.x,p.y+hy,p.z); sp.visible=false; world.add(sp); return sp; };
@@ -173,7 +173,7 @@ function buildDorf(K){ const {mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst
     ziege(-1.5,1.48,-1.4,.5,'#e8e4dc'); ziege(1.2,0,.8,2.4,'#8a6a4a'); ziege(1.6,0,-1.2,-1,'#f2ece0'); strohhaufen(G,1.8,0,1.8,.5); }
 
   // ---------- rechts 379–405 m, hinter dem Ortsende frei auf der Wiese: Dorfweiher mit Schilf und Enten ----------
-  { const p=at(1,392,7.5), G=grp(p), gy=terrainAt(p.x,p.z); G.position.y=gy; const ws=new THREE.Mesh(new THREE.CircleGeometry(1,24),new THREE.MeshPhongMaterial({color:'#5d7f86',shininess:90})); ws.rotation.x=-Math.PI/2; ws.scale.set(9,6,1); ws.position.y=.12; G.add(ws);
+  { const p=at(1,392,7.5), G=grp(p), gy=bodenY(p.x,p.z); G.position.y=gy; const ws=new THREE.Mesh(new THREE.CircleGeometry(1,24),new THREE.MeshPhongMaterial({color:'#5d7f86',shininess:90})); ws.rotation.x=-Math.PI/2; ws.scale.set(9,6,1); ws.position.y=.12; G.add(ws);
     const uf=new THREE.Mesh(new THREE.RingGeometry(.94,1.12,24),M('#6b5a3a')); uf.rotation.x=-Math.PI/2; uf.scale.set(9,6,1); uf.position.y=.1; G.add(uf);
     const schilf=[]; for(let i=0;i<70;i++){ const a=q()*6.28, r2=.85+q()*.2; if(Math.sin(a)>.4) continue; schilf.push({x:Math.cos(a)*9*r2, z:Math.sin(a)*6*r2, h:.8+q()*.9, c:q()}); } G.updateMatrixWorld(); const gm=G.matrixWorld;
     inst(new THREE.CylinderGeometry(.02,.03,1,4),M('#fff'),schilf,o=>{ ps.set(o.x,o.h/2,o.z).applyMatrix4(gm); qq.setFromAxisAngle(up,o.c*6); sc.set(1,o.h,1); cc.set(o.c<.5?'#6b7a3a':'#8a8a4a'); });
