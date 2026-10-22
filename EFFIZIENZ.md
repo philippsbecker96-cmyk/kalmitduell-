@@ -32,6 +32,8 @@ Chrome ohne Grafikkarte (Bildrate dort nicht aussagekräftig, Zählungen schon; 
 
 Berwartstein nach Meter: 0 m ≈ 930 Aufrufe · 500 m (Dorf) ≈ 2.900 · 1.500 m/3.000 m ≈ 2.150 · 4.500 m ≈ 1.670.
 
+Trifels (Kampagne Mission 1, 22.10.2026, mit dem Leben am Wirtshaus und unterwegs): ≈ 2.300 Objekte (+430 durch `welt-trifels-leben.js`), Zeichenaufrufe Start ≈ 390 · Wirtshaus ≈ 740 (ohne die neuen Szenen 590) · Tal ≈ 400. Entspannt.
+
 ## Einschätzung Berwartstein
 - Gut gefüllt, aber noch nicht zu voll. Auf gutem Rechner Luft, auf schwachen Geräten nahe der Grenze (vor allem im Dorf um 500 m).
 - **Auffällig:** fast jedes Objekt hat eine eigene Geometrie (4.325 bei 4.326 Objekten) → gleiche Teile (Zaunlatten, Kiefern, Ziegel, Steine) werden einzeln gebaut statt einmal gebaut und mehrfach verwendet. Hier liegt das größte Einsparpotenzial.

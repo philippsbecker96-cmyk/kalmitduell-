@@ -1,0 +1,117 @@
+/* ================= Kampagne Mission 1: Leben am Wirtshaus und unterwegs (Trifels) =================
+   Baulücken am Wirtshaus mit Misthaufen, Schweinekoben, Hühnerstall, Strohhaufen (Hof-Baukasten aus welt-dorf.js), Gänseherde quert in der Wirtshaus-Szene die Gasse,
+   Gegenverkehr zwischen Wirtshaus und Jagd 1 (Magd, Bauer, Heuwagen, Mönch), Reh mit zwei Kitzen nach Jagd 1, Wildschwein quert nach Jagd 4 von rechts nach links und läuft vor dir her (Friedel: TRI_TXT.sau).
+   prepTrifelsLeben aus prepTrifels · buildTrifelsLeben aus buildTrifels · poseTrifelsLeben aus poseTrifels · triGegenSpur aus triSpur (dem Heuwagen rechts ausweichen) */
+const TRI_LUECKEN=[[-1,-21,'mist'],[1,-29,'koben'],[1,11,'stall'],[-1,9,'gaense'],[-1,36,'stroh']]; // [Seite, Meter ab Wirtshaus, Szene]: das Haus dort fällt weg
+const TRI_GEGEN_ART=['magd','bauer','wagen','moench'], TRI_GEGEN_V={wagen:2, sonst:1.3}; // Gegenverkehr in der Reihenfolge von TRIFELS_T.gegen, m/s
+const TRI_GANS={da:10, n:6, von:3, bis:17};
+const TRI_SAU={rein:3, raus:12, ab:4, ende:17}; // Wildschwein, s ab Auftauchen: bis rein auf den Weg, ab raus nach links (dauert ab), ende verschwunden // Gänse queren 10 m hinter dem Wirtshaus, Szene-Sekunde 3 bis 17 (von der rechten in die linke Lücke)
+
+// ---- Vorbereitung: Häuser für die Lücken herausnehmen, Wege für Reh und Wildschwein frei von Bäumen ----
+function prepTrifelsLeben(r){ const T=r.tri, S=r.S, O=r.def.orte, kf=r.kf, dw=T.wirtD; T.luecken=[];
+  T.gegen=(O.gegen||[]).map(([t,d])=>[t,d*kf]); T.reh=O.reh!=null?O.reh*kf:null; T.sau=O.sau!=null?O.sau*kf:null;
+  for(const [s,da,art] of TRI_LUECKEN){ const h=S.house.filter(h=>h.side===s&&h!==T.wirt&&h.su==null).sort((a,b)=>Math.abs(a.d-dw-da)-Math.abs(b.d-dw-da))[0]; if(!h||Math.abs(h.d-dw-da)>9) continue;
+    S.house.splice(S.house.indexOf(h),1); T.luecken.push({x:h.x, y:h.y, h:h.h, side:s, d:h.d, w:h.w, dep:h.dep, art});
+    const imHof=o=>o.side===s&&Math.abs(o.d-h.d)<h.w/2+1.5; S.tor=S.tor.filter(o=>!imHof(o)); S.ranke=S.ranke.filter(o=>!imHof(o));
+    for(const k of ['tree','bush','konif','grass','rock']) S[k]=S[k].filter(o=>Math.hypot(o.x-h.x,o.y-h.y)>Math.max(h.w,h.dep)/2+1.5); }
+  const frei=[], weg=(d,u,m)=>{ const [px,py]=posAt(r,d), h=headingAt(r,d); frei.push([px-Math.sin(h)*u, py+Math.cos(h)*u, m]); };
+  if(T.reh!=null) for(let u=-20;u<=16;u+=3) weg(T.reh,u,4); // Reh quert von rechts nach links
+  if(T.sau!=null){ for(let d=T.sau-16;d<=T.sau;d+=4) for(const u of [4,7,10]) weg(d,u,2.5); for(let d=T.sau+70;d<=T.sau+130;d+=4) for(const u of [-4,-7,-10]) weg(d,u,2.5); } // rechts herein, links hinaus // Wildschwein läuft rechts am Rand mit, dreht ab
+  for(const k of ['tree','bush','rock']) S[k]=S[k].filter(o=>!frei.some(([x,y,m])=>Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m&&Math.hypot(o.x-x,o.y-y)<m)); }
+
+// Vierbeiner mit beweglichen Beinen (Reh, Kitz, Wildschwein), lokal +x nach vorn, Hufe auf y=0
+function triTier(o){ const G=new THREE.Group(), K=new THREE.Group(), m=o.em?new THREE.MeshLambertMaterial({color:o.c,emissive:o.em}):lam(o.c), H=o.H, L=o.L; G.add(K);
+  const rumpf=new THREE.Mesh(new THREE.SphereGeometry(1,12,9),m); rumpf.scale.set(L/2,o.dick,o.breit); rumpf.position.y=H; K.add(rumpf);
+  const beine=[[1,1],[1,-1],[-1,1],[-1,-1]].map(([x,z])=>{ const b=new THREE.Group(); b.position.set(x*L*.3,H,z*o.breit*.55); K.add(b); const l=new THREE.Mesh(new THREE.CylinderGeometry(o.bein,o.bein*.7,H,6),m); l.position.y=-H/2; b.add(l);
+    const hf=new THREE.Mesh(new THREE.BoxGeometry(o.bein*2,o.bein*1.6,o.bein*2),lam('#1c1814')); hf.position.y=-H+o.bein*.8; b.add(hf); return b; });
+  const kopf=new THREE.Group(); kopf.position.set(L*.46,H+o.hals,0); K.add(kopf); return {G,K,m,beine,kopf}; }
+function triReh(kitz){ const c=kitz?'#a8703e':'#9a6438', T=triTier({c,em:'#2a1a0c',L:1.1,H:.62,dick:.27,breit:.2,bein:.035,hals:.42}), s=new THREE.MeshLambertMaterial({color:'#f2ece0',emissive:'#6a665e'}); // Fell glimmt leicht, Spiegel und Tupfen hell (in der Dämmerung gut zu sehen)
+  const hs=new THREE.Mesh(new THREE.CylinderGeometry(.07,.11,.5,6),T.m); place(hs,[.42,.66,0],[.56,1.04,0]); T.K.add(hs);
+  const k=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),T.m); k.scale.set(1.5,1,.9); k.position.set(.08,0,0); T.kopf.add(k); const na=new THREE.Mesh(new THREE.SphereGeometry(.035,5,4),lam('#1a1a1a')); na.position.set(.22,-.02,0); T.kopf.add(na);
+  for(const z of [-.06,.06]){ const au=new THREE.Mesh(new THREE.SphereGeometry(.018,5,4),new THREE.MeshBasicMaterial({color:'#e8c070'})); au.position.set(.12,.04,z); T.kopf.add(au); } // Augen
+  for(const z of [-.06,.06]){ const oh=new THREE.Mesh(new THREE.ConeGeometry(.04,.16,5),T.m); oh.position.set(-.02,.12,z); oh.rotation.x=z*4; T.kopf.add(oh); }
+  const sp=new THREE.Mesh(new THREE.SphereGeometry(.09,6,5),s); sp.position.set(-.55,.7,0); T.K.add(sp); // Spiegel
+  if(kitz) for(let i=0;i<10;i++){ const p=new THREE.Mesh(new THREE.SphereGeometry(.025,4,3),s); p.position.set(-.35+(i%5)*.17,.88,(i<5?-1:1)*(.08+(i%2)*.04)); T.K.add(p); } // Tupfen
+  if(kitz) T.G.scale.setScalar(.58); return T; }
+function triSau(){ const T=triTier({c:'#5a4a3c',em:'#2a2016',L:1.2,H:.46,dick:.3,breit:.25,bein:.05,hals:.1}), dk=new THREE.MeshLambertMaterial({color:'#3a2e24',emissive:'#1a140e'}); // glimmt leicht, damit man es in der Dämmerung sieht
+  const nk=new THREE.Mesh(new THREE.SphereGeometry(.3,8,6),T.m); nk.scale.set(1,1.15,.9); nk.position.set(.3,.55,0); T.K.add(nk); // hoher Nacken
+  for(let i=0;i<7;i++){ const b=new THREE.Mesh(new THREE.BoxGeometry(.1,.12,.04),dk); b.position.set(.45-i*.15,.82-Math.abs(i-1.5)*.02,0); T.K.add(b); } // Borstenkamm
+  const k=new THREE.Mesh(new THREE.ConeGeometry(.2,.55,7),T.m); k.rotation.z=-Math.PI/2-.35; k.position.set(.2,-.08,0); T.kopf.add(k); const rs=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.04,8),lam('#4a3a32')); rs.rotation.z=Math.PI/2; rs.position.set(.47,-.18,0); T.kopf.add(rs);
+  for(const z of [-.06,.06]){ const h=new THREE.Mesh(new THREE.ConeGeometry(.018,.12,4),lam('#efe8d6')); h.position.set(.38,-.14,z*1.3); h.rotation.z=-.5; T.kopf.add(h); const oh=new THREE.Mesh(new THREE.ConeGeometry(.05,.13,4),dk); oh.position.set(-.05,.13,z*1.6); T.kopf.add(oh); }
+  for(const z of [-.07,.07]){ const au=new THREE.Mesh(new THREE.SphereGeometry(.028,6,4),new THREE.MeshBasicMaterial({color:'#ffc860'})); au.position.set(.1,.05,z); T.kopf.add(au); } // Augen spiegeln das Laternenlicht
+  const sw=new THREE.Mesh(new THREE.CylinderGeometry(.015,.01,.25,4),dk); place(sw,[-.6,.5,0],[-.72,.32,0]); T.K.add(sw); T.G.scale.setScalar(1.25); return T; }
+
+// ---- Aufbau ----
+function buildTrifelsLeben(T){ const A=anim.tri, q=rng(905), M=c=>lam(c), holz=M('#6b4a32'), holzD=M('#4e3626'), dachM=M('#7a5a3a'), D={tiere:[], katzen:[], dampf:[]};
+  const box=(P,w,h,d,m,x,y,z)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y,z); P.add(o); return o; };
+  const bretter=hMat('bretter',()=>new THREE.MeshLambertMaterial({map:canvasTex(64,64,g=>{ for(let x=0;x<64;x+=8){ const v=.8+Math.random()*.3; g.fillStyle=`rgb(${118*v|0},${84*v|0},${54*v|0})`; g.fillRect(x,0,8,64); g.fillStyle='rgba(30,18,10,.55)'; g.fillRect(x+7,0,1,64); } })}));
+  const K=hofKasten({box,M,holz,holzD,bretter,q,D}), L=A.leben={D, gaense:[], gegen:[], reh:null, sau:null};
+  // Baulücken: lokal +z zur Gasse, Ursprung in der Mitte des alten Hauses
+  for(const l of T.luecken){ const G=new THREE.Group(); G.position.set(l.x,terrainAt(l.x,l.y),l.y); G.rotation.y=Math.atan2(l.side*Math.sin(l.h),-l.side*Math.cos(l.h)); world.add(G); const bz=-l.dep/2+1.6;
+    if(l.art==='mist'){ const m=new THREE.Group(); m.position.z=-.6; G.add(m); K.misthaufen(m); K.eimer(G,2.2,0,1.6); K.korb(G,-2.4,0,1.8,'#9a5a2a'); }
+    else if(l.art==='koben'){ const m=new THREE.Group(); m.position.z=-.4; G.add(m); K.koben(m); }
+    else if(l.art==='stall'){ for(const [x,z] of [[-.9,-.55],[.9,-.55],[-.9,.55],[.9,.55]]) box(G,.1,.65,.1,holzD,x,.33,bz+z); box(G,2,1.1,1.3,bretter,0,1.2,bz); // Hühnerstall auf Stelzen
+      for(const s of [-1,1]){ const d2=box(G,2.3,.06,.85,dachM,0,1.95,bz+s*.33); d2.rotation.x=s*.55; } box(G,.4,.45,.02,M('#1e1610'),.4,.95,bz+.66); // Dach, Schlupfloch
+      const rp=box(G,.35,.03,1.3,bretter,.4,.4,bz+1.2); rp.rotation.x=.55; for(let i=0;i<4;i++) box(G,.35,.03,.03,holzD,.4,.12+i*.18,bz+1.68-i*.3); // Hühnerleiter mit Sprossen
+      K.huhn(G,.4,.62,bz+.95,1.6,'#f2ece0'); K.huhn(G,-.6,0,bz+1.6,.4,'#9a5a2a'); K.huhn(G,1.3,0,bz+2,2.8,'#c9733a'); K.huhn(G,-1.5,0,bz+2.6,-1,'#2e2a24');
+      box(G,1.2,.15,.3,holzD,-1,.08,bz+2.4); K.strohhaufen(G,-2.6,0,bz+.4,.7); }
+    else if(l.art==='gaense'){ box(G,1.6,.3,.5,holzD,-1.5,.15,-.5); const wa=new THREE.Mesh(new THREE.BoxGeometry(1.45,.02,.36),K.wasser); wa.position.set(-1.5,.28,-.5); G.add(wa); K.eimer(G,-.3,0,-.4); K.strohhaufen(G,2.4,0,-1.8,.6); } // Wassertrog
+    else if(l.art==='stroh'){ K.strohhaufen(G,-1.6,0,-1.2,1.2); K.handkarren(G,1.4,.4,.5); K.fass(G,2.6,0,-1.5); K.korb(G,.3,0,1.4,'#e0b33c'); } }
+  // Fässer und Körbe an der Ecke des Wirtshauses
+  if(T.wirt){ const H=T.wirt, dd=H.d+H.w/2+.9, uF=A.uF??roadW(R,dd)/2, G=new THREE.Group(), p=wegPos(dd,uF+.5); G.position.set(p.x,roadY(dd)+.05,p.z); G.rotation.y=-p.h; world.add(G);
+    K.fass(G,0,0,0); K.fass(G,.62,0,.1,.9); K.fass(G,.3,.68,.05,.8); K.korb(G,-.6,0,.2,'#7a9a3a'); }
+  // Gänseherde mit Magd (wartet in der rechten Lücke, quert in der Szene, grast dann links)
+  { const W=world; for(let i=0;i<TRI_GANS.n;i++){ const g=K.gans(W,0,0,i===2?'#9a9a8a':'#f2ece0'); L.gaense.push({...g, dd:(q()-.5)*3.2, lag:i*.7+q()*.4, uu:(q()-.5)*1.2, ph:q()*6}); }
+    const m=trMensch({lang:'#7a5a8a',haar:'#c9a04a'}), st=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,1.6,4),holz); st.position.set(0,-.62,.5); st.rotation.x=1.1; m.arme[1].add(st); m.arme[1].rotation.x=-.5; world.add(m.G); L.magd=m; }
+  // Gegenverkehr: Magd mit Korb, Bauer mit Sense, Heuwagen mit Kutscher, Mönch mit Stab
+  T.gegen.forEach(([t,d],i)=>{ const art=TRI_GEGEN_ART[i]||'bauer', G=new THREE.Group(); G.visible=false; world.add(G); const E={G,t,d,art,v:TRI_GEGEN_V[art]||TRI_GEGEN_V.sonst,ph:q()*6};
+    if(art==='wagen'){ const P=trPferd({fell:'#6b4a2e'}); P.G.position.z=2.3; G.add(P.G); E.pferd=P; box(G,1.5,.1,2.8,bretter,0,1,-.6); for(const x of [-.72,.72]) box(G,.06,.45,2.8,bretter,x,1.25,-.6); // Wagen
+      for(const [x,z] of [[-.85,.3],[.85,.3],[-.85,-1.5],[.85,-1.5]]){ const r2=new THREE.Mesh(new THREE.TorusGeometry(.48,.05,5,16),holzD); r2.rotation.y=Math.PI/2; r2.position.set(x,.5,z); G.add(r2); for(let k=0;k<4;k++){ const sp=box(G,.03,.9,.03,holz,x,.5,z); sp.rotation.x=k*Math.PI/4; } }
+      for(const x of [-.4,.4]){ const de=cyl(.04,holz); place(de,[x,1,.75],[x*.6,1.3,1.9]); G.add(de); } // Deichsel
+      for(const [x,y,z,sx,sy,sz] of [[0,1.55,-.9,.7,.45,1.2],[-.1,1.95,-.5,.5,.35,.8],[.2,1.85,-1.4,.45,.3,.6]]) K.kugel(G,1,K.stroh,x,y,z,sx,sy,sz); // Heu
+      const m=trMensch({kittel:'#6b5a3a',hose:'#3a3020',haar:'#5a4232',bart:'#5a4232'}); m.G.position.set(0,.55,.55); m.beine[0].rotation.x=m.beine[1].rotation.x=-1.4; m.arme[0].rotation.x=m.arme[1].rotation.x=-.9; G.add(m.G); E.m=m; }
+    else { const o=art==='magd'?{lang:'#3f6b4a',haar:'#8a5a32'}:art==='moench'?{lang:'#5a4632',haar:'#8a6a4a'}:{kittel:'#8a3b2e',hose:'#3a3020',haar:'#4a3222',bart:'#4a3222'}, m=trMensch(o); G.add(m.G); E.m=m;
+      if(art==='magd'){ const kb=new THREE.Group(); kb.position.set(0,-.55,.15); m.arme[0].add(kb); K.korb(kb,0,-.15,0,'#c94a2a'); m.arme[0].rotation.x=-.5; }
+      if(art==='bauer'){ const se=new THREE.Group(); se.position.set(0,-.6,0); m.arme[0].add(se); const st=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,1.7,4),holz); st.position.y=.6; se.add(st); const bl=box(se,.04,.06,.8,M('#8a8d93'),0,1.42,-.38); bl.rotation.x=.3; m.arme[0].rotation.x=-2.6; } // Sense über der Schulter
+      if(art==='moench'){ const st=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,1.8,4),holz); st.position.set(0,-.62,0); m.arme[0].add(st); m.arme[0].rotation.x=-.4; const tk=new THREE.Mesh(new THREE.SphereGeometry(.125,8,6),lam('#e3b48e')); tk.position.y=.16; m.kopf.add(tk); } } // Tonsur
+    L.gegen.push(E); });
+  // Reh mit zwei Kitzen, Wildschwein
+  if(T.reh!=null){ L.reh={tiere:[triReh(false),triReh(true),triReh(true)], s:-1, fertig:false}; L.reh.tiere.forEach(r=>{ r.G.visible=false; world.add(r.G); }); }
+  if(T.sau!=null){ const S=triSau(); S.G.visible=false; world.add(S.G); L.sau={S, s:-1, fertig:false, d:0, u:0}; } }
+
+// ---- Ausweichen: dem Heuwagen rechts Platz machen (Friedel fährt links neben dir mit) ----
+function triGegenSpur(d,t){ const L=anim.tri&&anim.tri.leben; if(!L) return t; const W=L.gegen.find(E=>E.art==='wagen'&&E.G.visible); if(!W) return t;
+  const g=W.dNow-d, rechts=bSm((50-g)/12)*bSm((g+9)/4); return t+(roadW(R,d)/2-.5-t)*rechts; }
+
+// ---- Bewegung (aus poseTrifels) ----
+function poseTrifelsLeben(dt,t,rt){ const A=anim.tri, L=A.leben, T=R.tri; if(!L) return; const run=race.state==='run', lauf=run&&!race.paused?dt*simSpeed():0, dw=T.wirtD, ZS=A.sk&&run?rt-A.sk.tS:-1;
+  const bodenY=(d,u,x,z)=>Math.abs(u)<roadW(R,d)/2+.4?roadY(d)+.05:terrainAt(x,z)+.02;
+  if(Math.abs(me.d-dw)<260){ hofKastenPose(L.D,t);
+    // Gänse: Szene-Sekunde von..bis queren sie von rechts nach links, die Magd treibt
+    const rw=roadW(R,dw)/2, u0=rw+5, u1=-(rw+6), k=(ZS-TRI_GANS.von)/(TRI_GANS.bis-TRI_GANS.von), nachher=run&&rt>=(A.sk?A.sk.tW:1e9);
+    for(const g of L.gaense){ const kk=nachher?1:clampN(k-g.lag/14,0,1), geht=kk>0&&kk<1, d=dw+TRI_GANS.da+g.dd, u=u0+(u1-u0)*kk+g.uu, p=wegPos(d,u);
+      g.T.position.set(p.x,bodenY(d,u,p.x,p.z),p.z); g.T.rotation.y=geht?Math.PI/2-p.h:Math.PI/2-p.h+Math.sin(t*.3+g.ph)*1.4; g.T.rotation.z=geht?.08*Math.sin(t*8+g.ph):0;
+      g.k.rotation.z=geht?.1*Math.sin(t*6+g.ph):-.4*Math.max(0,Math.sin(t*2+g.ph*3))**3; } // laufen watschelnd, sonst picken
+    { const m=L.magd, kk=nachher?1:clampN(k-.25,0,1.1), geht=kk>0&&kk<1.1, d=dw+TRI_GANS.da, u=Math.max(u1+1.5,u0+2+(u1-u0)*kk), p=wegPos(d,u); m.G.position.set(p.x,bodenY(d,u,p.x,p.z),p.z); m.G.rotation.y=Math.PI-p.h;
+      const s=geht?Math.sin(t*6):0; m.beine[0].rotation.x=.5*s; m.beine[1].rotation.x=-.5*s; m.arme[1].rotation.x=-.5-(geht?.4*Math.max(0,Math.sin(t*3)):0); } } // schwingt den Stecken
+  // Gegenverkehr: kommt dir auf dem Weg entgegen (zu Fuß links neben dem Weg, der Wagen in der linken Hälfte)
+  for(const E of L.gegen){ const d=E.d+E.v*(E.t-rt), vis=run&&Math.abs(d-me.d)<160&&d>me.d-25; E.G.visible=vis; E.dNow=d; if(!vis) continue;
+    const rw=roadW(R,d)/2, u=E.art==='wagen'?-(rw-1.15):-(rw+.7), p=wegPos(d,u); E.G.position.set(p.x,E.art==='wagen'?roadY(d)+.02:bodenY(d,u,p.x,p.z),p.z); E.G.rotation.y=-p.h-Math.PI/2;
+    E.ph+=lauf*E.v*2.6; const s=Math.sin(E.ph), g=d-me.d;
+    if(E.pferd){ E.pferd.beine.forEach((b,i)=>b.rotation.x=.35*(i===0||i===3?s:-s)); E.pferd.hals.rotation.x=.06*Math.sin(E.ph*2); E.m.arme[1].rotation.x=g<14&&g>-3?-2.5+.3*Math.sin(t*9):-.9; } // Kutscher grüßt
+    else { E.m.beine[0].rotation.x=.45*s; E.m.beine[1].rotation.x=-.45*s; E.m.G.position.y=.03*Math.abs(Math.sin(E.ph));
+      const gruss=g<12&&g>-2, a=E.m.arme[1]; a.rotation.x+=((gruss?-2.5+.3*Math.sin(t*9):-.45*s)-a.rotation.x)*Math.min(1,dt*6); E.m.kopf.rotation.y=gruss?-.5:0; } }
+  // Reh mit Kitzen: steht am Waldrand rechts, quert vor dir den Weg, wenn du auf 45 m herankommst
+  if(L.reh&&!L.reh.fertig){ const Rh=L.reh, d0=T.reh, rw=roadW(R,d0)/2, nah=me.d>d0-150&&me.d<d0+30;
+    if(Rh.s<0&&me.d>d0-45) Rh.s=me.d<d0+5?0:99; if(Rh.s>=0) Rh.s+=lauf; if(Rh.s>9||!nah&&Rh.s>=0){ Rh.fertig=true; Rh.tiere.forEach(r=>r.G.visible=false); }
+    else Rh.tiere.forEach((r,i)=>{ const tau=Rh.s-i*.7, sp=tau>0, u=sp?rw+9-5.2*tau:rw+9+i*1.4, d=d0+[0,-1.6,1.2][i]+(sp?0:i*.4); r.G.visible=nah&&u>-(rw+16); if(!r.G.visible) return;
+      const p=wegPos(d,u), w=sp?Math.abs(Math.sin(tau*5.5)):0; r.G.position.set(p.x,bodenY(d,u,p.x,p.z)+w*.45,p.z); r.G.rotation.y=sp?Math.PI/2-p.h:Math.PI/2-p.h+.6;
+      r.beine.forEach((b,j)=>b.rotation.z=sp?(j<2?1:-1)*.7*Math.sin(tau*11):0); r.K.rotation.z=sp?.15*Math.sin(tau*11):0; r.kopf.rotation.z=sp?0:.15*Math.sin(t*.8+i); }); }
+  // Wildschwein: kommt schräg von rechts aus dem Wald, läuft vor dir auf den Weg, rennt ein Stück vor dir her und biegt dann nach links in den Wald ab (TRI_SAU)
+  if(L.sau&&!L.sau.fertig){ const W=L.sau, S=W.S, d0=T.sau, Z=TRI_SAU;
+    if(W.s<0&&me.d>d0-22){ if(me.d<d0+10){ W.s=0; W.pd=null; } else W.fertig=true; }
+    if(W.s>=0){ W.s+=lauf; const s=W.s, rw=roadW(R,me.d)/2, rein=bSm(s/Z.rein), raus=bSm((s-Z.raus)/Z.ab), gap=13-6*rein+8*raus, d=me.d+gap;
+      const u1=rw+6+(.35*Math.sin(s*.8)-rw-6)*rein, u=u1+(-(rw+10)-u1)*raus; // rechts im Wald → Wegmitte (leicht pendelnd) → links hinaus
+      if(s>Z.ende){ W.fertig=true; S.G.visible=false; } else { const p=wegPos(d,u); S.G.visible=true; S.G.position.set(p.x,bodenY(d,u,p.x,p.z)+.06*Math.abs(Math.sin(s*9)),p.z);
+        if(W.pd!=null&&lauf>0){ const dd=d-W.pd, du=u-W.pu; if(Math.hypot(dd,du)>.01) W.rot=Math.atan2(du,Math.max(.01,dd)); } W.pd=d; W.pu=u; S.G.rotation.y=-p.h-(W.rot||0); // schaut in Laufrichtung
+        S.beine.forEach((b,j)=>b.rotation.z=(j%2?1:-1)*(j<2?1:-1)*.6*Math.sin(s*14)); S.kopf.rotation.z=.1*Math.sin(s*7); } } } }

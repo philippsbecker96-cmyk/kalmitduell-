@@ -18,10 +18,9 @@ function dorfGruen(r,fr,rw){ const S=r.S, q=rng(2024), Z=r.zones.find(z=>z[0]===
     else if(k<.85){ S.bush.push({x, y, s:.7+q()*.6, c:q(), tree:q()<.3}); if(q()<.5) S.bush.push({x:x+1.2, y:y+.6, s:.5+q()*.4, c:q(), tree:false}); } // Holunder, Hasel
     else for(let i=0;i<3;i++) S.grass.push({x:x+(q()-.5)*2, y:y+(q()-.5)*2, s:1+q()*.6, c:q(), r:q()*6}); } }
 
-function buildDorf(K){ const {mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst,fr,rw,A,ps,qq,sc,cc,up}=K, q=rng(4711), D=A.dorf={tiere:[], leute:[], tuecher:[], katzen:[], bienen:[], gaense:[], enten:[], dampf:[]};
-  const at=(s,d,u)=>{ const f=fr(d), o=rw(d)+(zOpt(R,d).geh??SIDEWALK)+u, x=f.px+f.nx*s*o, z=f.py+f.ny*s*o; return {x, y:u<.6?roadY(d)+.15:terrainAt(x,z), z, h:f.h, s, d}; }; // u: Meter neben dem Gehweg
-  const grp=p=>{ const G=new THREE.Group(); G.position.set(p.x,p.y,p.z); G.rotation.y=Math.atan2(-Math.sin(p.h)*-p.s, Math.cos(p.h)*-p.s); world.add(G); return G; }; // lokal: +z zur Straße
-  const zuG=(G,m)=>{ G.add(m.G); return m; }, mesh=(P,geo,mat,x,y,z)=>{ const o=new THREE.Mesh(geo,mat); o.position.set(x,y,z); P.add(o); return o; }, kugel=(P,r,c,x,y,z,sx=1,sy=1,sz=1)=>{ const o=mesh(P,new THREE.SphereGeometry(r,8,6),typeof c==='string'?M(c):c,x,y,z); o.scale.set(sx,sy,sz); return o; };
+// ---- Hof-Baukasten (Berwartstein und Wirtshaus der Kampagne): Tiere, Misthaufen, Schweinekoben, Kleinkram · K: box, M, holz, holzD, bretter, q (Zufall), D (Listen für die Bewegung: tiere, katzen, dampf) ----
+function hofKasten(K){ const {box,M,holz,holzD,bretter,q,D}=K;
+  const mesh=(P,geo,mat,x,y,z)=>{ const o=new THREE.Mesh(geo,mat); o.position.set(x,y,z); P.add(o); return o; }, kugel=(P,r,c,x,y,z,sx=1,sy=1,sz=1)=>{ const o=mesh(P,new THREE.SphereGeometry(r,8,6),typeof c==='string'?M(c):c,x,y,z); o.scale.set(sx,sy,sz); return o; };
   const geflecht=(c,quer)=>{ const t=canvasTex(64,64,g=>{ g.fillStyle=c; for(let i=0;i<64;i+=8){ g.fillRect(i,0,4,64); if(quer) g.fillRect(0,i+2,64,3); } }); t.wrapS=t.wrapT=THREE.RepeatWrapping; return new THREE.MeshLambertMaterial({map:t,transparent:true,alphaTest:.4,side:THREE.DoubleSide}); };
   const stroh=M('#d8c070'), erde=M('#5a4128'), hufe=M('#2a2420'), wasser=new THREE.MeshPhongMaterial({color:'#6d8f93',shininess:80}), korbM=geflecht('#a8844a',true);
   // Tiere: Rumpf, vier Beine, Kopf vorn (lokal +x)
@@ -47,8 +46,25 @@ function buildDorf(K){ const {mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst
     box(G,.08,.42,.08,holzD,.5,.21,-.3); return G; };
   const strohhaufen=(P,x,y,z,s=1)=>{ kugel(P,1,stroh,x,y+.25*s,z,1.1*s,.5*s,.9*s); for(let i=0;i<6;i++){ const h=box(P,.4*s,.02,.02,M('#c9ad5a'),x+(q()-.5)*s,y+.3*s+q()*.2*s,z+(q()-.5)*s); h.rotation.set(q()*3,q()*3,q()*3); } };
   const pfahl=(P,x,y,z,h,r=.06)=>{ const p=cyl(r,holzD); place(p,[x,y,z],[x,y+h,z]); P.add(p); return p; };
-  const blase=(txt,p,hy,w=6.2)=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(txt),transparent:true,depthWrite:false})); sp.scale.set(w,w*.31,1); sp.position.set(p.x,p.y+hy,p.z); sp.visible=false; world.add(sp); return sp; };
   const puff=canvasTex(64,64,g=>{ const gr=g.createRadialGradient(32,32,0,32,32,30); gr.addColorStop(0,'rgba(255,255,255,.55)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,64,64); });
+  const misthaufen=G=>{ kugel(G,1,M('#4e3a24'),0,.35,0,2.2,.8,1.6); kugel(G,1,M('#6b5230'),.4,.75,-.2,1.2,.45,.9); for(let i=0;i<9;i++) box(G,.5,.02,.03,M('#b8a050'),(q()-.5)*3,.6+q()*.5,(q()-.5)*2).rotation.set(q()*3,q()*3,q()*3);
+    const gb=new THREE.Group(); gb.position.set(-.9,.9,.3); gb.rotation.z=.35; G.add(gb); const st=cyl(.03,holz); place(st,[0,-.3,0],[0,1.4,0]); gb.add(st); for(const z of [-.08,0,.08]) box(gb,.015,.35,.015,M('#5f6266'),0,-.45,z); // Mistgabel
+    huhn(G,.3,1.05,0,1,'#f2ece0'); huhn(G,-.6,.75,-.5,2.5,'#9a5a2a'); huhn(G,1.3,.35,.8,-1,'#c9733a');
+    const wp=new THREE.Vector3(); G.updateMatrixWorld(); for(let i=0;i<4;i++){ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:puff,transparent:true,depthWrite:false,opacity:.4})); world.add(sp); wp.set((q()-.5)*1.4,.9,(q()-.5)*.8).applyMatrix4(G.matrixWorld); D.dampf.push({sp,x:wp.x,y:wp.y,z:wp.z,ph:i/4}); } }; // Dampf
+  const koben=G=>{ box(G,4,.04,3,M('#4a3524'),0,.03,0); for(const [x,z,w,dd] of [[0,1.5,4,.06],[0,-1.5,4,.06],[2,0,.06,3],[-2,0,.06,3]]) for(const y of [.25,.6,.95]) box(G,w,.22,dd||.06,bretter,x,y,z); // Bretterwand
+    for(const [x,z] of [[2,1.5],[-2,1.5],[2,-1.5],[-2,-1.5],[0,1.5]]) box(G,.12,1.15,.12,holzD,x,.57,z); box(G,1.2,.25,.35,holzD,-1.2,.13,-1.1); // Pfosten, Trog
+    kugel(G,.6,M('#3a2a1c'),.4,.04,.2,2,.08,1.4); schwein(G,.6,.3,.4); schwein(G,-.5,-.4,2.6); strohhaufen(G,-1.3,0,.9,.6); strohhaufen(G,3,0,-1,.8); };
+  return {mesh,kugel,geflecht,stroh,erde,hufe,wasser,korbM,vier,schwein,huhn,gans,katze,fass,korb,eimer,handkarren,strohhaufen,pfahl,puff,misthaufen,koben}; }
+// Bewegung der Hoftiere und des Mistdampfs (aus poseDorf und poseTrifels)
+function hofKastenPose(D,t){ for(const T of D.tiere){ const ph=t+T.ph; if(T.art==='huhn'){ T.k.rotation.z=T.kraeht?(Math.sin(t*.7)>.93?.9:0):-.9*Math.max(0,Math.sin(ph*3))**4; T.T.rotation.y+=Math.sin(ph*.7)*.004; }
+    else if(T.art==='schwein'){ T.k.rotation.z=-.25-.15*Math.max(0,Math.sin(ph*2.2)); T.T.rotation.z=.04*Math.sin(ph*1.3); } else if(T.art==='ziege') T.k.rotation.y=.25*Math.sin(ph*.9); else T.k.rotation.z=.08*Math.sin(ph*.8); }
+  for(const P of D.dampf){ const k=(t*.18+P.ph)%1; P.sp.position.set(P.x+k*.6,P.y+k*2.2,P.z); P.sp.scale.setScalar(.6+k*1.6); P.sp.material.opacity=.35*Math.sin(k*Math.PI); } }
+
+function buildDorf(K){ const {mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst,fr,rw,A,ps,qq,sc,cc,up}=K, q=rng(4711), D=A.dorf={tiere:[], leute:[], tuecher:[], katzen:[], bienen:[], gaense:[], enten:[], dampf:[]};
+  const at=(s,d,u)=>{ const f=fr(d), o=rw(d)+(zOpt(R,d).geh??SIDEWALK)+u, x=f.px+f.nx*s*o, z=f.py+f.ny*s*o; return {x, y:u<.6?roadY(d)+.15:terrainAt(x,z), z, h:f.h, s, d}; }; // u: Meter neben dem Gehweg
+  const grp=p=>{ const G=new THREE.Group(); G.position.set(p.x,p.y,p.z); G.rotation.y=Math.atan2(-Math.sin(p.h)*-p.s, Math.cos(p.h)*-p.s); world.add(G); return G; }; // lokal: +z zur Straße
+  const zuG=(G,m)=>{ G.add(m.G); return m; }, {mesh,kugel,geflecht,stroh,erde,hufe,wasser,korbM,vier,schwein,huhn,gans,katze,fass,korb,eimer,handkarren,strohhaufen,pfahl,puff,misthaufen,koben}=hofKasten({box,M,holz,holzD,bretter,q,D});
+  const blase=(txt,p,hy,w=6.2)=>{ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(txt),transparent:true,depthWrite:false})); sp.scale.set(w,w*.31,1); sp.position.set(p.x,p.y+hy,p.z); sp.visible=false; world.add(sp); return sp; };
 
   // ---------- Ortseingang im Vorlauf: Ortstafel, Wegkreuz, Heuhaufen am Feldrand ----------
   { const p=at(1,14,1), tx=Math.cos(p.h), tz=Math.sin(p.h), G=new THREE.Group(); G.position.set(p.x,p.y,p.z); G.rotation.y=Math.atan2(-tx,-tz); world.add(G); // lokal: +z zu den Ankommenden, x quer zur Straße
@@ -61,13 +77,8 @@ function buildDorf(K){ const {mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst
   for(const [s,d,u] of [[1,4,9],[1,12,15],[-1,5,13],[-1,15,8],[1,18,6],[-1,10,19]]){ const p=at(s,d,u); kugel(world,1.1,stroh,p.x,p.y+.9,p.z,1,1.15,1); pfahl(world,p.x,p.y,p.z,2.6,.04); mesh(world,new THREE.ConeGeometry(.9,.8,9),stroh,p.x,p.y+1.95,p.z); } // Heuhaufen um Stangen
 
   // ---------- links 72–98 m: dampfender Misthaufen mit Hühnern und Mistgabel, Schweinekoben mit zwei Säuen im Schlamm ----------
-  { const p=at(-1,78,3), G=grp(p); kugel(G,1,M('#4e3a24'),0,.35,0,2.2,.8,1.6); kugel(G,1,M('#6b5230'),.4,.75,-.2,1.2,.45,.9); for(let i=0;i<9;i++) box(G,.5,.02,.03,M('#b8a050'),(q()-.5)*3,.6+q()*.5,(q()-.5)*2).rotation.set(q()*3,q()*3,q()*3);
-    const gb=new THREE.Group(); gb.position.set(-.9,.9,.3); gb.rotation.z=.35; G.add(gb); const st=cyl(.03,holz); place(st,[0,-.3,0],[0,1.4,0]); gb.add(st); for(const z of [-.08,0,.08]) box(gb,.015,.35,.015,M('#5f6266'),0,-.45,z); // Mistgabel
-    huhn(G,.3,1.05,0,1,'#f2ece0'); huhn(G,-.6,.75,-.5,2.5,'#9a5a2a'); huhn(G,1.3,.35,.8,-1,'#c9733a');
-    const wp=new THREE.Vector3(); G.updateMatrixWorld(); for(let i=0;i<4;i++){ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:puff,transparent:true,depthWrite:false,opacity:.4})); world.add(sp); wp.set((q()-.5)*1.4,.9,(q()-.5)*.8).applyMatrix4(G.matrixWorld); D.dampf.push({sp,x:wp.x,y:wp.y,z:wp.z,ph:i/4}); } } // Dampf
-  { const p=at(-1,91,3.5), G=grp(p); box(G,4,.04,3,M('#4a3524'),0,.03,0); for(const [x,z,w,dd] of [[0,1.5,4,.06],[0,-1.5,4,.06],[2,0,.06,3],[-2,0,.06,3]]) for(const y of [.25,.6,.95]) box(G,w,.22,dd||.06,bretter,x,y,z); // Bretterwand
-    for(const [x,z] of [[2,1.5],[-2,1.5],[2,-1.5],[-2,-1.5],[0,1.5]]) box(G,.12,1.15,.12,holzD,x,.57,z); box(G,1.2,.25,.35,holzD,-1.2,.13,-1.1); // Pfosten, Trog
-    kugel(G,.6,M('#3a2a1c'),.4,.04,.2,2,.08,1.4); schwein(G,.6,.3,.4); schwein(G,-.5,-.4,2.6); strohhaufen(G,-1.3,0,.9,.6); strohhaufen(G,3,0,-1,.8); }
+  { const p=at(-1,78,3), G=grp(p); misthaufen(G); }
+  { const p=at(-1,91,3.5), G=grp(p); koben(G); }
 
   // ---------- links 108–113 m: alter Heuwagen mit gebrochenem Rad, Kinder klettern drauf ----------
   { const p=at(-1,110.5,3.5), G=grp(p), W=new THREE.Group(); W.rotation.z=-.13; W.position.y=.1; G.add(W); box(W,3.2,.12,1.6,bretter,0,.95,0); for(const z of [-.78,.78]) box(W,3.2,.4,.06,bretter,0,1.2,z);
@@ -200,8 +211,7 @@ function buildDorf(K){ const {mensch,HUT,box,M,holz,holzD,dach,sand,bretter,inst
 
 // ---- Bewegung (aus poseBurg, nur in der Nähe des Dorfs): Tiere picken und schnüffeln, Hahn kräht, Holzhacker, Magd pumpt, Wäsche weht, Gänse und Enten ziehen ihre Runden ----
 function poseDorf(t,dt,cp){ const D=anim.burg.dorf; if(!D||me.d>420&&Math.hypot(cp.x-R.xs[0],cp.z-R.ys[0])>500) return;
-  for(const T of D.tiere){ const ph=t+T.ph; if(T.art==='huhn'){ T.k.rotation.z=T.kraeht?(Math.sin(t*.7)>.93?.9:0):-.9*Math.max(0,Math.sin(ph*3))**4; T.T.rotation.y+=Math.sin(ph*.7)*.004; }
-    else if(T.art==='schwein'){ T.k.rotation.z=-.25-.15*Math.max(0,Math.sin(ph*2.2)); T.T.rotation.z=.04*Math.sin(ph*1.3); } else if(T.art==='ziege') T.k.rotation.y=.25*Math.sin(ph*.9); else T.k.rotation.z=.08*Math.sin(ph*.8); }
+  hofKastenPose(D,t);
   for(const L of D.leute){ const m=L.m, ph=t+L.ph;
     if(L.art==='pumpe'){ const w=Math.sin(t*2.6); L.hb.rotation.z=.35*w; m.arme[0].rotation.x=m.arme[1].rotation.x=-1.3-.35*w; L.str.scale.y=w<0?1:.2; L.str.position.y=w<0?.9:1.1; }
     else if(L.art==='haendler'){ m.arme[1].rotation.x=-.8-.5*Math.max(0,Math.sin(ph*2.4)); m.kopf.rotation.y=.3*Math.sin(ph*.8); }
@@ -216,5 +226,4 @@ function poseDorf(t,dt,cp){ const D=anim.burg.dorf; if(!D||me.d>420&&Math.hypot(
   for(const T of D.tuecher) T.t.rotation.x=.18*Math.sin(t*2.2+T.ph)+.08*Math.sin(t*3.9+T.ph*1.7);
   for(const K of D.katzen){ K.sw.rotation.y=.5*Math.sin(t*1.5+K.ph); K.k.rotation.y=.4*Math.sin(t*.4+K.ph); }
   for(const B of D.bienen){ const a=t*3+B.ph; B.b.position.set(B.c.x+Math.cos(a)*B.r, B.c.y+.25*Math.sin(a*1.7), B.c.z+Math.sin(a*1.3)*B.r); }
-  for(const [L,v] of [[D.gaense,.18],[D.enten,.12]]) for(const G of L){ const a=G.ph+t*v; G.T.position.set(Math.cos(a)*G.r*(L===D.enten?1.3:1), L===D.enten?.08:0, Math.sin(a)*G.r*.8); G.T.rotation.y=-a-Math.PI/2; G.T.rotation.z=L===D.enten?0:.08*Math.sin(t*8+G.ph); if(L===D.gaense) G.k.rotation.z=-.4*Math.max(0,Math.sin(t*2+G.ph*3))**3; }
-  for(const P of D.dampf){ const k=(t*.18+P.ph)%1; P.sp.position.set(P.x+k*.6,P.y+k*2.2,P.z); P.sp.scale.setScalar(.6+k*1.6); P.sp.material.opacity=.35*Math.sin(k*Math.PI); } }
+  for(const [L,v] of [[D.gaense,.18],[D.enten,.12]]) for(const G of L){ const a=G.ph+t*v; G.T.position.set(Math.cos(a)*G.r*(L===D.enten?1.3:1), L===D.enten?.08:0, Math.sin(a)*G.r*.8); G.T.rotation.y=-a-Math.PI/2; G.T.rotation.z=L===D.enten?0:.08*Math.sin(t*8+G.ph); if(L===D.gaense) G.k.rotation.z=-.4*Math.max(0,Math.sin(t*2+G.ph*3))**3; } }

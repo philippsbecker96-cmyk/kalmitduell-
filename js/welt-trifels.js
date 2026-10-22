@@ -23,7 +23,8 @@ function prepTrifels(r){ const O=r.def.orte, S=r.S, q=rng(77), kf=r.kf, [kx,ky]=
         if(amWeg(x,y,(busch?1.5:rad)+3.2)) continue; if(busch) S.bush.push({x,y,s:.6+q()*.9,c:q()}); else S.tree.push({x,y,s:rad,c:q(),pine:q()<.55,ht:9+q()*8}); } } }
   for(const k of ['tree','rock','bush','block','konif','grass']) S[k]=S[k].filter(o=>!frei.some(([x,y,m])=>Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m&&Math.hypot(o.x-x,o.y-y)<m));
   for(const h of S.house){ h.fw=q()<.75; h.gw=false; h.pv=false; if(h.roof==='#6f6f70'||q()<.4) h.roof=q()<.6?'#9e3a28':'#a8925c'; } // Fachwerk, Ziegel oder Stroh, keine Solardächer
-  r.tri.wirt=S.house.filter(h=>h.side===1&&!h.gs).sort((a,b)=>Math.abs(a.d-r.tri.wirtD)-Math.abs(b.d-r.tri.wirtD))[0]||null; } // Haus rechts, das dem Wirtshaus-Meter am nächsten steht
+  r.tri.wirt=S.house.filter(h=>h.side===1&&!h.gs).sort((a,b)=>Math.abs(a.d-r.tri.wirtD)-Math.abs(b.d-r.tri.wirtD))[0]||null;
+  prepTrifelsLeben(r); } // Baulücken am Wirtshaus, Wege für Reh und Wildschwein (welt-trifels-leben.js) // Haus rechts, das dem Wirtshaus-Meter am nächsten steht
 
 // ---- Gelände (aus build3D, vor dem Gelände-Mesh): Vorburg eben (nur absenken, damit nichts durch die Straße sticht), Burgberg unter dem Felsen ----
 function trifelsGelaende(h,src,dist){ const T=R.tri, n=TER.nx, res=TER.res, [kx,ky]=T.karren, [bx,by]=T.burg, hy=roadY((T.hof[0]+T.hof[1])/2)-.45, rp=T.rh+14; T.hofY=hy+.45;
@@ -112,6 +113,7 @@ function buildTrifels(){ const T=R.tri, hy=T.hofY, [kx,ky]=T.karren, [bx,by]=T.b
     for(const p of L){ const st=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,2.2,5),holzD); st.position.set(p.x,p.y+1.1,p.z); world.add(st); const la=new THREE.Mesh(new THREE.BoxGeometry(.28,.38,.28),glow); la.position.set(p.x,p.y+2.35,p.z); world.add(la); } }
   buildTrifelsLeute(T,hy); // Goldkarren, Wachen, Burgherr, Löwenherz mit Gefolge
   if(T.gast) buildGasthaus(T); // Ziel: Gasthaus „Zum Teufelstisch“ mit Wirt, Teufelstisch im Hintergrund
+  sicher('Trifels-Leben',()=>buildTrifelsLeben(T)); // Hoftiere am Wirtshaus, Gänse, Gegenverkehr, Reh, Wildschwein (welt-trifels-leben.js)
 }
 
 // ---- Figuren (Schritt 4): Mensch, Pferd mit Schabracke, Wappen ----
@@ -209,7 +211,7 @@ function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=
     if(lauf) r.ph+=dt*TRI_V*2.6*simSpeed(); const s=Math.sin(r.ph), a=lauf?1:0; r.p.beine.forEach((b,i)=>b.rotation.x=.55*a*(i===0||i===3?s:-s)); r.p.hals.rotation.x=.08*a*Math.sin(r.ph*2)+.03*Math.sin(t*.9+r.ab);
     r.m.G.position.y=1.1+.05*a*Math.abs(Math.sin(r.ph)); }
   A.d0=d0; // für triSpur
-  triWanken(dt,t); poseSturz(dt,t,rt); poseGasthaus(dt,t); poseAudienz(dt,t,rt); poseFriedel(dt,t,rt); trifelsLicht(rt);
+  triWanken(dt,t); poseSturz(dt,t,rt); poseGasthaus(dt,t); poseAudienz(dt,t,rt); poseFriedel(dt,t,rt); sicher('Trifels-Leben',()=>poseTrifelsLeben(dt,t,rt)); trifelsLicht(rt);
   if(A.ruf){ const g=d0-me.d, an=race.state==='run'&&g<48&&g>2, b=A.reiter[0].p.G.position; A.ruf.visible=an; if(an){ A.ruf.position.set(b.x,b.y+5.2,b.z); const tx=kText(TRI_BEISEITE); if(A.rufTx!==tx){ A.rufTx=tx; A.ruf.material.map=blaseTex(tx); A.ruf.material.needsUpdate=true; } } }
   if(A.fahne) A.fahne.rotation.x=.12*Math.sin(t*2.3);
   // Burgherr: hebt die Hand und spricht dich an, kurz bevor die Audienz-Tafel kommt (Blase über seinem Kopf, aber nie auf deinem Fahrer)
@@ -224,7 +226,7 @@ function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=
 const KARREN_TRI=1.2; // Schritt des Goldkarrens, m/s
 const TRI_BEISEITE='Beiseite mit Euch, [Bauer|Bäuerin]! Platz für den König von England!';
 // Spur (aus rennen.js): vor dem Gefolge in der Mitte, ab 32 m ganz an den rechten Rand gedrängt, bis der Letzte vorbei ist; beim Sturz rutschst du aufs Bankett
-function triSpur(d,t){ const A=anim.tri; if(!A||A.d0==null||race.state!=='run') return t; if(A.sturzS>=.4) return roadW(R,d)/2-.7; const g=A.d0-d, L=A.reiter.length?A.reiter[A.reiter.length-1].ab:0; if(g>70||g+L<-6) return t;
+function triSpur(d,t){ const A=anim.tri; if(!A||A.d0==null||race.state!=='run') return t; t=triGegenSpur(d,t); if(A.sturzS>=.4) return roadW(R,d)/2-.7; const g=A.d0-d, L=A.reiter.length?A.reiter[A.reiter.length-1].ab:0; if(g>70||g+L<-6) return t;
   const H=roadW(R,d)/2-.3, mitte=bSm((70-g)/15), rechts=bSm((32-g)/6)*bSm((g+L+6)/5); return t+(0-t)*mitte*(1-rechts)+(H-t)*rechts; }
 // Wanken: reitet ein Pferd dicht an dir vorbei, kommt dein Holzrad ins Schwanken (Rollen r.wank und Lenken r.lenk, wirken in putRider), bis ±18°
 function triWanken(dt,t){ const A=anim.tri, ich=riders3d[myKey]; if(!ich) return; let e=0;
@@ -269,7 +271,7 @@ function trifelsKamera(dt){ const A=anim.tri, B=A&&A.burgherr, ich=riders3d[myKe
   const w=.75*bSm((rt-a)/1.2)*bSm((b-rt)/1.2), look=new THREE.Vector3(p.x,p.y+1.6,p.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz); camera.lookAt(now.lerp(look,w)); }
 
 // ---- Friedel, Wirtshaus-Szene, Elwetritsche-Jagden (Schritt 4/5) – Texte vom Nutzer, Übersicht in KAMPAGNE.md ----
-const TRI_TXT={dorfmann:'Zeh Gulde, dass du heit owend kä Elwetritsch fangsch!', friedel1:'Des wer ma mo sehe!', dorfweib:['Dem Bu henn se ah ä mo zu oft hochgeworfe…','…un ä mo zu wenich uffgfange.'],
+const TRI_TXT={dorfmann:'Zeh Gulde, dass du heit owend kä Elwetritsch fangsch!', friedel1:'Des wer ma mo sehe!', dorfweib:['Den Bu henn se ah ä mo zu oft hochgeworfe…','…un ä mo zu wenich uffgfange.'],
   friedel2:['Du fahrschd doch a noch Siede, gell?','Kinnsch ma do vielleicht helfe? Allä trau ich mich ned in de Wald…'],
   ank:['Psst. Do vorne raschelts, [name]!','Do is se widder!','Wie frech se uns aguckt, die mänt a, sie is de Kees!','Uffbasse, [name], die is gscheit wie sunscht was.','Des is die letzscht Chance! Ich halt schummo de Sack uff, [name]!'],
   hopp:'Hopp, hopp, alleweil hemmer se!',
@@ -277,16 +279,19 @@ const TRI_TXT={dorfmann:'Zeh Gulde, dass du heit owend kä Elwetritsch fangsch!'
   weg:['Weg isse – ins Gebisch!',"Die hot uns d' Zung rausgstreckt, hosch des gsähne?",'Jetzt lacht se uns a noch aus!','Des gibts doch ned – schun widder!'],
   angst:['Die beißen, die Sauviecher, ich schwörs!',['Hosch du des Geheul ghört?','Des war bestimmt bloß de Wind…'],['Im Dunkle seht ma do hinnen Ache leichte…','…do werd ma ganz onnerschd.']],
   lob:[['Du triddsch jo wie de Deifel persönlich!','Ich gläb ich nenn dich Betzi ab jetzad!'],'So schnell bin ich noch nie gewesst!','Mit dir zsamme kriech ich noch so eh Vieh, ich spürs!'],
-  fang:['Ich hab se!!! Ich hab des Scheißding!','Zeh Gulde, aller!!!'], ende:['Ich muss glei zurick ind Wertschaft, die werren gucken…','Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell?','Hosch enner gud bei mer, [name]!']};
+  fang:['Ich hab se!!! Ich hab des Scheißding!','Zeh Gulde, aller!!!'], ende:['Ich muss glei zurick ind Wertschaft, die werren gucken…','Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell?','Hosch enner gud bei mer, [name]!'],
+  lampe:'Oich dunkel do im Wald, loss mo di Lambe aschalte!',
+  sau:['Gugg mo do! E Wutz!','Do kinnt ma e subba Brotworschd draus mache… Hosch du a so en Hunger?']};
 // Ablauf aus dem Workout: wer sagt wann was (Workout-Zeit in s) – Wirtshaus am Ende des Einfahrens, je Jagd Ankündigung, Anfeuern, Zurückfallen, Countdown, Entwischt/Fang, dazwischen Lob und Angst
 function triSkript(){ const S=race.woSegs||[], tW=S[0]?S[0].t0+S[0].dur:480, tS=tW-TRIFELS_T.szene, J=S.filter(s=>/Jagd/.test(s.label)), L=[], X=TRI_TXT;
   const sag=(t0,dur,wer,txt)=>{ if(Array.isArray(txt)) txt.forEach((x,i)=>L.push({t0:t0+dur*i/txt.length,t1:t0+dur*(i+1)/txt.length,wer,txt:x})); else L.push({t0,t1:t0+dur,wer,txt}); }; // lange Sprüche: mehrere Blasen nacheinander
   sag(tS+1,6,'dorfmann',X.dorfmann); sag(tS+7,4,'friedel',X.friedel1); sag(tS+11,8,'dorfweib',X.dorfweib); sag(tS+19,11,'friedel',X.friedel2); // Zwischenszene am Wirtshaus
   J.forEach((j,k)=>{ const a=j.t0; sag(a-7,7,'friedel',X.ank[k]); sag(a+3,5,'friedel',X.hopp); if(k<4) sag(a+10,6,'friedel',X.zurueck[k]);
     if(k<4) sag(a+j.dur+1,6,'friedel',X.weg[k]); else sag(a+j.dur-3,9,'friedel',X.fang);
-    if(k<3){ sag(a+70,8,'friedel',X.lob[k]); sag(a+140,9,'friedel',X.angst[k]); } });
+    if(k<3){ sag(a+70,8,'friedel',X.lob[k]); sag(a+140,9,'friedel',X.angst[k]); } if(k===3){ sag(a+42,6,'friedel',X.lampe); sag(a+TRIFELS_T.sau-2,13,'friedel',X.sau); } }); // Wildschwein nach Jagd 4 (welt-trifels-leben.js)
   const G=S.find(s=>s.label==='Grundlage'), T=race.woT||0, heim=G?G.t0+Math.round(G.dur*.55):T-52; sag(heim-21,20,'friedel',X.ende); // Abschied in der Grundlage, dann kehrt er um – das Ausfahren fährt man allein
-  return {L,tS,tW,J,T,heim}; }
+  const lampe=J[3]?J[3].t0+48:heim; // nach Friedels Lampen-Spruch gehen beide Laternen richtig an
+  return {L,tS,tW,J,T,heim,lampe}; }
 // Sprechblase in fester Bildschirmgröße (gut lesbar, auch von weitem)
 function triBlase(){ const s=new THREE.Sprite(new THREE.SpriteMaterial({transparent:true,depthWrite:false,depthTest:false,sizeAttenuation:false})); s.scale.set(.62,.19,1); s.renderOrder=10; s.visible=false; world.add(s); return s; }
 // Blase auf dem Bildschirm über den Punkt p setzen; liegt sie auf dem Fahrer g, rückt sie über dessen Kopf (NDC: halbe Blasenhöhe aus scale und Brennweite)
@@ -355,8 +360,8 @@ function trifelsLicht(rt){ const A=anim.tri; if(!A||race.rain) return; const K=r
   if(SUNS) SUNS.forEach((s,j)=>s.material.opacity=(j?1:.75)*clampN((sy+.03)/.1,0,1));
   c('bg',scene.background); scene.fog.color.copy(scene.background); c('himmel',sky.material.color); if(R.fog0) scene.fog.far=R.fog0[1]*z('fern');
   const sch=sun.castShadow?k<2.05:k<1.95; if(sch!==sun.castShadow) sun.castShadow=sch; // ab der Dämmerung keine Sonnenschatten mehr: three.js (Lambert) rechnet den Schatten auch über das Laternenlicht – sonst bleiben Fahrer und Weg dunkel (einmaliger Shader-Neubau)
-  const dk=clampN(k-1,0,2)/2; A.dk=dk; if(A.elw.licht){ const E=A.elw, F=A.friedel; E.licht.intensity=E.G.visible?2.2*dk:0; E.licht.position.copy(E.G.position); E.licht.position.y+=.8; F.licht.intensity=F.r.g.visible?3*dk:0; F.la.getWorldPosition(F.licht.position); { const hf=headingAt(R,F.d); F.licht.position.x-=Math.cos(hf)*.9; F.licht.position.z-=Math.sin(hf)*.9; F.licht.position.y+=1.3; } } // über und hinter dem Kopf: so ist auch die Seite zur Kamera hell // Elwetritsche glimmt, Friedels Laterne leuchtet
-  { const L=A.meinL, ich=riders3d[myKey]; if(L&&ich){ if(L.m.parent!==ich.body) ich.body.add(L.m); const z=K?rt-K.heim-1:-1, fl=z<0?0:z<1.4?(Math.random()<.5?.2:1)*bSm(z/1.4):1; // nach Friedels Abschied anzünden: kurz flackern, dann ruhig
+  const dk=clampN(k-1,0,2)/2; A.dk=dk; if(A.elw.licht){ const E=A.elw, F=A.friedel; E.licht.intensity=E.G.visible?2.2*dk:0; E.licht.position.copy(E.G.position); E.licht.position.y+=.8; const an=K?clampN((rt-K.lampe)/1.4,0,1):0, fl=an>0&&an<1?(Math.random()<.5?.25:1)*an:an; F.licht.intensity=F.r.g.visible?3*(dk*.3+(Math.max(dk,.55)-dk*.3)*fl):0; F.la.getWorldPosition(F.licht.position); { const hf=headingAt(R,F.d); F.licht.position.x-=Math.cos(hf)*.9; F.licht.position.z-=Math.sin(hf)*.9; F.licht.position.y+=1.3; } } // über und hinter dem Kopf: so ist auch die Seite zur Kamera hell // Elwetritsche glimmt, Friedels Laterne glimmt schwach und brennt nach seinem Lampen-Spruch hell (kurzes Flackern)
+  { const L=A.meinL, ich=riders3d[myKey]; if(L&&ich){ if(L.m.parent!==ich.body) ich.body.add(L.m); const z=K?rt-K.lampe:-1, fl=z<0?0:z<1.4?(Math.random()<.5?.2:1)*bSm(z/1.4):1; // mit Friedels Laterne anzünden (nach seinem Lampen-Spruch): kurz flackern, dann ruhig
     L.mat.emissive.setRGB(fl,.78*fl,.42*fl); L.licht.intensity=ich.g.visible?3.4*fl*(.92+.08*Math.sin(performance.now()/1000*13)):0; L.m.getWorldPosition(L.licht.position); const hd=headingAt(R,me.d); L.licht.position.x-=Math.cos(hd)*1.1; L.licht.position.z-=Math.sin(hd)*1.1; L.licht.position.y+=1.5; } } // über und hinter dir: leuchtet den ganzen Fahrer aus (die Kamera sieht dich von hinten), reicht 18 m weit
   for(const m of A.elwMats||[]) if(m.emissive) m.emissive.copy(m.color).multiplyScalar(.55*dk);
   const ab=K?clampN((rt-(K.T-8))/8,0,1):0, fl=ab>0?`brightness(${(1-ab).toFixed(3)})`:''; if(cv.style.filter!==fl) cv.style.filter=fl; } // letzte 8 s: Bild blendet ab, bleibt schwarz bis zum Ergebnis

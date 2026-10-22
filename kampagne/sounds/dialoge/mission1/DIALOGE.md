@@ -76,6 +76,9 @@ Je Jagd: Ankündigung, Anfeuern, (Jagd 1–4) Zurückfallen, am Ende Entwischt b
 | `friedel_angst2b` | nach Jagd 2 | Des war bestimmt bloß de Wind… |
 | `friedel_angst3a` | nach Jagd 3 | Im Dunkle seht ma do hinnen Ache leichte… |
 | `friedel_angst3b` | nach Jagd 3 | …do werd ma ganz onnerschd. |
+| `friedel_lampe` | nach Jagd 4, bevor die Laternen angehen | Oich dunkel do im Wald, loss mo di Lambe aschalte! |
+| `friedel_sau1` | nach Jagd 4, Wildschwein läuft mit | Gugg mo do! E Wutz! |
+| `friedel_sau2` | ebenso | Do kinnt ma e subba Brotworschd draus mache… Hosch du a so en Hunger? |
 
 ## Abschied (Friedel)
 
@@ -85,4 +88,4 @@ Je Jagd: Ankündigung, Anfeuern, (Jagd 1–4) Zurückfallen, am Ende Entwischt b
 | `friedel_ende2` | ebenso | Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell? |
 | `friedel_ende3` | ebenso | Hosch enner gud bei mer! |
 
-**Zusammen:** 48 Dateien (41 Sätze, davon 7 doppelt für Bauer/Bäuerin).
+**Zusammen:** 48 Dateien (45 Sätze, davon 3 doppelt für Bauer/Bäuerin).
