@@ -1,4 +1,4 @@
-# Lücken zwischen Straße und Gelände (Kalmit, Berwartstein)
+# Lücken zwischen Straße und Gelände (Kalmit, Berwartstein) – und versunkene Figuren (unten)
 
 ## Problem
 In steilen Kurven und Kehren schwebt die Straße zum Teil über dem Gelände. Man sieht unter die Fahrbahnkante oder auf die Unterseite eines höheren Kehren-Asts, an manchen Stellen sind Lücken im Bild. Betroffen: Kalmit und Burg Berwartstein (z. B. Berwartstein bei Kehre 7, ca. 4,2 km, 9–10 % Steigung). Im Flachen und auf geraden Stücken tritt es kaum auf.
@@ -48,3 +48,22 @@ Messung mit 0,08 m Tiefe: Kalmit 5×, Berwartstein 6× offen, je höchstens 4 cm
 
 ## Stand
 **Gelöst** (Okt. 2026): Mit 0,2 m Absenkung und Schulter sind im Spiel keine Lücken mehr zu sehen. Bei neuen Strecken oder Änderungen am Gelände mit `__luecken()` nachmessen.
+
+# Versunkene Figuren und Gegenstände (Okt. 2026)
+
+## Problem
+Truhen, Bauern, Pferde und Wagenräder steckten auf Berwartstein und in Mission 1 sichtbar im Straßenbelag oder im Hang.
+
+## Ursache
+Aufgestellt mit `terrainAt` oder `roadY`, beides ist nicht der sichtbare Boden: Die Fahrbahn liegt 0,12 m über `roadY`, unter der Straße ist das Gelände `STR_UNTER` abgesenkt, und `terrainAt` mischt bilinear, während das Gelände-Mesh Dreiecke zeichnet (`triAt`). Am Hang macht das bis 0,3 m aus.
+
+## Lösung (eingebaut)
+- `bodenY(x,z)` in `welt-kalmit.js`: Fahrbahn +0,12 · Bankett +0,05 · Gehweg im Ort +0,22 · Schulter schräg vom Bankett bis unter das Gelände · eigene Flächen der Szenen (`BODEN_FL`) · sonst gezeichnetes Gelände. Nächster Straßenpunkt über ein Gitter (`strasseBei`), ≈ 4 µs pro Aufruf.
+- Regel (auch in `CLAUDE.md`): alles mit `bodenY` aufstellen, große Gruppen am Hang Teil für Teil, absichtlich Eingegrabenes mit `userData.ohneBoden=true` markieren.
+- Prüfer `__versunken(tol=0.06)` (Konsole) bzw. `node werkzeuge/selbsttest.mjs [strecke|trifels] [meter,…] --boden`: kleine Dinge bis ≈ 30 m neben der Straße, die im Boden stecken, bis 0,6 m schweben oder unplatziert am Start (0,0,0) stehen; Gruppen über 2 m Teil für Teil.
+- Ergebnis: Mission 1 von 146 auf eine Handvoll Funde; nebenbei gefunden: Gänse-Magd und Gänse standen am Start.
+
+## Offen
+- Berwartstein: Reigen-Tänzer am Fest 12–15 cm (drehen sich in der Gruppe `F.reigen` über schrägem Platz → pro Bild einzeln auf den Boden) · Pferd bei den Leuten am Weg (≈ Meter 4571) 18 cm · zwei nicht zugeordnete Figuren bei Meter 111 und 255 · Wäscherin am Bach (−53 cm) und Bader (−56 cm): prüfen, ob Absicht, dann markieren.
+- Mission 1: Schweinekoben am Wirtshaus 45 cm im Hang → Gelände darunter ebnen (`trifelsGelaende`).
+- Grenzen des Prüfers: schräg stehende Teile misst er etwas zu tief (Box um gedrehte Teile), Posen mit Gliedern unter dem Boden und große starre Teile am Hang einzeln beurteilen.
