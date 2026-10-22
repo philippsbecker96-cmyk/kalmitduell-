@@ -137,6 +137,7 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 - Ablauf: Tafeln vor und nach der Mission, keine Bewertung.
 - Neue Welten: Trifels/Annweiler, Teufelstisch, Dahn – je eine Welt ist ungefähr so viel Arbeit wie Berwartstein bisher. Alternative zum Einstieg: erst Gerüst + Mission 4 auf der bestehenden Strecke bauen und testen.
 - Neue Effekte: Flutwelle als Verfolger (Finale), Verfolger-Schergen (Mission 3).
+- **Idee Infokästen (vom Nutzer, noch nicht ausgearbeitet):** während der Fahrt kurze Infotafeln zu historischen Figuren (Richard Löwenherz, Hans von Trotha …), Burgen (Trifels, Berwartstein, Dahn), Sagen (Elwetritsche, Teufelstisch, Jungfernsprung) und der Region (Wasgau, Pfälzerwald, Queichtal). Klein am Bildrand, nicht bildfüllend wie die Story-Tafeln, ein paar Sätze, ≈ 15–20 s sichtbar; ausgelöst an Meter/Zeit, passend zum Ort oder zur gerade getroffenen Figur, am besten in den lockeren Workout-Phasen. Hochdeutsch, sachlich (Sage klar als Sage kennzeichnen). Optional im Menü abschaltbar.
 - Knappe: Figur + Holzrad, Abstandslogik (zurückfallen/aufholen je nach Workout-Block), Sprüche pro Block. Aufwand klein bis mittel, Esel wäre der größte Einzelposten.
 
 ## Umsetzung
