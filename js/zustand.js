@@ -92,7 +92,7 @@ function applyEnv(){ if(!R||R.space) return; if(R.stadium){ applyStadiumEnv(); r
   if(BG&&!dusk&&!rain){ SUN_DIR.set(1,.4,.3).normalize(); sun.color.set(0xffd6a6); sun.intensity=1.05; hemi.color.set(0xd2dce6); hemi.groundColor.set(0x4f5a3c); hemi.intensity=.7; scene.background.set(0xdfe3e1); scene.fog.color.set(0xdfe3e1); sunDisc(true); }
   const hz=race.season==='herbst'&&!R.island&&!rain&&!BG; // Herbst am Tag: tiefere, wärmere Sonne und leichter Dunst
   if(hz&&!dusk){ SUN_DIR.set(-1,.72,.62).normalize(); sun.color.set(0xffcf96); sun.intensity=1.1; hemi.color.set(0xd8dccc); hemi.groundColor.set(0x6a5a3a); scene.background.set(0xe4dccb); scene.fog.color.set(0xe4dccb); }
-  sky.material.color.set(0xffffff); if(SUNS) SUNS.forEach((s,j)=>s.material.opacity=j?1:.75); renderer.domElement.style.filter=''; // Reste vom Trifels-Sonnenuntergang (welt-trifels.js)
+  sun.castShadow=true; sky.material.color.set(0xffffff); if(SUNS) SUNS.forEach((s,j)=>s.material.opacity=j?1:.75); renderer.domElement.style.filter=''; // Reste vom Trifels-Sonnenuntergang (welt-trifels.js)
   scene.fog.near=rain?60:hz?90:R.fog0[0]; scene.fog.far=rain?Math.min(R.fog0[1],900):hz?R.fog0[1]*.75:R.fog0[1]; wetRoads(rain); }
 // Nasse Straße: Phong statt Lambert, dunkler, mit kräftigem Glanzlicht und leichter Spiegelung des Himmels (Materialien mit userData.wet)
 let WET_ENV=null; const wetEnv=()=>WET_ENV||(WET_ENV=Object.assign(canvasTex(8,128,(g,w,h)=>{ const gr=g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'#eef1f3'); gr.addColorStop(.5,'#c4c9cd'); gr.addColorStop(1,'#6d7176'); g.fillStyle=gr; g.fillRect(0,0,w,h); }),{mapping:THREE.EquirectangularReflectionMapping}));
