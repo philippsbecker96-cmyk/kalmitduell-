@@ -186,41 +186,51 @@ function buildTrifelsLeute(T,hy){ const A=anim.tri={reiter:[], traeger:null, kpf
   const wache=(x,z,ry)=>{ const w=trMensch({kittel:'#c8302a',aermel:'#e9b22e',hose:'#2f4a35'}); const hb=new THREE.Mesh(new THREE.SphereGeometry(.15,10,8),lam('#8a8d93')); hb.position.set(0,.12,-.045); w.kopf.add(hb); w.G.position.set(x,0,z); w.G.rotation.y=ry; K.add(w.G); return w; };
   const wachen=[wache(-1.5,1.4,0),wache(1.5,-.4,0)]; wachen.forEach(speer); // gehen links und rechts neben dem Wagen mit
   A.karren={K,raeder,wachen,s:0,ph:0};
+  { const W=T.weg, W0=W[0]; let dj=T.hof[0], m=1e9; for(let d=T.hof[0];d<T.hof[1];d+=.5){ const [x,z]=posAt(R,d), e=Math.hypot(x-W0.x,z-W0.z); if(e<m){ m=e; dj=d; } } // Abzweigung des Burgwegs
+    const P=[]; for(let d=dj-16;d<=dj-1;d+=1.5){ const p=wegPos(d,-1.5); P.push({x:p.x,z:p.z,y:roadY(d)+.17}); } let L=0; for(let i=P.length-1;i>=0;i--){ const n=P[i+1]||W0; L-=Math.hypot(n.x-P[i].x,n.z-P[i].z); P[i].L=L; }
+    A.karren.P=P.concat(W); A.karren.Lr=-L; } // Kamerafahrt beim Countdown: Karren rollt über die Kehre heran und biegt auf den Burgweg
   // Burgherr: langes Gewand, pelzbesetzter Mantel, steht am Karren und blickt zur Straße
   const W0=T.weg[3], bd=T.aud+3, bp=wegPos(bd,-(roadW(R,bd)/2+1.6)), bv=wegPos(bd-14,0), bh=trMensch({lang:'#3a4f8a',mantel:'#6a1f2a',bart:'#5a4632',haar:'#5a4632'}); bh.G.position.set(bp.x,terrainAt(bp.x,bp.z),bp.z); bh.G.rotation.y=Math.atan2(bv.x-bp.x,bv.z-bp.z); world.add(bh.G); // links am Scheitel der Kehre, 3 m hinter dem Halt der Audienz, blickt dir entgegen
   for(const da of [-1.5,1.5]){ const w=trMensch({kittel:'#c8302a',aermel:'#e9b22e',hose:'#2f4a35'}), hb=new THREE.Mesh(new THREE.SphereGeometry(.15,10,8),lam('#8a8d93')); hb.position.set(0,.12,-.045); w.kopf.add(hb); speer(w);
     const p=wegPos(bd+da,-(roadW(R,bd)/2+1.9)); w.G.position.set(p.x,terrainAt(p.x,p.z),p.z); w.G.rotation.y=bh.G.rotation.y; world.add(w.G); } // zwei Wachen neben ihm
   const bl=triBlase(), bq=wegPos(bd,-(roadW(R,bd)/2+3.4)); bl.position.set(bq.x,bh.G.position.y+4.3,bq.z); // feste Bildschirmgröße, nie verdeckt; hoch und etwas außen, damit sie nicht auf dem Fahrer liegt
   A.burgherr={m:bh,blase:bl,ry:bh.G.rotation.y};
-  for(const [dx,dz,ry] of [[-5.5,-1,.4],[-5.8,.2,-.3]]){ const t=truhe(world,W0.x+dx,0,W0.z+dz,ry); t.position.y=terrainAt(t.position.x,t.position.z); } // zwei abgeladene Truhen dort const pz=new THREE.Mesh(new THREE.TorusGeometry(.25,.06,6,14),lam('#e8e0d0')); pz.rotation.x=Math.PI/2; pz.position.y=1.5; bh.G.add(pz);
+  for(const [dx,dz,ry] of [[-5.5,-1,.4],[-5.8,.2,-.3]]){ const t=truhe(world,W0.x+dx,0,W0.z+dz,ry); t.position.y=terrainAt(t.position.x,t.position.z); A.truhe={t,boden:t.position.clone()}; } // zwei abgeladene Truhen dort
+  { const w=trMensch({kittel:'#c8302a',aermel:'#e9b22e',hose:'#2f4a35'}), hb=new THREE.Mesh(new THREE.SphereGeometry(.15,10,8),lam('#8a8d93')), b=A.truhe.boden; hb.position.set(0,.12,-.045); w.kopf.add(hb);
+    w.G.position.set(b.x+1.05,terrainAt(b.x+1.05,b.z),b.z); w.G.rotation.y=-Math.PI/2; world.add(w.G); A.truhe.w=w; } // Wache trägt die zweite Truhe und stellt sie bei der Kamerafahrt ab const pz=new THREE.Mesh(new THREE.TorusGeometry(.25,.06,6,14),lam('#e8e0d0')); pz.rotation.x=Math.PI/2; pz.position.y=1.5; bh.G.add(pz);
   // Löwenherz mit Gefolge: ein Ritter reitet voraus, dahinter Bannerträger mit der Löwenfahne und ein Ritter, Richard in der Mitte zwischen zwei Rittern, zwei Ritter am Schluss – füllt fast den ganzen Weg
   // [Rolle, Kleidung, Wappen, ab = Meter hinter dem Vorreiter, u = Spur]
   const L=[['vor',{rock:3,kette:1},3,0,0],['banner',{rock:0,kette:1},0,6.5,-.75],['',{rock:1,kette:1},1,6.5,.75],['koenig',{rock:0,kette:1,krone:1,bart:'#8a7a68'},0,12,-.1],['',{rock:2,kette:1},2,12,-1.3],['',{rock:3,kette:1},3,12,1.05],['',{rock:1,kette:1},1,17.5,-.7],['',{rock:2,kette:1},2,17.5,.7]];
   L.forEach(([rolle,mo,sk,ab,u],i)=>{ const p=trPferd({fell:i%2?'#2a201a':'#3a2a22',schabracke:sk,federbusch:rolle==='koenig'?'#c8202a':'#efeae0'}), m=trMensch(mo); trReiter(p,m); world.add(p.G);
     if(rolle==='banner'){ const st=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,3.6,6),holz); st.position.set(.25,1.5,.1); m.G.add(st); const f=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.8),new THREE.MeshLambertMaterial({map:canvasTex(160,116,g=>wappenMal(g,160,116,0)),side:THREE.DoubleSide})); f.position.set(.25,2.9,-.55); f.rotation.y=Math.PI/2; m.G.add(f); A.fahne=f; }
-    A.reiter.push({p,m,ab,u,ph:i*1.3}); });
+    A.reiter.push({p,m,ab,u,ph:i*1.3}); if(rolle==='koenig') A.koenig=A.reiter[i]; });
+  A.kd=bd-4; A.ku=-roadW(R,bd)/2; // Richard wartet zu Fuß neben dem Burgherrn, sein Pferd am Rand der Kehre
   const ru=new THREE.Sprite(new THREE.SpriteMaterial({map:blaseTex(kText(TRI_BEISEITE)),transparent:true,depthWrite:false})); ru.scale.set(7.4,2.3,1); ru.visible=false; world.add(ru); A.ruf=ru; buildFriedel(T); } // Ruf des Vorreiters
 
 // ---- Bewegung (jeden Frame): Gefolge reitet dir auf dem Anstieg entgegen und vorbei, Träger, Pferde nicken ----
 const TRI_V=3.2; // Trab der Reiter, m/s
 function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=performance.now()/1000, rt=race.state==='run'?race.t:0;
+  if(race.state==='count'){ if(A.kst!=='count') A.kt=0; A.kt=Math.min(5,A.kt+dt); } else A.kt=race.state==='run'?5+race.t:0; A.kst=race.state; // Zeit der Kamerafahrt: 5 s Countdown, dann 10 s schon im Rennen
   // Begegnung: Richards Reihe (12 m hinter dem Vorreiter) ist beim Sturz (TRIFELS_T.sturz) genau neben dir; vorher kommen sie von der Vorburg herab, warten oben bis zum Start
   const d0=Math.min(T.hof[0]-8, T.sturz-12+TRI_V*(TRIFELS_T.sturz-rt)), lauf=race.state==='run'&&!race.paused&&d0<T.hof[0]-8;
-  for(const r of A.reiter){ const d=d0+r.ab, vis=d>-30&&d<T.hof[1]; r.p.G.visible=vis; if(!vis) continue; const P=wegPos(d,r.u), y=roadY(d);
+  for(const r of A.reiter){ let d=d0+r.ab, u=r.u, a=lauf?1:0;
+    if(r===A.koenig){ const L=A.kd-d, x=rt-4.2, w=x<=0?0:x<1?1.7*x*x:3.4*(x-.5); if(w<L){ d=A.kd-w; u=A.ku+(r.u-A.ku)*bSm((w-L+15)/15); a=x>0?1:0; } } // Richard: steigt beim Burgherrn auf und trabt zurück an seinen Platz im Gefolge
+    const vis=d>-30&&d<T.hof[1]; r.p.G.visible=vis; if(!vis) continue; const P=wegPos(d,u), y=roadY(d);
     r.p.G.position.set(P.x,y,P.z); r.p.G.rotation.set(0,-P.h-Math.PI/2,0); // lokal +z gegen die Fahrtrichtung: reitet bergab
-    if(lauf) r.ph+=dt*TRI_V*2.6*simSpeed(); const s=Math.sin(r.ph), a=lauf?1:0; r.p.beine.forEach((b,i)=>b.rotation.x=.55*a*(i===0||i===3?s:-s)); r.p.hals.rotation.x=.08*a*Math.sin(r.ph*2)+.03*Math.sin(t*.9+r.ab);
+    if(a) r.ph+=dt*TRI_V*2.6*simSpeed(); const s=Math.sin(r.ph); r.p.beine.forEach((b,i)=>b.rotation.x=.55*a*(i===0||i===3?s:-s)); r.p.hals.rotation.x=.08*a*Math.sin(r.ph*2)+.03*Math.sin(t*.9+r.ab);
     r.m.G.position.y=1.1+.05*a*Math.abs(Math.sin(r.ph)); }
   A.d0=d0; // für triSpur
+  triIntroPose(A.kt);
   triWanken(dt,t); poseSturz(dt,t,rt); poseGasthaus(dt,t); poseAudienz(dt,t,rt); poseFriedel(dt,t,rt); sicher('Trifels-Leben',()=>poseTrifelsLeben(dt,t,rt)); trifelsLicht(rt);
   if(A.ruf){ const g=d0-me.d, an=race.state==='run'&&g<48&&g>2, b=A.reiter[0].p.G.position; A.ruf.visible=an; if(an){ A.ruf.position.set(b.x,b.y+5.2,b.z); const tx=kText(TRI_BEISEITE); if(A.rufTx!==tx){ A.rufTx=tx; A.ruf.material.map=blaseTex(tx); A.ruf.material.needsUpdate=true; } } }
   if(A.fahne) A.fahne.rotation.x=.12*Math.sin(t*2.3);
   // Burgherr: hebt die Hand und spricht dich an, kurz bevor die Audienz-Tafel kommt (Blase über seinem Kopf, aber nie auf deinem Fahrer)
-  const B=A.burgherr; if(B&&!A.aud){ const an=race.state==='run'&&rt>=TRI_RUF[0]&&rt<TRI_RUF[1]; B.blase.visible=an; if(an){ B.txt=kText(TRI_RUF_TXT); triBlaseText(B.blase,B.txt); const k=B.m.G.position.clone(); k.y+=2.6; triBlaseUeber(B.blase,k,riders3d[myKey]&&riders3d[myKey].g); } B.m.arme[1].rotation.x+=((an?-2.4:0)-B.m.arme[1].rotation.x)*Math.min(1,dt*4); B.m.arme[0].rotation.x+=(0-B.m.arme[0].rotation.x)*Math.min(1,dt*4); B.m.kopf.rotation.y=.15*Math.sin(t*.6); B.m.G.rotation.y+=angDiff(B.ry,B.m.G.rotation.y)*Math.min(1,dt*3); }
+  const B=A.burgherr; if(B&&!A.aud){ const an=race.state==='run'&&rt>=TRI_RUF[0]&&rt<TRI_RUF[1]; B.blase.visible=an; if(an){ B.txt=kText(TRI_RUF_TXT); triBlaseText(B.blase,B.txt); const k=B.m.G.position.clone(); k.y+=2.6; triBlaseUeber(B.blase,k,riders3d[myKey]&&riders3d[myKey].g); } B.m.arme[1].rotation.x+=((an||A.kt>5.2&&A.kt<9.5?-2.4:0)-B.m.arme[1].rotation.x)*Math.min(1,dt*4); B.m.arme[0].rotation.x+=(0-B.m.arme[0].rotation.x)*Math.min(1,dt*4); B.m.kopf.rotation.y=.15*Math.sin(t*.6); B.m.G.rotation.y+=angDiff(B.ry,B.m.G.rotation.y)*Math.min(1,dt*3); }
   // Goldkarren: wartet an der Abzweigung, ab 5 s vor der Vorburg (Workout-Zeit) im Schritt den Burgweg hinauf, fährt durchs Tor und verschwindet
-  const C=A.karren; if(C&&T.weg){ const W=T.weg, L=T.wegL, s=Math.min(L+4, 6+Math.max(0,rt-(TRIFELS_T.rauf-5))*KARREN_TRI), lauf=race.state==='run'&&!race.paused&&s>6&&s<L+4;
+  const C=A.karren; if(C&&T.weg){ const W=C.P, L=T.wegL, ank=-C.Lr+(C.Lr+6)*bSm(A.kt/7.5), s=Math.min(L+4, ank<6?ank:6+Math.max(0,rt-(TRIFELS_T.rauf-5))*KARREN_TRI), v=C.sAlt==null?0:Math.abs(s-C.sAlt)/Math.max(dt,1e-3), lauf=!race.paused&&v>.05; C.sAlt=s; // bei der Kamerafahrt rollt er über die Kehre heran
     C.K.visible=s<L+3.5; let i=1; while(i<W.length-1&&W[i].L<s) i++; const a=W[i-1], b=W[i], f=Math.min(1,Math.max(0,(s-a.L)/Math.max(.01,b.L-a.L))), y=a.y+(b.y-a.y)*f-.17;
     C.K.position.set(a.x+(b.x-a.x)*f, y, a.z+(b.z-a.z)*f); C.K.rotation.set(-Math.atan((b.y-a.y)/Math.max(.01,b.L-a.L)), Math.atan2(b.x-a.x,b.z-a.z), 0);
-    if(lauf) C.ph+=dt*KARREN_TRI*3*simSpeed(); const sn=Math.sin(C.ph), am=lauf?1:0; for(const rr of C.raeder) rr.rotation.x=-(s/.55);
+    if(lauf) C.ph+=dt*Math.min(v,5)*3; const sn=Math.sin(C.ph), am=lauf?1:0; for(const rr of C.raeder) rr.rotation.x=-(s/.55);
     A.kpferd.beine.forEach((bb,k)=>bb.rotation.x=.4*am*(k===0||k===3?sn:-sn)); A.kpferd.hals.rotation.x=.06*Math.sin(lauf?C.ph*2:t*.7);
     for(const w of C.wachen){ w.beine[0].rotation.x=.45*am*sn; w.beine[1].rotation.x=-.45*am*sn; } } }
 const KARREN_TRI=1.2; // Schritt des Goldkarrens, m/s
@@ -263,8 +273,22 @@ function poseAudienz(dt,t,rt){ const A=anim.tri, B=A.burgherr, V=A.ichV, ich=rid
   // Kamera: Totale von der Innenseite der Kehre (du, Burgherr, Wachen), ab dem Auftrag über deine Schulter auf den Burgherrn
   const d=R.tri.aud, w=bSm((s-15.5)/2), at=(dd,u,y)=>{ const p=wegPos(dd,u); return [p.x,roadY(dd)+y,p.z]; }, rw=roadW(R,d)/2, mix=(a,b)=>a.map((v,i)=>v+(b[i]-v)*w);
   camOverride={pos:mix(at(d-7,1.2,2.5),at(d+.3,-(rw-2.4),2)), look:mix(at(d+2.5,-(rw+.4),1.2),[bp.x,bp.y+1.55,bp.z])}; A.audCam=true; }
+// Kamerafahrt beim Countdown (kt = 0–15 s, ab 5 s fährst du schon): Weitwinkel auf den Trifels, Schwenk zum Goldkarren, der über die Kehre heranrollt und vor dem Burgherrn
+// auf den Burgweg biegt, eine Wache stellt eine Truhe ab, Löwenherz schwingt sich aufs Pferd, dann Flug den Berg hinab zu dir
+function triIntroPose(kt){ const A=anim.tri, Q=A.koenig, U=A.truhe;
+  if(Q&&kt<9.5){ const m=Q.m, k=bSm((kt-7.4)/1.2), s=Math.sin(Math.PI*k); // steht links neben dem Pferd (zum Burgherrn hin), Schwung im Bogen in den Sattel
+    m.G.position.set(-.9*(1-k),1.1*k+.5*s,.05); m.G.rotation.set(0,Math.PI/2*(1-k),0); m.beine[0].rotation.set(-.9*k,0,-.35*k); m.beine[1].rotation.set(-.9*k-.8*s,0,.35*k);
+    m.arme[0].rotation.x=m.arme[1].rotation.x=-1.6*(1-k)*bSm((kt-6.6)/.5)-.7*k; }
+  if(U){ const k=bSm((kt-6.2)/1), w=U.w, g=w.G.position, hb=new THREE.Vector3(g.x-.45,g.y+.85,g.z); // Wache bückt sich und setzt die Truhe ab
+    U.t.position.copy(hb.lerp(U.boden,k)); w.kopf.rotation.x=.5*Math.sin(Math.PI*k); w.arme[0].rotation.x=w.arme[1].rotation.x=-1.2*(1-k*k); } }
+function triIntroKamera(){ const A=anim.tri, T=R.tri, kt=A&&A.kt; if(!T||!A.koenig||!(race.state==='count'||race.state==='run')||kt>=15) return false;
+  const [kx,ky]=T.karren, [bx,by]=T.burg, hy=T.hofY, V=(x,y,z)=>new THREE.Vector3(x,y,z), K=A.karren.K.position, Kg=A.koenig.p.G.position, sm=(a,b)=>bSm((kt-a)/(b-a));
+  const pos=V(kx-25,hy+40,ky+40).lerp(V(kx-20,hy+30,ky+5),sm(0,4)).lerp(V(kx-8,hy+4,ky-T.rh+12),sm(3.5,6)).lerp(V(kx-12,hy+3.5,ky-T.rh+9),sm(6.5,8)); // Burg von weit, dann in die Vorburg, dann zu Burgherr und Richard
+  const look=V(bx,hy+20,by).lerp(V(K.x,K.y+1.2,K.z),sm(3.5,5.5)).lerp(V(Kg.x,Kg.y+1.6,Kg.z),sm(6.8,7.8));
+  const f=sm(10,15); if(f>0){ pos.lerp(camera.position,f).y+=30*Math.sin(Math.PI*f); look.lerp(V(camS.lx,camS.ly,camS.lz),f); } // Flug zu dir, im Bogen über den Wald
+  camera.position.copy(pos); camera.lookAt(look); return true; }
 // Kamera (aus draw): schaut kurz zum Burgherrn, während er dich anspricht (wie beim Zöllner)
-function trifelsKamera(dt){ const A=anim.tri, B=A&&A.burgherr, ich=riders3d[myKey]; if(!B||!ich||race.state!=='run') return;
+function trifelsKamera(dt){ const A=anim.tri, B=A&&A.burgherr, ich=riders3d[myKey]; if(A&&triIntroKamera()) return; if(!B||!ich||race.state!=='run') return;
   if(A.seitW>.002){ const w=bSm(A.seitW), u=ich.lane||0, ps=wegPos(me.d+2.2,u+5), pl=wegPos(me.d-1.2,u-1.4), yr=roadY(me.d), ys=Math.max(yr+1.7,terrainAt(ps.x,ps.z)+1.2), sh=A.sturzS>.45&&A.sturzS<.95?.18*(1-(A.sturzS-.45)/.5):0; // Gefolge: von rechts seitlich auf dich und die Pferde
     const lk=new THREE.Vector3(camS.lx,camS.ly,camS.lz).lerp(new THREE.Vector3(pl.x,yr+1,pl.z),w); camera.position.lerp(new THREE.Vector3(ps.x+(Math.random()-.5)*sh,ys+(Math.random()-.5)*sh,ps.z),w); camera.lookAt(lk); }
   const rt=race.t, a=TRI_RUF[0]+6, b=TRI_RUF[1]+1, p=B.m.G.position; if(rt<a||rt>b) return;

@@ -190,9 +190,10 @@ function wertStep(){ const W=race.wert; if(!W||!W.length) return; const auth=!(c
     wertWin(i, a&&(!b||ueber(me)>=ueber(opp))?'me':'opp'); }); }
 function countdown(){
   prepWert(); race.state='count'; enterRaceView(); wakeOn(); recReset();
-  let n=5; const b=$('banner'); b.textContent=n; beep(660);
-  const iv=setInterval(()=>{ n--; if(n>0){ b.textContent=n; beep(660); } else { clearInterval(iv); b.textContent='LOS!'; beep(1046,.35);
-    race.state='run'; race.t=0; setTimeout(()=>b.textContent='',1200); } },1000);
+  const still=!!anim.tri, pip=(f,d)=>{ if(!still) beep(f,d); }; // Trifels: Kamerafahrt, Countdown leise und dezent
+  let n=5; const b=$('banner'); b.classList.toggle('dezent',still); b.textContent=n; pip(660);
+  const iv=setInterval(()=>{ n--; if(n>0){ b.textContent=n; pip(660); } else { clearInterval(iv); b.textContent='LOS!'; pip(1046,.35);
+    race.state='run'; race.t=0; setTimeout(()=>{ b.textContent=''; b.classList.remove('dezent'); },1200); } },1000);
 }
 /* ---------- Pause & Beenden ---------- */
 function setPause(on,tell=true){

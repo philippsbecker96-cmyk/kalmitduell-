@@ -231,6 +231,7 @@ input[type=checkbox]{accent-color:var(--acc)}
 #draftChip i{background:rgba(255,255,255,.2)}
 #draftChip em{background:#6cc0ff}
 #banner{text-shadow:0 6px 34px rgba(0,0,0,.5),0 2px 0 rgba(0,0,0,.35)}
+#banner.dezent{font-size:64px;opacity:.45} /* Trifels: Countdown während der Kamerafahrt */
 /* Ergebnis: große Übersicht */
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 10px}
 .stats .st{background:var(--g-soft);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 12px}
