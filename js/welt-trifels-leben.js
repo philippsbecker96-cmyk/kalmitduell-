@@ -58,9 +58,9 @@ function buildTrifelsLeben(T){ const A=anim.tri, q=rng(905), M=c=>lam(c), holz=M
     for(const x of [-.4,.4]){ const de=cyl(.04,holz); place(de,[x,1,.75],[x*.6,1.3,1.9]); G.add(de); } // Deichsel
     const m=trMensch(o); m.G.position.set(0,.55,.55); m.beine[0].rotation.x=m.beine[1].rotation.x=-1.4; m.arme[0].rotation.x=m.arme[1].rotation.x=-.9; G.add(m.G); return {pferd:P,raeder,m}; };
   // Baulücken: lokal +z zur Gasse, Ursprung in der Mitte des alten Hauses
-  for(const l of T.luecken){ const G=new THREE.Group(); G.position.set(l.x,bodenY(l.x,l.y),l.y); G.rotation.y=Math.atan2(l.side*Math.sin(l.h),-l.side*Math.cos(l.h)); world.add(G); const bz=-l.dep/2+1.6;
-    if(l.art==='mist'){ const m=new THREE.Group(); m.position.z=-.6; G.add(m); K.misthaufen(m); K.eimer(G,2.2,0,1.6); K.korb(G,-2.4,0,1.8,'#9a5a2a'); }
-    else if(l.art==='koben'){ const m=new THREE.Group(); m.position.z=-.4; G.add(m); K.koben(m); }
+  for(const l of T.luecken){ let kob=null; const G=new THREE.Group(); G.position.set(l.x,bodenY(l.x,l.y),l.y); G.rotation.y=Math.atan2(l.side*Math.sin(l.h),-l.side*Math.cos(l.h)); world.add(G); const bz=-l.dep/2+1.6;
+    if(l.art==='mist'){ const m=new THREE.Group(); m.position.z=-.6; m.userData.ohneBoden=true; G.add(m); K.misthaufen(m); /* Haufen steckt absichtlich halb im Boden */ K.eimer(G,2.2,0,1.6); K.korb(G,-2.4,0,1.8,'#9a5a2a'); }
+    else if(l.art==='koben'){ const m=kob=new THREE.Group(); m.position.z=-.4; G.add(m); K.koben(m); }
     else if(l.art==='stall'){ for(const [x,z] of [[-.9,-.55],[.9,-.55],[-.9,.55],[.9,.55]]) box(G,.1,.65,.1,holzD,x,.33,bz+z); box(G,2,1.1,1.3,bretter,0,1.2,bz); // Hühnerstall auf Stelzen
       for(const s of [-1,1]){ const d2=box(G,2.3,.06,.85,dachM,0,1.95,bz+s*.33); d2.rotation.x=s*.55; } box(G,.4,.45,.02,M('#1e1610'),.4,.95,bz+.66); // Dach, Schlupfloch
       const rp=box(G,.35,.03,1.3,bretter,.4,.4,bz+1.2); rp.rotation.x=.55; for(let i=0;i<4;i++) box(G,.35,.03,.03,holzD,.4,.12+i*.18,bz+1.68-i*.3); // Hühnerleiter mit Sprossen
@@ -68,7 +68,9 @@ function buildTrifelsLeben(T){ const A=anim.tri, q=rng(905), M=c=>lam(c), holz=M
       box(G,1.2,.15,.3,holzD,-1,.08,bz+2.4); K.strohhaufen(G,-2.6,0,bz+.4,.7); }
     else if(l.art==='gaense'){ box(G,1.6,.3,.5,holzD,-1.5,.15,-.5); const wa=new THREE.Mesh(new THREE.BoxGeometry(1.45,.02,.36),K.wasser); wa.position.set(-1.5,.28,-.5); G.add(wa); K.eimer(G,-.3,0,-.4); K.strohhaufen(G,2.4,0,-1.8,.6); } // Wassertrog
     else if(l.art==='stroh'){ K.strohhaufen(G,-1.6,0,-1.2,1.2); K.handkarren(G,1.4,.4,.5); K.fass(G,2.6,0,-1.5); K.korb(G,.3,0,1.4,'#e0b33c'); }
-    G.updateMatrixWorld(true); const wp=new THREE.Vector3(); for(const o of G.children){ o.getWorldPosition(wp); o.position.y+=bodenY(wp.x,wp.z)-G.position.y; } } // jedes Teil auf den Boden (die Lücken liegen am Hang)
+    G.updateMatrixWorld(true); const wp=new THREE.Vector3(); for(const o of G.children){ o.getWorldPosition(wp); o.position.y+=bodenY(wp.x,wp.z)-G.position.y; } // jedes Teil auf den Boden (die Lücken liegen am Hang)
+    if(kob){ const Y=[[-2,-1.5],[2,-1.5],[-2,1.5],[2,1.5],[0,0]].map(([x,z])=>{ const v=kob.localToWorld(new THREE.Vector3(x,0,z)); return bodenY(v.x,v.z); }), hi=Math.max(...Y), lo=Math.min(...Y); // Koben ist starr: auf die höchste Ecke, darunter ein Sockel aus Trockenmauer bis in den Hang
+      kob.position.y=hi-G.position.y; if(hi-lo>.03) box(kob,4.1,hi-lo+.3,3.1,M('#7d6f5c'),0,-(hi-lo+.3)/2,0); kob.userData.ohneBoden=true; } }
   // Fässer und Körbe an der Ecke des Wirtshauses
   if(T.wirt){ const H=T.wirt, dd=H.d+H.w/2+.9, uF=A.uF??roadW(R,dd)/2, G=new THREE.Group(), p=wegPos(dd,uF+.5); G.position.set(p.x,bodenY(p.x,p.z),p.z); G.rotation.y=-p.h; world.add(G);
     K.fass(G,0,0,0); K.fass(G,.62,0,.1,.9); K.fass(G,.3,.68,.05,.8); K.korb(G,-.6,0,.2,'#7a9a3a'); }

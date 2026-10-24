@@ -115,6 +115,7 @@ function buildTrifels(){ const T=R.tri, hy=T.hofY, [kx,ky]=T.karren, [bx,by]=T.b
   buildTrifelsLeute(T,hy); // Goldkarren, Wachen, Burgherr, Löwenherz mit Gefolge
   if(T.gast) buildGasthaus(T); // Ziel: Gasthaus „Zum Teufelstisch“ mit Wirt, Teufelstisch im Hintergrund
   sicher('Trifels-Leben',()=>buildTrifelsLeben(T)); // Hoftiere am Wirtshaus, Gänse, Gegenverkehr, Reh, Wildschwein (welt-trifels-leben.js)
+  sicher('Trifels-Nebel',buildTrifelsNebel); // Nebel ab der Dämmerung, im Ausfahren dicht
 }
 
 // ---- Figuren (Schritt 4): Mensch, Pferd mit Schabracke, Wappen ----
@@ -222,7 +223,7 @@ function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=
     r.m.G.position.y=1.1+.05*a*Math.abs(Math.sin(r.ph)); }
   A.d0=d0; // für triSpur
   triIntroPose(A.kt);
-  triWanken(dt,t); poseSturz(dt,t,rt); poseGasthaus(dt,t); poseAudienz(dt,t,rt); poseFriedel(dt,t,rt); sicher('Trifels-Leben',()=>poseTrifelsLeben(dt,t,rt)); sicher('Trifels-Ton',()=>triTon(dt,t,rt)); trifelsLicht(rt);
+  triWanken(dt,t); poseSturz(dt,t,rt); poseGasthaus(dt,t); poseAudienz(dt,t,rt); poseFriedel(dt,t,rt); sicher('Trifels-Leben',()=>poseTrifelsLeben(dt,t,rt)); sicher('Trifels-Ton',()=>triTon(dt,t,rt)); trifelsLicht(rt); sicher('Trifels-Nebel',()=>poseTrifelsNebel(t));
   if(A.ruf){ const g=d0-me.d, an=race.state==='run'&&g<48&&g>2, b=A.reiter[0].p.G.position; A.ruf.visible=an; if(an){ A.ruf.position.set(b.x,b.y+5.2,b.z); const tx=kText(TRI_BEISEITE); if(A.rufTx!==tx){ A.rufTx=tx; A.ruf.material.map=blaseTex(tx); A.ruf.material.needsUpdate=true; } } }
   if(A.fahne) A.fahne.rotation.x=.12*Math.sin(t*2.3);
   // Burgherr: hebt die Hand und spricht dich an, kurz bevor die Audienz-Tafel kommt (Blase über seinem Kopf, aber nie auf deinem Fahrer)
@@ -397,8 +398,26 @@ function trifelsLicht(rt){ const A=anim.tri; if(!A||race.rain) return; const K=r
   { const L=A.meinL, ich=riders3d[myKey]; if(L&&ich){ if(L.m.parent!==ich.body) ich.body.add(L.m); const z=K?rt-K.lampe:-1, fl=z<0?0:z<1.4?(Math.random()<.5?.2:1)*bSm(z/1.4):1; // mit Friedels Laterne anzünden (nach seinem Lampen-Spruch): kurz flackern, dann ruhig
     L.mat.emissive.setRGB(fl,.78*fl,.42*fl); L.licht.intensity=ich.g.visible?2.5*fl*(.92+.08*Math.sin(performance.now()/1000*13)):0; L.m.getWorldPosition(L.licht.position); const hd=headingAt(R,me.d); L.licht.position.x-=Math.cos(hd)*1.1; L.licht.position.z-=Math.sin(hd)*1.1; L.licht.position.y+=1.5; } } // über und hinter dir: leuchtet den ganzen Fahrer aus (die Kamera sieht dich von hinten), reicht 18 m weit
   for(const m of A.elwMats||[]) if(m.emissive) m.emissive.copy(m.color).multiplyScalar(.55*dk);
+  triNebel(A,K,rt);
   const ab=K?clampN((rt-(K.T-8))/8,0,1):0, fl=ab>0?`brightness(${(1-ab).toFixed(3)})`:''; if(cv.style.filter!==fl) cv.style.filter=fl; } // letzte 8 s: Bild blendet ab, bleibt schwarz bis zum Ergebnis
 
+// ---- Nebel (vom Nutzer gewünscht, dicht und unheimlich): ab Jagd 1 leichter Dunst im Wald, nach Friedels Abschied dichter Nebel (Ausfahren im Dunst), auf den letzten 700 m vor dem Gasthaus reißt er auf ----
+// nb 0–1: Szenen-Nebel rückt heran (Sichtweite bei 1 ≈ weit m) und färbt Himmel und Hintergrund; dazu Schwaden-Sprites, die um dich herum mitwandern (fester Vorrat, kein Objekt je Meter)
+const TRI_NEBEL={jagd:.3, rampe:60, gast:700, gastNb:.08, weit:75, nah:3, abend:0xc4b2a6, nacht:0x48526a, n:60, abst:8, sicht:170, op:.42}; // gast: ab so vielen m vor dem Gasthaus reißt er auf bis gastNb (Gasthaus, Kuppe und Teufelstisch klar vor dem Nachthimmel)
+function triNebel(A,K,rt){ const N=TRI_NEBEL, T=R.tri, f=scene.fog; let nb=0;
+  if(K){ if(K.J[0]) nb=N.jagd*clampN((rt-K.J[0].t0)/N.rampe,0,1); nb=Math.max(nb,clampN((rt-K.heim)/N.rampe,0,1)); if(T.gast) nb=Math.min(nb,N.gastNb+(1-N.gastNb)*clampN((T.gast.d-me.d)/N.gast,0,1)); }
+  A.nebelNb=nb; if(!R.fog0) return; f.near=R.fog0[0]*(N.nah/R.fog0[0])**nb; if(nb<=0) return; f.far*=(N.weit/f.far)**nb; // logarithmisch: schon bei wenig nb merklich näher
+  const c=(A.nebelC||(A.nebelC=new THREE.Color())).set(N.abend).lerp(new THREE.Color(N.nacht),A.dk||0); scene.background.lerp(c,nb); f.color.copy(scene.background); sky.material.color.lerp(c,nb); } // Himmel und Nebel gleich stark gefärbt: sonst Rand um die Hügel
+function buildTrifelsNebel(){ const A=anim.tri; A.schwaden=[];
+  const puff=canvasTex(128,128,g=>{ for(let i=0;i<16;i++){ const x=28+Math.random()*72, y=38+Math.random()*52, r=16+Math.random()*28, gr=g.createRadialGradient(x,y,0,x,y,r); gr.addColorStop(0,'rgba(255,255,255,.5)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.beginPath(); g.arc(x,y,r,0,7); g.fill(); } }); // wie der Morgennebel auf Berwartstein
+  for(let i=0;i<TRI_NEBEL.n;i++){ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:puff, transparent:true, opacity:0, depthWrite:false, fog:false})); sp.visible=false; world.add(sp); A.schwaden.push(sp); } }
+// Schwaden: je Platz (alle abst m) einer flach über dem Weg und einer daneben (6–26 m), Lage fest aus der Platznummer, treiben langsam; blenden aus, wenn die Kamera hindurchfährt
+function poseTrifelsNebel(t){ const A=anim.tri, S=A.schwaden, nb=A.nebelNb||0, N=TRI_NEBEL; if(!S) return; if(nb<.02||race.state!=='run'){ for(const s of S) s.visible=false; return; }
+  const cp=camera.position, k0=Math.floor((me.d-40)/N.abst), h=(k,j)=>{ const x=Math.sin(k*12.9898+j*78.233)*43758.5453; return x-Math.floor(x); };
+  S.forEach((sp,i)=>{ const k=k0+(i>>1), neben=i&1, d=k*N.abst+h(k,neben)*N.abst; if(d<0){ sp.visible=false; return; }
+    const u=neben?(h(k,3)<.5?-1:1)*(6+h(k,4)*20)+Math.sin(t*.12+k)*2:(h(k,5)-.5)*6+Math.sin(t*.15+k)*1.5, p=wegPos(d,u), s=neben?18+h(k,7)*18:9+h(k,7)*8;
+    sp.position.set(p.x,bodenY(p.x,p.z)+(neben?1+h(k,6)*4:.6+h(k,6)*1.4),p.z); sp.scale.set(s,s*.45,1); const dist=sp.position.distanceTo(cp);
+    const op=N.op*nb*bSm((dist-s*.3)/(s*.7))*bSm((N.sicht-dist)/50); sp.material.opacity=op; sp.material.color.copy(scene.fog.color).multiplyScalar(1.3); sp.visible=op>.003; }); }
 // ---- Gasthaus „Zum Teufelstisch“ am Ziel: Fachwerk, alle Fenster hell, offene Tür, Laternen am Hof, Lichtschein, Rauch, Wirt mit Laterne; Teufelstisch auf der Kuppe dahinter ----
 function gastTex(w,h,front,glow){ return canvasTex(w,h,g=>{ const B='#3e2a1c', bal=(x,y,ww,hh)=>{ g.fillStyle=B; g.fillRect(x,y,ww,hh); }, fen=[]; // glow: nur die Leuchtkarte (Fenster und Tür)
   if(!glow){ g.fillStyle='#ece3cf'; g.fillRect(0,0,w,h); bal(0,0,w,9); bal(0,h/2-5,w,10); bal(0,h-9,w,9); for(let x=0;x<=w;x+=64) bal(Math.min(x,w-9),0,9,h);

@@ -65,5 +65,6 @@ Aufgestellt mit `terrainAt` oder `roadY`, beides ist nicht der sichtbare Boden: 
 
 ## Offen
 - Berwartstein: Reigen-Tänzer am Fest 12–15 cm (drehen sich in der Gruppe `F.reigen` über schrägem Platz → pro Bild einzeln auf den Boden) · Pferd bei den Leuten am Weg (≈ Meter 4571) 18 cm · zwei nicht zugeordnete Figuren bei Meter 111 und 255 · Wäscherin am Bach (−53 cm) und Bader (−56 cm): prüfen, ob Absicht, dann markieren.
-- Mission 1: Schweinekoben am Wirtshaus 45 cm im Hang → Gelände darunter ebnen (`trifelsGelaende`).
+- Mission 1, noch nicht geprüft: zwei dünne Teile bei Meter 285 (−6 cm) · vier Teile 1,6 × 1,6 m bei Meter 370/372 (−16 bis −23 cm, vermutlich schräg gemessene Räder) · ein Teil bei Meter 17142 schwebt 34 cm.
+- Erledigt (25.10.2026): Der Fund „Schweinekoben am Wirtshaus, 45 cm“ war der Misthaufen; Misthaufen und Strohhaufen stecken absichtlich im Boden und sind jetzt markiert (`ohneBoden`, Strohhaufen im Hof-Baukasten, gilt auch für Berwartstein). Der Koben steht als starrer Kasten auf der höchsten Ecke mit Sockel aus Trockenmauer (`welt-trifels-leben.js`).
 - Grenzen des Prüfers: schräg stehende Teile misst er etwas zu tief (Box um gedrehte Teile), Posen mit Gliedern unter dem Boden und große starre Teile am Hang einzeln beurteilen.

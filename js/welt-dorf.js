@@ -44,7 +44,7 @@ function hofKasten(K){ const {box,M,holz,holzD,bretter,q,D}=K;
   const handkarren=(P,x,z,ry)=>{ const G=new THREE.Group(); G.position.set(x,0,z); G.rotation.y=ry; P.add(G); box(G,1.3,.08,.8,bretter,0,.45,0); for(const zz of [-.4,.4]) box(G,1.3,.25,.04,bretter,0,.6,zz);
     const r2=mesh(G,new THREE.TorusGeometry(.32,.04,4,14),holzD,.25,.32,.46); for(let i=0;i<6;i++){ const sp=box(G,.03,.3,.03,holz,.25,.32,.46); sp.rotation.z=i/6*Math.PI; } for(const zz of [-.3,.3]){ const h=cyl(.03,holz); place(h,[-.6,.48,zz],[-1.4,.75,zz]); G.add(h); }
     box(G,.08,.42,.08,holzD,.5,.21,-.3); return G; };
-  const strohhaufen=(P,x,y,z,s=1)=>{ kugel(P,1,stroh,x,y+.25*s,z,1.1*s,.5*s,.9*s); for(let i=0;i<6;i++){ const h=box(P,.4*s,.02,.02,M('#c9ad5a'),x+(q()-.5)*s,y+.3*s+q()*.2*s,z+(q()-.5)*s); h.rotation.set(q()*3,q()*3,q()*3); } };
+  const strohhaufen=(P,x,y,z,s=1)=>{ kugel(P,1,stroh,x,y+.25*s,z,1.1*s,.5*s,.9*s).userData.ohneBoden=true; /* Haufen steckt absichtlich im Boden */ for(let i=0;i<6;i++){ const h=box(P,.4*s,.02,.02,M('#c9ad5a'),x+(q()-.5)*s,y+.3*s+q()*.2*s,z+(q()-.5)*s); h.rotation.set(q()*3,q()*3,q()*3); } };
   const pfahl=(P,x,y,z,h,r=.06)=>{ const p=cyl(r,holzD); place(p,[x,y,z],[x,y+h,z]); P.add(p); return p; };
   const puff=canvasTex(64,64,g=>{ const gr=g.createRadialGradient(32,32,0,32,32,30); gr.addColorStop(0,'rgba(255,255,255,.55)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,64,64); });
   const misthaufen=G=>{ kugel(G,1,M('#4e3a24'),0,.35,0,2.2,.8,1.6); kugel(G,1,M('#6b5230'),.4,.75,-.2,1.2,.45,.9); for(let i=0;i<9;i++) box(G,.5,.02,.03,M('#b8a050'),(q()-.5)*3,.6+q()*.5,(q()-.5)*2).rotation.set(q()*3,q()*3,q()*3);
