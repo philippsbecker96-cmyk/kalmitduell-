@@ -41,6 +41,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - Nicht selbst im Browser auf Aussehen oder Spielgefühl testen – das macht der Nutzer. Erlaubt und erwünscht: nach Änderungen an Strecken/Welten der Selbsttest `node werkzeuge/selbsttest.mjs [strecke|trifels] [meter,…] [--boden]` (`--boden`: listet Versunkenes und Schwebendes, `__versunken()`) (Chrome headless, baut die Strecke, startet das Rennen, springt an die Meter, meldet nur Fehler aus der Konsole).
 - Berwartstein: Zusatz-Szenen laufen über `sicher(name,fn)` (welt-berwartstein.js) – ein Fehler darin lässt nur die Szene ausfallen und steht in der Konsole, die Strecke läuft weiter. Neue Szenen ebenso einbinden.
 - Commit-Nachrichten auf Deutsch. Remote: GitHub `philippsbecker96-cmyk/kalmitduell-`, Branch `main`.
+- Notizen und TODOs des Nutzers (Sammelstelle, nach Themen gegliedert): `TODO.md`.
 - Offene Verschönerungspläne (Landschaft, Gebäude, Licht): `PLAENE.md`.
 - Plan für Rennen mit bis zu 4 Fahrern (Bots und online): `MEHRSPIELER.md`.
 - Konzept Kampagne (4 Mittelalter-Missionen im Wasgau, Workouts nach FTP): `KAMPAGNE.md`.
