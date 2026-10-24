@@ -171,9 +171,9 @@ function friesTex(){ const t=canvasTex(256,32,g=>{ g.fillStyle='#4e3626'; g.fill
 // Frakturschrift (UnifrakturMaguntia): Textur sofort zeichnen und neu zeichnen, sobald die Schrift geladen ist (font: andere Webschrift)
 function frakturTex(w,h,draw,font){ const t=canvasTex(w,h,draw); if(document.fonts&&document.fonts.load) document.fonts.load(font||'40px UnifrakturMaguntia').then(()=>{ const g=t.image.getContext('2d'); g.clearRect(0,0,w,h); draw(g,w,h); t.needsUpdate=true; }).catch(()=>{}); return t; }
 const FRAKTUR='"UnifrakturMaguntia", Georgia, serif';
-const BLASE_SCHRIFT='700 36px "Almendra", Georgia, serif'; // Sprechblasen: kalligrafische Buchschrift, besser lesbar als Fraktur
+const BLASE_SCHRIFT='36px "IM Fell English", Georgia, serif'; // Sprechblasen: alter Buchdruck, besser lesbar als Fraktur
 if(document.fonts&&document.fonts.load) document.fonts.load(BLASE_SCHRIFT).catch(()=>{}); // früh laden, damit der Zeilenumbruch schon mit der richtigen Schrift misst
-// Sprechblase als Pergament: gelbliches Papier mit dunklem Rand, geschwungene Spitze nach unten, Text in Almendra; deko(g) zeichnet zusätzlich etwas aufs Papier
+// Sprechblase als Pergament: gelbliches Papier mit dunklem Rand, geschwungene Spitze nach unten, Text in IM Fell English; deko(g) zeichnet zusätzlich etwas aufs Papier
 // Mehr als drei Zeilen: die Blase wird je Zeile 44 px höher (t.hf = Höhe/190, damit Sprites ihr Seitenverhältnis anpassen können)
 function blaseTex(txt,deko){ const zeilen=g=>{ g.font=BLASE_SCHRIFT; const Z=[]; let z=''; for(const w of txt.split(' ')){ const t=z?z+' '+w:w; if(g.measureText(t).width>(deko?340:450)&&z){ Z.push(z); z=w; } else z=t; } Z.push(z); return Z; };
   const E=Math.max(0,zeilen(document.createElement('canvas').getContext('2d')).length-3)*44, H=190+E;
