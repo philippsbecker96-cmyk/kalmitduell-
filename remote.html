@@ -3,47 +3,80 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-<meta name="theme-color" content="#1d3328">
+<meta name="theme-color" content="#14241c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Kalmit-Duell Fernbedienung</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;800&family=Barlow:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
-:root{--forest:#1d3328;--pine:#2f5a44;--sand:#b5523b;--paper:#f6f3ea;--muted:#c9d6cc}
+/* Farben und Glas-Optik wie in der Lobby (css/style.css) */
+:root{--forest:#1d3328;--pine:#2f5a44;--paper:#f6f3ea;--g-line:rgba(255,255,255,.15);--g-soft:rgba(255,255,255,.06);--acc:#ff7a45;--acc2:#e8552f;--ok:#3fbf7f;--txt2:rgba(246,243,234,.66)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--forest);color:var(--paper);font-family:system-ui,sans-serif;user-select:none;-webkit-user-select:none}
-body{display:flex;flex-direction:column;padding:16px;gap:14px;min-height:100%}
-h1{margin:0;font-size:22px} #st{color:var(--muted);font-size:15px;min-height:1.3em}
-button{flex:1;border:0;border-radius:22px;font:700 34px system-ui,sans-serif;color:var(--paper);background:var(--pine);touch-action:manipulation}
-button:active{filter:brightness(1.3);transform:scale(.98)} button:disabled{opacity:.35}
-#bStart{background:#2b8a3e;flex:.7} #bPause{background:var(--sand)} #bWeiter{background:#1c7ed6}
-#wl{font-size:13px;color:var(--muted);text-align:center}
+html,body{margin:0;min-height:100%;color:var(--paper);font-family:Barlow,system-ui,sans-serif;user-select:none;-webkit-user-select:none}
+html{background:radial-gradient(ellipse at 30% 0%,#3d6b52 0%,var(--forest) 45%,#0c1611 100%) fixed;background-color:var(--forest)}
+body{display:flex;flex-direction:column;padding:16px;gap:12px;min-height:100vh;min-height:100dvh}
+.card{background:linear-gradient(160deg,rgba(34,52,44,.66),rgba(10,18,15,.74));border:1px solid var(--g-line);border-radius:22px;padding:16px 18px;
+  backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);box-shadow:0 28px 80px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.09)}
+h1{margin:0;font:800 34px/1 "Barlow Condensed",sans-serif;letter-spacing:.5px}
+#st{color:var(--txt2);font-size:15px;margin-top:6px;min-height:1.3em} #st.ok{color:var(--ok)}
+.k{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--txt2);font-weight:600}
+.num{font-family:"Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums}
+button{flex:1;border:1px solid var(--g-line);border-radius:18px;font:800 32px "Barlow Condensed",sans-serif;letter-spacing:.5px;color:var(--paper);background:var(--g-soft);touch-action:manipulation;transition:transform .12s,opacity .15s}
+button:active{transform:scale(.98);filter:brightness(1.2)} button:disabled{opacity:.3;box-shadow:none}
+#bStart{background:linear-gradient(180deg,#ff8b52,var(--acc2));border-color:rgba(255,255,255,.28);box-shadow:0 6px 20px rgba(232,85,47,.35);flex:.8}
+#bPause{background:rgba(255,255,255,.1)}
+#bWeiter{background:linear-gradient(180deg,#4fd08f,#2b9a62);border-color:rgba(255,255,255,.28);box-shadow:0 6px 20px rgba(63,191,127,.3)}
+#intBox{display:none}
+#intBox .kopf{display:flex;justify-content:space-between;align-items:baseline}
+#intV{font-size:40px;font-weight:800;line-height:1} #intV.hoch{color:#ffb38f} #intV.tief{color:#9fd8ff}
+#intBox .zeile{display:flex;align-items:center;gap:10px;margin-top:10px}
+#intBox .zeile button{flex:none;width:52px;height:52px;border-radius:14px;font-size:30px;padding:0}
+input[type=range]{flex:1;accent-color:var(--acc);height:36px}
+#intBox .schnell{display:flex;gap:6px;margin-top:10px}
+#intBox .schnell button{flex:1;font:600 16px Barlow,sans-serif;padding:9px 0;border-radius:12px}
+#intBox .schnell button.sel{background:rgba(255,122,69,.18);border-color:var(--acc)}
+#wl{font-size:13px;color:var(--txt2);text-align:center}
 </style>
 </head>
 <body>
-<h1>Kalmit-Duell 📱</h1>
-<div id="st">Verbinde…</div>
+<div class="card"><h1>Kalmit-Duell 📱</h1><div id="st">Verbinde…</div></div>
 <button id="bStart" disabled>▶ Start</button>
 <button id="bPause" disabled>⏸ Pause</button>
 <button id="bWeiter" disabled>▶ Weiter</button>
+<div class="card" id="intBox">
+  <div class="kopf"><span class="k">Intensität · alle Ziel-Watt</span><b class="num" id="intV">100 %</b></div>
+  <div class="zeile"><button id="intM">−</button><input type="range" id="int" min="70" max="130" step="1" value="100"><button id="intP">+</button></div>
+  <div class="schnell"><button data-i="90">90 %</button><button data-i="95">95 %</button><button data-i="100">100 %</button><button data-i="105">105 %</button><button data-i="110">110 %</button></div>
+</div>
 <div id="wl"></div>
 <script>
-/* Fernbedienung: verbindet sich mit dem Peer des PCs (Code aus dem QR-Code) und schickt nur Befehle */
+/* Fernbedienung: verbindet sich mit dem Peer des PCs (Code aus dem QR-Code), schickt Befehle und bekommt jede Sekunde den Stand ({t:'st'}) */
 const PREFIX='kalmit-duell-v3-', code=location.hash.slice(1).toUpperCase(), $=id=>document.getElementById(id);
-let conn=null, wakeLock=null, wlOk=false;
-const st=t=>$('st').textContent=t, btns=on=>['bStart','bPause','bWeiter'].forEach(id=>$(id).disabled=!on);
+let conn=null, wakeLock=null, wlOk=false, ziehe=false, intT=0;
+const st=(t,ok)=>{ $('st').textContent=t; $('st').classList.toggle('ok',!!ok); }, btns=on=>['bStart','bPause','bWeiter'].forEach(id=>$(id).disabled=!on);
 // Display an lassen: beim ersten Tippen anfragen, nach Rückkehr in die Seite neu holen
 async function wakeOn(){ try{ if('wakeLock' in navigator && !wakeLock && document.visibilityState==='visible'){ wakeLock=await navigator.wakeLock.request('screen'); wlOk=true; $('wl').textContent='Display bleibt an ✓'; wakeLock.addEventListener('release',()=>{ wakeLock=null; }); } }catch(e){ if(!wlOk) $('wl').textContent='Display-Sperre konnte nicht verhindert werden.'; } }
 if(!('wakeLock' in navigator)) $('wl').textContent='Dieses Handy kann das Display nicht wach halten – Auto-Sperre ggf. selbst abschalten.';
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible' && wlOk) wakeOn(); });
 document.addEventListener('pointerdown',wakeOn);
-function cmd(a){ wakeOn(); if(conn&&conn.open){ conn.send({t:'rc',a}); if(navigator.vibrate) navigator.vibrate(40); } }
+function cmd(a,v){ wakeOn(); if(conn&&conn.open){ conn.send({t:'rc',a,v}); if(navigator.vibrate) navigator.vibrate(40); } }
 $('bStart').onclick=()=>cmd('start'); $('bPause').onclick=()=>cmd('pause'); $('bWeiter').onclick=()=>cmd('resume');
+// Intensität: Anzeige sofort, an den PC kurz verzögert (beim Ziehen nicht jeden Schritt)
+function intUi(v){ $('int').value=v; $('intV').textContent=v+' %'; $('intV').className='num'+(v>100?' hoch':v<100?' tief':''); document.querySelectorAll('#intBox .schnell button').forEach(b=>b.classList.toggle('sel',+b.dataset.i===v)); }
+function intSetz(v){ v=Math.max(70,Math.min(130,v)); intUi(v); clearTimeout(intT); intT=setTimeout(()=>{ intT=0; cmd('int',v); },150); }
+$('int').oninput=()=>{ ziehe=true; intSetz(+$('int').value); }; $('int').onchange=()=>{ ziehe=false; };
+$('intM').onclick=()=>intSetz(+$('int').value-1); $('intP').onclick=()=>intSetz(+$('int').value+1);
+document.querySelectorAll('#intBox .schnell button').forEach(b=>b.onclick=()=>intSetz(+b.dataset.i));
+function stand(m){ $('bStart').disabled=!m.start; $('bPause').disabled=!m.pause; $('bWeiter').disabled=!m.weiter;
+  $('intBox').style.display=m.wo?'block':'none'; if(!ziehe && !intT) intUi(m.int); }
 if(!code) st('Kein Code – bitte den QR-Code am PC scannen.');
 else if(!window.Peer) st('Online-Modul nicht geladen – Internetverbindung prüfen.');
 else { const peer=new Peer();
   peer.on('open',()=>{ conn=peer.connect(PREFIX+'r-'+code,{reliable:true});
-    conn.on('open',()=>{ st('Verbunden ✓ ('+code+')'); btns(true); });
-    conn.on('close',()=>{ st('Verbindung getrennt – Seite neu laden.'); btns(false); }); });
+    conn.on('open',()=>{ st('Verbunden ✓ ('+code+')',true); btns(true); });
+    conn.on('data',m=>{ if(m&&m.t==='st') stand(m); });
+    conn.on('close',()=>{ st('Verbindung getrennt – Seite neu laden.'); btns(false); $('intBox').style.display='none'; }); });
   peer.on('error',e=>{ st(e.type==='peer-unavailable'?'PC nicht gefunden – QR-Code neu scannen.':'Fehler: '+e.type+' – Seite neu laden.'); btns(false); }); }
 </script>
 </body>

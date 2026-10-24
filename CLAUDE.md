@@ -26,7 +26,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `js/auswertung.js` – Testmodus, Fotofinish, Aufzeichnung, Ergebnis, TCX-Export
 - `js/lobby.js` – Lobby, Fahrer-Editor, Lobby-Hintergrund
 - `js/online.js` – PeerJS-Raumcode, Sync mit dem Gegner
-- `js/fernbedienung.js` – Handy als Fernbedienung: QR-Code (qrcodejs), eigener PeerJS-Peer `kalmit-duell-v3-r-CODE`, Befehle start/pause/resume; Handy-Seite ist `remote.html` (läuft über GitHub Pages, da `file://` vom Handy nicht erreichbar)
+- `js/fernbedienung.js` – Handy als Fernbedienung: QR-Code (qrcodejs), eigener PeerJS-Peer `kalmit-duell-v3-r-CODE`, Befehle start/pause/resume/int (Intensität), PC schickt jede Sekunde den Stand `rStand` (Knöpfe, Intensitäts-Regler nur bei eigenem Workout); Handy-Seite im Lobby-Stil ist `remote.html` (läuft über GitHub Pages, da `file://` vom Handy nicht erreichbar)
 - `js/bluetooth.js` – FTMS/FE-C-Trainer, Pulsgurt
 - `js/main.js` – Sound (Freilauf-Klicken `freewheel` vorerst stumm, Aufruf in rennen.js mit `if(0)` aus), Tasten, Event-Bindings, Start (`setRoute`, `requestAnimationFrame(loop)`), Test-Helfer `window.__scene`
 
