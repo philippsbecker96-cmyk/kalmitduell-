@@ -56,7 +56,7 @@ function renderWo(){
   const ro=race.role==='guest', L=$('woList'), k=woKind();
   $('woKind').value=k; $('woKind').disabled=ro; document.querySelectorAll('#woBlock .woEd').forEach(e=>e.style.display=k==='wo'&&!race.kamp?'':'none'); $('woKind').parentNode.style.display=race.kamp?'none':''; // Kampagne: Workout fest, nur FTP
   $('woTestInfo').style.display=k==='wo'?'none':''; $('woTestInfo').innerHTML=TEST_INFO[k]||'';
-  $('woHa').textContent=WO.unit==='w'?'Watt':'% FTP'; $('woUnit').value=WO.unit; $('woUnit').disabled=ro; $('woPreset').disabled=ro; $('woAddStep').style.display=$('woAddRep').style.display=ro?'none':'';
+  $('woHa').textContent=WO.unit==='w'?'Watt':'% FTP'; $('woUnit').value=WO.unit; $('woUnit').disabled=ro; $('woPreset').disabled=ro; $('woAddStep').style.display=$('woAddRep').style.display=$('woZwo').style.display=ro?'none':''; $('woEigenDel').style.display=!ro&&k==='wo'&&WO_EIGEN.some(w=>w.name===WO.name)?'':'none';
   L.innerHTML=WO.items.map((it,i)=> it.k==='r'
     ? `<div class="rep" data-p="${i}"><div class="rephead">🔁 Wiederholen <input type="number" min="1" max="50" data-f="n" value="${it.n}" ${ro?'disabled':''}> × <span class="sp"></span>${ro?'':`<button data-act="add" title="Abschnitt in den Block">+</button><button data-act="up">↑</button><button data-act="down">↓</button><button data-act="del">✕</button>`}</div>${(it.items||[]).map((s,j)=>woRowHtml(s,i+'.'+j,ro)).join('')}</div>`
     : woRowHtml(it,String(i),ro)).join('');
@@ -82,8 +82,33 @@ $('woAddStep').onclick=()=>{ WO.items.push(S_('Abschnitt',5,WO.unit==='w'?Math.r
 $('woAddRep').onclick=()=>{ const u=WO.unit==='w'; WO.items.push({k:'r',n:3,items:[S_('Intervall',2,u?Math.round(ftp()*1.05):105),S_('Pause',2,u?Math.round(ftp()*.55):55)]}); renderWo(); sendCfg(); };
 $('woUnit').onchange=()=>{ const to=$('woUnit').value; if(to===WO.unit) return; const f=ftp(), cv=v=>v==null?null:to==='w'?Math.round(v*f/100):Math.round(v/f*100);
   const conv=s=>{ s.a=cv(+s.a); s.b=cv(s.b); }; WO.items.forEach(it=>it.k==='r'?it.items.forEach(conv):conv(it)); WO.unit=to; renderWo(); sendCfg(); };
-for(const [k,p] of Object.entries(WO_PRESETS)){ const o=document.createElement('option'); o.value=k; o.textContent=p.name; $('woPreset').appendChild(o); }
-$('woPreset').onchange=()=>{ const k=$('woPreset').value; if(!k) return; WO={unit:'pct',...clone(WO_PRESETS[k])}; $('woPreset').value=''; renderWo(); sendCfg(); };
+// hochgeladene Workouts bleiben als eigene Vorlagen (kd-wo-eigen)
+let WO_EIGEN=[]; try{ const v=JSON.parse(localStorage.getItem('kd-wo-eigen')); if(Array.isArray(v)) WO_EIGEN=v; }catch(e){}
+const saveEigen=()=>{ try{ localStorage.setItem('kd-wo-eigen',JSON.stringify(WO_EIGEN)); }catch(e){} };
+// Workouts aus dem Ordner workouts/ (für alle, über workouts/workouts.js), Unterordner = Kategorie
+const WO_ORDNER=(typeof WO_DATEIEN!=='undefined'?WO_DATEIEN:[]).map(d=>{ try{ return {...parseZwo(d.xml),kat:d.kat||''}; }catch(e){ console.warn('workouts/'+d.datei+': '+e.message); return null; } }).filter(Boolean);
+function fillPresets(){ const sel=$('woPreset'); sel.innerHTML='<option value="">– laden –</option>';
+  const grp=(t,L)=>{ const g=document.createElement('optgroup'); g.label=t; L.forEach(([k,n])=>{ const o=document.createElement('option'); o.value=k; o.textContent=n; g.appendChild(o); }); sel.appendChild(g); };
+  grp('Vorlagen',Object.entries(WO_PRESETS).map(([k,p])=>[k,p.name])); [...new Set(WO_ORDNER.map(w=>w.kat))].sort((a,b)=>!a-!b||a.localeCompare(b,'de')).forEach(kt=>grp(kt||'Workouts-Ordner',WO_ORDNER.map((w,i)=>[w,i]).filter(([w])=>w.kat===kt).map(([w,i])=>['d'+i,w.name]))); if(WO_EIGEN.length) grp('Hochgeladen',WO_EIGEN.map((w,i)=>['e'+i,w.name])); }
+fillPresets();
+$('woPreset').onchange=()=>{ const k=$('woPreset').value; if(!k) return; WO=k[0]==='e'?clone(WO_EIGEN[+k.slice(1)]):k[0]==='d'?(({kat,...w})=>clone(w))(WO_ORDNER[+k.slice(1)]):{unit:'pct',...clone(WO_PRESETS[k])}; $('woPreset').value=''; renderWo(); sendCfg(); };
+$('woEigenDel').onclick=()=>{ const i=WO_EIGEN.findIndex(w=>w.name===WO.name); if(i<0||!confirm('„'+WO.name+'“ aus den hochgeladenen Vorlagen löschen?')) return; WO_EIGEN.splice(i,1); saveEigen(); fillPresets(); renderWo(); };
+// .zwo-Datei (Zwift-Workout, XML): Leistung als Anteil der FTP → % FTP
+function parseZwo(txt){ const x=new DOMParser().parseFromString(txt,'application/xml'), wk=x.querySelector('workout'); if(!wk||x.querySelector('parsererror')) throw new Error('keine gültige .zwo-Datei');
+  const nm=(x.querySelector('name')||{}).textContent, num=(e,...k)=>{ for(const n of k){ const v=e.getAttribute(n); if(v!=null&&v!==''&&!isNaN(+v)) return +v; } return null; }, P=v=>v==null?null:Math.round(v*100);
+  const st=(label,dur,a,b=null)=>({k:'s',label,dur:Math.max(5,Math.round(dur||0)),a:P(a)??60,b:P(b)}), items=[];
+  for(const e of wk.children){ const t=e.tagName.toLowerCase(), d=num(e,'Duration');
+    if(t==='steadystate'||t==='solidstate') items.push(st('Konstant',d,num(e,'Power','PowerLow')));
+    else if(t==='warmup'||t==='cooldown'||t==='ramp'){ const a=num(e,'PowerLow','Power'), b=num(e,'PowerHigh'); items.push(st(t==='warmup'?'Einfahren':t==='cooldown'?'Ausfahren':'Rampe',d,a,b!=null&&P(b)!==P(a)?b:null)); }
+    else if(t==='intervalst'){ const on=num(e,'OnPower','PowerOnLow'), onB=num(e,'PowerOnHigh'), off=num(e,'OffPower','PowerOffLow'), offB=num(e,'PowerOffHigh');
+      items.push({k:'r',n:Math.max(1,Math.min(50,num(e,'Repeat')||1)),items:[st('Intervall',num(e,'OnDuration'),on,onB!=null&&P(onB)!==P(on)?onB:null),st('Pause',num(e,'OffDuration'),off,offB!=null&&P(offB)!==P(off)?offB:null)]}); }
+    else if(t==='freeride') items.push(st('Freie Fahrt',d,.6));
+    else if(t==='maxeffort') items.push(st('Vollgas',d,1.5)); }
+  if(!items.length) throw new Error('keine Abschnitte gefunden');
+  return {unit:'pct',kind:'wo',name:nm||'Workout',items}; }
+$('woZwo').onclick=()=>$('woZwoFile').click();
+$('woZwoFile').onchange=()=>{ const f=$('woZwoFile').files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{ try{ WO=parseZwo(rd.result); const i=WO_EIGEN.findIndex(w=>w.name===WO.name); if(i>=0) WO_EIGEN[i]=clone(WO); else WO_EIGEN.push(clone(WO)); saveEigen(); fillPresets(); renderWo(); sendCfg(); } catch(e){ alert('Konnte '+f.name+' nicht laden: '+e.message); } $('woZwoFile').value=''; }; rd.readAsText(f); };
 try{ const f=localStorage.getItem('kd-ftp'); if(f) $('ftp').value=f; }catch(e){}
 $('ftp').addEventListener('change',()=>renderWo());
 $('weight').addEventListener('change',()=>{ setTimeout(()=>{ if(race.mode==='train' && race.state==='setup' && $('cfgScreen').style.display!=='none') renderRouteList(); },300); }); // verzögert, damit ein Klick direkt danach nicht verloren geht

@@ -1,0 +1,32 @@
+<workout_file><author>mywhooshinfo.com</author><name>Neuromuscular with AC #3</name><description>A challenging session that requires completing race-like intervals, involving efforts of Anaerobic Capacity, Sweetspot and neuromuscular power. 
+
+5 x 5-minute 15-second intervals will see you put through a range of top-end power.</description><sportType>bike</sportType><workout>
+<Warmup  Duration="300" PowerLow="0.44999998807907" PowerHigh="0.75"><textevent timeoffset="30" message="A long warm up today before the main intervals."/><textevent timeoffset="50" message="This is a challenging session today. But definitely achievable."/><textevent timeoffset="260" message="First we have some low-level 1min efforts to help prepare for the main set."/></Warmup>
+<IntervalsT   Repeat="2" OnDuration="60" OnPower="0.80000001192093" OffDuration="60" OffPower="0.5">
+</IntervalsT>
+<IntervalsT   Repeat="2" OnDuration="60" OnPower="0.98000001907349" OffDuration="60" OffPower="0.5">
+</IntervalsT>
+<SteadyState  Duration="120" Power="0.5"></SteadyState>
+<SteadyState  Duration="120" Power="0.5"><textevent timeoffset="30" message="Ahead we have intervals of 5min 15sec."/><textevent timeoffset="40" message="Opening with a 2min Anaerobic Capacity effort, we then step up through a 3min sweet spot effort..."/><textevent timeoffset="50" message="before finishing with a high power 15sec effort."/><textevent timeoffset="100" message="These efforts take good focus. Aim to hold a consistent rpm through each effort."/></SteadyState>
+<SteadyState  Duration="120" Power="1.2000000476837"><textevent timeoffset="45" message="Good start... maintain your cadence."/><textevent timeoffset="110" message="Now we drop down to a sweet spot effort."/></SteadyState>
+<Warmup  Duration="180" PowerLow="0.87999999523163" PowerHigh="0.93999999761581"><textevent timeoffset="20" message="A little recovery here. But keep the cadence up."/><textevent timeoffset="90" message="Great work. Focus on controlled breathing."/><textevent timeoffset="170" message="Now finish it off with a big sprint!"/></Warmup>
+<SteadyState  Duration="15" Power="1.5"></SteadyState>
+<SteadyState  Duration="180" Power="0.5"><textevent timeoffset="20" message="Perfect!... How was it?"/><textevent timeoffset="40" message="Just 4 more to go."/><textevent timeoffset="170" message="Here we go... onto the next effort."/></SteadyState>
+<SteadyState  Duration="120" Power="1.2000000476837"><textevent timeoffset="45" message="Good start... maintain your cadence."/><textevent timeoffset="110" message="Now we drop down to a sweet spot effort."/></SteadyState>
+<Warmup  Duration="180" PowerLow="0.87999999523163" PowerHigh="0.93999999761581"><textevent timeoffset="20" message="A little recovery here. But keep the cadence up."/><textevent timeoffset="90" message="Great work. Focus on controlled breathing."/><textevent timeoffset="170" message="Now finish it off with a big sprint!"/></Warmup>
+<SteadyState  Duration="15" Power="1.5"></SteadyState>
+<SteadyState  Duration="180" Power="0.5"><textevent timeoffset="20" message="Perfect!... How was it? Getting harder?"/><textevent timeoffset="40" message="Just 3 more to go."/><textevent timeoffset="170" message="Here we go... onto the next effort."/></SteadyState>
+<SteadyState  Duration="120" Power="1.2000000476837"><textevent timeoffset="45" message="Good start... maintain your cadence. Is it the same as previous efforts?"/><textevent timeoffset="110" message="Now we drop down to a sweet spot effort."/></SteadyState>
+<Warmup  Duration="180" PowerLow="0.87999999523163" PowerHigh="0.93999999761581"><textevent timeoffset="20" message="A little recovery here. But keep the cadence up."/><textevent timeoffset="90" message="Great work. Focus on controlled breathing."/><textevent timeoffset="170" message="Now finish it off with a big sprint! Same peak power as earlier."/></Warmup>
+<SteadyState  Duration="15" Power="1.5"></SteadyState>
+<SteadyState  Duration="180" Power="0.5"><textevent timeoffset="20" message="Perfect!... How was it? Getting harder?"/><textevent timeoffset="40" message="Just 2 more to go."/><textevent timeoffset="170" message="Here we go... onto the next effort."/></SteadyState>
+<SteadyState  Duration="120" Power="1.2000000476837"><textevent timeoffset="45" message="Good start... maintain your cadence. Is it the same as previous efforts?"/><textevent timeoffset="110" message="Now we drop down to a sweet spot effort."/><textevent timeoffset="90" message="Is your HR increasing from the previous efforts?"/></SteadyState>
+<Warmup  Duration="180" PowerLow="0.87999999523163" PowerHigh="0.93999999761581"><textevent timeoffset="20" message="A little recovery here. But keep the cadence up."/><textevent timeoffset="90" message="Great work. Focus on controlled breathing."/><textevent timeoffset="170" message="Now finish it off with a big sprint! Same peak power as earlier."/></Warmup>
+<SteadyState  Duration="15" Power="1.5"></SteadyState>
+<SteadyState  Duration="180" Power="0.5"><textevent timeoffset="20" message="Perfect!... How was it? Getting harder?"/><textevent timeoffset="40" message="Just 1 more to go."/><textevent timeoffset="170" message="Here we go... last effort."/></SteadyState>
+<SteadyState  Duration="120" Power="1.2000000476837"><textevent timeoffset="45" message="Good start... maintain your cadence. Is it the same as previous efforts?"/><textevent timeoffset="110" message="Now we drop down to a sweet spot effort."/><textevent timeoffset="90" message="Observe your HR after this step. Is it higher than the 1st set?"/></SteadyState>
+<Warmup  Duration="180" PowerLow="0.87999999523163" PowerHigh="0.93999999761581"><textevent timeoffset="20" message="Are pedaling with the same fluency as the 1st set?"/><textevent timeoffset="170" message="Now finish it off with a big sprint! Same peak power as earlier."/></Warmup>
+<SteadyState  Duration="15" Power="1.5"></SteadyState>
+<SteadyState  Duration="120" Power="0.5"><textevent timeoffset="30" message="Well done! That was a big session today."/></SteadyState>
+<Cooldown  Duration="300" PowerLow="0.75" PowerHigh="0.44999998807907"><textevent timeoffset="20" message="We need a good cool down after a session like this."/></Cooldown>
+</workout></workout_file>

@@ -1,0 +1,17 @@
+<workout_file><author>mywhooshinfo.com</author><name>Tadej&#039;s Criss-cross Tempo</name><description>Train Like Tadej for the Giro-Tour Double with Criss-cross Tempo. This is a challenging session that tests both your aerobic and anaerobic energy systems. Criss-cross Tempo is a great session that simulates the demands of racing by forcing you to recover at a high power output. This session consists of 2x8min Criss-cross Tempo (1min at 95% FTP followed by 3min at 80% FTP) with 4min recovery.</description><sportType>bike</sportType><workout>
+<Warmup  Duration="180" PowerLow="0.40449995" PowerHigh="0.65449995"></Warmup>
+<SteadyState  Duration="60" Power="0.70449996"></SteadyState>
+<SteadyState  Cadence="90" Duration="60" Power="0.80449992"></SteadyState>
+<SteadyState  Cadence="100" Duration="60" Power="0.90449995"></SteadyState>
+<SteadyState  Duration="180" Power="0.50449997"></SteadyState>
+<SteadyState  Cadence="100" Duration="60" Power="0.95449996"></SteadyState>
+<SteadyState  Cadence="90" Duration="180" Power="0.80449992"></SteadyState>
+<SteadyState  Cadence="100" Duration="60" Power="0.95449996"></SteadyState>
+<SteadyState  Cadence="90" Duration="180" Power="0.80449992"></SteadyState>
+<SteadyState  Duration="240" Power="0.50449997"></SteadyState>
+<SteadyState  Cadence="100" Duration="60" Power="0.95449996"></SteadyState>
+<SteadyState  Cadence="90" Duration="180" Power="0.80449992"></SteadyState>
+<SteadyState  Cadence="100" Duration="60" Power="0.95449996"></SteadyState>
+<SteadyState  Cadence="90" Duration="180" Power="0.80449992"></SteadyState>
+<Cooldown  Duration="300" PowerLow="0.55449998" PowerHigh="0.40449998"></Cooldown>
+</workout></workout_file>

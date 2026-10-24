@@ -1,0 +1,51 @@
+<workout_file><author>mywhooshinfo.com</author><name>Sprints into Zone 3 #2</name><description>We often need to perform a series of hard accelerations to better position ourselves for a critical part of the race. These above threshold efforts result in lactate accumulation, which becomes the preferred fuel source. 
+
+But there&#039;s no time to rest. Once you have fought for position, you will need to keep the pressure on the pedals to stay at the front of the race.</description><sportType>bike</sportType><workout>
+<SteadyState  Duration="180" Power="0.5"><textevent timeoffset="130" message="High rpm in warm up sprints"/></SteadyState>
+<IntervalsT   Repeat="4" OnDuration="10" OnPower="1.7044999599457" OffDuration="50" OffPower="0.50449997186661">
+</IntervalsT>
+<Warmup  Duration="120" PowerLow="0.65450000762939" PowerHigh="0.75449997186661"></Warmup>
+<SteadyState  Duration="120" Power="0.50449997186661"></SteadyState>
+<Warmup  Duration="120" PowerLow="0.76450002193451" PowerHigh="0.95450001955032"></Warmup>
+<SteadyState  Duration="180" Power="0.5"></SteadyState>
+<SteadyState  Duration="60" Power="1.2545000314713"></SteadyState>
+<SteadyState  Duration="60" Power="0.65560901165009"></SteadyState>
+<SteadyState  Duration="30" Power="1.5045000314713"></SteadyState>
+<SteadyState  Duration="30" Power="0.65450000762939"></SteadyState>
+<SteadyState  Duration="15" Power="1.6669319868088"></SteadyState>
+<SteadyState  Duration="45" Power="0.6506729722023"></SteadyState>
+<SteadyState  Duration="10" Power="1.854611992836"></SteadyState>
+<SteadyState  Duration="50" Power="0.65298300981522"></SteadyState>
+<SteadyState  Duration="300" Power="0.81449997425079"></SteadyState>
+<SteadyState  Duration="120" Power="0.50449997186661"></SteadyState>
+<SteadyState  Duration="60" Power="1.2545000314713"></SteadyState>
+<SteadyState  Duration="60" Power="0.65871202945709"></SteadyState>
+<SteadyState  Duration="30" Power="1.5045000314713"></SteadyState>
+<SteadyState  Duration="30" Power="0.65108001232147"></SteadyState>
+<SteadyState  Duration="15" Power="1.6669319868088"></SteadyState>
+<SteadyState  Duration="45" Power="0.65101301670074"></SteadyState>
+<SteadyState  Duration="10" Power="1.854611992836"></SteadyState>
+<SteadyState  Duration="50" Power="0.65169197320938"></SteadyState>
+<SteadyState  Duration="300" Power="0.81449997425079"></SteadyState>
+<SteadyState  Duration="120" Power="0.50449997186661"></SteadyState>
+<SteadyState  Duration="60" Power="1.2545000314713"></SteadyState>
+<SteadyState  Duration="60" Power="0.65581297874451"></SteadyState>
+<SteadyState  Duration="30" Power="1.5045000314713"></SteadyState>
+<SteadyState  Duration="30" Power="0.650445997715"></SteadyState>
+<SteadyState  Duration="15" Power="1.6669319868088"></SteadyState>
+<SteadyState  Duration="45" Power="0.65379798412323"></SteadyState>
+<SteadyState  Duration="10" Power="1.854611992836"></SteadyState>
+<SteadyState  Duration="50" Power="0.6530510187149"></SteadyState>
+<SteadyState  Duration="300" Power="0.81449997425079"></SteadyState>
+<SteadyState  Duration="120" Power="0.50449997186661"></SteadyState>
+<SteadyState  Duration="60" Power="1.2545000314713"></SteadyState>
+<SteadyState  Duration="60" Power="0.65425097942352"></SteadyState>
+<SteadyState  Duration="30" Power="1.5045000314713"></SteadyState>
+<SteadyState  Duration="30" Power="0.65483897924423"></SteadyState>
+<SteadyState  Duration="15" Power="1.6669319868088"></SteadyState>
+<SteadyState  Duration="45" Power="0.65345901250839"></SteadyState>
+<SteadyState  Duration="10" Power="1.854611992836"></SteadyState>
+<SteadyState  Duration="50" Power="0.65839499235153"></SteadyState>
+<SteadyState  Duration="300" Power="0.81449997425079"></SteadyState>
+<SteadyState  Duration="300" Power="0.50449997186661"></SteadyState>
+</workout></workout_file>

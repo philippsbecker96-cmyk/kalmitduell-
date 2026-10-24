@@ -1,0 +1,25 @@
+<workout_file><author>mywhooshinfo.com</author><name>Anaerobic into Sweet Spot</name><description>Along with challenging your fitness by going from a short Anaerobic effort into a sustained Tempo effort, this session adds to that adaptation by including a significant difference in cadence. 
+
+Complete the opening low cadence Anaerobic Interval out of the seat before settling into a high cadence tempo Interval.</description><sportType>bike</sportType><workout>
+<Warmup  Duration="600" PowerLow="0.50449997186661" PowerHigh="0.75449997186661"></Warmup>
+<SteadyState  Duration="60" Power="0.50449997186661"></SteadyState>
+<SteadyState  Duration="60" Power="1.2044999599457"></SteadyState>
+<SteadyState  Duration="300" Power="0.88450002670288"></SteadyState>
+<SteadyState  Duration="120" Power="0.65512901544571"></SteadyState>
+<SteadyState  Duration="60" Power="1.2044999599457"></SteadyState>
+<SteadyState  Duration="300" Power="0.88450002670288"></SteadyState>
+<SteadyState  Duration="120" Power="0.65542501211166"></SteadyState>
+<SteadyState  Duration="60" Power="1.2044999599457"></SteadyState>
+<SteadyState  Duration="300" Power="0.88450002670288"></SteadyState>
+<SteadyState  Duration="120" Power="0.6547070145607"></SteadyState>
+<SteadyState  Duration="60" Power="1.2044999599457"></SteadyState>
+<SteadyState  Duration="300" Power="0.88450002670288"></SteadyState>
+<SteadyState  Duration="120" Power="0.65103101730347"></SteadyState>
+<SteadyState  Duration="60" Power="1.2044999599457"></SteadyState>
+<SteadyState  Duration="300" Power="0.88450002670288"></SteadyState>
+<SteadyState  Duration="120" Power="0.65434002876282"></SteadyState>
+<SteadyState  Duration="60" Power="1.2044999599457"></SteadyState>
+<SteadyState  Duration="300" Power="0.88450002670288"></SteadyState>
+<SteadyState  Duration="120" Power="0.55000001192093"></SteadyState>
+<Cooldown  Duration="300" PowerLow="0.65450000762939" PowerHigh="0.50449997186661"></Cooldown>
+</workout></workout_file>

@@ -16,7 +16,8 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `js/figuren.js` – 3D-Fahrer (Becker, Dengel, eigener Fahrer, Teufel-Bot), Haltung (Wiegetritt, Aero, Kurvenlage, Trittfrequenz), Avatar-Vorschau
 - `js/effekte.js` – Fahrtwind-Linien, Regen, Partikel (Gischt, Staub, Blätter), Windschatten-Linien, Kamerawackeln, Antritt-Kick
 - `js/rennen.js` – Kamera, Zeichnen, Rennlogik, Pause/Menü, Wake Lock
-- `js/training.js` – Workouts, FTP-Tests
+- `js/training.js` – Workouts, FTP-Tests, Import von .zwo-Dateien (`parseZwo`)
+- `workouts/` – .zwo-Dateien als Vorlagen für alle, Unterordner = Kategorie im Auswahlfeld; `workouts/workouts.js` (`WO_DATEIEN`) daraus erzeugen mit `node werkzeuge/workouts.mjs` (nach jeder neuen/geänderten Datei), lädt vor `training.js`
 - `js/welt-trifels.js` – Welt für Kampagnen-Mission 1 (Burg Trifels, Vorburg, Queichtal), noch leer – Plan in `KAMPAGNE.md`
 - `js/welt-trifels-leben.js` – Mission 1: Baulücken am Wirtshaus (`TRI_LUECKEN`: Misthaufen, Schweinekoben, Hühnerstall, Wassertrog, Strohhaufen; Teile aus dem Hof-Baukasten `hofKasten` in `welt-dorf.js`), Fuhrwerk auf der Abfahrt (`TRI_FUHR`, `TRI_FUHR_TXT`, Zeit `triFuhrT`: Bauer rauscht heran, redet über den Fußball in Lautre, fährt davon), Gänseherde quert in der Wirtshaus-Szene (`TRI_GANS`), Gegenverkehr nach dem Wirtshaus (`TRIFELS_T.gegen`, `TRI_GEGEN_ART`, Ausweichen vor dem Heuwagen `triGegenSpur`), Reh mit zwei Kitzen nach Jagd 1, Wildschwein quert nach Jagd 4 und läuft vor dir her (`TRI_SAU`, Friedel: `TRI_TXT.sau`), drei Elwetritsche im Ausfahren (`TRI_TRITSCH`, 30 s nach Beginn = 31:00: rennen wild im Kreis und hauen ab); Meter in `R.tri.reh`/`sau`/`gegen`/`tritsch`
 - `js/welt-trifels-wiesen.js` – Mission 1: vier Lichtungen nach Jagd 1–4 (`TRIFELS_T.wiesen` in s nach Jagdbeginn → `orte.wiesen` → `R.tri.wiesen`, Arten `TRI_WIESE_ART`): Schafherde mit Schäfer, Hütehund, Pferch, Schäferkarren, vier Schafe auf dem Weg (Friedel: `TRI_TXT.schafe`) · Weiher (Gelände eben über `triWiesenGelaende`) mit Enten, Steg und Angler, Fachwerkscheune mit Leiterwagen und Elwetritsche auf dem First · Kuhherde (Glanrind) hinter dem Stangenzaun, Hirtenjunge, Kuh schaut dir nach · Köhlerplatz mit Meiler, Hütte, Feuer, Köhler; nur in der Nähe sichtbar; `prepTrifelsWiesen`/`buildTrifelsWiesen`/`poseTrifelsWiesen` aus prepTrifelsLeben/buildTrifelsLeben/poseTrifelsLeben, Töne in `triTon`
@@ -32,7 +33,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 ## Regeln
 - Klassische `<script>`-Tags, keine ES-Module: alle Dateien teilen sich globale Variablen. Reihenfolge in `index.html` ist wichtig – Code, der beim Laden läuft, darf nur Funktionen aus derselben oder früheren Dateien aufrufen.
 - Code und Kommentare auf Deutsch, kompakter Stil (viele Anweisungen pro Zeile) beibehalten.
-- localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`, `kd-shake`, `kd-kampagne`.
+- localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`, `kd-shake`, `kd-kampagne`, `kd-wo-eigen` (hochgeladene .zwo-Workouts).
 - Figuren und Gegenstände mit `bodenY(x,z)` aufstellen (`welt-kalmit.js`: sichtbarer Boden mit Fahrbahn, Bankett, Gehweg, Schulter und gezeichnetem Gelände), nicht mit `terrainAt` oder `roadY` – sonst stecken sie im Belag oder schweben am Hang. Große Gruppen am Hang Teil für Teil auf den Boden setzen. Absichtlich Eingegrabenes mit `userData.ohneBoden=true` markieren.
 
 ## Arbeitsweise

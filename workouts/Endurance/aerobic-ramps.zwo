@@ -1,0 +1,22 @@
+<workout_file><author>mywhooshinfo.com</author><name>Aerobic Ramps</name><description>Not every session needs to involve high-intensity efforts. Today&#039;s session is a low-intensity workout focussing on your aerobic fitness. 
+
+One of the most important aspects of cycling is your aerobic fitness. This allows you to preserve vital glycogen stores and power up the day&#039;s final climb.</description><sportType>bike</sportType><workout>
+<Warmup  Duration="180" PowerLow="0.44999998807907" PowerHigh="0.60000002384186"><textevent timeoffset="90" message="The warmup gradually increases in power."/><textevent timeoffset="130" message="By increasing your aerobic fitness, you will improve your ability to recover from the long climbs."/><textevent timeoffset="160" message="Now we ramp up the power each minute to continue the warmup."/></Warmup>
+<SteadyState  Duration="60" Power="0.60000002384186"></SteadyState>
+<SteadyState  Duration="60" Power="0.64999997615814"></SteadyState>
+<SteadyState  Duration="60" Power="0.81000000238419"><textevent timeoffset="31" message="Just the 1min effort above threshold now."/></SteadyState>
+<SteadyState  Duration="60" Power="1.0900000333786"></SteadyState>
+<SteadyState  Duration="120" Power="0.5"><textevent timeoffset="80" message="4min just under threshold will complete your warmup."/></SteadyState>
+<SteadyState  Duration="240" Power="0.88450002670288"><textevent timeoffset="80" message="This is the level of power you can expect to target on a long climb."/></SteadyState>
+<SteadyState  Duration="120" Power="0.50449997186661"><textevent timeoffset="60" message="The main set today consists of 5 x 5min aerobic efforts."/></SteadyState>
+<Warmup  Duration="300" PowerLow="0.61449998617172" PowerHigh="0.80449998378754"><textevent timeoffset="106" message="As the power increases aim to hold the same cadence."/><textevent timeoffset="235" message="The last minute should see an increase in your breathing rate."/></Warmup>
+<SteadyState  Duration="120" Power="0.60449999570847"><textevent timeoffset="47" message="For the recovery we keep some pressure on the pedals."/></SteadyState>
+<Warmup  Duration="300" PowerLow="0.61449998617172" PowerHigh="0.80449998378754"><textevent timeoffset="240" message="This is the kind of workout you can perform several times during the week."/></Warmup>
+<SteadyState  Duration="120" Power="0.65450000762939"><textevent timeoffset="55" message="Remember, it&#039;s fine to complete some low intensity work."/></SteadyState>
+<Warmup  Duration="300" PowerLow="0.61449998617172" PowerHigh="0.80449998378754"><textevent timeoffset="236" message="How does the last minute feel?"/><textevent timeoffset="281" message="Still comfortable?"/></Warmup>
+<SteadyState  Duration="120" Power="0.65450000762939"><textevent timeoffset="68" message="Just 2 intervals to go."/></SteadyState>
+<Warmup  Duration="300" PowerLow="0.61449998617172" PowerHigh="0.80449998378754"><textevent timeoffset="151" message="Are you holding the same cadence as the earlier intervals?"/><textevent timeoffset="171" message="A decreased cadence indicates fatigue is accumulating."/></Warmup>
+<SteadyState  Duration="120" Power="0.65450000762939"><textevent timeoffset="58" message="Last effort now."/></SteadyState>
+<Warmup  Duration="300" PowerLow="0.61449998617172" PowerHigh="0.80449998378754"><textevent timeoffset="143" message="This is a good session to maintain your aerobic fitness."/></Warmup>
+<Cooldown  Duration="300" PowerLow="0.75449997186661" PowerHigh="0.50449997186661"><textevent timeoffset="30" message="Now for a nice cool down."/></Cooldown>
+</workout></workout_file>

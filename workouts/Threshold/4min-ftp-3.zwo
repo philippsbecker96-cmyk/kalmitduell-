@@ -1,0 +1,16 @@
+<workout_file><author>mywhooshinfo.com</author><name>4min FTP #3</name><description>Improving your FTP allows you to ride faster and more efficiently. However, not all FTP work needs to focus on long intervals of over 20 minutes. 
+
+By targeting shorter FTP efforts of 9 x 4min @ Threshold with 90sec recovery, athletes can focus and remain engaged in their training. The shorter intervals also allow you to analyse changes to your heart rate, cadence and power from each effort. The brief recovery period is enough to allow you to accumulate a good volume of quality work at threshold power. Yet, the fatigue will gradually build throughout the set intervals. 
+
+Complete 15 minutes of zone 2 after your threshold work to build endurance.</description><sportType>bike</sportType><workout>
+<SteadyState  Duration="180" Power="0.50449997186661"></SteadyState>
+<IntervalsT   Repeat="2" OnDuration="60" OnPower="0.75449997186661" OffDuration="60" OffPower="0.50449997186661">
+</IntervalsT>
+<IntervalsT   Repeat="2" OnDuration="60" OnPower="0.90450000762939" OffDuration="60" OffPower="0.50449997186661">
+</IntervalsT>
+<SteadyState  Duration="180" Power="0.50449997186661"><textevent timeoffset="130" message="Ready for FTP efforts!"/><textevent timeoffset="162" message="What&#039;s your HR?"/></SteadyState>
+<IntervalsT   Repeat="9" OnDuration="240" OnPower="0.98449999094009" OffDuration="90" OffPower="0.56449997425079">
+</IntervalsT>
+<FreeRide Duration="900" ><textevent timeoffset="30" message="Building endurance now."/><textevent timeoffset="90" message="From the earlier high-intensity work, your glycogen stores are depleted."/><textevent timeoffset="110" message="By pushing on and completing some zone 2 work, you are now increasing your aerobic endurance."/></FreeRide>
+<SteadyState  Duration="300" Power="0.50449997186661"></SteadyState>
+</workout></workout_file>

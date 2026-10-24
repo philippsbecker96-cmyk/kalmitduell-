@@ -1,0 +1,13 @@
+<workout_file><author>mywhooshinfo.com</author><name>5min Max Aerobic</name><description>By working just above Threshold in Zone 4 and into Zone 5, we can improve our VO2max abilities and increase our Threshold. These are high-intensity efforts, so the intervals are broken down into shorter work periods. 
+
+A well developed VO2max system will allow you to recover from high-intensity efforts faster and increase endurance.</description><sportType>bike</sportType><workout>
+<SteadyState  Duration="300" Power="0.5"></SteadyState>
+<SteadyState  Duration="60" Power="0.56999999284744"></SteadyState>
+<SteadyState  Duration="60" Power="0.62999999523163"></SteadyState>
+<SteadyState  Duration="60" Power="0.69999998807907"></SteadyState>
+<SteadyState  Duration="60" Power="0.80449998378754"></SteadyState>
+<SteadyState  Duration="180" Power="0.55000001192093"></SteadyState>
+<IntervalsT   Repeat="4" OnDuration="300" OnPower="1.0944999456406" OffDuration="300" OffPower="0.55449998378754">
+</IntervalsT>
+<Cooldown  Duration="600" PowerLow="0.70933002233505" PowerHigh="0.45264899730682"></Cooldown>
+</workout></workout_file>

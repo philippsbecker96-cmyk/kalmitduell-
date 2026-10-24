@@ -186,6 +186,7 @@
         <label class="check">Art <select id="woKind"><option value="wo">Eigenes Workout</option><option value="ramp">FTP-Test: Rampe</option><option value="t20">FTP-Test: 20 min</option></select></label>
         <label class="check woEd">Angaben in <select id="woUnit"><option value="pct">% FTP</option><option value="w">Watt</option></select></label>
         <label class="check woEd">Vorlage <select id="woPreset"><option value="">– laden –</option></select></label>
+        <button class="woEd" id="woZwo" title="Workout-Datei aus Zwift, TrainerRoad, intervals.icu …">📂 .zwo hochladen</button><button class="woEd" id="woEigenDel" title="dieses hochgeladene Workout aus den Vorlagen löschen" style="display:none">🗑 Vorlage löschen</button><input type="file" id="woZwoFile" accept=".zwo,.xml" style="display:none">
       </div>
       <canvas id="woChart" width="1880" height="168"></canvas>
       <div class="small" id="woSum"></div>
@@ -230,6 +231,7 @@
 <script src="js/figuren.js"></script>
 <script src="js/effekte.js"></script>
 <script src="js/rennen.js"></script>
+<script src="workouts/workouts.js"></script>
 <script src="js/training.js"></script>
 <script src="js/kampagne.js"></script>
 <script src="js/auswertung.js"></script>
