@@ -141,7 +141,7 @@ function build3D(){
     const side=Math.sign(Math.cos(hd)*(z-R.ys[s])-Math.sin(hd)*(x-R.xs[s]))||1, dd=dist[k], far=Math.min(1,Math.max(0,(dd-16)/110));
     let v=roadY(d) + far*(side*Math.min(45,(dd-16)*0.22) + (vnoise(x/90,z/90)-.5)*40 + (vnoise(x/25,z/25)-.5)*8) - 0.45;
     const edge=Math.min(i,j,n-1-i,TER.nz-1-j)*res, ef=Math.min(1,Math.max(0,(edge-20)/260)), e2=ef*ef*(3-2*ef);
-    h[k]=plainY+(v-plainY)*e2;
+    h[k]=plainY+(v-plainY)*e2; if(R.def.haardt) h[k]=Math.max(h[k],spKalmitchenY(x,z,plainY)); // Südpfalz: Kleine Kalmit
     if(R.b10l){ const bd=R.b10Dist(x,z); if(bd<75) h[k]+=(roadY(d)-.45-h[k])*Math.min(1,(75-bd)/45); } } // B10 liegt eben
   const tmp=new Float32Array(N);
   for(let pass=0;pass<12;pass++){ tmp.set(h); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; if(dist[k]<12) continue;
@@ -168,6 +168,7 @@ function build3D(){
     if(TER.bach && TER.bach[k]<5) tc.lerp(cKies, (1-TER.bach[k]/5)*.7);
     if(dist[k]<16) tc.lerp(zt!=='ort'&&zoneAt(R,d+200)==='wald' ? cSand : cVerge, 1-dist[k]/16);
     if(vnoise(x/14,z/14)>.86 && dist[k]>20) tc.lerp(cRock,.6);
+    if(R.def.haardt) spKalmitchenFarbe(x,z,tc,cVine);
     if(h[k]<plainY+6) tc.lerp(cPlain, Math.min(1,(plainY+6-h[k])/6));
     col[k*3]=tc.r; col[k*3+1]=tc.g; col[k*3+2]=tc.b; }
   for(let j=0;j<TER.nz-1;j++) for(let i=0;i<n-1;i++){ const a=j*n+i; idx.push(a,a+n,a+1, a+1,a+n,a+n+1); }
@@ -324,6 +325,7 @@ function build3D(){
     const head=new THREE.Mesh(new THREE.BoxGeometry(.35,.3,.35), lam('#2f3338')); const nx=-Math.sin(o.h)*-o.side*.6, nz=Math.cos(o.h)*-o.side*.6; head.position.set(o.x+nx,gY+4.5,o.y+nz); world.add(head);
     const pl=new THREE.Mesh(new THREE.BoxGeometry(.3,.04,.3), lampM); pl.position.set(o.x+nx,gY+4.34,o.y+nz); world.add(pl); });
   hausLicht();
+  if(R.def.haardt) buildSuedpfalz(plainY); // Burgen auf der Haardt, Kastanienwald, Kapelle, Typisches am Weg (welt-suedpfalz.js)
 
   // ---------- B10 (vierspurig, Grünstreifen in der Mitte) mit fahrenden Autos · Gewerbehallen ----------
   anim.autos=null;
@@ -489,13 +491,20 @@ function poseFans(t, all){
 
 /* ================= Südpfalz: Haardt im Westen ================= */
 // Bergkette entlang einer Fußlinie (läuft leicht nach Nordnordost), Gipfel rund 300–400 m über der Ebene; ohne Nebel, dafür mit Dunst je Entfernung
-function buildHaardt(plainY){ const foot=z=>-4400+(2400-z)*.35, sm=v=>{ v=Math.min(1,Math.max(0,v)); return v*v*(3-2*v); };
-  const Z0=-7000, Z1=9000, dz=100, W0=-300, W1=6000, dw=100, nz=(Z1-Z0)/dz+1, nw=(W1-W0)/dw+1, pos=new Float32Array(nz*nw*3), col=new Float32Array(nz*nw*3), idx=[];
+// w: Meter hinter der Fußlinie (nach Westen) · Raster 100 m; haardtRise: Höhe über der Ebene, mit Queichtal und den Burgbergen (spHaardt, welt-suedpfalz.js)
+const HAARDT={fuss:z=>-4400+(2400-z)*.35, Z0:-7000, Z1:9000, dz:100, W0:-300, W1:6000, dw:100}, hSm=v=>{ v=Math.min(1,Math.max(0,v)); return v*v*(3-2*v); };
+function haardtRise(w,z){ const sm=hSm, H=HAARDT;
+  let rise=w<0?-25:(420*sm(w/2200)*(.7+.5*vnoise(z/1500,3.1)) + 120*(vnoise(w/700+5,z/700)-.5)*sm(w/800) + 40*(vnoise(w/220,z/220)-.5)*sm(w/500));
+  rise*=(1-sm((w-4500)/1500))*sm((z-H.Z0)/2000)*sm((H.Z1-z)/2000);
+  return spHaardt(H.fuss(z)-w,z,rise); }
+// Höhe über der Ebene genau wie das Mesh sie zeichnet (Dreiecke wie im Index unten)
+function haardtY(x,z){ const H=HAARDT, gi=(H.fuss(z)-x-H.W0)/H.dw, gj=(z-H.Z0)/H.dz, i=Math.floor(gi), j=Math.floor(gj), fx=gi-i, fz=gj-j, r=(a,b)=>haardtRise(H.W0+a*H.dw,H.Z0+b*H.dz);
+  const A=r(i,j), B=r(i+1,j), C=r(i,j+1); if(fx+fz<1) return A+(B-A)*fx+(C-A)*fz; const D=r(i+1,j+1); return D+(C-D)*(1-fx)+(B-D)*(1-fz); }
+function buildHaardt(plainY){ const H=HAARDT, sm=hSm;
+  const nz=(H.Z1-H.Z0)/H.dz+1, nw=(H.W1-H.W0)/H.dw+1, pos=new Float32Array(nz*nw*3), col=new Float32Array(nz*nw*3), idx=[];
   const cF=new THREE.Color('#34502e'), cF2=new THREE.Color('#47623a'), cH=new THREE.Color('#aab8c2'), c=new THREE.Color();
-  for(let j=0;j<nz;j++) for(let i=0;i<nw;i++){ const z=Z0+j*dz, w=W0+i*dw, k=j*nw+i;
-    let rise=w<0?-25:(420*sm(w/2200)*(.7+.5*vnoise(z/1500,3.1)) + 120*(vnoise(w/700+5,z/700)-.5)*sm(w/800) + 40*(vnoise(w/220,z/220)-.5)*sm(w/500));
-    rise*=(1-sm((w-4500)/1500))*sm((z-Z0)/2000)*sm((Z1-z)/2000);
-    pos.set([foot(z)-w, plainY+rise, z], k*3);
+  for(let j=0;j<nz;j++) for(let i=0;i<nw;i++){ const z=H.Z0+j*H.dz, w=H.W0+i*H.dw, k=j*nw+i;
+    pos.set([H.fuss(z)-w, plainY+haardtRise(w,z), z], k*3);
     c.copy(cF).lerp(cF2, vnoise(w/300,z/300)).lerp(cH, .18+.45*sm(w/5000)); col.set([c.r,c.g,c.b], k*3);
     if(i<nw-1&&j<nz-1) idx.push(k,k+1,k+nw, k+1,k+nw+1,k+nw); }
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3)); g.setIndex(idx); g.computeVertexNormals();

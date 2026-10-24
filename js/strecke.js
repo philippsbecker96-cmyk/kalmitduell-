@@ -87,6 +87,9 @@ function suedpfalzDef(loop){ const V=SP_V, E=scharfeEcke(hoeheSchliessen(SUEDPFA
   kreuz:E.kreuz, haardt:true, steil:true, // Haardt als Bergkette im Westen · Überhöhung in deiner Nähe wie an der Kalmit
   mitte:Z([[2350,3800],[6200,8000]]), planke:Z([[7700,7930],[12990,null,2],[0,120,2]]), saum:Z([[2350,2460,1],[2460,2800,0],[2800,3000,-1],[3510,3630,1],[3660,3800,1]]), radweg:Z([[2800,3510,1]]), allee:Z([[3420,3620,-1]]),
   weiter:[[9060,-24,220,6]].map(([d,...x])=>[um(d),...x]), // nach Ranschbach: die L508 läuft geradeaus weiter, der Betonplattenweg knickt rechts ab
+  // Typisches am Weg (welt-suedpfalz.js): haeusel [d, Seite, Abstand] Wingertshäuschen · kreuz [d, Seite] Wegkreuz/Bildstock am nächsten Wirtschaftsweg · bank [d, Seite] Bank mit Blick · weinstr [d, Seite] Schild Deutsche Weinstraße
+  typisch:Object.fromEntries(Object.entries({haeusel:[[2650,-1,26],[4300,1,34],[4900,-1,22],[6700,1,30],[7400,-1,38],[9700,1,24],[10600,-1,30],[11800,1,26]], kreuz:[[2700,-1],[4050,-1],[6600,-1],[10300,1]],
+    bank:[[3020,-1],[7150,1],[10900,1]], weinstr:[[5360,1],[7960,1]]}).map(([k,L])=>[k,L.map(([d,...x])=>[um(d),...x])])),
   hof:[[3590,-1,20],[3710,-1,14]].map(([d,...x])=>[um(d),...x]), // Ilbesheim: die K20 führt am Ortsrand vorbei, nur Aussiedlerhöfe mit Hallen links
   bogen:[5415,[8165,'Seilmacher-Dorf']].map(e=>Array.isArray(e)?[um(e[0]),e[1]]:um(e)),
   // B10 links parallel (Mitte 30 m neben dem Weg), dazwischen und dahinter Gehölz (Bahn, Queich), dahinter Gewerbe von Godramstein
@@ -143,7 +146,7 @@ function buildRoute(def){
   r.fans = def.burg||def.ma?r.len:Math.max(r.len*0.6, r.len-1000); // Burg: kein modernes Publikum
   r.kehren=[]; if(r.kalmit||def.burg) for(let dd=40; dd<len-40; dd+=STEP*5){ const dh=Math.abs(angDiff(headingAt(r,dd+25),headingAt(r,dd-25)));
     if(dh>1.25 && !r.kehren.some(k=>Math.abs(k-dd)<120) && !(def.burg&&(dd<1420||dd>5370))) r.kehren.push(dd); } // Burg: Ecken im Dorf und am Tor sind keine Kehren
-  prepFeld(r); makeScenery(r); if(def.burg) prepBurg(r); if(def.ma&&def.orte) prepTrifels(r); // Trifels: welt-trifels.js
+  prepFeld(r); makeScenery(r); if(def.typisch) prepSuedpfalz(r); if(def.burg) prepBurg(r); if(def.ma&&def.orte) prepTrifels(r); // Trifels: welt-trifels.js
   return r;
 }
 function posAt(r,d){ if(r.ring && d>r.len) d-=r.ring; // hinter dem Ziel: Umlaufbahn
