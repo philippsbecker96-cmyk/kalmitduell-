@@ -93,7 +93,7 @@ function recReset(){ Object.assign(rec,{s:[],laps:[],start:null,savedN:0,sec:0,a
 function recStep(dt,P){
   if(me.done&&!me.free) return; if(!rec.start) rec.start=new Date();
   rec.accE+=P*dt; rec.accT+=dt; rec.maxP=Math.max(rec.maxP,P); rec.maxV=Math.max(rec.maxV,me.v);
-  if(live.hr){ rec.hrS+=live.hr*dt; rec.hrT+=dt; } if(live.src!=='sim'&&live.cadence!=null){ rec.cadS+=live.cadence*dt; rec.cadT+=dt; }
+  const hr=hrNow(); if(hr){ rec.hrS+=hr*dt; rec.hrT+=dt; } if(live.src!=='sim'&&live.cadence!=null){ rec.cadS+=live.cadence*dt; rec.cadT+=dt; }
   let key, name;
   if(race.mode==='train'){ if(me.done){ key='free'; name='Ausrollen'; } else { const sg=woSeg(race.t); key=race.woSegs.indexOf(sg); name=sg?sg.label:'Abschnitt'; } }
   else if(R.loop){ key=Math.floor(me.d/R.len); name='Runde '+(key+1); } else { key=0; name=R.name; }

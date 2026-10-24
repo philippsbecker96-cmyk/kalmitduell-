@@ -137,7 +137,7 @@ function loop(now){
     rideState(riders3d[myKey],me,run&&!(me.done&&!me.free)?P:0,ftp(),dt,live.src!=='sim'?live.cadence:null);
     if(opp.active){ const kg=opp.bot?botKg():weight(), oP=opp.done||!run?0:opp.watt??(opp.wkg||0)*kg; if(!opp.bot) opp.aero=!!opp.ra;
       rideState(riders3d[oppKey],opp,oP,opp.bot?((opp.plan&&opp.plan.A)||3)*kg:1e9,dt,opp.bot?null:opp.rc??null,opp.bot?null:opp.rst); } }
-  if(live.hr) race.hrMax=Math.max(race.hrMax,live.hr);
+  if(hrNow()) race.hrMax=Math.max(race.hrMax,hrNow());
   rainSound(race.state!=='setup'&&race.rain&&!R.space);
   // Freilauf-Klicken vorerst stumm (Funktion freewheel in main.js bleibt)
   if(0){ const S=(riders3d[myKey]||{}).rs; freewheel(dt, race.state==='run'&&!race.paused&&!race.frozen&&S&&S.cad<8&&me.v>2, me.v); } // Freilauf klickt beim Rollen
@@ -150,12 +150,13 @@ function hud(P,wkg){
   const inPlay=race.state==='run'&&!race.paused&&$('pause').style.display!=='flex', canPause=inPlay&&(!me.done||me.free);
   $('btnPause').style.display=canPause?'block':'none'; $('btnMenu').style.display=inPlay?'block':'none'; $('btnMenu').style.right=canPause?'140px':'14px'; // Menü auch nach dem Ende
   $('hV').textContent=de(me.v*3.6,1);
-  if(race.mode==='train'){ const sg=woSeg(race.t); $('hGk').textContent='Ziel'; $('hG').textContent=sg&&sg.free?'frei':Math.round(me.tgt||0)+' W'; woPanel(P,sg); }
-  else if(R.loop){ $('hGk').textContent='Runde'; $('hG').textContent=`${Math.min(race.laps,Math.floor(me.d/R.len)+1)} / ${race.laps}`; $('hRestk').textContent='bis Ziel'; }
-  else { $('hGk').textContent='Steigung'; $('hG').textContent=de(gradeAt(me.d))+' %'; $('hRestk').textContent=R.kalmit?'bis Gipfel':'bis Ziel'; }
+  $('hG').textContent=de(gradeAt(me.d))+' %'; $('sZ').style.display=race.mode==='train'||R.loop?'':'none'; // Steigung in allen Modi, Ziel-Watt bzw. Runde daneben
+  if(race.mode==='train'){ const sg=woSeg(race.t); $('hZk').textContent='Ziel'; $('hZ').textContent=sg&&sg.free?'frei':Math.round(me.tgt||0)+' W'; woPanel(P,sg); }
+  else if(R.loop){ $('hZk').textContent='Runde'; $('hZ').textContent=`${Math.min(race.laps,Math.floor(me.d/R.len)+1)} / ${race.laps}`; $('hRestk').textContent='bis Ziel'; }
+  else $('hRestk').textContent=R.kalmit?'bis Gipfel':'bis Ziel';
   if(race.mode!=='train') $('hRest').textContent=de(Math.max(0,raceLen()-me.d)/1000,2)+' km';
   const dr=me.draftR||0, chip=$('draftChip'); chip.style.display=race.draft&&dr>0.02&&!me.done?'flex':'none'; $('draftBar').style.width=Math.round(dr/0.35*100)+'%'; $('draftPct').textContent='−'+Math.round(dr*100)+' %'; $('hT').textContent=fmtT(me.time);
-  $('hHr').textContent=live.hr??'–'; $('hCad').textContent=live.src!=='sim'&&live.cadence!=null?Math.round(live.cadence):'–';
+  const hr=hrNow(); $('sHr').style.display=hr?'':'none'; if(hr) $('hHr').textContent=hr; $('hCad').textContent=live.src!=='sim'&&live.cadence!=null?Math.round(live.cadence):'–';
   if(opp.active){ const gap=me.d-opp.d; $('gapName').textContent=`Abstand zu ${opp.name}`;
     $('gapV').textContent=Math.abs(gap)<0.5?'±0 m':(gap>=0?'+':'−')+Math.round(Math.abs(gap))+' m'; $('gapV').style.color=gap>=0?'#9cc46b':'#f0b860';
     const v=Math.max(1,gap>=0?opp.v:me.v); $('gapSub').textContent= R.loop&&Math.abs(gap)>=R.len&&!opp.done?`${Math.floor(Math.abs(gap)/R.len)} Runde${Math.abs(gap)>=2*R.len?'n':''} ${gap>=0?'Vorsprung':'Rückstand'}`: opp.done?`${opp.name} im Ziel: ${fmtT(opp.time)}`:`≈ ${Math.round(Math.abs(gap)/v)} s ${gap>=0?'Vorsprung':'Rückstand'}`; }

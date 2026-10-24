@@ -26,7 +26,7 @@ function parseIndoorBike(dv){
   if(f&8) i+=2; if(f&16) i+=3; if(f&32) i+=2;
   if(f&64){ if(i+2<=L) live.power=Math.max(0,dv.getInt16(i,true)); i+=2; }
   if(f&128) i+=2; if(f&256) i+=5;
-  if(f&512){ if(i+1<=L && !live.hrStrap){ const h=dv.getUint8(i); if(h>0) live.hr=h; } }
+  // Puls vom Trainer nicht übernehmen: manche Trainer schicken einen festen Wert (z. B. 110) – Puls nur vom Pulsgurt
 }
 // Leistungsmesser (Cycling Power): Watt und – falls mitgeschickt – Kurbelumdrehungen, daraus die Trittfrequenz
 const cpsCrank={n:null,t:0,at:0};
@@ -64,12 +64,15 @@ function trainerSlope(){
   const g=(gradeAt(me.d)+belagAt(me.d,weight())+(me.airS||0))*(+$('slopeK').value/100), now=performance.now();
   if((lastSlopeSent===null||Math.abs(g-lastSlopeSent)>0.15)&&now-lastSlopeAt>1000){ lastSlopeSent=g; lastSlopeAt=now; setSlope(g); }
 }
+let hrDev=null; // Pulsgurt global halten, sonst kann Chrome das Gerät aufräumen und die Meldungen bleiben aus
 async function connectHr(){
   if(!navigator.bluetooth){ alert('Bitte in Google Chrome öffnen.'); return; }
-  try{ const dev=await navigator.bluetooth.requestDevice({filters:[{services:[0x180D]}]});
+  try{ const dev=await navigator.bluetooth.requestDevice({filters:[{services:[0x180D]}]}); hrDev=dev;
+    dev.addEventListener('gattserverdisconnected',()=>{ live.hr=null; live.hrStrap=false; flash('Pulsgurt getrennt'); $('btnHr').textContent='Pulsgurt verbinden'; $('btnHr').classList.remove('verb'); });
     const c=await (await (await dev.gatt.connect()).getPrimaryService(0x180D)).getCharacteristic(0x2A37);
-    c.addEventListener('characteristicvaluechanged',e=>{ const v=e.target.value; live.hr=(v.getUint8(0)&1)?v.getUint16(1,true):v.getUint8(1); });
+    c.addEventListener('characteristicvaluechanged',e=>{ const v=e.target.value, h=(v.getUint8(0)&1)?v.getUint16(1,true):v.getUint8(1); if(h>0){ live.hr=h; live.hrAt=performance.now(); } });
     await c.startNotifications(); live.hrStrap=true; $('btnHr').textContent='Pulsgurt verbunden ✓'; $('btnHr').classList.add('verb');
   }catch(e){ if(e.name!=='NotFoundError') alert('Pulsgurt: '+e.message); }
 }
-
+// Puls nur, wenn ein Gurt verbunden ist und in den letzten 5 s etwas geschickt hat
+function hrNow(){ return live.hrStrap&&live.hr&&performance.now()-(live.hrAt||0)<5000?live.hr:null; }
