@@ -39,7 +39,7 @@ function renderRouteList(){
   if(race.role!=='guest') $('startHint').textContent = ok ? 'Wer das Rennen erstellt, startet für beide.' : 'Für diesen Modus gibt es noch keine Strecke.';
 }
 function openMode(m){
-  const kp=m==='kamp'; $('modeTitle').textContent=MODES[m].title; if(kp) m='train'; race.kamp=kp?kampMission():null; $('kampBlock').style.display=kp?'':'none'; if(kp) kampUi(); // Kampagne = Training mit fester Mission
+  const kp=m==='kamp'; $('modeTitle').textContent=MODES[m].title; if(kp) m='train'; race.kamp=kp?kampMission():null; $('kampBlock').style.display=kp?'':'none'; if(kp) kampUi(); $('windLvl').closest('.block').style.display=kp?'none':''; // Kampagne = Training mit fester Mission, ohne Wind und Windschatten
   race.mode=m; $('lapsBox').style.display=m==='loop'?'flex':'none'; $('lapsV').textContent=race.laps;
   const tr=m==='train'; $('woBlock').style.display=tr?'':'none'; $('ergRow').style.display=tr?'':'none'; $('botRow').style.display=tr?'none':''; $('botStyleRow').style.display=tr?'none':'';
   $('oppTitle').textContent=tr?'Mitfahrer':'Gegner'; $('btnStart').textContent=kp?'Mission starten':tr?'Training starten':'Rennen starten'; if(tr) renderWo();

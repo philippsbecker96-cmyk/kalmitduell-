@@ -56,7 +56,7 @@ function renderWo(){
   const ro=race.role==='guest', L=$('woList'), k=woKind();
   $('woKind').value=k; $('woKind').disabled=ro; document.querySelectorAll('#woBlock .woEd').forEach(e=>e.style.display=k==='wo'&&!race.kamp?'':'none'); $('woKind').parentNode.style.display=race.kamp?'none':''; // Kampagne: Workout fest, nur FTP
   $('woTestInfo').style.display=k==='wo'?'none':''; $('woTestInfo').innerHTML=TEST_INFO[k]||'';
-  $('woHa').textContent=WO.unit==='w'?'Watt':'% FTP'; $('woUnit').value=WO.unit; $('woUnit').disabled=ro; $('woPreset').disabled=ro; $('woAddStep').style.display=$('woAddRep').style.display=$('woZwo').style.display=ro?'none':''; $('woEigenDel').style.display=!ro&&k==='wo'&&WO_EIGEN.some(w=>w.name===WO.name)?'':'none';
+  $('woHa').textContent=WO.unit==='w'?'Watt':'% FTP'; $('woUnit').value=WO.unit; $('woUnit').disabled=ro; $('woPreset').disabled=ro; $('woAddStep').style.display=$('woAddRep').style.display=$('woZwo').style.display=ro||race.kamp?'none':''; $('woEigenDel').style.display=!ro&&!race.kamp&&k==='wo'&&WO_EIGEN.some(w=>w.name===WO.name)?'':'none';
   L.innerHTML=WO.items.map((it,i)=> it.k==='r'
     ? `<div class="rep" data-p="${i}"><div class="rephead">🔁 Wiederholen <input type="number" min="1" max="50" data-f="n" value="${it.n}" ${ro?'disabled':''}> × <span class="sp"></span>${ro?'':`<button data-act="add" title="Abschnitt in den Block">+</button><button data-act="up">↑</button><button data-act="down">↓</button><button data-act="del">✕</button>`}</div>${(it.items||[]).map((s,j)=>woRowHtml(s,i+'.'+j,ro)).join('')}</div>`
     : woRowHtml(it,String(i),ro)).join('');
