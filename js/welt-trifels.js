@@ -43,7 +43,8 @@ function trifelsGelaende(h,src,dist){ const T=R.tri, n=TER.nx, res=TER.res, [kx,
   const tiefst=(x,z)=>{ let m=1e9; const cx=Math.floor(x/CG), cz=Math.floor(z/CG); for(let a=-1;a<=1;a++) for(let b=-1;b<=1;b++){ const l=gr.get((cx+a)+','+(cz+b)); if(l) for(const i of l) if(Math.hypot(R.xs[i]-x,R.ys[i]-z)<14) m=Math.min(m,roadY(i*STEP)); } return m; };
   // an der Straße wie überall: bis 12 m neben der Mitte knapp unter der Fahrbahn, bis 30 m weich und nur sanft ansteigend – sonst schaut Gras durchs Pflaster
   for(let k=0;k<h.length;k++){ if(dist[k]>=30) continue; // auf der ganzen Strecke (auch in den Kehren der Abfahrt)
-    const rl=Math.min(roadY(src[k]*STEP),dist[k]<14?tiefst((k%n)*res+TER.x0,((k/n)|0)*res+TER.z0):1e9)-STR_UNTER; h[k]=dist[k]<12?rl:Math.min(rl+(h[k]-rl)*bSm((dist[k]-12)/12), rl+Math.max(0,dist[k]-16)*.15); } } // neben der Straße nur sanft ansteigen (grobes Raster)
+    const rl=Math.min(roadY(src[k]*STEP),dist[k]<14?tiefst((k%n)*res+TER.x0,((k/n)|0)*res+TER.z0):1e9)-STR_UNTER; h[k]=dist[k]<12?rl:Math.min(rl+(h[k]-rl)*bSm((dist[k]-12)/12), rl+Math.max(0,dist[k]-16)*.15); }
+  triWiesenGelaende(h,dist); } // neben der Straße nur sanft ansteigen (grobes Raster) · danach Weiher auf der Lichtung nach Jagd 2 eben (welt-trifels-wiesen.js), nah am Weg
 
 // ---- Aufbau (aus build3D) ----
 function buildTrifels(){ const T=R.tri, hy=T.hofY, [kx,ky]=T.karren, [bx,by]=T.burg, q=rng(1280);
@@ -303,17 +304,20 @@ const TRI_TXT={dorfmann:'Zeh Gulde, dass du heit owend kä Elwetritsch fangsch!'
   zurueck:['Jetz wart doch bitte uff mich!','Mein Bock is oich longsam…','Mei Wade krampfen, [name]!','Jetz wart doch bitte uff mich!'],
   weg:['Weg isse – ins Gebisch!',"Die hot uns d' Zung rausgstreckt, hosch des gsähne?",'Jetzt lacht se uns a noch aus!','Des gibts doch ned – schun widder!'],
   angst:['Die beißen, die Sauviecher, ich schwörs!',['Hosch du des Geheul ghört?','Des war bestimmt bloß de Wind…'],['Im Dunkle seht ma do hinnen Ache leichte…','…do werd ma ganz onnerschd.']],
-  lob:[['Du triddsch jo wie de Deifel persönlich!','Ich gläb ich nenn dich Betzi ab jetzad!'],'So schnell bin ich noch nie gewesst!','Mit dir zsamme kriech ich noch so eh Vieh, ich spürs!'],
+  lob:['So schnell bin ich noch nie gewesst!','Mit dir zsamme kriech ich noch so eh Vieh, ich spürs!'],
   fang:['Ich hab se!!! Ich hab des Scheißding!','Zeh Gulde, aller!!!'], ende:['Ich muss glei zurick ind Wertschaft, die werren gucken…','Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell?','Hosch enner gud bei mer, [name]!'],
   lampe:'Oich dunkel do im Wald, loss mo di Lambe aschalte!',
-  sau:['Gugg mo do! E Wutz!','Do kinnt ma e subba Brotworschd draus mache… Hosch du a so en Hunger?']};
+  sau:['Gugg mo do! E Wutz!','Do kinnt ma e subba Brotworschd draus mache… Hosch du a so en Hunger?'],
+  schafe:['Wenn nur die bleede Elwetritsche ach so schää rumstehe würden…','…anstatt so rumzuflattre die ganz Zeit!']};
 // Ablauf aus dem Workout: wer sagt wann was (Workout-Zeit in s) – Wirtshaus am Ende des Einfahrens, je Jagd Ankündigung, Anfeuern, Zurückfallen, Countdown, Entwischt/Fang, dazwischen Lob und Angst
 function triSkript(){ const S=race.woSegs||[], tW=S[0]?S[0].t0+S[0].dur:480, tS=tW-TRIFELS_T.szene, J=S.filter(s=>/Jagd/.test(s.label)), L=[], X=TRI_TXT;
   const sag=(t0,dur,wer,txt)=>{ if(Array.isArray(txt)) txt.forEach((x,i)=>L.push({t0:t0+dur*i/txt.length,t1:t0+dur*(i+1)/txt.length,wer,txt:x})); else L.push({t0,t1:t0+dur,wer,txt}); }; // lange Sprüche: mehrere Blasen nacheinander
   sag(tS+1,6,'dorfmann',X.dorfmann); sag(tS+7,4,'friedel',X.friedel1); sag(tS+11,8,'dorfweib',X.dorfweib); sag(tS+19,11,'friedel',X.friedel2); // Zwischenszene am Wirtshaus
   J.forEach((j,k)=>{ const a=j.t0; sag(a-7,7,'friedel',X.ank[k]); sag(a+3,5,'friedel',X.hopp); if(k<4) sag(a+10,6,'friedel',X.zurueck[k]);
     if(k<4) sag(a+j.dur+1,6,'friedel',X.weg[k]); else sag(a+j.dur-3,9,'friedel',X.fang);
-    if(k<3){ sag(a+70,8,'friedel',X.lob[k]); sag(a+140,9,'friedel',X.angst[k]); } if(k===3){ sag(a+42,6,'friedel',X.lampe); sag(a+TRIFELS_T.sau-2,13,'friedel',X.sau); } }); // Wildschwein nach Jagd 4 (welt-trifels-leben.js)
+    if(k===0) sag(a+TRIFELS_T.schafe,9,'friedel',X.schafe); // nach den Schafen auf dem Weg (welt-trifels-wiesen.js)
+    if(k<3){ if(k) sag(a+70,8,'friedel',X.lob[k-1]); // nach Jagd 1 kein Lob (vom Nutzer gewünscht: dort reichen die Schafe)
+      sag(a+140,9,'friedel',X.angst[k]); } if(k===3){ sag(a+42,6,'friedel',X.lampe); sag(a+TRIFELS_T.sau-2,13,'friedel',X.sau); } }); // Wildschwein nach Jagd 4 (welt-trifels-leben.js)
   const G=S.find(s=>s.label==='Grundlage'), T=race.woT||0, heim=G?G.t0+Math.round(G.dur*.55):T-52; sag(heim-21,20,'friedel',X.ende); // Abschied in der Grundlage, dann kehrt er um – das Ausfahren fährt man allein
   const lampe=J[3]?J[3].t0+48:heim; // nach Friedels Lampen-Spruch gehen beide Laternen richtig an
   return {L,tS,tW,J,T,heim,lampe}; }

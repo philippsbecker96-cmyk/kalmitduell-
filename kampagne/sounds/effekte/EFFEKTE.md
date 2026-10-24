@@ -36,5 +36,18 @@ Vor jedem neuen Ton wird erst gefragt.
 | `effekte/unheimlich.mp3` | 32 s | Wald nach Jagd 1–3, um Friedels Angst-Spruch · nach Jagd 4 leiser zwischen Laternen-Spruch und Wildschwein |
 | `musik/ankunft.mp3` | 15 s | einmal mit den Ende-Tafeln (Taverne pausiert so lange) |
 
+## Mission 1 – Lichtungen (`welt-trifels-wiesen.js`, eingebaut)
+
+| Datei | Länge | Wann |
+|---|---|---|
+| `schaafe.mp3` | vorhanden | Schleife: Blöken der Schafherde auf der Lichtung nach Jagd 1 (bis 70 m) |
+| `hundebellen.mp3` | vorhanden | Hütehund bellt alle 2–8 s, solange du näher als 45 m bist |
+| `entengeräusche.mp3` | vorhanden | Schleife: Enten quaken am Weiher nach Jagd 2 (bis 50 m) |
+| `kuhglocken.mp3` | vorhanden | Schleife: Kuhherde nach Jagd 3 (bis 75 m) |
+| `muhen.mp3` | vorhanden | eine Kuh muht alle 6–14 s, solange du an der Herde bist |
+| `feuerknistern.mp3` | vorhanden | Schleife: Knistern und Prasseln am Köhlerplatz nach Jagd 4 (bis 45 m) |
+
+Außerdem `fluegel.mp3`, wenn die Elwetritsche vom Scheunendach flattert. Fehlende Dateien bleiben einfach still. Sobald sie im Ordner liegen, sind sie zu hören.
+
 Fehlt noch: `truhe.mp3` (Wache stellt in der Kamerafahrt eine Truhe ab).
 Noch offen (Ideen): Gänse schnattern, Käuzchen.

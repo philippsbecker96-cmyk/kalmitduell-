@@ -22,7 +22,8 @@ function prepTrifelsLeben(r){ const T=r.tri, S=r.S, O=r.def.orte, kf=r.kf, dw=T.
   if(T.reh!=null) for(let u=-20;u<=16;u+=3) weg(T.reh,u,4); // Reh quert von rechts nach links
   if(T.sau!=null){ for(let d=T.sau-16;d<=T.sau;d+=4) for(const u of [4,7,10]) weg(d,u,2.5); for(let d=T.sau+70;d<=T.sau+130;d+=4) for(const u of [-4,-7,-10]) weg(d,u,2.5); } // rechts herein, links hinaus // Wildschwein läuft rechts am Rand mit, dreht ab
   if(T.tritsch!=null) for(let d=T.tritsch-5;d<=T.tritsch+60;d+=4) for(const u of [-5,-8,-11,-14,6,9,12]) weg(d,u,2.5); // Elwetritsche: links und rechts ins Gebüsch
-  for(const k of ['tree','bush','rock']) S[k]=S[k].filter(o=>!frei.some(([x,y,m])=>Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m&&Math.hypot(o.x-x,o.y-y)<m)); }
+  for(const k of ['tree','bush','rock']) S[k]=S[k].filter(o=>!frei.some(([x,y,m])=>Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m&&Math.hypot(o.x-x,o.y-y)<m));
+  prepTrifelsWiesen(r); } // Lichtungen zwischen den Jagden (welt-trifels-wiesen.js)
 
 // Vierbeiner mit beweglichen Beinen (Reh, Kitz, Wildschwein), lokal +x nach vorn, Hufe auf y=0
 function triTier(o){ const G=new THREE.Group(), K=new THREE.Group(), m=o.em?new THREE.MeshLambertMaterial({color:o.c,emissive:o.em}):lam(o.c), H=o.H, L=o.L; G.add(K);
@@ -95,7 +96,8 @@ function buildTrifelsLeben(T){ const A=anim.tri, q=rng(905), M=c=>lam(c), holz=M
   // Drei Elwetritsche: Fell glimmt leicht, Augen leuchten im Laternenlicht
   if(T.tritsch!=null) L.tritsch={s:-1, fertig:false, c:T.tritsch, tiere:[1.15,1,.9].map(g=>{ const E=elwetritscheModell(); E.G.traverse(o=>{ if(!o.material||!o.material.color) return; const c=o.material.color;
     o.material=c.getHexString()==='f6f4ee'?new THREE.MeshBasicMaterial({color:'#fff4d0'}):new THREE.MeshLambertMaterial({color:c,emissive:c.clone().multiplyScalar(.25)}); });
-    E.G.scale.setScalar(1.2*g); E.G.visible=false; world.add(E.G); return {...E, ph:q()*6, pd:null, rot:0}; })}; }
+    E.G.scale.setScalar(1.2*g); E.G.visible=false; world.add(E.G); return {...E, ph:q()*6, pd:null, rot:0}; })};
+  sicher('Trifels-Wiesen',()=>buildTrifelsWiesen(T,K,box,bretter)); } // Schafe, Weiher und Scheune, Kühe, Köhler (welt-trifels-wiesen.js)
 
 // ---- Ausweichen: dem Heuwagen und dem Fuhrwerk rechts Platz machen (Friedel fährt links neben dir mit) ----
 function triGegenSpur(d,t){ const L=anim.tri&&anim.tri.leben; if(!L) return t; const W=L.gegen.find(E=>E.art==='wagen'&&E.G.visible), F=L.fuhre; let rechts=0;
@@ -103,6 +105,7 @@ function triGegenSpur(d,t){ const L=anim.tri&&anim.tri.leben; if(!L) return t; c
 
 // ---- Bewegung (aus poseTrifels) ----
 function poseTrifelsLeben(dt,t,rt){ const A=anim.tri, L=A.leben, T=R.tri; if(!L) return; const run=race.state==='run', lauf=run&&!race.paused?dt*simSpeed():0, dw=T.wirtD, ZS=A.sk&&run?rt-A.sk.tS:-1;
+  sicher('Trifels-Wiesen',()=>poseTrifelsWiesen(dt,t,lauf)); // Lichtungen (welt-trifels-wiesen.js)
   const nah=Math.abs(me.d-dw)<260; L.magd.G.visible=nah; for(const g of L.gaense) g.T.visible=nah; // sonst stehen sie unplatziert am Start (0,0,0)
   if(nah){ hofKastenPose(L.D,t);
     // Gänse: Szene-Sekunde von..bis queren sie von rechts nach links, die Magd treibt
@@ -160,7 +163,7 @@ function poseTrifelsLeben(dt,t,rt){ const A=anim.tri, L=A.leben, T=R.tri; if(!L)
         e.kopf.rotation.x=!an?.7*Math.max(0,Math.sin(t*1.7+e.ph*2))**3:-.25; e.augen.forEach(a=>a.scale.y=an?1.5:1); e.zunge.visible=i===2&&f>0; }); } } }
 
 // ---- Geräusche (kampagne/sounds/effekte/, über <audio>, da file://): Schleifen werden leiser, je weiter die Kamera weg ist; Einzeltöne einmal je Ereignis (A.ton) ----
-const TRI_TON='kampagne/sounds/effekte/', TRI_TON_VOL={wagen:.5,hufe:.7,kettenhemd:.3,wiehern:.7,sturz:.9,glocken:.6,peitsche:.8,wirtshaus:.6,grillen:.35,fluegel:.7,elwetritsch_schrei:.8,gackern:.6,schwein:.8,rascheln_gebuesch:.7,elwetritschegefangen:.9,fanfare:.7};
+const TRI_TON='kampagne/sounds/effekte/', TRI_TON_VOL={wagen:.5,hufe:.7,kettenhemd:.3,wiehern:.7,sturz:.9,glocken:.6,peitsche:.8,wirtshaus:.6,grillen:.35,fluegel:.7,elwetritsch_schrei:.8,gackern:.6,schwein:.8,rascheln_gebuesch:.7,elwetritschegefangen:.9,fanfare:.7,schaafe:.5,hundebellen:.6,'entengeräusche':.4,kuhglocken:.45,muhen:.7,feuerknistern:.5};
 const TRI_MUSIK={thema:['musik/thema',.45], jagd:['musik/jagd',.5,2], ankunft:['musik/ankunft',.45], taverne:['musik/taverne',.35], unheimlich:['effekte/unheimlich',.4]}; // [Datei ab kampagne/sounds/, Lautstärke, Blende je s (sonst .45 = gut 2 s)]
 const triLoops={}; let triTonVor=null;
 function triEins(n,v=1,rate=1){ if(v<.02) return; try{ const a=new Audio(TRI_TON+n+'.mp3'); a.volume=clampN(v*TRI_TON_VOL[n],0,1); a.preservesPitch=false; a.playbackRate=rate; a.play().catch(()=>{}); }catch(e){} }
@@ -213,6 +216,13 @@ function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race
   const Rh=L&&L.reh; if(Rh&&Rh.s>=0&&Rh.s<9){ if(einmal('reh',true)) triEins('rascheln_gebuesch',.8); if(einmal('rehweg',Rh.s>=3.5)) triEins('rascheln_gebuesch',.6,1.1); }
   const Sw=L&&L.sau; if(Sw&&Sw.s>=0&&!Sw.fertig){ const s=Sw.s, Z=TRI_SAU; if(einmal('saurein',true)) triEins('rascheln_gebuesch');
     if(an&&s>1&&s<Z.raus+Z.ab&&t>(O.grunz||0)){ triEins('schwein',.9,.9+Math.random()*.2); O.grunz=t+1.6+Math.random()*1.8; } if(einmal('saurraus',s>=Z.raus+Z.ab*.6)) triEins('rascheln_gebuesch'); }
+  // Lichtungen (welt-trifels-wiesen.js): Schafe blöken, Hütehund bellt ab und zu, Enten am Weiher, Elwetritsche flattert vom Scheunendach, Kuhglocken und Muhen, Knistern am Meiler
+  const Wz=k=>L&&L.wiesen&&L.wiesen.find(W=>W.art===k), fw=(W,max)=>an&&W&&W.an&&W.ton?triFern(W.ton,max):0;
+  { const W=Wz('schafe'); triLoop('schafe','schaafe',fw(W,70),dt); const f=an&&W&&W.an&&W.hund?triFern(W.hund.G.position,45):0;
+    if(f>.05){ if(O.bell==null) O.bell=t+.3; else if(t>O.bell){ triEins('hundebellen',f,.95+Math.random()*.15); O.bell=t+2.5+Math.random()*5; } } }
+  { const W=Wz('teich'); triLoop('enten','entengeräusche',fw(W,50),dt); if(einmal('selw',W&&W.elw&&W.elw.s>=.25&&W.elw.s<5)) triEins('fluegel',.7,1.1); }
+  { const f=fw(Wz('kuehe'),75); triLoop('kuhglocken','kuhglocken',f,dt); if(f>.05){ if(O.muh==null) O.muh=t+1.5; else if(t>O.muh){ triEins('muhen',f,.9+Math.random()*.2); O.muh=t+6+Math.random()*8; } } }
+  triLoop('meiler','feuerknistern',fw(Wz('koehler'),45),dt);
   // ---- Musik ----
   const km=race.kamp, e0=km?(race.woT||0)-(km.ende||[]).length*KT_DAUER:1e9, G=T.gast, gp=G?new THREE.Vector3(G.x,roadY(G.d)+1.5,G.y):null, ank=run&&rt>=e0&&rt<e0+16; // e0: Ende-Tafeln
   // Erkennungsmelodie: Countdown, Kamerafahrt und erste Tafeln, aus, sobald das Gefolge zu hören ist

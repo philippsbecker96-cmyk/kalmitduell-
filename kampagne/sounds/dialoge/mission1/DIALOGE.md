@@ -79,8 +79,8 @@ Je Jagd: Ankündigung, Anfeuern, (Jagd 1–4) Zurückfallen, am Ende Entwischt b
 
 | Datei | Wann | Text |
 |---|---|---|
-| `friedel_lob1a` | nach Jagd 1 | Du triddsch jo wie de Deifel persönlich! |
-| `friedel_lob1b` | nach Jagd 1 | Ich gläb ich nenn dich Betzi ab jetzad! |
+| `friedel_schafe1` | nach Jagd 1, Schafe auf dem Weg | Wenn nur die bleede Elwetritsche ach so schää rumstehe würden… |
+| `friedel_schafe2` | nach Jagd 1, Schafe auf dem Weg | …anstatt so rumzuflattre die ganz Zeit! |
 | `friedel_lob2` | nach Jagd 2 | So schnell bin ich noch nie gewesst! |
 | `friedel_lob3` | nach Jagd 3 | Mit dir zsamme kriech ich noch so eh Vieh, ich spürs! |
 | `friedel_angst1` | nach Jagd 1 | Die beißen, die Sauviecher, ich schwörs! |
