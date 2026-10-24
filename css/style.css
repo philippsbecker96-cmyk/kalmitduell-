@@ -82,10 +82,21 @@ input[type=text],input[type=number]{font:600 16px Barlow,sans-serif;padding:8px 
 .todrow{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:15px;flex-wrap:wrap}
 .tod,.sea,.kst{background:#14241c;border:3px solid transparent;padding:7px 14px;font-size:15px}
 .tod.sel,.sea.sel,.kst.sel{border-color:var(--sky1);background:#1f3a2c}
+/* Strecken zu zweit nebeneinander: Bild oben, Text darunter */
+#routeList{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#routeList .route{flex-direction:column;align-items:stretch;margin:0;padding:10px}
+#routeList .route canvas,#routeList .route .ph{width:100%;height:auto;aspect-ratio:300/92}
+@media (max-width:520px){#routeList{grid-template-columns:1fr}}
 .route.soon{border:3px dashed #3d6a52;opacity:.85;cursor:default}
 .route.soon canvas{display:none}
 .route .ph{width:150px;height:46px;flex:none;border-radius:8px;background:repeating-linear-gradient(45deg,#1f3a2c 0 8px,#18301f 8px 16px);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted)}
 .switch .small{display:block;margin-top:2px}
+/* Lobby: Einstellungen als Raster – Name links, Auswahl rechts */
+.opts{display:grid;grid-template-columns:112px 1fr;gap:12px 14px;align-items:center;font-size:15px}
+.optgrp,.opt{display:contents} .olbl{color:var(--txt2);font-weight:600}
+.ochs{display:flex;gap:8px;flex-wrap:wrap;align-items:center} .ochs .small{flex-basis:100%}
+.opts .tod,.opts .sea{padding:6px 12px}
+button.verb{background:rgba(76,175,110,.18);border-color:var(--ok);color:#bff0cf}
 @media (max-width:1050px){.modes{grid-template-columns:1fr 1fr 1fr}}
 @media (max-width:820px){.modes{grid-template-columns:1fr}}
 select{font:600 15px Barlow,sans-serif;padding:7px 8px;border-radius:8px;border:2px solid var(--pine);background:#14241c;color:var(--paper)}

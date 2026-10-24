@@ -110,11 +110,6 @@
         <div class="block">
           <h2>Strecke <span class="tag hostonly" style="display:none">legt der Ersteller fest</span></h2>
           <div id="routeList"></div>
-          <div id="todBox" class="todrow" style="display:none">
-            <span>Tageszeit</span><button id="todDay" class="tod sel" data-tod="tag">☀️ Tag</button><button id="todDusk" class="tod" data-tod="abend">🌇 Abenddämmerung</button><button id="todNight" class="tod" data-tod="nacht">🌙 Nacht · Flutlicht</button>
-            <span id="seaBox" style="margin-left:8px;display:inline-flex;gap:10px;align-items:center">Jahreszeit <button class="sea sel" data-sea="sommer">🌿 Sommer</button><button class="sea" data-sea="herbst">🍂 Herbst</button></span>
-            <label class="check" style="margin-left:8px"><input type="checkbox" id="rainOn"> 🌧️ Regen <span class="small">(nur Optik)</span></label>
-          </div>
           <div id="lapsBox" class="laps" style="display:none">
             <span>Runden</span>
             <button id="lapMinus" aria-label="Eine Runde weniger">−</button>
@@ -151,10 +146,17 @@
           </div>
         </div>
         <div class="block">
-          <h2>Regeln <span class="tag hostonly" style="display:none">legt der Ersteller fest</span></h2>
-          <label class="switch"><input type="checkbox" id="draftOn" checked><span class="knob"></span><span><b>Windschatten</b> <span class="small" id="draftLbl">An – dicht hinter dem Gegner brauchst du weniger Watt</span></span></label>
-          <div class="rowb" style="margin-top:12px"><label class="check"><b>Wind</b> <select id="windLvl"><option value="0">aus</option><option value="1">leicht · 10 km/h</option><option value="2">mittel · 20 km/h</option><option value="3">stark · 30 km/h</option></select></label>
-            <span class="small">Richtung zufällig, mit Böen · Wald und Ortschaften schirmen ab · am Trainer als Zusatzsteigung</span></div>
+          <h2>Bedingungen <span class="tag hostonly" style="display:none">legt der Ersteller fest</span></h2>
+          <div class="opts">
+            <div id="todBox" class="optgrp" style="display:none">
+              <div class="opt"><span class="olbl">Tageszeit</span><div class="ochs"><button id="todDay" class="tod sel" data-tod="tag">☀️ Tag</button><button id="todDusk" class="tod" data-tod="abend">🌇 Abend</button><button id="todNight" class="tod" data-tod="nacht">🌙 Nacht · Flutlicht</button></div></div>
+              <div class="opt" id="seaBox"><span class="olbl">Jahreszeit</span><div class="ochs"><button class="sea sel" data-sea="sommer">🌿 Sommer</button><button class="sea" data-sea="herbst">🍂 Herbst</button></div></div>
+              <div class="opt"><span class="olbl">Wetter</span><label class="switch"><input type="checkbox" id="rainOn"><span class="knob"></span><span>🌧️ Regen <span class="small">nur Optik</span></span></label></div>
+            </div>
+            <div class="opt"><span class="olbl">Wind</span><div class="ochs"><select id="windLvl"><option value="0">aus</option><option value="1">leicht · 10 km/h</option><option value="2">mittel · 20 km/h</option><option value="3">stark · 30 km/h</option></select>
+              <span class="small">Richtung zufällig, mit Böen · Wald und Orte schirmen ab · am Trainer als Zusatzsteigung</span></div></div>
+            <div class="opt"><span class="olbl">Windschatten</span><label class="switch"><input type="checkbox" id="draftOn" checked><span class="knob"></span><span class="small" id="draftLbl">An – dicht hinter dem Gegner brauchst du weniger Watt</span></label></div>
+          </div>
         </div>
         <div class="block">
           <h2>Trainer</h2>
@@ -162,20 +164,13 @@
             <button id="btnTrainer">Trainer verbinden</button>
             <button id="btnHr">Pulsgurt verbinden</button>
           </div>
-          <div class="rowb" style="margin-top:10px">
-            <label class="check"><input type="checkbox" id="slopeOn" checked> Steigung am Trainer, Stärke</label>
-            <input type="range" id="slopeK" min="0" max="100" value="50"> <span class="num" id="slopeKv">50 %</span>
+          <div class="small" id="trainerState" style="margin-top:8px">Nicht verbunden – ohne Trainer fährst du mit dem Simulationsregler.</div>
+          <div class="opts" style="margin-top:12px">
+            <div class="opt"><span class="olbl">Steigung</span><div class="ochs"><label class="switch"><input type="checkbox" id="slopeOn" checked><span class="knob"></span></label><input type="range" id="slopeK" min="0" max="100" value="50"> <span class="num" id="slopeKv">50 %</span></div></div>
+            <div class="opt" id="ergRow" style="display:none"><span class="olbl">ERG</span><label class="switch"><input type="checkbox" id="ergOn" checked><span class="knob"></span><span class="small">im Training hält der Trainer die Ziel-Watt</span></label></div>
+            <div class="opt"><span class="olbl">Kamera</span><label class="switch"><input type="checkbox" id="shakeOn" checked><span class="knob"></span><span class="small">wackelt je nach Belag und Tempo</span></label></div>
+            <div class="opt"><span class="olbl">Testmodus</span><label class="switch"><input type="checkbox" id="testOn"><span class="knob"></span><span class="small">Tempo ×1 / ×5 / ×15 / ×30 im Spiel (nur allein)</span></label></div>
           </div>
-          <div class="rowb" id="ergRow" style="margin-top:10px;display:none">
-            <label class="check"><input type="checkbox" id="ergOn" checked> ERG im Training – der Trainer hält die Ziel-Watt</label>
-          </div>
-          <div class="rowb" style="margin-top:10px">
-            <label class="check"><input type="checkbox" id="testOn"> Testmodus – im Spiel Tempo ×1 / ×5 / ×15 / ×30 wählbar <span class="small">(nur allein)</span></label>
-          </div>
-          <div class="rowb" style="margin-top:10px">
-            <label class="check"><input type="checkbox" id="shakeOn" checked> Kamerawackeln – je nach Belag und Tempo</label>
-          </div>
-          <div class="small" id="trainerState">Nicht verbunden – ohne Trainer fährst du mit dem Simulationsregler.</div>
         </div>
       </div>
     </div>

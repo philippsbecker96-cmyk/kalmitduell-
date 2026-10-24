@@ -3,7 +3,7 @@ async function connectTrainer(){
   if(!navigator.bluetooth){ alert('Web Bluetooth ist hier nicht verfügbar. Bitte in Google Chrome öffnen.'); return; }
   try{
     const dev=await navigator.bluetooth.requestDevice({filters:[{services:[0x1826]},{services:[0x1818]},{services:[FEC_SVC]}],optionalServices:[0x1826,0x1818,FEC_SVC]});
-    dev.addEventListener('gattserverdisconnected',()=>{ live.src='sim'; ftmsCtrl=null; fecWr=null; $('trainerState').textContent='Trainer getrennt – Simulation aktiv'; if(race.state!=='setup') $('simBox').style.display='block'; flash('Trainer getrennt'); });
+    dev.addEventListener('gattserverdisconnected',()=>{ live.src='sim'; ftmsCtrl=null; fecWr=null; $('trainerState').textContent='Trainer getrennt – Simulation aktiv'; if(race.state!=='setup') $('simBox').style.display='block'; flash('Trainer getrennt'); $('btnTrainer').textContent='Trainer verbinden'; $('btnTrainer').classList.remove('verb'); });
     $('trainerState').textContent='Verbinde mit '+dev.name+'…';
     const server=await dev.gatt.connect();
     try{
@@ -16,7 +16,7 @@ async function connectTrainer(){
     }
     // Tacx: ohne FTMS-Steuerung über FE-C (Tacx-eigene Schnittstelle über Bluetooth) steuern
     fecWr=null; if(!ftmsCtrl){ try{ fecWr=await (await server.getPrimaryService(FEC_SVC)).getCharacteristic(FEC_WR); }catch(e){ fecWr=null; } }
-    live.src='ble'; lastSlopeSent=null; lastErgW=null; $('trainerState').textContent=`Verbunden: ${dev.name}`+(ftmsCtrl||fecWr?' · Steigung und ERG steuerbar':' · nur Leistung');
+    live.src='ble'; lastSlopeSent=null; lastErgW=null; $('trainerState').textContent=`Verbunden: ${dev.name}`+(ftmsCtrl||fecWr?' · Steigung und ERG steuerbar':' · nur Leistung'); $('btnTrainer').textContent='Trainer verbunden ✓'; $('btnTrainer').classList.add('verb');
   }catch(e){ if(e.name!=='NotFoundError') $('trainerState').textContent='Verbindung fehlgeschlagen: '+e.message; }
 }
 function parseIndoorBike(dv){
@@ -69,7 +69,7 @@ async function connectHr(){
   try{ const dev=await navigator.bluetooth.requestDevice({filters:[{services:[0x180D]}]});
     const c=await (await (await dev.gatt.connect()).getPrimaryService(0x180D)).getCharacteristic(0x2A37);
     c.addEventListener('characteristicvaluechanged',e=>{ const v=e.target.value; live.hr=(v.getUint8(0)&1)?v.getUint16(1,true):v.getUint8(1); });
-    await c.startNotifications(); live.hrStrap=true; $('btnHr').textContent='Pulsgurt ✓';
+    await c.startNotifications(); live.hrStrap=true; $('btnHr').textContent='Pulsgurt verbunden ✓'; $('btnHr').classList.add('verb');
   }catch(e){ if(e.name!=='NotFoundError') alert('Pulsgurt: '+e.message); }
 }
 
