@@ -28,7 +28,8 @@ function prepSuedpfalz(r){ const T=r.def.typisch, S=r.S, q=rng(321), P=r.sp={hae
   // Kleine Kalmit: ein paar Bäume um die Kapelle
   const K=SP_KALMITCHEN; for(let i=0;i<7;i++){ const a=i/7*6.28+q()*.5, o=16+q()*14; S.tree.push({x:K.x+Math.cos(a)*o, y:K.z+Math.sin(a)*o, s:2.6+q()*1.4, c:q(), pine:i%3===0, ht:9+q()*4}); }
   // Weinverkauf, Weingut, Straußwirtschaft über einem Teil der Hoftore
-  for(const o of S.tor){ const z=zoneOf(r,o.d); if(!z||z[0]!=='ort'||o.w<2.6||q()>.3) continue; const u=q(); P.wein.push({o, art:u<.2?2:u<.6?1:0, n:SP_WEINGUT[q()*SP_WEINGUT.length|0]}); } }
+  for(const o of S.tor){ const z=zoneOf(r,o.d); if(!z||z[0]!=='ort'||o.w<2.6||q()>.3) continue; const u=q(); P.wein.push({o, art:u<.2?2:u<.6?1:0, n:SP_WEINGUT[q()*SP_WEINGUT.length|0]}); }
+  if(r.def.weinberg) prepWeinberg(r); } // Weinstände, Weinlese (welt-weinberg.js)
 
 // ---- Aufbau (aus build3D) ----
 function buildSuedpfalz(plainY){ const P=R.sp; if(!P) return;

@@ -24,7 +24,7 @@ function draw(dt){
   if(opp.active&&Math.abs(opp.d-me.d)<2.2&&!R.stadium&&!camOverride){ // nebeneinander: beide fahren die Linie gemeinsam mit 1,2 m Abstand, Reihenfolge wie die Grundspuren
     const up=ownLane(myKey)>=ownLane(oppKey)?1:-1; let a=tm.t, b=to.t; if((a-b)*up<1.2){ const m=(a+b)/2; a=m+.6*up; b=m-.6*up; }
     const H=tm.H, sh=Math.max(0,Math.max(a,b)-H)-Math.max(0,-H-Math.min(a,b)); tm.t=a-sh; to.t=b-sh; }
-  const lanes=(r,gapAhead,leader,t,d)=>{ const tgt=radlerSpur(d,triSpur(d,burgSpur(d,(race.draft&&opp.active&&gapAhead>2&&gapAhead<10&&leader.lane!=null)?leader.lane:t))); // Südpfalz: an anderen Radlern vorbei · Berwartstein: links am Pferdekarren vorbei · Trifels: dem Gefolge von Löwenherz ausweichen
+  const lanes=(r,gapAhead,leader,t,d)=>{ const tgt=weinSpur(d,radlerSpur(d,triSpur(d,burgSpur(d,(race.draft&&opp.active&&gapAhead>2&&gapAhead<10&&leader.lane!=null)?leader.lane:t)))); // Südpfalz: an anderen Radlern vorbei, dem Traktor Platz machen · Berwartstein: links am Pferdekarren vorbei · Trifels: dem Gefolge von Löwenherz ausweichen
     if(r.lane==null||camOverride) r.lane=tgt; else r.lane+=(tgt-r.lane)*Math.min(1,dt*1.5); };
   if(mine.lane==null) mine.lane=ownLane(myKey);
   if(theirs.lane==null) theirs.lane=ownLane(oppKey);
@@ -40,6 +40,7 @@ function draw(dt){
   if(anim.burg) poseBurg(dt); if(anim.tri) poseTrifels(dt); else triTonAus(); // Trifels: welt-trifels.js, Geräusche in welt-trifels-leben.js
   if(anim.autos) poseAutos(dt);
   if(anim.radler) poseRadler(dt); // Südpfalz: andere Radfahrer (welt-radler.js)
+  if(anim.wb) poseWeinberg(dt); // Südpfalz: Weinstände, Traktor, Weinlese (welt-weinberg.js)
   // Kamera: hinten oben, läuft den Anstieg mit
   const focusD=me.d; let tx,ty,tz,lx,ly,lz;
   // Tempo-Gefühl: sp 0 (≤25 km/h) … 1 (≥54 km/h), acc = geglättete Beschleunigung

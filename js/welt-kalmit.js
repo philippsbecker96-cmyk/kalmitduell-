@@ -121,7 +121,7 @@ function build3D(){
   if(world){ scene.remove(world); world.traverse(o=>{ o.geometry&&o.geometry.dispose&&o.geometry.dispose(); for(const mt of [].concat(o.material||[], o.userData.dry||[], (o.userData.dry&&o.userData.dry.userData.wm)||[])){ mt.map&&mt.map.dispose&&mt.map.dispose(); mt.dispose&&mt.dispose(); } }); }
   hausReset();
   world=new THREE.Group(); scene.add(world);
-  BODEN_FL.length=0; anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; anim.radler=null; anim.burg=null; anim.tri=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
+  BODEN_FL.length=0; anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; anim.radler=null; anim.wb=null; anim.burg=null; anim.tri=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
   const sp=!!R.space; sky.visible=!sp; spaceSky.visible=sp; streaks.m.visible=false; scene.background.set(sp?SPACE_BG:HORIZON); scene.fog.color.set(sp?SPACE_BG:HORIZON);
   if(sp){ buildSpace(); return; }
   if(R.island){ buildIsland(); return; }
@@ -327,6 +327,7 @@ function build3D(){
   hausLicht();
   if(R.def.haardt) buildSuedpfalz(plainY); // Burgen auf der Haardt, Kastanienwald, Kapelle, Typisches am Weg (welt-suedpfalz.js)
   if(R.def.radler) buildRadler(); // andere Radfahrer (welt-radler.js)
+  if(R.wb) buildWeinberg(); // Weinstände, Traktor, Weinlese (welt-weinberg.js)
 
   // ---------- B10 (vierspurig, Grünstreifen in der Mitte) mit fahrenden Autos · Gewerbehallen ----------
   anim.autos=null;
