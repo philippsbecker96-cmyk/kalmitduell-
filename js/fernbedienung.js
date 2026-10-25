@@ -7,7 +7,7 @@ const startOk=()=>race.state==='setup' && $('cfgScreen').style.display!=='none' 
 function remoteCmd(a,v){
   if(a==='int'){ if(rStand().wo){ race.intens=Math.max(70,Math.min(130,Math.round(+v)||100))/100; lastErgW=null; intUi(); } return; } // Intensität: alle Ziel-Watt mal …
   if(a==='start'){ if(startOk()){ $('remote').style.display='none'; startRace(); } return; }
-  if(race.menuOnly||$('pauseAsk').style.display!=='none') return; // Menü nach Einheitsende oder Beenden-Frage: nicht vom Handy aus
+  if(race.menuOnly||$('quitAsk').style.display==='flex') return; // Menü nach Einheitsende oder Beenden-Frage: nicht vom Handy aus
   if(a==='pause' && race.state==='run' && !race.paused){ $('remote').style.display='none'; setPause(true); }
   if(a==='resume' && race.paused){ $('remote').style.display='none'; resumeRace(); }
 }

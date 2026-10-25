@@ -35,18 +35,23 @@
 <div id="banner"></div>
 <div id="kampTafel"></div>
 <div id="speedBox">Tempo <button data-s="1" class="sel">×1</button><button data-s="5">×5</button><button data-s="15">×15</button><button data-s="30">×30</button><span id="sprungBox">· Zeit <input id="sprungT" placeholder="7:25" size="5" title="Workout-Zeit (min:s), Enter springt hin"></span></div>
-<button id="btnMenu" title="Menü – pausiert das Spiel">☰ Menü</button>
-<button id="btnPause" title="Pause (Leertaste)">⏸ Pause</button>
-<div id="pause"><div class="card"><h1 style="font-size:52px;margin:0" id="pauseTitle">Pause</h1><div class="sub" id="pauseSub">Alles steht still – der Trainer ist auf flach gestellt.</div>
-  <div id="menuOpts" style="display:none;text-align:left;margin:4px 0 14px">
+<button id="btnMenu" title="Pause und Menü (Leertaste)">⏸ Pause · Menü</button>
+<div id="pause"><div class="card"><h1 id="pauseTitle">⏸ Pause</h1><div class="sub" id="pauseSub"></div>
+  <div id="pStat" class="pStat"></div>
+  <div id="pProg" class="pProg"><div class="pBar"><i id="pBarFill"></i></div><span id="pProgTxt"></span></div>
+  <div id="pGap" class="pGap"></div>
+  <div id="menuOpts" class="pOpts">
+    <div class="pLab">Einstellungen</div>
     <label class="switch" id="mErgRow"><input type="checkbox" id="mErg"><span class="knob"></span><span><b>ERG</b> <span class="small" id="mErgLbl"></span></span></label>
-    <div id="mIntRow" style="margin-top:14px"><b>Intensität des Workouts</b> <span class="small">– alle Ziel-Watt mal …</span>
-      <div class="rowb" style="margin-top:6px"><input type="range" id="mInt" min="70" max="130" step="1" value="100" style="flex:1"><b class="num" id="mIntV" style="font-size:24px;min-width:64px;text-align:right">100 %</b></div>
-      <div class="rowb" style="margin-top:6px"><button data-i="90">90 %</button><button data-i="95">95 %</button><button data-i="100">100 %</button><button data-i="105">105 %</button><button data-i="110">110 %</button></div></div>
-    <div class="small" id="mNoOpts" style="display:none">Kein ERG in Rennen – jeder tritt und schaltet selbst.</div>
+    <div id="mIntRow" class="pInt"><div><b>Intensität</b><div class="small">alle Ziel-Watt mal …</div></div>
+      <div class="rowb"><button id="mIntM" title="5 % leichter">−</button><b class="num" id="mIntV">100 %</b><button id="mIntP" title="5 % schwerer">+</button></div></div>
   </div>
-  <div id="pauseMain" class="rowb"><button class="go" id="btnResume">▶ Weiter</button><button class="tcxBtn" style="display:none">⬇ TCX für Strava</button><button id="btnQuit">Beenden</button><button id="btnRemote2" class="rcBtn" title="Handy als Fernbedienung">📱 Handy</button></div>
-  <div id="pauseAsk" class="rowb" style="display:none"><span style="font-size:17px;flex-basis:100%">Wirklich beenden und zurück in die Lobby?</span><button class="tcxBtn" style="display:none">⬇ TCX für Strava</button><button class="go" id="btnQuitYes">Ja, beenden</button><button id="btnQuitNo">Abbrechen</button></div></div></div>
+  <div id="pauseMain">
+    <button class="go pGo" id="btnResume">▶ Weiter</button>
+    <div class="rowb pNeben"><button id="btnRemote2" class="rcBtn" title="Handy als Fernbedienung">📱 Handy</button><button class="tcxBtn" style="display:none">⬇ TCX für Strava</button><button id="btnClose">Schließen</button></div>
+    <button id="btnQuit" class="pQuit">Beenden</button></div></div></div>
+<div id="quitAsk"><div class="card"><h1>Beenden?</h1><div class="sub" id="quitSub">Zurück in die Lobby – die Fahrt ist danach vorbei.</div>
+  <div class="pKnoepfe"><button class="go" id="btnQuitSave">⬇ Fahrt speichern (TCX) und beenden</button><button id="btnQuitYes">Beenden</button><button id="btnQuitNo">Abbrechen</button></div></div></div>
 <div id="woNow"><div class="lab" id="wnLab"></div><div class="big"><span id="wnW">0</span> <small>W</small></div>
   <div class="row"><span id="wnMe">Du: 0 W</span><span class="cd" id="wnCd">0:00</span></div><div class="nx" id="wnNx"></div><div id="wnList"></div><button id="wnStop" style="display:none;margin-top:8px;background:var(--sand);padding:6px 14px;font-size:15px">Test beenden</button></div>
 <div id="msg"></div>

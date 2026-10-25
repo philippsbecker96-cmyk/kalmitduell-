@@ -152,14 +152,31 @@ select{font:600 15px Barlow,sans-serif;padding:7px 8px;border-radius:8px;border:
 #result td.r{text-align:right}
 #speedBox{position:fixed;right:14px;bottom:150px;z-index:6;display:none;align-items:center;gap:6px;background:rgba(29,51,40,.92);border:2px solid var(--pine);border-radius:10px;padding:6px 8px;font-size:14px;color:var(--muted)}
 #speedBox button{padding:6px 10px;font-size:15px;background:#14241c;border:2px solid transparent}
-#mIntRow button{padding:6px 10px;font-size:15px;background:#14241c;border:2px solid transparent}
-#mIntRow button.sel{border-color:var(--sky1);background:#1f3a2c}
 #speedBox button.sel{border-color:var(--sky1);background:#1f3a2c}
 #sprungT{width:62px;padding:5px 6px;font-size:15px;background:#14241c;color:inherit;border:1px solid var(--g-line);border-radius:6px;text-align:center}
-#btnMenu{position:fixed;right:140px;bottom:96px;z-index:6;display:none;background:rgba(29,51,40,.92);border:2px solid var(--pine);font-size:17px;padding:10px 18px}
-#btnPause{position:fixed;right:14px;bottom:96px;z-index:6;display:none;background:rgba(29,51,40,.92);border:2px solid var(--pine);font-size:17px;padding:10px 18px}
-#pause{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:13;background:rgba(18,32,25,.72)}
-#pause .card{width:min(460px,94vw);text-align:center} #pause .rowb{justify-content:center;margin-top:8px}
+#btnMenu{position:fixed;right:14px;bottom:96px;z-index:6;display:none;background:rgba(29,51,40,.92);border:2px solid var(--pine);font-size:17px;padding:10px 18px}
+/* Pause/Menü: Titel, Statuszeile, Fortschritt, Einstellungen, Weiter groß, Nebenaktionen klein, Beenden abgesetzt */
+#pause,#quitAsk{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:13;background:rgba(18,32,25,.72)}
+#quitAsk{z-index:14}
+#pause .card,#quitAsk .card{width:min(480px,94vw);text-align:center}
+#pause h1,#quitAsk h1{font-size:46px}
+#pause .sub{margin:4px 0 14px}
+.pStat{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-bottom:12px}
+.pStat div{background:var(--g-soft);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 6px}
+.pStat b{display:block;font:700 26px/1.1 "Barlow Condensed",sans-serif;font-variant-numeric:tabular-nums}
+.pStat span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--txt2);font-weight:600}
+.pProg{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);margin-bottom:6px}
+.pBar{flex:1;height:10px;border-radius:5px;background:var(--g-soft);overflow:hidden} .pBar i{display:block;height:100%;width:0;background:#4caf6e}
+.pGap{font-size:16px;font-weight:600;margin:6px 0 2px}
+.pOpts{text-align:left;border-top:1px solid var(--pine);margin-top:12px;padding-top:12px;display:flex;flex-direction:column;gap:14px}
+.pLab{font:600 14px Barlow,sans-serif;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.pInt{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#mIntRow button{width:46px;font-size:22px;padding:6px 0} .pInt .num{font-size:28px;min-width:72px;text-align:center}
+#pauseMain{border-top:1px solid var(--pine);margin-top:16px;padding-top:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.pGo{width:100%;font-size:24px;padding:14px}
+.pNeben{justify-content:center} .pNeben button{font-size:14px;padding:8px 14px}
+.pQuit{background:none;color:#f0b3a6;border:1.5px solid rgba(232,165,152,.55);font-size:17px;padding:10px 28px;margin-top:4px} .pQuit:hover{background:rgba(181,82,59,.25)}
+.pKnoepfe{display:flex;flex-direction:column;gap:10px}
 #photo{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:12;background:rgba(18,32,25,.86)}
 #photo .card{width:min(1000px,96vw,calc((100vh - 230px)*1.5))}
 #photoCv{width:100%;height:auto;display:block;border-radius:6px;margin:12px 0 10px;background:#222}
@@ -234,9 +251,9 @@ input[type=checkbox]{accent-color:var(--acc)}
 #wnList .more{font-size:12px;color:var(--txt2);margin-top:3px}
 #simBox,#speedBox{background:var(--g-bg);border:1px solid var(--g-line);border-radius:14px;backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-shadow)}
 #speedBox button,#mIntRow button{background:var(--g-soft);border:1px solid var(--g-line)}
-#speedBox button.sel,#mIntRow button.sel{background:rgba(255,122,69,.18);border-color:var(--acc)}
-#btnMenu,#btnPause{background:var(--g-bg);border:1px solid var(--g-line);border-radius:14px;backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-shadow)}
-#btnMenu:hover,#btnPause:hover{background:rgba(30,44,38,.7)}
+#speedBox button.sel{background:rgba(255,122,69,.18);border-color:var(--acc)}
+#btnMenu{background:var(--g-bg);border:1px solid var(--g-line);border-radius:14px;backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-shadow)}
+#btnMenu:hover{background:rgba(30,44,38,.7)}
 #msg{background:var(--g-bg2);color:var(--paper);border:1px solid var(--g-line);border-radius:14px;padding:9px 18px;backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-shadow)}
 #draftChip{background:rgba(28,126,214,.24);color:#e3f2ff;border:1px solid rgba(130,195,255,.5);border-radius:14px;backdrop-filter:var(--g-blur);-webkit-backdrop-filter:var(--g-blur);box-shadow:var(--g-shadow)}
 #draftChip i{background:rgba(255,255,255,.2)}

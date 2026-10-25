@@ -147,8 +147,8 @@ function hud(P,wkg){
   if(race.state==='setup') return;
   $('hW').textContent=Math.round(P); $('hWkg').textContent=de(wkg);
   $('hDist').textContent=de((race.mode==='train'?(me.dist||0):me.d)/1000,2)+' km'; $('sRest').style.display=race.mode==='train'?'none':'';
-  const inPlay=race.state==='run'&&!race.paused&&$('pause').style.display!=='flex', canPause=inPlay&&(!me.done||me.free);
-  $('btnPause').style.display=canPause?'block':'none'; $('btnMenu').style.display=inPlay?'block':'none'; $('btnMenu').style.right=canPause?'140px':'14px'; // Menü auch nach dem Ende
+  const inPlay=race.state==='run'&&!race.paused&&$('pause').style.display!=='flex';
+  $('btnMenu').style.display=inPlay?'block':'none'; // auch nach dem Ende (dann ohne Pause, mit Endwerten)
   $('hV').textContent=de(me.v*3.6,1);
   $('hG').textContent=de(gradeAt(me.d))+' %'; $('sZ').style.display=race.mode==='train'||R.loop?'':'none'; // Steigung in allen Modi, Ziel-Watt bzw. Runde daneben
   if(race.mode==='train'){ const sg=woSeg(race.t); $('hZk').textContent='Ziel'; $('hZ').textContent=sg&&sg.free?'frei':Math.round(me.tgt||0)+' W'; woPanel(P,sg); }
@@ -196,30 +196,36 @@ function countdown(){
   const iv=setInterval(()=>{ n--; if(n>0){ b.textContent=n; pip(660); } else { clearInterval(iv); b.textContent='LOS!'; pip(1046,.35);
     race.state='run'; race.t=0; setTimeout(()=>{ b.textContent=''; b.classList.remove('dezent'); },1200); } },1000);
 }
-/* ---------- Pause & Beenden ---------- */
+/* ---------- Pause & Menü: ein Fenster mit Statuszeile, Einstellungen (nur Training), Weiter groß, Beenden abgesetzt ---------- */
 function setPause(on,tell=true){
-  if(on){ if(race.state!=='run'||race.paused||(me.done&&!me.free)) return; race.paused=true; if(tell) send({t:'pause'}); setSlope(0);
-    $('pauseSub').textContent=tell?'Alles steht still – der Trainer ist auf flach gestellt.':`${opp.name} hat pausiert – alles steht still.`;
-    $('pauseMain').style.display=''; $('pauseAsk').style.display='none'; $('pause').style.display='flex'; pauseView(false); }
+  if(on){ if(race.state!=='run'||race.paused||(me.done&&!me.free)) return; race.paused=true; race.menuOnly=false; if(tell) send({t:'pause'}); setSlope(0);
+    $('pauseSub').textContent=tell?'Trainer entlastet · Leertaste = weiter':`${opp.name} hat pausiert – alles steht still.`;
+    $('quitAsk').style.display='none'; $('pause').style.display='flex'; pauseView(); }
 }
-/* ---------- Menü: pausiert, ERG und (im eigenen Workout) Intensität einstellen, zurück in die Lobby ---------- */
-function pauseView(menu){ const tr=race.mode==='train'&&!race.menuOnly, wo=tr&&race.woKind==='wo';
-  $('btnResume').textContent=race.menuOnly?'Schließen':'▶ Weiter'; tcxBtns();
-  if(race.menuOnly){ $('pauseTitle').textContent='Menü'; $('menuOpts').style.display='none'; $('btnQuit').textContent='↩ Zurück in die Lobby'; return; }
-  $('pauseTitle').textContent=menu?'Menü':'Pause'; $('menuOpts').style.display=menu?'':'none'; $('btnQuit').textContent=menu?'↩ Zurück in die Lobby':'Beenden';
-  $('mErgRow').style.display=tr?'':'none'; $('mIntRow').style.display=wo?'':'none'; $('mNoOpts').style.display=tr?'none':'';
-  $('mErg').checked=$('ergOn').checked; ergLbl(); intUi(); }
+function pauseView(){ const end=race.menuOnly, tr=race.mode==='train'&&!end, wo=tr&&race.woKind==='wo';
+  $('pauseTitle').textContent=end?'🏁 Fertig':'⏸ Pause'; $('btnResume').textContent=end?'↩ Zurück in die Lobby':'▶ Weiter';
+  $('btnClose').style.display=end?'':'none'; $('btnQuit').style.display=end?'none':''; tcxBtns();
+  $('menuOpts').style.display=tr?'':'none'; $('mIntRow').style.display=wo?'':'none'; // in Rennen keine Einstellungen
+  $('mErg').checked=$('ergOn').checked; ergLbl(); intUi(); pauseStat(); }
+// Statuszeile: Zeit, Strecke, Höhenmeter (nur mit Höhendaten), Ø Watt; darunter Fortschritt (Workout bzw. Strecke) und Abstand zum Gegner
+function pauseStat(){ const st=recStats(), d=race.mode==='train'?me.dist||0:me.d, t=(l,v)=>`<div><b>${v}</b><span>${l}</span></div>`;
+  $('pStat').innerHTML=t('Zeit',fmtT(me.time))+t('Strecke',de(d/1000,1)+' km')+(st&&st.gain>1?t('Höhenmeter',Math.round(st.gain)+' m'):'')+t('Ø Leistung',st?Math.round(st.avg)+' W':'–');
+  let p=null, txt='';
+  if(race.mode==='train'){ if(race.woT>0){ p=race.t/race.woT; txt=`Workout ${Math.round(Math.min(1,p)*100)} %`+(p<1?` · noch ${fmtT(race.woT-race.t)}`:''); } }
+  else { const L=raceLen(); p=me.d/L; txt=`Strecke ${Math.round(Math.min(1,p)*100)} %`+(p<1?` · noch ${de((L-me.d)/1000,1)} km`:''); }
+  $('pProg').style.display=p==null?'none':''; if(p!=null){ $('pBarFill').style.width=Math.min(100,p*100)+'%'; $('pProgTxt').textContent=txt; }
+  const g=opp.active?Math.round(me.d-opp.d):null; $('pGap').style.display=g==null?'none':''; if(g!=null) $('pGap').textContent=g>=0?`${g} m vor ${opp.name}`:`${-g} m hinter ${opp.name}`; }
 function openMenu(){
-  if(me.done&&!me.free){ race.menuOnly=true; // Einheit schon zu Ende: Menü öffnen, ohne etwas anzuhalten
-    $('pauseSub').textContent='Deine Einheit ist beendet. Hier kannst du die Fahrt speichern und zurück in die Lobby gehen.';
-    $('pauseMain').style.display=''; $('pauseAsk').style.display='none'; $('pause').style.display='flex'; pauseView(true); return; }
-  race.menuOnly=false; if(!race.paused) setPause(true); if(race.paused) pauseView(true); }
+  if(me.done&&!me.free){ race.menuOnly=true; // Einheit schon zu Ende: Endwerte zeigen, ohne etwas anzuhalten
+    $('pauseSub').textContent='Deine Einheit ist beendet – speichere die Fahrt oder geh zurück in die Lobby.';
+    $('quitAsk').style.display='none'; $('pause').style.display='flex'; pauseView(); return; }
+  setPause(true); }
 const ergLbl=()=>$('mErgLbl').textContent=$('mErg').checked?'An – der Trainer hält die Ziel-Watt':'Aus – du schaltest selbst, der Trainer folgt der Steigung';
 $('mErg').onchange=()=>{ $('ergOn').checked=$('mErg').checked; ergLbl(); lastErgW=null; lastSlopeSent=null; };
 race.intens=1;
-function intUi(){ const v=Math.round(race.intens*100); $('mInt').value=v; $('mIntV').textContent=v+' %'; document.querySelectorAll('#mIntRow button').forEach(b=>b.classList.toggle('sel',+b.dataset.i===v)); }
-$('mInt').oninput=()=>{ race.intens=+$('mInt').value/100; lastErgW=null; intUi(); };
-document.querySelectorAll('#mIntRow button').forEach(b=>b.onclick=()=>{ race.intens=+b.dataset.i/100; lastErgW=null; intUi(); });
+function intUi(){ $('mIntV').textContent=Math.round(race.intens*100)+' %'; }
+const intStep=s=>{ race.intens=Math.max(70,Math.min(130,Math.round(race.intens*20)*5+s))/100; lastErgW=null; intUi(); }; // in 5-%-Schritten, 70–130 %
+$('mIntM').onclick=()=>intStep(-5); $('mIntP').onclick=()=>intStep(5);
 $('btnMenu').onclick=openMenu;
 let resumeIv=null;
 function resumeRace(tell=true){
@@ -231,10 +237,14 @@ function resumeRace(tell=true){
 function quitToLobby(){
   const wasGuest=race.role==='guest';
   send({t:'quit'}); try{ conn&&conn.close(); }catch(e){} try{ peer&&peer.destroy(); }catch(e){} conn=null; peer=null;
+// Beenden-Fenster: mit ungespeicherter Fahrt zuerst „speichern und beenden“ anbieten
+const fahrtOffen=()=>rec.s.length>=5&&rec.s.length>rec.savedN;
+function quitAsk(){ const o=fahrtOffen(); $('btnQuitSave').style.display=o?'':'none'; $('btnQuitYes').textContent=o?'Ohne Speichern beenden':'Beenden'; $('btnQuitYes').classList.toggle('go',!o);
+  $('quitSub').textContent=race.menuOnly?'Zurück in die Lobby.':'Zurück in die Lobby – die Fahrt ist danach vorbei.'; $('quitAsk').style.display='flex'; }
   if(resumeIv){ clearInterval(resumeIv); resumeIv=null; }
   Object.assign(race,{state:'setup',paused:false,frozen:false,role:null,menuOnly:false}); camOverride=null; setSlope(0); wakeOff(); tcxBtns();
   Object.assign(opp,{active:false,bot:false,done:false,d:0,v:0,watt:null});
-  for(const id of ['pause','result','photo','hud','gapBox','powBox','woNow','simBox','draftChip','btnPause','btnMenu','speedBox']) $(id).style.display='none';
+  for(const id of ['pause','quitAsk','result','photo','hud','gapBox','powBox','woNow','simBox','draftChip','btnMenu','speedBox']) $(id).style.display='none';
   $('banner').textContent=''; $('msg').style.display='none'; ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,ov.width,ov.height);
   if(anim.stadium&&anim.stadium.confetti){ anim.stadium.confetti.t0=null; anim.stadium.confetti.pts.visible=false; anim.stadium.replay=null; anim.stadium.bell.t0=-1e9; anim.stadium.choreo.t0=-1e9; }
   if(anim.stadium&&anim.stadium.pyro){ const Y=anim.stadium.pyro; Y.t0=null; Y.list.forEach(P=>{ P.glow.visible=P.core.visible=false; P.smoke.forEach(sm=>sm.visible=false); }); Y.sparks.visible=false; Y.lights.forEach(l=>l.intensity=0); }
@@ -248,13 +258,15 @@ function quitToLobby(){
     const hi=ROUTES.findIndex(r=>r.id==='host'); if(hi>=0) ROUTES.splice(hi,1);
     WO=loadWo(); routeId=ROUTES[0].id; setRoute(ROUTES[0].def); }
 }
-$('btnPause').onclick=()=>setPause(true); $('btnResume').onclick=()=>{ if(race.menuOnly){ race.menuOnly=false; $('pause').style.display='none'; } else resumeRace(); };
-$('btnQuit').onclick=()=>{ $('pauseMain').style.display='none'; $('pauseAsk').style.display=''; };
-$('btnQuitNo').onclick=()=>{ $('pauseMain').style.display=''; $('pauseAsk').style.display='none'; };
-$('btnQuitYes').onclick=quitToLobby;
-addEventListener('keydown',e=>{ if(e.code!=='Space'||race.state==='setup'||/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return; e.preventDefault();
-  if(race.menuOnly){ if($('pauseAsk').style.display==='none'){ race.menuOnly=false; $('pause').style.display='none'; } return; }
-  if(race.paused){ if($('pauseAsk').style.display==='none') resumeRace(); } else setPause(true); });
+$('btnResume').onclick=()=>{ if(!race.menuOnly) return resumeRace(); if(fahrtOffen()) quitAsk(); else quitToLobby(); };
+$('btnClose').onclick=()=>{ race.menuOnly=false; $('pause').style.display='none'; };
+$('btnQuit').onclick=quitAsk; $('btnQuitNo').onclick=()=>$('quitAsk').style.display='none';
+$('btnQuitYes').onclick=quitToLobby; $('btnQuitSave').onclick=()=>{ downloadTcx(); quitToLobby(); };
+// Leertaste/Esc: öffnet Pause, schließt sie wieder (weiter); Esc bricht die Beenden-Frage ab
+addEventListener('keydown',e=>{ if((e.code!=='Space'&&e.code!=='Escape')||race.state==='setup'||/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return; e.preventDefault();
+  if($('quitAsk').style.display==='flex'){ if(e.code==='Escape') $('quitAsk').style.display='none'; return; }
+  if($('pause').style.display==='flex'){ if(race.menuOnly) $('btnClose').onclick(); else if(race.paused) resumeRace(); return; }
+  if(!race.paused) setPause(true); });
 function resetRiders(){ Object.assign(me,{free:false,corr:1,d:0,v:0,done:false,time:0,wkgSum:0,maxWkg:0,lap:0,draftR:0,dist:0,wSum:0,inZone:0,zoneT:0,trace:[],tgt:0}); race.hrMax=0; race.resultShown=false; race.woIdx=-1; race.woCd=null; lastErgW=null; if(race.mode==='train') prepTrain(); race.photoShown=false; race.photoPending=false; if(anim.space){ anim.space.fw.t0=null; anim.space.fw.bursts=null; } }
 function startRace(){
   if(race.role==='guest') return;
