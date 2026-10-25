@@ -103,7 +103,7 @@ function recStep(dt,P){
   if(key!==rec.lapKey){ rec.lapKey=key; rec.laps.push({i0:rec.s.length,name}); }
   if(race.t>=rec.sec+1){ rec.sec=Math.floor(race.t);
     rec.s.push({t:rec.sec, p:rec.accT?rec.accE/rec.accT:P, hr:rec.hrT>.3?Math.round(rec.hrS/rec.hrT):null, cad:rec.cadT>.3?Math.round(rec.cadS/rec.cadT):null,
-      d:race.mode==='train'?me.dist:me.d, v:me.v, alt:R.gpx?elevAt(me.d):null});
+      d:race.mode==='train'?me.dist:me.d, v:R.space?me.vb:me.v, alt:R.gpx?elevAt(me.d):null});
     rec.accE=rec.accT=rec.hrS=rec.hrT=rec.cadS=rec.cadT=0;
     if(rec.s.length===5||rec.s.length-rec.savedN===30) tcxBtns(); }
 }

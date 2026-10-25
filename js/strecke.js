@@ -144,7 +144,7 @@ function buildRoute(def){
     for(let dd=Lw0-6; dd<=Lw0+6; dd+=0.05){ const [px,py]=posAt(tmp,dd), q=Math.hypot(px-ex,py-ey); if(q<bd){ bd=q; best=dd; } }
     Object.assign(r,{ring:len-best, goal:def.island?def.goal*kf:best, kehren:[], fans:len, S:null});
     if(def.island){ r.island=true; prepIsland(r); return r; }
-    // Optische Überhöhung: Bahn wird 2,5 × so steil gezeichnet (max. 30 %), Physik und Trainer bleiben bei der echten Steigung
+    // Optische Überhöhung: Bahn wird 2,5 × so steil gezeichnet (max. 30 %); Physik flach mit Schub, Trainer bei 0 %
     let ve=0; segs.forEach(o=>{ o.vg=Math.sign(o.g)*Math.min(Math.abs(o.g)/SPACE_PHYS*SPACE_VX,30); o.ve0=ve; ve+=o.len*o.vg/100; }); r.vEnd=ve;
     r.space=true; return r; }
   // Landschaftszonen: Dorf, Weinberge, Wald, Fans im letzten Kilometer
@@ -337,11 +337,16 @@ function makeScenery(r){
 const SPACE_COL=p=>p<0?'#8fe3ff':p<60?'#3d7bff':p<76?'#29c6f6':p<90?'#2fe07a':p<105?'#ffd23a':p<119?'#ff8a2a':p<135?'#ff3b4e':'#c04bff';
 // Steigung je Intensität: locker = bergab/flach, hart = steil
 const SPACE_GR=[[0,-4],[50,-3],[60,-1],[70,1],[80,3],[90,5],[100,7],[110,9],[120,11],[140,15],[170,19],[200,22]];
-function spaceGrade(p){ const T=SPACE_GR; if(p<=T[0][0]) return T[0][1]; for(let i=1;i<T.length;i++) if(p<=T[i][0]){ const [a,ga]=T[i-1],[b,gb]=T[i]; return ga+(gb-ga)*(p-a)/(b-a); } return T[T.length-1][1]; }
+function tabLerp(T,p){ if(p<=T[0][0]) return T[0][1]; for(let i=1;i<T.length;i++) if(p<=T[i][0]){ const [a,ga]=T[i-1],[b,gb]=T[i]; return ga+(gb-ga)*(p-a)/(b-a); } return T[T.length-1][1]; }
+const spaceGrade=p=>tabLerp(SPACE_GR,p);
+// Schub je Intensität (% FTP, echte Watt): Faktor auf das Tempo in der Ebene. Schon in der Erholung etwas Schub, ab 80 % zündet er richtig
+// (75 kg, FTP 250: 50 % ≈ 60, 80 % ≈ 90, 90 % ≈ 125, 100 % ≈ 190, 120 % ≈ 370, 150 % ≈ 525 km/h), höchstens 525 km/h; ohne Treten kein Schub
+const SPACE_SCHUB=[[0,1],[20,1.6],[40,2],[50,2.2],[60,2.39],[70,2.57],[80,2.75],[90,3.65],[100,5.33],[110,7.58],[120,9.7],[130,11.07],[140,12.02],[150,12.69]], SPACE_VMAX=525/3.6;
+const spaceSchub=p=>tabLerp(SPACE_SCHUB,p);
 function vSteady(P,g,kg,ph=PH_ROAD){ const M=kg+BIKE_KG, th=Math.atan(g/100), a=M*G*(Math.sin(th)+ph.crr*Math.cos(th)), b=0.5*RHO*cdaOf(kg,ph.cda);
   let lo=0, hi=40; for(let i=0;i<40;i++){ const v=(lo+hi)/2; if(v*a+b*v*v*v<P) lo=v; else hi=v; } return Math.max(1,(lo+hi)/2); }
 const SPACE_RING=160, SPACE_VX=2.5; // Radius der Umlaufbahn hinter der Raumstation
-const SPACE_PHYS=0.5; // Physik rechnet mit der halben Steigung (schneller), gezeichnet wird weiter die volle Steigung × SPACE_VX
+const SPACE_PHYS=0.5; // angezeigte Steigung = halbe Tabellen-Steigung, gezeichnet wird die volle × SPACE_VX; die Physik rechnet flach (mit Schub)
 function spaceDef(segs, unit, f, kg){
   const DT=2, T=segs.reduce((a,s)=>a+s.dur,0), raw=[];
   let si=0; for(let t=0;t<T;t+=DT){ while(si<segs.length-1 && t>=segs[si].t0+segs[si].dur) si++; const sg=segs[si];
@@ -350,7 +355,7 @@ function spaceDef(segs, unit, f, kg){
   if(!raw.length) raw.push({p:50,w:f*.5,g:0});
   // Übergänge weich: gleitender Mittelwert über ±12 s
   const out=raw.map((c,i)=>{ let s=0,n=0; for(let j=-6;j<=6;j++){ const o=raw[i+j]; if(o){ s+=o.g; n++; } } const g=Math.round(s/n*SPACE_PHYS*100)/100;
-    return {len:Math.round(vSteady(c.w,g,kg)*DT*100)/100, g, p:Math.round(c.p)}; });
+    return {len:Math.round(Math.min(SPACE_VMAX,vSteady(c.w,0,kg)*spaceSchub(c.p))*DT*100)/100, g, p:Math.round(c.p)}; });
   const ring=2*Math.PI*SPACE_RING; out.push({len:ring,g:0,p:-1});
   // Verlauf in der Ebene: sanfte Bögen, aus dem Workout abgeleitet (gleiches Workout = gleiche Strecke)
   let hs=7; for(const s of segs) hs=(hs*31+Math.round(s.dur)+Math.round(s.a*7)+(s.b==null?3:Math.round(s.b*11))+(s.free?5:0))%2147483647;

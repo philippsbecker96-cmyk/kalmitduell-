@@ -31,7 +31,7 @@ function wire(c){
     if(m.t==='pause') setPause(true,false);
     if(m.t==='resume') resumeRace(false);
     if(m.t==='quit'){ opp.active=false; flash(`${opp.name} hat beendet – du fährst allein weiter`); if(race.paused) $('pauseSub').textContent=`${opp.name} hat beendet. Mit „Weiter“ fährst du allein weiter.`; }
-    if(m.t==='s'){ opp.target=m.d; opp.v=m.v; opp.wkg=m.w; opp.watt=m.p; opp.lastAt=performance.now(); opp.rc=m.c; opp.rst=m.st; opp.ra=m.a; // Trittfrequenz, Wiegetritt, Aero-Haltung des Gegners
+    if(m.t==='s'){ opp.target=m.d; opp.v=m.v; opp.wkg=m.w; opp.watt=m.p; if(m.f) opp.ftp=m.f; opp.lastAt=performance.now(); opp.rc=m.c; opp.rst=m.st; opp.ra=m.a; // Trittfrequenz, Wiegetritt, Aero-Haltung des Gegners
       if(m.done && !opp.done && race.mode==='train'){ Object.assign(opp,{done:true,time:m.ft,avg:m.avg,avgW:m.avgW,zone:m.zone,dist:m.dist,ftpRes:m.ftpRes}); if(race.resultShown) showTrainResult(); return; }
       if(m.done && !opp.done){ opp.done=true; opp.time=m.ft; opp.vf=m.vf; opp.avg=m.avg; opp.d=m.d; pyroStart(); if(!me.done) flash(`${opp.name} ist ${R.loop?'im Ziel':'oben'} – ${fmtT(m.ft)}`); else if(!finishCheck()) showResult(); } }
   });
@@ -51,5 +51,5 @@ function join(){
   peer=new Peer(); peer.on('open',()=>{ setConn('Verbinde…'); wire(peer.connect(PREFIX+code,{reliable:true})); });
   peer.on('error',e=>setConn(e.type==='peer-unavailable'?'Code nicht gefunden – stimmt er?':'Fehler: '+e.type));
 }
-setInterval(()=>{ if(race.state==='run'&&(!me.done||me.free)) { const S=(riders3d[myKey]||{}).rs||{}; send({t:'s',d:me.d,v:me.v,w:curPower()/weight(),p:curPower(),done:false,c:Math.round(S.cad||0),st:S.stand?1:0,a:me.aero?1:0}); } },200);
+setInterval(()=>{ if(race.state==='run'&&(!me.done||me.free)) { const S=(riders3d[myKey]||{}).rs||{}; send({t:'s',d:me.d,v:me.v,w:curPower()/weight(),p:curPower(),f:ftp(),done:false,c:Math.round(S.cad||0),st:S.stand?1:0,a:me.aero?1:0}); } },200);
 

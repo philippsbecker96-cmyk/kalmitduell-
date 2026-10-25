@@ -212,7 +212,7 @@ function putRider(r,d,crank){
 function smoothHeading(d){ let sx=0,sz=0; for(let k=-4;k<=4;k++){ const h=headingAt(R,d+k*3); sx+=Math.cos(h); sz+=Math.sin(h); } return Math.atan2(sz,sx); }
 // Krümmung (rad/m, positiv = Kurve zur Spur +u) · Kurvenlage atan(v²·κ/g), höchstens 40°
 const curv=d=>{ const a=smoothHeading(d+6), b=smoothHeading(d-6); return Math.atan2(Math.sin(a-b),Math.cos(a-b))/12; };
-function leanStep(r,d,v,dt){ const t=R.stadium||camOverride?0:clampN(Math.atan(v*v*curv(d)/G),-.7,.7); r.lean=r.lean==null||dt>.09?t:r.lean+(t-r.lean)*Math.min(1,dt*4); }
+function leanStep(r,d,v,dt){ if(R.space) v=Math.min(v,16); const t=R.stadium||camOverride?0:clampN(Math.atan(v*v*curv(d)/G),-.7,.7); r.lean=r.lean==null||dt>.09?t:r.lean+(t-r.lean)*Math.min(1,dt*4); }
 /* Fahrweise der Figur: Trittfrequenz, Wiegetritt (Anstieg und Sprint) und Aero-Haltung (Abfahrt und Stadion, kommt aus der Physik: o.aero) */
 function rideState(r,o,P,ftpW,dt,cadReal,standRemote){ if(!r) return; const S=r.rs||(r.rs={st:0,ae:0,cad:0,up:false,t:0,sp:false,spT:0,lock:false,stand:false}), g=R.stadium?0:gradeAt(o.d), v=o.v;
   // Sprint: ab 1,6 × FTP aus dem Sattel, unter 1,2 × FTP (frühestens nach 2 s) oder spätestens nach 20 s wieder sitzen

@@ -6,7 +6,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `index.html` – nur HTML-Gerüst, bindet CDN-Libs (three.js r128, peerjs 1.5.4), `css/style.css` und die JS-Dateien ein
 - `js/strecke.js` – Streckendaten, Kalmit-GPX, `ROUTES`, Space-/Insel-/Stadion-Geometrie (`stadionDef`, `trackPt`)
 - `js/welt-stadion.js` – 3D-Stadion: Tribünen, Fußballspiel, Choreo, Anzeigetafel, Flutlicht
-- `js/physik.js` – Physik (Watt, Gewicht, CdA, Wind, Aero-Haltung, Windschatten) und Bot-Fahrweise
+- `js/physik.js` – Physik (Watt, Gewicht, CdA, Wind, Aero-Haltung, Windschatten) und Bot-Fahrweise; Space: flach mit Schub ab 80 % FTP (`SPACE_SCHUB` in strecke.js, bis 525 km/h, Trainer bei 0 %), Raketenantrieb ab 80 % FTP (`rakete`/`rakTick` in welt-space.js)
 - `js/zustand.js` – Fahrer-Aussehen (`LOOKS`), Spielzustand (`me`, `opp`, `race`), 3D-Grundgerüst (`scene`, `camera`, `renderer`), `setRoute`, `canvasTex`
 - `js/welt-bausteine.js` – Haus-Baukasten: `haus(o)` (Altort, Neubau, Fachwerk), Fassaden mit Leuchtkarte, Ziegeldach, `hoftor`, `hausLicht()` für Abendfenster
 - `js/welt-space.js`, `js/welt-insel.js`, `js/welt-kalmit.js` – die übrigen 3D-Welten

@@ -23,10 +23,13 @@ const AERO=0.82;
 function aeroOf(o,P,g){ if(R.stadium) return o.aero=true; o.aero=o.aero?P<25&&g<-3.5&&o.v>12:P<15&&g<=-4&&o.v>12.5; return o.aero; }
 // Übersetzung: zwischen 62 und 72 km/h tritt man zunehmend ins Leere
 const gearOf=v=>clampN((20-v)/2.78,0,1);
+// Space: flache Physik mit eigenem Tempo vb, darauf der Schub sk (geglättet, zündet in gut 1 s, klingt in 5–6 s ab wie Austrudeln); v = vb × sk
 function step(o, P, kg, dt, draft=0){ // P = echte Watt, kg = Fahrergewicht
-  const M=kg+BIKE_KG, g0=gradeAt(o.d), th=Math.atan((g0+belagAt(o.d,kg))/100), cda=cdaOf(kg)*(aeroOf(o,P,g0)&&!R.stadium?AERO:1);
-  const Fg=M*G*Math.sin(th), Fr=phys().crr*M*G*Math.cos(th), Fa=0.5*RHO*cda*(1-draft)*airF(o.v,windHead(o.d)), Fp=Math.min(P/Math.max(o.v,0.8),450)*gearOf(o.v); // 450 N: Grenze beim Anfahren aus dem Stand
-  o.v=Math.max(0,o.v+(Fp-Fg-Fr-Fa)/(M+1.5)*dt); o.d+=o.v*dt;
+  const sp=!!R.space, v=sp?o.vb||0:o.v, M=kg+BIKE_KG, g0=sp?0:gradeAt(o.d), th=Math.atan((g0+belagAt(o.d,kg))/100), cda=cdaOf(kg)*(aeroOf(o,P,g0)&&!R.stadium?AERO:1);
+  const Fg=M*G*Math.sin(th), Fr=phys().crr*M*G*Math.cos(th), Fa=0.5*RHO*cda*(1-draft)*airF(v,windHead(o.d)), Fp=Math.min(P/Math.max(v,0.8),450)*gearOf(v); // 450 N: Grenze beim Anfahren aus dem Stand
+  const vn=Math.max(0,v+(Fp-Fg-Fr-Fa)/(M+1.5)*dt);
+  if(sp){ const k=spaceSchub(P/ftp()*100), s0=o.sk||1; o.vb=vn; o.sk=s0+(k-s0)*Math.min(1,dt*(k>s0?.9:.28)); o.v=Math.min(SPACE_VMAX,vn*o.sk); } else o.v=vn;
+  o.d+=o.v*dt;
 }
 
 /* ================= Bot-Fahrweise: gleichmäßig oder Angreifer =================

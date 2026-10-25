@@ -44,8 +44,10 @@ function draw(dt){
   // Kamera: hinten oben, läuft den Anstieg mit
   const focusD=me.d; let tx,ty,tz,lx,ly,lz;
   // Tempo-Gefühl: sp 0 (≤25 km/h) … 1 (≥54 km/h), acc = geglättete Beschleunigung
-  const vC=race.state==='run'&&(!me.done||me.free)?me.v:0; if(dt>0&&!race.paused){ camS.acc=(camS.acc||0)+(((vC-(camS.vp??vC))/dt)-(camS.acc||0))*Math.min(1,dt*2); camS.vp=vC; }
-  camS.sp=(camS.sp||0)+(clampN((vC-7)/8,0,1)-(camS.sp||0))*Math.min(1,dt*1.5); if(!race.paused) kickStep(dt); const sp=camS.sp, ext=sp*1.5+clampN(camS.acc||0,0,2)*0.8+(camS.kx||0); // ext: Kamera fällt bei Tempo und Antritt zurück
+  // Space: Abstand und Sichtfeld nach dem Grundtempo; Zünden/Hochschalten des Schubs gibt einen Stoß st, der in 3–4 s abklingt
+  const vC=race.state==='run'&&(!me.done||me.free)?me.v:0; if(R.space&&dt>0&&!race.paused){ const k=me.sk||1; camS.st=clampN((camS.st||0)*Math.exp(-dt/1.3)+Math.max(0,k-(camS.sk0??k))*.35,0,1); camS.sk0=k; }
+  if(dt>0&&!race.paused){ camS.acc=(camS.acc||0)+(((vC-(camS.vp??vC))/dt)-(camS.acc||0))*Math.min(1,dt*2); camS.vp=vC; }
+  camS.sp=(camS.sp||0)+(clampN(((R.space?Math.min(vC,me.vb||0):vC)-7)/8,0,1)-(camS.sp||0))*Math.min(1,dt*1.5); if(!race.paused) kickStep(dt); const sp=camS.sp, aK=R.space?2*(camS.st||0):clampN(camS.acc||0,0,2), ext=sp*1.5+aK*0.8+(camS.kx||0); // ext: Kamera fällt bei Tempo und Antritt zurück
   let rollT=0; if(R.stadium){ const kc=clampN((bankAt(focusD)*180/Math.PI-ST.BANK0)/(ST.BANK1-ST.BANK0),0,1), u=mine.lane*0.8, pb=trackPt(focusD-(9-3*kc)-ext,u), pl=trackPt(focusD+12,u); [tx,ty,tz]=[pb[0],pb[1]+3.4-1.3*kc-sp*0.8,pb[2]]; [lx,ly,lz]=[pl[0],pl[1]+1.0,pl[2]]; rollT=R.outSign*bankAt(focusD)*.5*kc; } // Steilkurve: Kamera tiefer, näher und mitgeneigt
   else if(R.gpx){ const back=Math.max(0,focusD-6-ext), [bx,bz]=posAt(R,back), [ax,az]=posAt(R,R.loop?focusD+10:Math.min(R.len,focusD+10)); // auf der Straße 6 m hinter dir, knapp 2 m über der Straße, Blick waagerecht
     tx=bx; tz=bz; ty=visRoadY(back)+1.9-sp*0.5; lx=ax; lz=az; ly=ty-0.33+sp*0.15; }
@@ -53,9 +55,11 @@ function draw(dt){
     const la=R.ring?focusD+10:Math.min(R.len,focusD+10); [lx,lz]=posAt(R,la); ly=roadY(la)+1.0;
     if(R.space){ const yr=roadY(focusD); ty=Math.max(roadY(back)+1.5, yr+3.6-sp*0.8); ly=yr+1.6+0.25*(roadY(focusD+14)-yr); } } // Space: Kamera bleibt eher waagerecht, Anstiege bauen sich vor dir auf
   if(!R.stadium&&vC>1){ const a=smoothHeading(focusD+6), b=smoothHeading(focusD-6), dh=Math.atan2(Math.sin(a-b),Math.cos(a-b)); rollT=clampN(-dh/12*vC*vC*0.012,-0.07,0.07); } // Kurvenlage: Querbeschleunigung v²·κ, max ≈ 4°
-  { const fovT=camOverride?60:60+15*sp+clampN(camS.acc||0,0,2)*1.5; camS.fovB=camS.fovB==null?camera.fov:camS.fovB+(fovT-camS.fovB)*Math.min(1,dt*2);
+  { const fovT=camOverride?60:60+15*sp+aK*1.5+(R.space?4*(camS.st||0):0); camS.fovB=camS.fovB==null?camera.fov:camS.fovB+(fovT-camS.fovB)*Math.min(1,dt*2);
     const f=camS.fovB+(camOverride?0:clampN((camS.kx||0)/.85,0,1)*5); if(Math.abs(f-camera.fov)>0.02){ camera.fov=f; camera.updateProjectionMatrix(); } } // Sichtfeld weitet sich mit dem Tempo und beim Antritt
-  if(!camS.init){ Object.assign(camS,{x:tx,y:ty,z:tz,lx,ly,lz,init:true}); }
+  if(!camS.init){ Object.assign(camS,{x:tx,y:ty,z:tz,lx,ly,lz,init:true}); camS.fp=null; }
+  if(R.space){ const [px,pz]=posAt(R,focusD), py=roadY(focusD), q=camS.fp; // Space: Kamera fährt die Bewegung des Fahrers direkt mit, geglättet wird nur der Abstand – sonst hängt sie bei 500 km/h 40 m zurück
+    if(q&&Math.hypot(px-q[0],pz-q[2])<300){ const dx=px-q[0], dy=py-q[1], dz=pz-q[2]; camS.x+=dx; camS.y+=dy; camS.z+=dz; camS.lx+=dx; camS.ly+=dy; camS.lz+=dz; } camS.fp=[px,py,pz]; }
   const sk=race.paused?1:simSpeed(), k=Math.min(1,dt*3.5*sk), kl=Math.min(1,dt*5*sk); // Testmodus: Kamera folgt im gleichen Tempo
   camS.x+=(tx-camS.x)*k; camS.y+=(ty-camS.y)*k; camS.z+=(tz-camS.z)*k; camS.lx+=(lx-camS.lx)*kl; camS.ly+=(ly-camS.ly)*kl; camS.lz+=(lz-camS.lz)*kl;
   if(camOverride){ camera.position.set(...camOverride.pos); camera.lookAt(...camOverride.look); }
@@ -278,7 +282,7 @@ addEventListener('keydown',e=>{ if((e.code!=='Space'&&e.code!=='Escape')||race.s
   if($('quitAsk').style.display==='flex'){ if(e.code==='Escape') $('quitAsk').style.display='none'; return; }
   if($('pause').style.display==='flex'){ if(race.menuOnly) $('btnClose').onclick(); else if(race.paused) resumeRace(); return; }
   if(!race.paused) setPause(true); });
-function resetRiders(){ Object.assign(me,{free:false,corr:1,d:0,v:0,done:false,time:0,wkgSum:0,maxWkg:0,lap:0,draftR:0,dist:0,wSum:0,inZone:0,zoneT:0,trace:[],tgt:0}); race.hrMax=0; race.resultShown=false; race.woIdx=-1; race.woCd=null; lastErgW=null; if(race.mode==='train') prepTrain(); race.photoShown=false; race.photoPending=false; if(anim.space){ anim.space.fw.t0=null; anim.space.fw.bursts=null; } }
+function resetRiders(){ Object.assign(me,{free:false,corr:1,d:0,v:0,vb:0,sk:1,done:false,time:0,wkgSum:0,maxWkg:0,lap:0,draftR:0,dist:0,wSum:0,inZone:0,zoneT:0,trace:[],tgt:0}); race.hrMax=0; race.resultShown=false; race.woIdx=-1; race.woCd=null; lastErgW=null; if(race.mode==='train') prepTrain(); race.photoShown=false; race.photoPending=false; if(anim.space){ anim.space.fw.t0=null; anim.space.fw.bursts=null; } }
 function startRace(){
   if(race.role==='guest') return;
   if($('btnStart').disabled) return;
