@@ -86,6 +86,8 @@ function suedpfalzDef(loop){ const V=SP_V, E=scharfeEcke(hoeheSchliessen(SUEDPFA
   return Object.assign(g, {name:'Südpfalz-Klassiker', start:'Godramstein', finish:'Ziel', gpx:'suedpfalz', loop:!!loop, zones,
   kreuz:E.kreuz, haardt:true, steil:true, // Haardt als Bergkette im Westen · Überhöhung in deiner Nähe wie an der Kalmit
   mitte:Z([[2350,3800],[6200,8000]]), planke:Z([[7700,7930],[12990,null,2],[0,120,2]]), saum:Z([[2350,2460,1],[2460,2800,0],[2800,3000,-1],[3510,3630,1],[3660,3800,1]]), radweg:Z([[2800,3510,1]]), allee:Z([[3420,3620,-1]]),
+  // andere Radfahrer (welt-radler.js): Abschnitte, in denen pro Runde gewürfelt wird · gegen = Entgegenkommende (nur auf breiter Straße) · vorn = Pendler · rentner = vor dem langen Anstieg durch Arzheim · radweg = Familie · berg = Rivale wartet, bergEnde = oben
+  radler:{gegen:Z([[700,950],[2400,2780],[3560,5300],[6300,7900]]), vorn:Z([[700,950],[2400,5300],[6300,7900],[9150,12600]]), rentner:Z([[650,950]]), radweg:Z([[2850,3150]]), berg:Z([[6220,6420]]), bergEnde:um(7150)},
   weiter:[[9060,-24,220,6]].map(([d,...x])=>[um(d),...x]), // nach Ranschbach: die L508 läuft geradeaus weiter, der Betonplattenweg knickt rechts ab
   // Typisches am Weg (welt-suedpfalz.js): haeusel [d, Seite, Abstand] Wingertshäuschen · kreuz [d, Seite] Wegkreuz/Bildstock am nächsten Wirtschaftsweg · bank [d, Seite] Bank mit Blick · weinstr [d, Seite] Schild Deutsche Weinstraße
   typisch:Object.fromEntries(Object.entries({haeusel:[[2650,-1,26],[4300,1,34],[4900,-1,22],[6700,1,30],[7400,-1,38],[9700,1,24],[10600,-1,30],[11800,1,26]], kreuz:[[2700,-1],[4050,-1],[6600,-1],[10300,1]],
@@ -319,6 +321,11 @@ function makeScenery(r){
   for(const P of r.hofPl) for(const k of ['vine','vpost','tree','bush','weg']) S[k]=S[k].filter(o=>o.ht===4||Math.hypot(o.x-P.x,o.y-P.y)>P.r);
   if(r.weiter.length) for(const k of ['vine','vpost','tree','bush','grass','weg','post','rock']) S[k]=S[k].filter(o=>!aufWeiter(o.x,o.y,k==='tree'?3:1.5));
   if(r.b10l) for(const k of ['tree','bush','konif','vine','vpost','grass','weg','rock','halle']) S[k]=S[k].filter(o=>b10Dist(o.x,o.y)>(k==='halle'?40:14)); // nichts auf der B10
+  if(r.def.radweg){ const aufRadweg=(x,y,m)=>{ let bi=-1, bd=1e9; const cx=Math.floor(x/CELL), cy=Math.floor(y/CELL); // Radweg liegt rw+2,6 … rw+5 neben der Straße (welt-kalmit.js)
+      for(let a=-1;a<=1;a++) for(let b=-1;b<=1;b++){ const l=rg.get((cx+a)+','+(cy+b)); if(l) for(const i of l){ const dd=Math.hypot(r.xs[i]-x,r.ys[i]-y); if(dd<bd){ bd=dd; bi=i; } } }
+      if(bi<1||bi>=r.xs.length-1) return false; const d=bi*STEP, rw=roadW(r,d)/2, tx=r.xs[bi+1]-r.xs[bi-1], ty=r.ys[bi+1]-r.ys[bi-1], u=((y-r.ys[bi])*tx-(x-r.xs[bi])*ty)/Math.hypot(tx,ty);
+      return r.def.radweg.some(([a,b,sd])=>d>a-4&&d<b+4&&u*sd>rw+2.6-m&&u*sd<rw+5+m); };
+    for(const k of ['tree','bush','konif','vine','vpost','grass','rock']) S[k]=S[k].filter(o=>!aufRadweg(o.x,o.y,k==='tree'||k==='bush'?(o.s||1)*.9+.3:.3)); } // nichts auf dem Radweg (Familie fährt dort)
   r.S=S;
 }
 
