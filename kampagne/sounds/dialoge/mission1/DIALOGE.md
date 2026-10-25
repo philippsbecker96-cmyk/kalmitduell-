@@ -14,8 +14,7 @@ Texte stehen im Code in `js/welt-trifels.js` (`TRI_RUF_TXT`, `TRI_AUD_TXT`, `TRI
 |---|---|---|---|
 | `vorreiter_01_bauer` | Vorreiter (Löwenherz' Gefolge) | reitet dir entgegen | Beiseite mit Euch, Bauer! Platz für den König von England! |
 | `vorreiter_01_baeuerin` | Vorreiter | ebenso | Beiseite mit Euch, Bäuerin! Platz für den König von England! |
-| `ritter_01_bauer` | Ritter am Schluss | nach deinem Sturz | Hoho, Bauer, das Radeln will gelernt sein! |
-| `ritter_01_baeuerin` | Ritter am Schluss | ebenso | Hoho, Bäuerin, das Radeln will gelernt sein! |
+| `ritter_01` | Ritter am Schluss | nach deinem Sturz | Hoho, das Radeln will gelernt sein! |
 
 ## Audienz in der Vorburg (Burgherr, Hochdeutsch)
 
@@ -100,4 +99,4 @@ Je Jagd: Ankündigung, Anfeuern, (Jagd 1–4) Zurückfallen, am Ende Entwischt b
 | `friedel_ende2` | ebenso | Mer treffen uns dann moie do im Gaschthaus in de Näh vum Deifelsdisch, gell? |
 | `friedel_ende3` | ebenso | Hosch enner gud bei mer! |
 
-**Zusammen:** 55 Dateien (51 Sätze, davon 4 doppelt für Bauer/Bäuerin).
+**Zusammen:** 54 Dateien (51 Sätze, davon 3 doppelt für Bauer/Bäuerin).

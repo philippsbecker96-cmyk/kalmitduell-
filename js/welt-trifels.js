@@ -246,7 +246,7 @@ function triWanken(dt,t){ const A=anim.tri, ich=riders3d[myKey]; if(!ich) return
   if(race.state==='run'&&A.d0!=null&&ich.lane!=null) for(const r of A.reiter){ const dd=Math.abs(A.d0+r.ab-me.d), lat=Math.abs(ich.lane-r.u); e+=bSm((4-dd)/2.5)*bSm((2.3-lat)/1); }
   A.wankE=Math.max(Math.min(1,e),(A.wankE||0)-dt*.7); ich.wank=A.wankE*(.22*Math.sin(t*7.3)+.09*Math.sin(t*12.1)); ich.lenk=A.wankE*.18*Math.sin(t*5.1+1); }
 // Sturz: als Richards Reihe vorbeizieht, kippst du nach rechts an den Wegrand, ein Ritter spottet, du rappelst dich auf, klopfst den Staub ab, hebst das Rad auf und steigst wieder auf
-const TRI_SPOTT='Hoho, [Bauer|Bäuerin], das Radeln will gelernt sein!';
+const TRI_SPOTT='Hoho, das Radeln will gelernt sein!';
 function poseSturz(dt,t,rt){ const A=anim.tri, S=A.sturzF, ich=riders3d[myKey]; if(!S||!ich) return; const s=race.state==='run'?rt-TRIFELS_T.sturz:-1, an=s>=0&&s<TRIFELS_T.liegen, m=S[KST.stand==='baeuerin'?'baeuerin':'bauer'];
   S.bauer.G.visible=S.baeuerin.G.visible=false; S.rad.visible=false; A.spott.visible=false;
   const g=A.d0!=null?A.d0-me.d:99, L=A.reiter.length?A.reiter[A.reiter.length-1].ab:0; A.seitZ=race.state==='run'&&g<14&&(g+L>-3||an||s>=0&&s<TRIFELS_T.liegen+.5)?1:0; A.seitW=(A.seitW||0)+(A.seitZ-(A.seitW||0))*Math.min(1,dt*1.8); A.sturzS=an?s:-1; // Seitenkamera (trifelsKamera)
