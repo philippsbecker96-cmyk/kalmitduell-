@@ -33,11 +33,11 @@ Spricht jemand (Dialog-Aufnahme), geht alle Musik auf ≈ ⅓ herunter (`triDuck
 | Datei | Länge | Wann |
 |---|---|---|
 | `musik/thema.mp3` | 43 s | Erkennungsmelodie: Countdown, Kamerafahrt, erste Tafeln – aus, sobald das Gefolge zu hören ist (spätestens 38 s) |
-| `musik/taverne.mp3` | 30 s | Schleife: Abfahrt nach dem Fuhrwerk bis 100 m vor das Wirtshaus · am Wirtshaus (bis 90 m) · letzte 700 m vor dem Gasthaus (Nebel reißt auf) |
+| `musik/taverne.mp3` | 30 s | Schleife: am Wirtshaus (bis 90 m) · am Gasthaus im Ziel (bis 130 m) |
 | `musik/jagd.mp3` | 32 s | jede Jagd von vorn, ab dem Antritt bis zum Haken bzw. Sprung in den Sack |
-| `effekte/unheimlich.mp3` | 32 s | über dem Wald-Teppich: nach Jagd 1–3 um Friedels Angst-Spruch · nach Jagd 4 leiser zwischen Laternen-Spruch und Wildschwein · im Nebel nach Friedels Abschied alle 100 s |
-| `musik/hintergrundhappy.mp3` | 60 s | leiser Hintergrund nach dem Thema bis zum Wirtshaus, nach jedem Durchlauf 10–20 s Pause · halb so laut, solange das Gefolge reitet · aus bei der Taverne |
-| `musik/nightambient.mp3` | 3 min | Wald-Teppich in Schleife ab dem Wirtshaus bis 700 m vor dem Gasthaus · leiser auf den Lichtungen, lauter im Nebel, aus bei den Jagden · um 25 dB angehoben, Original in `musik/roh/` |
+| `effekte/unheimlich.mp3`, `musik/omniouswaldnachts.mp3` | 32 s, 59 s | Gruselstücke im Wechsel über dem Wald-Teppich: nach Jagd 1 unheimlich, nach Jagd 2 (mit Wolfsgeheul) omin, Jagd 3 unheimlich, Jagd 4 omin (leiser, zwischen Laternen-Spruch und Wildschwein) · im Nebel nach Friedels Abschied alle 150 s abwechselnd · omniouswaldnachts mit 2,7 s Ausblendung am Ende, Original in `musik/roh/` |
+| `musik/hintergrundhappy.mp3`, `musik/mittelalterhintergrundfolkig.mp3`, `musik/mittelalterhintergrundfolkig2.mp3` | 60 s, 3:10, 3:56 | Unterwegs: Wiedergabeliste (je Fahrt gemischt, 4–8 s Pause zwischen den Stücken) nach dem Thema bis zum Wirtshaus und auf den letzten 700 m vor dem Gasthaus · halb so laut, solange das Gefolge reitet · aus bei der Taverne |
+| `musik/waldnichtsogruselig.mp3`, `musik/nightambient.mp3` | 3:38, 3 min | Wald-Teppich ab dem Wirtshaus bis 700 m vor dem Gasthaus: bis zu Friedels Laternen-Spruch nach Jagd 4 im Wechsel (erst waldnichtsogruselig), danach nur nightambient · leiser auf den Lichtungen, lauter im Nebel, aus bei den Jagden · nightambient um 25 dB angehoben, Original in `musik/roh/` |
 | `musik/ankunft.mp3` | 15 s | einmal mit den Ende-Tafeln (Taverne pausiert so lange) |
 
 ## Mission 1 – Lichtungen (`welt-trifels-wiesen.js`, eingebaut)

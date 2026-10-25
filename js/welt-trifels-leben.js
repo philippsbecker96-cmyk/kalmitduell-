@@ -181,7 +181,7 @@ function triStimmeTick(an){ const S=triSprich; if(S&&!S.ended&&!S.weg){ if(!an&&
 function triStimmeAus(){ if(triSprich){ triSprich.pause(); triSprich=null; } triWarte.length=0; triGesagt.clear(); for(const k in triSagt) delete triSagt[k]; } // neues Rennen oder Strecke verlassen
 // ---- Geräusche (kampagne/sounds/effekte/, über <audio>, da file://): Schleifen werden leiser, je weiter die Kamera weg ist; Einzeltöne einmal je Ereignis (A.ton) ----
 const TRI_TON='kampagne/sounds/effekte/', TRI_TON_VOL={wagen:.5,hufe:.7,kettenhemd:.3,wiehern:.7,sturz:.9,glocken:.6,peitsche:.8,wirtshaus:.6,grillen:.35,fluegel:.7,elwetritsch_schrei:.8,gackern:.6,schwein:.8,rascheln_gebuesch:.7,elwetritschegefangen:.9,fanfare:.7,schaafe:.5,hundebellen:.6,entengeraeusche:.4,kuhglocken:.45,muhen:.7,feuerknistern:.5,wolfsgehaeul:.8};
-const TRI_MUSIK={thema:['musik/thema',.45], jagd:['musik/jagd',.5,2], ankunft:['musik/ankunft',.45], taverne:['musik/taverne',.35], unheimlich:['effekte/unheimlich',.4], happy:['musik/hintergrundhappy',.3], nacht:['musik/nightambient',.55]}; // nightambient um 25 dB angehoben (Original in musik/roh/) · [Datei ab kampagne/sounds/, Lautstärke, Blende je s (sonst .45 = gut 2 s)]
+const TRI_MUSIK={thema:['musik/thema',.45], jagd:['musik/jagd',.5,2], ankunft:['musik/ankunft',.45], taverne:['musik/taverne',.35], unheimlich:['effekte/unheimlich',.4], happy:['musik/hintergrundhappy',.3], folk1:['musik/mittelalterhintergrundfolkig',.2], folk2:['musik/mittelalterhintergrundfolkig2',.2], nacht:['musik/nightambient',.55], wald2:['musik/waldnichtsogruselig',.3], omin:['musik/omniouswaldnachts',.38]}; // nightambient um 25 dB angehoben (Original in musik/roh/) · [Datei ab kampagne/sounds/, Lautstärke, Blende je s (sonst .45 = gut 2 s)]
 const triLoops={}; let triTonVor=null, triDuck=1; // triDuck: Musik leiser, solange jemand spricht
 function triEins(n,v=1,rate=1){ if(v<.02) return; try{ const a=new Audio(TRI_TON+n+'.mp3'); a.volume=clampN(v*TRI_TON_VOL[n],0,1); a.preservesPitch=false; a.playbackRate=rate; a.play().catch(()=>{}); }catch(e){} }
 function triLoop(k,n,ziel,dt){ let L=triLoops[k]; if(!L){ if(ziel<=0) return; const a=new Audio(TRI_TON+n+'.mp3'); a.loop=true; a.volume=0; L=triLoops[k]={a,n,v:0}; }
@@ -247,21 +247,26 @@ function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race
   // Jagdmusik: setzt mit dem Antritt ein, endet mit dem Haken (bei der letzten mit dem Sprung in den Sack), jede Jagd von vorn
   let jm=0; if(run&&K){ const k=K.J.findIndex(j=>rt>=j.t0-.3&&rt<j.t0+j.dur), j=K.J[k]; if(j){ const tau=rt-j.t0; if(einmal('jm'+k,true)) triMusikNeu('jagd'); jm=tau<(k===K.J.length-1?25.6:25.3)?1:0; } }
   triMusik('jagd',an?jm:0,dt,false);
-  // Unheimlich: leise im Wald, wenn Friedel nach Jagd 1–3 Angst bekommt (32 s um seinen Spruch), nach Jagd 4 noch leiser zwischen Laternen-Spruch und Wildschwein
-  let uh=0; if(run&&K) K.J.slice(0,3).forEach((j,k)=>{ const x=rt-(j.t0+132); if(x>=0&&x<32){ uh=1; if(einmal('uh'+k,true)) triMusikNeu('unheimlich'); } });
-  if(run&&K&&K.J[3]){ const x=rt-(K.J[3].t0+52); if(x>=0&&x<32){ uh=.6; if(einmal('uh3',true)) triMusikNeu('unheimlich'); } }
+  // Gruselstücke über dem Wald (unheimlich 32 s, omin 59 s, im Wechsel): nach Jagd 1–3 um Friedels Angst-Spruch, nach Jagd 4 leiser zwischen Laternen-Spruch und Wildschwein, im Nebel alle 150 s
+  const GR=['unheimlich','omin'], grD=n=>n==='omin'?57:32; let uh=0, gn=null; const grusel=(x,v,i,key)=>{ const n=GR[i%2]; if(x>=0&&x<grD(n)){ uh=v; gn=n; if(einmal(key,true)) triMusikNeu(n); } };
+  if(run&&K){ K.J.slice(0,3).forEach((j,k)=>grusel(rt-(j.t0+132),1,k,'uh'+k)); if(K.J[3]) grusel(rt-(K.J[3].t0+52),.6,3,'uh3'); } // Jagd 2 mit dem Wolf: omin
   const tritschNah=E&&!E.fertig&&me.d>T.tritsch-60, fernGast=!G||me.d<G.d-700, aus=run&&K&&rt>=K.heim+2; // aus: Heimweg im Nebel nach Friedels Abschied, bis 700 m vor dem Gasthaus
-  if(aus&&fernGast&&!tritschNah){ const x=rt-K.heim-8, n=Math.floor(x/100); if(x>=0&&x-n*100<32){ uh=.8; if(einmal('uhA'+n,true)) triMusikNeu('unheimlich'); } } // im Nebel alle 100 s
-  triMusik('unheimlich',an?uh:0,dt,false);
+  if(aus&&fernGast&&!tritschNah){ const x=rt-K.heim-8, n=Math.floor(x/150); grusel(x-n*150,.8,n,'uhA'+n); } // im Nebel
+  for(const n of GR) triMusik(n,an&&n===gn?uh:0,dt,false);
   if(run&&K&&K.J[1]&&einmal('wolf',rt>=K.J[1].t0+135&&rt<K.J[1].t0+145)) triEins('wolfsgehaeul'); // nach Jagd 2: Wolf heult, bevor Friedel fragt „Hosch du des Geheul ghört?“ (+140)
-  // Gemütlich (taverne): Abfahrt nach dem Fuhrwerk bis vor das Wirtshaus, am Wirtshaus (lauter, je näher) und auf den letzten 700 m vor dem Gasthaus, wo der Nebel aufreißt – still während der Ankunfts-Musik
-  let gm=0; if(run&&K&&(rt>=triFuhrT()+TRI_FUHR.ab+4&&me.d<T.wirtD-100||!fernGast)) gm=1;
-  gm=Math.max(gm,triFern(W3,90),triFern(gp,130)); if(ank) gm=0; triMusik('taverne',an?gm:0,dt);
-  // Hintergrund bis zum Wirtshaus (hintergrundhappy): nach dem Thema leise, nach jedem Durchlauf 10–20 s Pause, halb so laut, solange das Gefolge reitet, aus bei der Taverne
-  const mw=1-Math.min(1,gm*2), hp=run&&K&&rt>=38&&rt<K.tW?(rf>0?.5:1)*mw:0, HL=triLoops.mhappy;
-  if(HL&&HL.a.ended&&hp>0){ if(!O.hapNeu) O.hapNeu=t+10+Math.random()*10; else if(t>O.hapNeu){ O.hapNeu=0; triMusikNeu('happy'); } } triMusik('happy',an?hp:0,dt,false);
-  // Wald (nightambient): durchgehender Teppich ab dem Wirtshaus, leiser auf den Lichtungen, lauter im Nebel, aus bei Jagd und Taverne und auf den letzten 700 m
+  // Gemütlich (taverne): am Wirtshaus und am Gasthaus im Ziel (lauter, je näher) – still während der Ankunfts-Musik
+  let gm=Math.max(triFern(W3,90),triFern(gp,130)); if(ank) gm=0; triMusik('taverne',an?gm:0,dt);
+  // Unterwegs (folk1, folk2, happy): Wiedergabeliste, je Fahrt gemischt, 4–8 s Pause zwischen den Stücken – nach dem Thema bis zum Wirtshaus und auf den letzten 700 m vor dem Gasthaus (macht dort weiter, wo es aufgehört hat)
+  // halb so laut, solange das Gefolge reitet, aus bei der Taverne
+  const mw=1-Math.min(1,gm*2), PL=O.pl||(O.pl=['folk1','folk2','happy'].sort(()=>Math.random()-.5)), pn=PL[O.pi|0], PA=triLoops['m'+pn];
+  const hp=run&&K&&!ank&&(rt>=38&&rt<K.tW||!fernGast)?(rf>0?.5:1)*mw:0;
+  if(PA&&PA.a.ended&&hp>0){ if(!O.plNeu) O.plNeu=t+4+Math.random()*4; else if(t>O.plNeu){ O.plNeu=0; O.pi=((O.pi|0)+1)%PL.length; triMusikNeu(PL[O.pi]); } }
+  for(const n of PL) triMusik(n,an&&n===PL[O.pi|0]?hp:0,dt,false);
+  // Wald-Teppich ab dem Wirtshaus (wald2 = waldnichtsogruselig, nacht = nightambient): bis zu Friedels Laternen-Spruch im Wechsel (erst wald2), danach nur noch nacht – wird dunkler
+  // leiser auf den Lichtungen, lauter im Nebel, aus bei Jagd und Taverne und auf den letzten 700 m
   const licht=L&&L.wiesen&&L.wiesen.some(W=>W.an&&W.ton&&triFern(W.ton,70)>0), nm=run&&K&&rt>=K.tW&&fernGast&&!ank?(aus?1:.6)*(licht?.55:1)*(1-jm)*mw:0;
-  triMusik('nacht',an?nm:0,dt);
+  if(!O.wn) O.wn='wald2'; const dunkel=K&&rt>=K.lampe; if(dunkel&&O.wn!=='nacht'){ O.wn='nacht'; const N=triLoops.mnacht; if(N&&N.a.ended) triMusikNeu('nacht'); }
+  const WA=triLoops['m'+O.wn]; if(WA&&WA.a.ended&&nm>0){ if(!O.wNeu) O.wNeu=t+1+Math.random()*2; else if(t>O.wNeu){ O.wNeu=0; O.wn=dunkel||O.wn==='wald2'?'nacht':'wald2'; triMusikNeu(O.wn); } }
+  for(const n of ['wald2','nacht']) triMusik(n,an&&n===O.wn?nm:0,dt,false);
   // Ankunft: mit den Ende-Tafeln einmal das kurze Stück
   if(einmal('ankunft',ank)) triMusikNeu('ankunft'); triMusik('ankunft',an&&ank?1:0,dt,false); }
