@@ -451,8 +451,8 @@ function buildGasthaus(T){ const A=anim.tri, G=T.gast, holz=lam('#4e3626'), box=
   const wirt=trMensch({kittel:'#6b4a2e',aermel:'#ece3cf',hose:'#3a3020',haar:'#8a8a86',bart:'#8a8a86'}); box(wirt.G,.36,.7,.04,lam('#e8e0d0'),0,.95,.25); // Schürze
   const lat=new THREE.Mesh(new THREE.BoxGeometry(.16,.22,.16),glow); lat.position.y=-.78; wirt.arme[1].add(lat); wirt.arme[1].rotation.x=-.35; const wl=new THREE.PointLight(0xffc870,1.4,10,2); wl.position.y=-.78; wirt.arme[1].add(wl);
   const wp=loc(.6,0,5.6), wp0=loc(0,0,4.3); wp.y=bodenY(wp.x,wp.z); wp0.y=y0; wirt.G.position.copy(wp0); wirt.G.rotation.y=H.rotation.y; world.add(wirt.G);
-  // Teufelstisch: Sandsteinsäule mit breiter Felsplatte obendrauf, hebt sich als Silhouette vom Nachthimmel ab
-  const [tx,tz]=T.tisch, F=new THREE.Group(), fm=lam('#6a3a2c'), fm2=lam('#5a2e24'); F.position.set(tx,terrainAt(tx,tz)-2,tz); F.rotation.y=.4; world.add(F);
+  // Teufelstisch: Sandsteinsäule mit breiter Felsplatte obendrauf, hebt sich als dunkle Silhouette vom Himmel ab (ohne Szenen-Nebel, sonst verschwimmt er hell im Dunst)
+  const [tx,tz]=T.tisch, F=new THREE.Group(), fm=lam('#4a2820'), fm2=lam('#3a1f19'); fm.fog=fm2.fog=false; F.position.set(tx,terrainAt(tx,tz)-2,tz); F.rotation.y=.4; world.add(F);
   [[5.2,6,4.6,0,3,0,.05],[4.4,5.5,4,.3,8.5,.2,-.08],[4.8,5,4.3,-.2,13.6,-.1,.06],[3.8,3.6,3.4,.1,17.6,.1,0]].forEach(([w,h,d,x,y,z,r],i)=>{ const b=box(F,w,h,d,i%2?fm2:fm,x,y,z); b.rotation.y=r*3; b.rotation.z=r; });
   const pt=box(F,17,2.8,10.5,fm,0,20.6,0); pt.rotation.z=.04; box(F,13,.9,8,fm2,-.4,19,.3); for(const [x,z,s] of [[6,4,2.6],[-5,-4,2],[4,-5,1.6]]){ const b=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),fm2); b.position.set(x,s*.6,z); F.add(b); } // Platte und Brocken am Fuß
   A.gast={H,sc,rauch,kp,wirt,wp,wp0,mats:[mf,ms]}; }
