@@ -57,7 +57,7 @@ function draw(dt){
   const sk=race.paused?1:simSpeed(), k=Math.min(1,dt*3.5*sk), kl=Math.min(1,dt*5*sk); // Testmodus: Kamera folgt im gleichen Tempo
   camS.x+=(tx-camS.x)*k; camS.y+=(ty-camS.y)*k; camS.z+=(tz-camS.z)*k; camS.lx+=(lx-camS.lx)*kl; camS.ly+=(ly-camS.ly)*kl; camS.lz+=(lz-camS.lz)*kl;
   if(camOverride){ camera.position.set(...camOverride.pos); camera.lookAt(...camOverride.look); }
-  else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); if(anim.burg) burgKamera(dt); if(anim.tri) trifelsKamera(dt); // Berwartstein: kurzer Schwenk auf die eingestaubten Wegelagerer
+  else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); if(anim.burg) burgKamera(dt); if(anim.tri) trifelsKamera(dt); countKamera(dt,mine,theirs); // Berwartstein: kurzer Schwenk auf die eingestaubten Wegelagerer
     camS.roll=(camS.roll||0)+(rollT-(camS.roll||0))*Math.min(1,dt*3); if(Math.abs(camS.roll)>1e-4) camera.rotateZ(camS.roll); camShake(dt,vC); }
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
   sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vC); regenFx(race.paused?0:dt); luftFx(race.paused?0:dt,theirs,opp.active&&race.draft&&!me.done?me.draftR||0:0); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);
@@ -190,6 +190,15 @@ function wertStep(){ const W=race.wert; if(!W||!W.length) return; const auth=!(c
     const ueber=x=>(x.d-w.d)/Math.max(x.v,.1); // wie lange schon drüber – im selben Schritt gewinnt, wer früher drüber war
     wertWin(i, a&&(!b||ueber(me)>=ueber(opp))?'me':'opp'); }); }
 function countdown(){
+// Kamerafahrt beim Countdown (alle Modi außer Kampagne, Berwartstein hat seine eigene; nicht auf Space und Insel): von hoch oben vor den Fahrern herab auf beide zu, bis „LOS!“ fließend in die normale Kamera
+function countKamera(dt,mine,theirs){ if(race.state!=='count'||race.kamp||anim.burg||anim.tri||R.space||R.island||!mine){ camS.cdT=null; return; }
+  const t=camS.cdT=(camS.cdT??0)+dt, sm=(a,b)=>bSm((t-a)/(b-a)), V=(x,y,z)=>new THREE.Vector3(x,y,z);
+  const pt=(d,u)=>{ d=Math.min(R.len,Math.max(0,d)); if(R.stadium){ const p=trackPt(d,u); return V(p[0],p[1],p[2]); } const [x,z]=posAt(R,d), h=headingAt(R,d); return V(x-Math.sin(h)*u,roadY(d),z+Math.cos(h)*u); }; // u: seitlich zur Fahrtrichtung
+  const boden=p=>R.stadium?p.y:Math.max(p.y,terrainAt(p.x,p.z)); // nicht im Hang stecken
+  const look=mine.g.position.clone(); if(opp.active&&theirs) look.lerp(theirs.g.position,.5); look.y+=1.1;
+  const a=pt(me.d+26,6), b=pt(me.d+10,3); a.y=boden(a)+18; b.y=Math.max(boden(b),look.y)+4.5;
+  const pos=a.lerp(b,sm(0,3.6)), f=sm(3.4,5); pos.lerp(camera.position,f); look.lerp(V(camS.lx,camS.ly,camS.lz),f); // ab 3,4 s weich hinter den eigenen Fahrer
+  camera.position.copy(pos); camera.lookAt(look); }
   prepWert(); race.state='count'; enterRaceView(); wakeOn(); recReset();
   const still=!!anim.tri, pip=(f,d)=>{ if(!still) beep(f,d); }; // Trifels: Kamerafahrt, Countdown leise und dezent
   let n=5; const b=$('banner'); b.classList.toggle('dezent',still); b.textContent=n; pip(660);

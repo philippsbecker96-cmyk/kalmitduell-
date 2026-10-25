@@ -288,20 +288,20 @@ function makeScenery(r){
 
   // Fans im letzten Kilometer – zum Ziel hin immer dichter
   const JACK=['#f2c94c','#2f80ed','#eb5757','#27ae60','#d4f03a','#9b51e0','#f2994a','#56ccf2','#e0e0e0','#333a44','#e64980','#1d4a8c','#7a8a99','#c0392b','#fff3a8'];
-  for(let d=r.fans; d<r.len-14; ){
-    const near=(d-r.fans)/(r.len-r.fans), f=frame(d), barrier=d>r.len-320;
+  const SPZ=r.def.gpx==='suedpfalz'&&r.fans<r.len; // Südpfalz: Fans bis an die Start/Ziel-Linie und 50 m dahinter
+  const fanReihe=(d,near,barrier,Q)=>{ const f=frame(d);
     for(const side of [-1,1]){
-      const rows = 1 + (near>.25?1:0) + (near>.6?1:0) + (R1()<near?1:0);
+      const rows = 1 + (near>.25?1:0) + (near>.6?1:0) + (Q()<near?1:0);
       for(let row=0; row<rows; row++){
-        if(R1()<.12) continue;
-        const off=side*(ROAD_W/2+(barrier?1.25:0.55)+row*0.75+R1()*0.35), al=(R1()-.5)*.8;
-        S.fan.push({x:f.px+f.nx*off+Math.cos(f.h)*al, y:f.py+f.ny*off+Math.sin(f.h)*al, face:Math.atan2(-f.nx*side,-f.ny*side)+(R1()-.5)*.9,
-          jack:JACK[Math.floor(R1()*JACK.length)], legs:R1()<.6?'#2a2f3a':R1()<.5?'#4a5568':'#1c2a4a', tall:.9+R1()*.22,
-          arms:R1()<.38?(R1()<.55?2:1):0, phone:R1()<.5, cap:R1()<.3?JACK[Math.floor(R1()*JACK.length)]:null, flag:R1()<.035, ph:R1()*6.3, d});
+        if(Q()<.12) continue;
+        const off=side*(ROAD_W/2+(barrier?1.25:0.55)+row*0.75+Q()*0.35), al=(Q()-.5)*.8;
+        S.fan.push({x:f.px+f.nx*off+Math.cos(f.h)*al, y:f.py+f.ny*off+Math.sin(f.h)*al, face:Math.atan2(-f.nx*side,-f.ny*side)+(Q()-.5)*.9,
+          jack:JACK[Math.floor(Q()*JACK.length)], legs:Q()<.6?'#2a2f3a':Q()<.5?'#4a5568':'#1c2a4a', tall:.9+Q()*.22,
+          arms:Q()<.38?(Q()<.55?2:1):0, phone:Q()<.5, cap:Q()<.3?JACK[Math.floor(Q()*JACK.length)]:null, flag:Q()<.035, ph:Q()*6.3, d});
       }
-    }
-    d += 2.3 - near*1.55 + R1()*.4;
-  }
+    } };
+  for(let d=r.fans; d<r.len-14; ){ const near=(d-r.fans)/(r.len-r.fans); fanReihe(d,near,d>r.len-320,R1); d += 2.3 - near*1.55 + R1()*.4; }
+  if(SPZ){ const Q=rng(11); for(let d=r.len-13; d<r.len-1.5; d+=.75+Q()*.4) fanReihe(d,1,true,Q); for(let d=1.5; d<50; d+=.75+Q()*.4+d/50*.8) fanReihe(d,1-d/50*.6,true,Q); } // eigener Zufall, damit die übrige Landschaft gleich bleibt; Lücke am Zielbogen
   // Gehölz: dichte Laubbäume, Büsche bis an den Straßenrand
   for(const [zt,za,zb] of r.zones) if(zt==='hain') for(let d=za; d<Math.min(zb,r.len); d+=2.5){ const f=frame(d), rw=roadW(r,d)/2, ax=Math.cos(f.h), ay=Math.sin(f.h);
     const at=(o,al)=>({x:f.px+f.nx*o+ax*al, y:f.py+f.ny*o+ay*al});

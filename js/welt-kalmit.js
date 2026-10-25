@@ -389,7 +389,8 @@ function build3D(){
     if(zb<R.len) sign(zb+4,true); }
   // Absperrgitter mit Bannern auf den letzten 300 m
   if(!MA){ const bl=[], texts=R.kalmit?['BERGWERTUNG','KALMIT','HOPP HOPP!','PFALZ','ALLEZ!','673 m']:['SÜDPFALZ','HOPP HOPP!','WEINSTRASSE','ALLEZ!','PFALZ','ZIEL'], cols=['#1c7ed6','#2f9e44','#e8590c','#ae3ec9','#c92a2a','#0b7285'];
-    for(let d=R.len-320; d<R.len-6; d+=2.5) for(const s of [-1,1]){ const [x,z]=posAt(R,d+1.25), hd=headingAt(R,d+1.25), nx=-Math.sin(hd), nz=Math.cos(hd), off=ROAD_W/2+0.45;
+    const gitterD=[]; for(let d=R.len-320; d<R.len-6; d+=2.5) gitterD.push(d); if(R.fans<R.len&&R.def.gpx==='suedpfalz') for(let d=.5; d<50; d+=2.5) gitterD.push(d); // Südpfalz: Gitter auch 50 m hinter Start/Ziel
+    for(const d of gitterD) for(const s of [-1,1]){ const [x,z]=posAt(R,d+1.25), hd=headingAt(R,d+1.25), nx=-Math.sin(hd), nz=Math.cos(hd), off=ROAD_W/2+0.45;
       bl.push({x:x+nx*s*off, z:z+nz*s*off, bx:x+nx*s*(off-.05), bz:z+nz*s*(off-.05), y:roadY(d+1.25), g:gradeAt(d+1.25), h:hd, s, t:Math.floor((d/2.5+(s>0?3:0)))%texts.length}); }
     inst(new THREE.BoxGeometry(2.45,1.05,.04), lam('#c3c8cc'), bl, o=>{ ps.set(o.x,o.y+.62,o.z); slopeQ(o.h,o.g); sc.set(1,1,1); cc.set('#aab0b6'); });
     texts.forEach((t,ti)=>{ const tex=canvasTex(256,96,g=>{ g.fillStyle=cols[ti]; g.fillRect(0,0,256,96); g.fillStyle='#fff'; g.font='800 54px "Barlow Condensed", Arial Narrow, sans-serif'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(t,128,50,240); });
