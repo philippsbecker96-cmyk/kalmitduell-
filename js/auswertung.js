@@ -77,8 +77,8 @@ function showResult(){
   $('resultCard').innerHTML=`<h1 style="font-size:46px">${verdict}</h1><div class="sub">${esc(R.name)} · ${R.loop?race.laps+' Runden · ':''}${de(raceLen()/1000,1)} km${R.stadium?'':' · '+Math.round(R.gain*(R.loop?race.laps:1))+' Hm'}</div>
     <table>${rows.map(r=>`<tr><td>${esc(r[0])}</td><td class="r num" style="font-size:22px">${r[1]}</td><td class="r">${r[2]}</td></tr>`).join('')}</table>
     ${wertHtml()}
-    ${statsHtml()}
-    <div class="rowb" style="margin-top:18px"><button class="go" onclick="quitToLobby()">Neues Rennen</button>${tcxBtnHtml()}<button onclick="$('result').style.display='none'">Schließen</button></div>`;
+    ${statsHtml()}${fotoHtml()}
+    <div class="rowb" style="margin-top:18px"><button class="go" onclick="quitToLobby()">Neues Rennen</button>${tcxBtnHtml()}${fotoBtnHtml()}<button onclick="$('result').style.display='none'">Schließen</button></div>`;
   $('result').style.display='flex';
 }
 
@@ -88,7 +88,7 @@ function showResult(){
    Keine GPS-Daten – sonst würde Strava die Fahrt in echte Segmente einsortieren. */
 const BEST_DUR=[[60,'1 min'],[300,'5 min'],[480,'8 min'],[900,'15 min'],[1200,'20 min'],[1800,'30 min'],[2700,'45 min'],[3600,'60 min']];
 const rec={s:[],laps:[],start:null,savedN:0};
-function recReset(){ Object.assign(rec,{s:[],laps:[],start:null,savedN:0,sec:0,accE:0,accT:0,hrS:0,hrT:0,cadS:0,cadT:0,maxP:0,maxV:0,lapKey:null,
+function recReset(){ Object.assign(rec,{s:[],laps:[],start:null,savedN:0,fotos:[],fotoPlan:null,sec:0,accE:0,accT:0,hrS:0,hrT:0,cadS:0,cadT:0,maxP:0,maxV:0,lapKey:null,
   mode:race.mode,route:R.name,laps0:race.laps,kg:weight(),ftp:ftp(),sim:live.src==='sim'}); tcxBtns(); }
 function recStep(dt,P){
   if(me.done&&!me.free) return; if(!rec.start) rec.start=new Date();
@@ -186,9 +186,43 @@ function downloadTcx(){
 const tcxUnsaved=()=>rec.s.length-rec.savedN>=30; // mehr als 30 s nicht gespeichert
 const tcxLabel=()=>rec.savedN>0&&!tcxUnsaved()?'✓ TCX gespeichert':'⬇ TCX für Strava';
 const tcxBtnHtml=()=>rec.s.length>=5?`<button class="tcxBtn">${tcxLabel()}</button>`:'';
-function tcxBtns(){ const has=rec.s.length>=5;
+function tcxBtns(){ const has=rec.s.length>=5, nf=(rec.fotos||[]).length;
   document.querySelectorAll('.tcxBtn').forEach(b=>{ b.style.display=has?'':'none'; b.textContent=tcxLabel(); });
+  document.querySelectorAll('.fotoBtn').forEach(b=>{ b.style.display=nf?'':'none'; b.textContent=fotoLabel(); });
   const L=$('lastRide'); if(L) L.style.display=race.state==='setup'&&has&&tcxUnsaved()?'flex':'none'; }
-document.addEventListener('click',e=>{ if(e.target.closest('.tcxBtn')) downloadTcx(); });
+document.addEventListener('click',e=>{ if(e.target.closest('.tcxBtn')) downloadTcx(); if(e.target.closest('.fotoBtn')) fotosLaden(); const f=e.target.closest('.fotoMini'); if(f) fotoLaden(+f.dataset.i); });
+
+/* ================= Fotos der Fahrt: 3–4 Bilder je Strecke, Download neben der TCX =================
+   Stellen in fotoStellen: t = Sekunden nach dem Start, d = Meter (Runden zählen mit), ziel = Zieleinlauf bzw. Workout-Ende,
+   peak = höchste Leistung (3-s-Schnitt, wird ersetzt, wenn du später mehr trittst). Aufnahme direkt nach renderer.render (fotoTick aus draw in rennen.js):
+   genau das Bild, das du gesehen hast, ohne Anzeigen, unten eine Zeile mit Strecke, Stelle, Zeit und Watt. Strava nimmt Fotos nur von Hand an (API nur für Partner). */
+const fotoHoechst=()=>{ let b=-1e9, bd=R.len/2; for(let d=0;d<R.len;d+=10){ const e=elevAt(d); if(e>b){ b=e; bd=d; } } return bd; };
+const fotoSteil=()=>{ const A=[]; for(let d=R.len*.5;d<R.len;d+=5) A.push([d,bankAt(d)]); const b=Math.max(...A.map(x=>x[1])), S=A.filter(x=>x[1]>=b*.98); return (S[0][0]+S[S.length-1][0])/2; }; // Mitte der Steilkurve in der zweiten Rundenhälfte
+function fotoStellen(){ const T=race.mode==='train', L=!T&&R.loop&&race.laps>1?[{d:(race.laps-1)*R.len+R.len*.4,n:'Letzte Runde'}]:[], ziel=n=>({ziel:1,n:T?'Workout geschafft':n});
+  if(R.tri) return [{t:20,n:'Aufbruch zum Trifels'}, ...(R.tri.sau!=null?[{d:R.tri.sau+25,n:'Das Wildschwein'}]:[]), ...(R.tri.tritsch!=null?[{d:R.tri.tritsch+15,n:'Elwetritsche!'}]:[]), {d:R.tri.gast.d-30,n:'Gasthaus „Zum Teufelstisch“'}];
+  if(R.kalmit) return [{t:6,n:'Start in Maikammer'}, {d:1500,n:'Durch die Weinberge'}, {d:R.kehren.length?R.kehren[R.kehren.length>>1]:R.len*.6,n:'In der Kehre'}, ziel('Gipfel')];
+  if(R.def.burg) return [{t:4,n:'Bauernfest in Erlenbach'}, {d:BETR.d+10,n:'Der Betrunkene'}, {d:BETTLER.d+40,n:'Vor der Zugbrücke'}, ziel('Burg Berwartstein')];
+  if(R.stadium) return [{t:4,n:'Start auf dem Betzenberg'}, {d:fotoSteil(),n:'Steilkurve'}, ...L, ziel('Zieleinlauf')];
+  if(R.space||R.island) return [{t:10,n:'Start'}, {peak:1,n:'Höchste Leistung'}, ...(R.goal?[{d:R.goal,n:R.island?'Strandbar':'Raumstation'}]:[]), ziel('Ziel')];
+  const st={t:6,n:'Start'+(R.def.start?' in '+R.def.start:'')};
+  return R.loop ? [st, {d:fotoHoechst(),n:'Höchster Punkt'}, ...L, ziel('Ziel')] : [st, {d:R.len*.4,n:'Unterwegs'}, {d:fotoHoechst(),n:'Höchster Punkt'}, ziel('Ziel')]; }
+function fotoTick(){ if(race.state!=='run'||race.paused||race.frozen) return;
+  const F=rec.fotoPlan||(rec.fotoPlan=fotoStellen()), dd=race.mode==='train'&&!R.def.planbar&&!R.ring?me.dist:me.d;
+  for(const s of F){ if(s.ok) continue;
+    if(s.peak){ const S=rec.s.slice(-3); if(race.t<30||S.length<3||race.t-(s.tp||-99)<15) continue; const p=S.reduce((a,x)=>a+x.p,0)/3;
+      if(p>(s.p||0)*1.05){ s.p=p; s.tp=race.t; fotoNimm(s.n,p,true); return; } continue; }
+    if(s.ziel?me.done:s.t!=null?race.t>=s.t:dd>=s.d){ s.ok=true; if(!s.ziel&&s.t==null&&dd>s.d+60) continue; fotoNimm(s.n); return; } } } // weit vorbei (Sprung im Testmodus, Ziel vor der Stelle): auslassen
+function fotoNimm(n,p,ersetze){ const w=Math.min(1600,cv.width), h=Math.round(w*cv.height/cv.width), c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d');
+  g.drawImage(cv,0,0,w,h); p=Math.round(p??(rec.s[rec.s.length-1]||{}).p??0); const fs=Math.round(h/40);
+  g.fillStyle='rgba(14,22,19,.6)'; g.fillRect(0,h-fs*2.2,w,fs*2.2); g.font=`600 ${fs}px Barlow, sans-serif`; g.fillStyle='#e8ecef'; g.textBaseline='middle';
+  g.textAlign='left'; g.fillText(`Kalmit-Duell · ${R.name} · ${n}`,fs,h-fs*1.1); g.textAlign='right'; g.fillText(`${fmtT(race.t)} · ${p} W`,w-fs,h-fs*1.1);
+  const f={n,t:race.t,url:c.toDataURL('image/jpeg',.88)}, i=ersetze?rec.fotos.findIndex(x=>x.n===n):-1; if(i>=0) rec.fotos[i]=f; else rec.fotos.push(f);
+  rec.fotos.sort((a,b)=>a.t-b.t); tcxBtns(); }
+const fotoLabel=()=>`⬇ Bilder (${(rec.fotos||[]).length})`;
+const fotoBtnHtml=()=>(rec.fotos||[]).length?`<button class="fotoBtn">${fotoLabel()}</button>`:'';
+const fotoHtml=()=>(rec.fotos||[]).length?`<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">${rec.fotos.map((f,i)=>`<img class="fotoMini" data-i="${i}" src="${f.url}" title="${esc(f.n)} – zum Speichern klicken" style="height:64px;border-radius:6px;cursor:pointer">`).join('')}</div>`:'';
+function fotoLaden(i){ const f=rec.fotos[i]; if(!f) return; const a=document.createElement('a'); a.href=f.url;
+  a.download=tcxName().replace(/\.tcx$/,'')+`_${i+1}-${f.n.toLowerCase().replace(/[^a-z0-9äöüß]+/g,'-').replace(/^-|-$/g,'')}.jpg`; document.body.appendChild(a); a.click(); a.remove(); }
+function fotosLaden(){ rec.fotos.forEach((f,i)=>setTimeout(()=>fotoLaden(i),i*400)); flash(`${rec.fotos.length} Bilder gespeichert – in Strava unter „Fotos hinzufügen“ hochladen`); }
 addEventListener('beforeunload',e=>{ if(tcxUnsaved()){ e.preventDefault(); e.returnValue=''; } }); // Rückfrage, solange die Fahrt nicht gespeichert ist
 

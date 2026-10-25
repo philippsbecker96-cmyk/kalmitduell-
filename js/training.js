@@ -179,7 +179,7 @@ function showTrainResult(){
       :`<div class="small">Zu kurz gefahren für ein Ergebnis.</div>`):'';
   $('resultCard').innerHTML=`<h1 style="font-size:46px">${head}</h1><div class="sub">${esc(R.name)} · ${fmtT(T)} · ${test?(race.woKind==='ramp'?'Rampentest':'20-Minuten-Test'):race.woSegs.length+' Abschnitte'+(race.intens!==1?` · Intensität ${Math.round(race.intens*100)} %`:'')}</div>${ftpBox}
     <table><tr class="small"><td></td><td class="r">Ø Watt</td><td class="r">Ø W/kg</td><td class="r">${test?'FTP':'im Ziel ±5 %'}</td><td class="r">Strecke</td></tr>${rows.map(r=>`<tr><td>${esc(r[0])}</td>${r.slice(1).map(c=>`<td class="r num" style="font-size:20px">${c}</td>`).join('')}</tr>`).join('')}</table>
-    ${statsHtml()}
-    <div class="rowb" style="margin-top:18px"><button class="go" onclick="quitToLobby()">Neues Training</button>${tcxBtnHtml()}<button onclick="$('result').style.display='none'">Schließen</button></div>`;
+    ${statsHtml()}${fotoHtml()}
+    <div class="rowb" style="margin-top:18px"><button class="go" onclick="quitToLobby()">Neues Training</button>${tcxBtnHtml()}${fotoBtnHtml()}<button onclick="$('result').style.display='none'">Schließen</button></div>`;
   $('result').style.display='flex';
 }

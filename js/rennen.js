@@ -62,7 +62,7 @@ function draw(dt){
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
   sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vC); regenFx(race.paused?0:dt); luftFx(race.paused?0:dt,theirs,opp.active&&race.draft&&!me.done?me.draftR||0:0); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);
   for(const r of [mine,theirs]){ const dist=camera.position.distanceTo(r.g.position), ds=Math.max(1,dist/14); r.tag.scale.set(1.9*ds,.475*ds,1); r.tag.visible=dist>6&&!R.def.burg&&!R.def.ma; } // Namensschild (nicht auf Berwartstein) bleibt auch aus der Ferne lesbar
-  renderer.render(scene,camera);
+  renderer.render(scene,camera); fotoTick(); // Fotos der Fahrt (auswertung.js): direkt nach dem Zeichnen, sonst ist das Bild leer
   ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H); miniMap(); miniProfile();
 }
 function rightCol(){ // Abstand · Minimap · Leistung untereinander am rechten Rand
