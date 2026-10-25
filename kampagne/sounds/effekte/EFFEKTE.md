@@ -28,12 +28,16 @@ Vor jedem neuen Ton wird erst gefragt.
 
 ## Musik Mission 1 (`../musik/`, Lautstärke in `TRI_MUSIK`, blendet ein und aus)
 
+Spricht jemand (Dialog-Aufnahme), geht alle Musik auf ≈ ⅓ herunter (`triDuck`).
+
 | Datei | Länge | Wann |
 |---|---|---|
 | `musik/thema.mp3` | 43 s | Erkennungsmelodie: Countdown, Kamerafahrt, erste Tafeln – aus, sobald das Gefolge zu hören ist (spätestens 38 s) |
-| `musik/taverne.mp3` | 30 s | Schleife: Abfahrt nach dem Fuhrwerk bis 100 m vor das Wirtshaus · am Wirtshaus (bis 90 m) · Heimweg nach Friedels Abschied (still bei den drei Elwetritschen) · Gasthaus im Ziel (bis 130 m, lauter, je näher) |
+| `musik/taverne.mp3` | 30 s | Schleife: Abfahrt nach dem Fuhrwerk bis 100 m vor das Wirtshaus · am Wirtshaus (bis 90 m) · letzte 700 m vor dem Gasthaus (Nebel reißt auf) |
 | `musik/jagd.mp3` | 32 s | jede Jagd von vorn, ab dem Antritt bis zum Haken bzw. Sprung in den Sack |
-| `effekte/unheimlich.mp3` | 32 s | Wald nach Jagd 1–3, um Friedels Angst-Spruch · nach Jagd 4 leiser zwischen Laternen-Spruch und Wildschwein |
+| `effekte/unheimlich.mp3` | 32 s | über dem Wald-Teppich: nach Jagd 1–3 um Friedels Angst-Spruch · nach Jagd 4 leiser zwischen Laternen-Spruch und Wildschwein · im Nebel nach Friedels Abschied alle 100 s |
+| `musik/hintergrundhappy.mp3` | 60 s | leiser Hintergrund nach dem Thema bis zum Wirtshaus, nach jedem Durchlauf 10–20 s Pause · halb so laut, solange das Gefolge reitet · aus bei der Taverne |
+| `musik/nightambient.mp3` | 3 min | Wald-Teppich in Schleife ab dem Wirtshaus bis 700 m vor dem Gasthaus · leiser auf den Lichtungen, lauter im Nebel, aus bei den Jagden · um 25 dB angehoben, Original in `musik/roh/` |
 | `musik/ankunft.mp3` | 15 s | einmal mit den Ende-Tafeln (Taverne pausiert so lange) |
 
 ## Mission 1 – Lichtungen (`welt-trifels-wiesen.js`, eingebaut)
@@ -42,10 +46,11 @@ Vor jedem neuen Ton wird erst gefragt.
 |---|---|---|
 | `schaafe.mp3` | vorhanden | Schleife: Blöken der Schafherde auf der Lichtung nach Jagd 1 (bis 70 m) |
 | `hundebellen.mp3` | vorhanden | Hütehund bellt alle 2–8 s, solange du näher als 45 m bist |
-| `entengeräusche.mp3` | vorhanden | Schleife: Enten quaken am Weiher nach Jagd 2 (bis 50 m) |
+| `entengeraeusche.mp3` | vorhanden | Schleife: Enten quaken am Weiher nach Jagd 2 (bis 50 m) |
 | `kuhglocken.mp3` | vorhanden | Schleife: Kuhherde nach Jagd 3 (bis 75 m) |
 | `muhen.mp3` | vorhanden | eine Kuh muht alle 6–14 s, solange du an der Herde bist |
 | `feuerknistern.mp3` | vorhanden | Schleife: Knistern und Prasseln am Köhlerplatz nach Jagd 4 (bis 45 m) |
+| `wolfsgehaeul.mp3` | vorhanden | Einmal: Wolf heult nach Jagd 2, kurz bevor Friedel fragt „Hosch du des Geheul ghört?“ |
 
 Außerdem `fluegel.mp3`, wenn die Elwetritsche vom Scheunendach flattert. Fehlende Dateien bleiben einfach still. Sobald sie im Ordner liegen, sind sie zu hören.
 

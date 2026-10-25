@@ -132,7 +132,7 @@ function poseTrifelsLeben(dt,t,rt){ const A=anim.tri, L=A.leben, T=R.tri; if(!L)
       const m=F.m, z=TRI_FUHR_TXT.find(([a,b])=>s>=a&&s<b), k=Math.min(1,dt*6); m.kopf.rotation.y+=((s>-1&&s<Z.ab+1.5?-1:0)-m.kopf.rotation.y)*Math.min(1,dt*4); // schaut zu dir (rechts)
       m.arme[0].rotation.x+=((z?-1.3+.35*Math.sin(t*5):s>=Z.ab-.5&&s<Z.ab+1.2?-1.6+.8*Math.sin(t*9):-.9)-m.arme[0].rotation.x)*k; // erzählt mit der Hand, winkt ab
       m.arme[1].rotation.x+=((s>=Z.ab+.8?-2.7+.6*Math.sin(t*14):-.9)-m.arme[1].rotation.x)*k; // Peitsche
-      if(z){ F.blase.visible=true; triBlaseText(F.blase,kText(z[2])); const kp=m.kopf.getWorldPosition(new THREE.Vector3()); kp.y+=.9; triBlaseUeber(F.blase,kp,riders3d[myKey]&&riders3d[myKey].g); } } }
+      if(z){ F.blase.visible=true; triSag('fuhrmann',kText(z[2])); triBlaseText(F.blase,kText(z[2])); const kp=m.kopf.getWorldPosition(new THREE.Vector3()); kp.y+=.9; triBlaseUeber(F.blase,kp,riders3d[myKey]&&riders3d[myKey].g); } } }
   // Reh mit Kitzen: steht am Waldrand rechts, quert vor dir den Weg, wenn du auf 45 m herankommst
   if(L.reh&&!L.reh.fertig){ const Rh=L.reh, d0=T.reh, rw=roadW(R,d0)/2, nah=me.d>d0-150&&me.d<d0+30;
     if(Rh.s<0&&me.d>d0-45) Rh.s=me.d<d0+5?0:99; if(Rh.s>=0) Rh.s+=lauf; if(Rh.s>9||!nah&&Rh.s>=0){ Rh.fertig=true; Rh.tiere.forEach(r=>r.G.visible=false); }
@@ -164,23 +164,38 @@ function poseTrifelsLeben(dt,t,rt){ const A=anim.tri, L=A.leben, T=R.tri; if(!L)
         e.fluegel.forEach((w,j)=>w.rotation.z=(j?-1:1)*(an&&s<Z.wirr+1?.5+.5*Math.sin(t*28+e.ph):0));
         e.kopf.rotation.x=!an?.7*Math.max(0,Math.sin(t*1.7+e.ph*2))**3:-.25; e.augen.forEach(a=>a.scale.y=an?1.5:1); e.zunge.visible=i===2&&f>0; }); } } }
 
+// ---- Stimmen (kampagne/sounds/dialoge/mission1/, Liste in DIALOGE.md): je Sprechblase eine Aufnahme, gefunden über den Blasentext; fehlt die Datei, bleibt es still ----
+// Sätze mit [Bauer|Bäuerin] gibt es als _bauer/_baeuerin; gleicher Text zweimal (Friedels „Jetz wart doch …“): erst die eine, dann die andere Datei · eine Stimme nach der anderen, was länger als 4 s wartet, fällt weg
+const TRI_STIMME='kampagne/sounds/dialoge/mission1/', TRI_STIMME_VOL=1, triSagt={}, triGesagt=new Set(), triWarte=[]; let triStimmen=null, triSprich=null;
+function triStimmenListe(){ const X=TRI_TXT, L=[['vorreiter_01',TRI_BEISEITE],['ritter_01',TRI_SPOTT],['burgherr_01',TRI_RUF_TXT],['dorfmann_01',X.dorfmann],['friedel_01',X.friedel1],['friedel_02',X.friedel2[0]],['friedel_03',X.friedel2[1]],
+    ['friedel_hopp',X.hopp],['friedel_lampe',X.lampe],['friedel_lob2',X.lob[0]],['friedel_lob3',X.lob[1]],['friedel_angst1',X.angst[0]],['friedel_angst2a',X.angst[1][0]],['friedel_angst2b',X.angst[1][1]],['friedel_angst3a',X.angst[2][0]],['friedel_angst3b',X.angst[2][1]]],
+    n=(p,a)=>a.forEach((s,i)=>L.push([p+(i+1),s]));
+  TRI_AUD_TXT.forEach((a,i)=>a[1]&&L.push(['burgherr_0'+(i+2),a[1]])); TRI_FUHR_TXT.forEach((a,i)=>L.push(['fuhrmann_0'+(i+1),a[2]]));
+  n('dorfweib_0',X.dorfweib); n('friedel_ank',X.ank); n('friedel_zurueck',X.zurueck); n('friedel_weg',X.weg); n('friedel_fang',X.fang); n('friedel_schafe',X.schafe); n('friedel_sau',X.sau); n('friedel_ende',X.ende); return L; }
+function triSag(wer,txt){ if(!txt||triSagt[wer]===txt) return; triSagt[wer]=txt; if(!triStimmen) triStimmen=triStimmenListe(); // neuer Text in der Blase von wer
+  const M=triStimmen.filter(x=>kText(x[1])===txt), m=M.find(x=>!triGesagt.has(x[0]))||M[0]; if(!m) return; triGesagt.add(m[0]);
+  triWarte.push({f:TRI_STIMME+m[0]+(/\[[^\]|]*\|/.test(m[1])?(KST.stand==='baeuerin'?'_baeuerin':'_bauer'):'')+'.m4a', t:performance.now()}); }
+function triStimmeTick(an){ const S=triSprich; if(S&&!S.ended&&!S.weg){ if(!an&&!S.paused) S.pause(); else if(an&&S.paused) S.play().catch(()=>{ S.weg=1; }); return; } // Pause hält die Stimme an
+  if(!an) return; const jetzt=performance.now(); while(triWarte.length&&jetzt-triWarte[0].t>4000) triWarte.shift(); const w=triWarte.shift(); if(!w) return;
+  try{ const a=triSprich=new Audio(w.f); a.volume=TRI_STIMME_VOL; a.onerror=()=>{ a.weg=1; }; a.play().catch(()=>{ a.weg=1; }); }catch(e){ triSprich=null; } }
+function triStimmeAus(){ if(triSprich){ triSprich.pause(); triSprich=null; } triWarte.length=0; triGesagt.clear(); for(const k in triSagt) delete triSagt[k]; } // neues Rennen oder Strecke verlassen
 // ---- Geräusche (kampagne/sounds/effekte/, über <audio>, da file://): Schleifen werden leiser, je weiter die Kamera weg ist; Einzeltöne einmal je Ereignis (A.ton) ----
-const TRI_TON='kampagne/sounds/effekte/', TRI_TON_VOL={wagen:.5,hufe:.7,kettenhemd:.3,wiehern:.7,sturz:.9,glocken:.6,peitsche:.8,wirtshaus:.6,grillen:.35,fluegel:.7,elwetritsch_schrei:.8,gackern:.6,schwein:.8,rascheln_gebuesch:.7,elwetritschegefangen:.9,fanfare:.7,schaafe:.5,hundebellen:.6,'entengeräusche':.4,kuhglocken:.45,muhen:.7,feuerknistern:.5};
-const TRI_MUSIK={thema:['musik/thema',.45], jagd:['musik/jagd',.5,2], ankunft:['musik/ankunft',.45], taverne:['musik/taverne',.35], unheimlich:['effekte/unheimlich',.4]}; // [Datei ab kampagne/sounds/, Lautstärke, Blende je s (sonst .45 = gut 2 s)]
-const triLoops={}; let triTonVor=null;
+const TRI_TON='kampagne/sounds/effekte/', TRI_TON_VOL={wagen:.5,hufe:.7,kettenhemd:.3,wiehern:.7,sturz:.9,glocken:.6,peitsche:.8,wirtshaus:.6,grillen:.35,fluegel:.7,elwetritsch_schrei:.8,gackern:.6,schwein:.8,rascheln_gebuesch:.7,elwetritschegefangen:.9,fanfare:.7,schaafe:.5,hundebellen:.6,entengeraeusche:.4,kuhglocken:.45,muhen:.7,feuerknistern:.5,wolfsgehaeul:.8};
+const TRI_MUSIK={thema:['musik/thema',.45], jagd:['musik/jagd',.5,2], ankunft:['musik/ankunft',.45], taverne:['musik/taverne',.35], unheimlich:['effekte/unheimlich',.4], happy:['musik/hintergrundhappy',.3], nacht:['musik/nightambient',.55]}; // nightambient um 25 dB angehoben (Original in musik/roh/) · [Datei ab kampagne/sounds/, Lautstärke, Blende je s (sonst .45 = gut 2 s)]
+const triLoops={}; let triTonVor=null, triDuck=1; // triDuck: Musik leiser, solange jemand spricht
 function triEins(n,v=1,rate=1){ if(v<.02) return; try{ const a=new Audio(TRI_TON+n+'.mp3'); a.volume=clampN(v*TRI_TON_VOL[n],0,1); a.preservesPitch=false; a.playbackRate=rate; a.play().catch(()=>{}); }catch(e){} }
 function triLoop(k,n,ziel,dt){ let L=triLoops[k]; if(!L){ if(ziel<=0) return; const a=new Audio(TRI_TON+n+'.mp3'); a.loop=true; a.volume=0; L=triLoops[k]={a,n,v:0}; }
   L.v+=(ziel-L.v)*Math.min(1,dt*3); if(ziel<=0&&L.v<.01){ L.v=0; if(!L.a.paused) L.a.pause(); return; } L.a.volume=clampN(L.v*TRI_TON_VOL[n],0,1); if(L.a.paused) L.a.play().catch(()=>{}); }
 // Musik: blendet über 2–3 s ein und aus; ohne Schleife (loop=false) spielt sie einmal bis zum Ende, neu = von vorn (triMusikNeu)
 function triMusik(n,ziel,dt,loop=true){ const M=TRI_MUSIK[n]; let L=triLoops['m'+n]; if(!L){ if(ziel<=0) return; const a=new Audio('kampagne/sounds/'+M[0]+'.mp3'); a.loop=loop; a.volume=0; L=triLoops['m'+n]={a,v:0}; }
-  L.v+=Math.sign(ziel-L.v)*Math.min(Math.abs(ziel-L.v),dt*(M[2]||.45)); if(ziel<=0&&L.v<.01){ L.v=0; if(!L.a.paused) L.a.pause(); return; } if(L.a.ended) return; L.a.volume=clampN(L.v*M[1],0,1); if(L.a.paused) L.a.play().catch(()=>{}); }
+  L.v+=Math.sign(ziel-L.v)*Math.min(Math.abs(ziel-L.v),dt*(M[2]||.45)); if(ziel<=0&&L.v<.01){ L.v=0; if(!L.a.paused) L.a.pause(); return; } if(L.a.ended) return; L.a.volume=clampN(L.v*M[1]*triDuck,0,1); if(L.a.paused) L.a.play().catch(()=>{}); }
 function triMusikNeu(n){ const L=triLoops['m'+n]; if(L){ L.a.pause(); L.a.currentTime=0; L.v=0; } }
-function triTonAus(){ for(const k in triLoops){ triLoops[k].v=0; triLoops[k].a.pause(); } }
+function triTonAus(){ for(const k in triLoops){ triLoops[k].v=0; triLoops[k].a.pause(); } triStimmeAus(); }
 const triFern=(p,max)=>p?clampN(1-camera.position.distanceTo(p)/max,0,1)**1.5:0; // 1 an der Kamera, 0 ab max m
 function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race.state==='run', an=(run||race.state==='count')&&!race.paused;
   if(!triTonVor){ triTonVor=Object.keys(TRI_TON_VOL).map(n=>TRI_TON+n).concat(Object.values(TRI_MUSIK).map(m=>'kampagne/sounds/'+m[0])).map(f=>Object.assign(new Audio(f+'.mp3'),{preload:'auto'})); } // vorladen, damit der erste Ton nicht hängt
   if(race.state==='count'&&!A.tonNeu){ for(const n in TRI_MUSIK) triMusikNeu(n); } A.tonNeu=race.state==='count'; // neues Rennen: Musik von vorn
-  if(race.state==='count'||!A.ton) A.ton={}; const O=A.ton, einmal=(k,b)=>b&&!O[k]&&(O[k]=1); // Einzeltöne: neues Rennen = alles zurück
+  triStimmeTick(an); { const S=triSprich, sp=!!S&&!S.ended&&!S.weg&&!S.paused; triDuck+=((sp?.35:1)-triDuck)*Math.min(1,dt*(sp?6:1.5)); } if(race.state==='count'||!A.ton){ A.ton={}; triStimmeAus(); } const O=A.ton, einmal=(k,b)=>b&&!O[k]&&(O[k]=1); // Einzeltöne: neues Rennen = alles zurück
   const P=A.tonP||(A.tonP={}), fahrt=(k,G)=>{ const p=G.position, a=P[k], v=a&&dt>0?p.distanceTo(a)/dt:0; P[k]=p.clone(); return G.visible&&v>.3&&v<40; }; // bewegt sich das Ding gerade?
   // Goldkarren (Kamerafahrt beim Countdown, später den Burgweg hinauf)
   const C=A.karren; triLoop('karren','wagen',an&&C&&fahrt('k',C.K)?triFern(C.K.position,45):0,dt);
@@ -222,7 +237,7 @@ function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race
   const Wz=k=>L&&L.wiesen&&L.wiesen.find(W=>W.art===k), fw=(W,max)=>an&&W&&W.an&&W.ton?triFern(W.ton,max):0;
   { const W=Wz('schafe'); triLoop('schafe','schaafe',fw(W,70),dt); const f=an&&W&&W.an&&W.hund?triFern(W.hund.G.position,45):0;
     if(f>.05){ if(O.bell==null) O.bell=t+.3; else if(t>O.bell){ triEins('hundebellen',f,.95+Math.random()*.15); O.bell=t+2.5+Math.random()*5; } } }
-  { const W=Wz('teich'); triLoop('enten','entengeräusche',fw(W,50),dt); if(einmal('selw',W&&W.elw&&W.elw.s>=.25&&W.elw.s<5)) triEins('fluegel',.7,1.1); }
+  { const W=Wz('teich'); triLoop('enten','entengeraeusche',fw(W,50),dt); if(einmal('selw',W&&W.elw&&W.elw.s>=.25&&W.elw.s<5)) triEins('fluegel',.7,1.1); }
   { const f=fw(Wz('kuehe'),75); triLoop('kuhglocken','kuhglocken',f,dt); if(f>.05){ if(O.muh==null) O.muh=t+1.5; else if(t>O.muh){ triEins('muhen',f,.9+Math.random()*.2); O.muh=t+6+Math.random()*8; } } }
   triLoop('meiler','feuerknistern',fw(Wz('koehler'),45),dt);
   // ---- Musik ----
@@ -235,9 +250,18 @@ function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race
   // Unheimlich: leise im Wald, wenn Friedel nach Jagd 1–3 Angst bekommt (32 s um seinen Spruch), nach Jagd 4 noch leiser zwischen Laternen-Spruch und Wildschwein
   let uh=0; if(run&&K) K.J.slice(0,3).forEach((j,k)=>{ const x=rt-(j.t0+132); if(x>=0&&x<32){ uh=1; if(einmal('uh'+k,true)) triMusikNeu('unheimlich'); } });
   if(run&&K&&K.J[3]){ const x=rt-(K.J[3].t0+52); if(x>=0&&x<32){ uh=.6; if(einmal('uh3',true)) triMusikNeu('unheimlich'); } }
+  const tritschNah=E&&!E.fertig&&me.d>T.tritsch-60, fernGast=!G||me.d<G.d-700, aus=run&&K&&rt>=K.heim+2; // aus: Heimweg im Nebel nach Friedels Abschied, bis 700 m vor dem Gasthaus
+  if(aus&&fernGast&&!tritschNah){ const x=rt-K.heim-8, n=Math.floor(x/100); if(x>=0&&x-n*100<32){ uh=.8; if(einmal('uhA'+n,true)) triMusikNeu('unheimlich'); } } // im Nebel alle 100 s
   triMusik('unheimlich',an?uh:0,dt,false);
-  // Gemütlich (taverne): Abfahrt nach dem Fuhrwerk bis vor das Wirtshaus, am Wirtshaus und am Gasthaus im Ziel (lauter, je näher), Heimweg nach Friedels Abschied – still bei den drei Elwetritschen und während der Ankunfts-Musik
-  let gm=0; if(run&&K){ if(rt>=triFuhrT()+TRI_FUHR.ab+4&&me.d<T.wirtD-100) gm=1; if(rt>=K.heim+2&&!(E&&!E.fertig&&me.d>T.tritsch-60)) gm=1; }
+  if(run&&K&&K.J[1]&&einmal('wolf',rt>=K.J[1].t0+135&&rt<K.J[1].t0+145)) triEins('wolfsgehaeul'); // nach Jagd 2: Wolf heult, bevor Friedel fragt „Hosch du des Geheul ghört?“ (+140)
+  // Gemütlich (taverne): Abfahrt nach dem Fuhrwerk bis vor das Wirtshaus, am Wirtshaus (lauter, je näher) und auf den letzten 700 m vor dem Gasthaus, wo der Nebel aufreißt – still während der Ankunfts-Musik
+  let gm=0; if(run&&K&&(rt>=triFuhrT()+TRI_FUHR.ab+4&&me.d<T.wirtD-100||!fernGast)) gm=1;
   gm=Math.max(gm,triFern(W3,90),triFern(gp,130)); if(ank) gm=0; triMusik('taverne',an?gm:0,dt);
+  // Hintergrund bis zum Wirtshaus (hintergrundhappy): nach dem Thema leise, nach jedem Durchlauf 10–20 s Pause, halb so laut, solange das Gefolge reitet, aus bei der Taverne
+  const mw=1-Math.min(1,gm*2), hp=run&&K&&rt>=38&&rt<K.tW?(rf>0?.5:1)*mw:0, HL=triLoops.mhappy;
+  if(HL&&HL.a.ended&&hp>0){ if(!O.hapNeu) O.hapNeu=t+10+Math.random()*10; else if(t>O.hapNeu){ O.hapNeu=0; triMusikNeu('happy'); } } triMusik('happy',an?hp:0,dt,false);
+  // Wald (nightambient): durchgehender Teppich ab dem Wirtshaus, leiser auf den Lichtungen, lauter im Nebel, aus bei Jagd und Taverne und auf den letzten 700 m
+  const licht=L&&L.wiesen&&L.wiesen.some(W=>W.an&&W.ton&&triFern(W.ton,70)>0), nm=run&&K&&rt>=K.tW&&fernGast&&!ank?(aus?1:.6)*(licht?.55:1)*(1-jm)*mw:0;
+  triMusik('nacht',an?nm:0,dt);
   // Ankunft: mit den Ende-Tafeln einmal das kurze Stück
   if(einmal('ankunft',ank)) triMusikNeu('ankunft'); triMusik('ankunft',an&&ank?1:0,dt,false); }

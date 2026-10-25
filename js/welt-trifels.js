@@ -224,10 +224,10 @@ function poseTrifels(dt){ const A=anim.tri, T=R.tri; if(!A||!T) return; const t=
   A.d0=d0; // für triSpur
   triIntroPose(A.kt);
   triWanken(dt,t); poseSturz(dt,t,rt); poseGasthaus(dt,t); poseAudienz(dt,t,rt); poseFriedel(dt,t,rt); sicher('Trifels-Leben',()=>poseTrifelsLeben(dt,t,rt)); sicher('Trifels-Ton',()=>triTon(dt,t,rt)); trifelsLicht(rt); sicher('Trifels-Nebel',()=>poseTrifelsNebel(t));
-  if(A.ruf){ const g=d0-me.d, an=race.state==='run'&&g<48&&g>2, b=A.reiter[0].p.G.position; A.ruf.visible=an; if(an){ A.ruf.position.set(b.x,b.y+5.2,b.z); const tx=kText(TRI_BEISEITE); if(A.rufTx!==tx){ A.rufTx=tx; A.ruf.material.map=blaseTex(tx); A.ruf.material.needsUpdate=true; } } }
+  if(A.ruf){ const g=d0-me.d, an=race.state==='run'&&g<48&&g>2, b=A.reiter[0].p.G.position; A.ruf.visible=an; if(an){ A.ruf.position.set(b.x,b.y+5.2,b.z); const tx=kText(TRI_BEISEITE); triSag('vorreiter',tx); if(A.rufTx!==tx){ A.rufTx=tx; A.ruf.material.map=blaseTex(tx); A.ruf.material.needsUpdate=true; } } }
   if(A.fahne) A.fahne.rotation.x=.12*Math.sin(t*2.3);
   // Burgherr: hebt die Hand und spricht dich an, kurz bevor die Audienz-Tafel kommt (Blase über seinem Kopf, aber nie auf deinem Fahrer)
-  const B=A.burgherr; if(B&&!A.aud){ const an=race.state==='run'&&rt>=TRI_RUF[0]&&rt<TRI_RUF[1]; B.blase.visible=an; if(an){ B.txt=kText(TRI_RUF_TXT); triBlaseText(B.blase,B.txt); const k=B.m.G.position.clone(); k.y+=2.6; triBlaseUeber(B.blase,k,riders3d[myKey]&&riders3d[myKey].g); } B.m.arme[1].rotation.x+=((an||A.kt>5.2&&A.kt<9.5?-2.4:0)-B.m.arme[1].rotation.x)*Math.min(1,dt*4); B.m.arme[0].rotation.x+=(0-B.m.arme[0].rotation.x)*Math.min(1,dt*4); B.m.kopf.rotation.y=.15*Math.sin(t*.6); B.m.G.rotation.y+=angDiff(B.ry,B.m.G.rotation.y)*Math.min(1,dt*3); }
+  const B=A.burgherr; if(B&&!A.aud){ const an=race.state==='run'&&rt>=TRI_RUF[0]&&rt<TRI_RUF[1]; B.blase.visible=an; if(an){ B.txt=kText(TRI_RUF_TXT); triSag('burgherr',B.txt); triBlaseText(B.blase,B.txt); const k=B.m.G.position.clone(); k.y+=2.6; triBlaseUeber(B.blase,k,riders3d[myKey]&&riders3d[myKey].g); } B.m.arme[1].rotation.x+=((an||A.kt>5.2&&A.kt<9.5?-2.4:0)-B.m.arme[1].rotation.x)*Math.min(1,dt*4); B.m.arme[0].rotation.x+=(0-B.m.arme[0].rotation.x)*Math.min(1,dt*4); B.m.kopf.rotation.y=.15*Math.sin(t*.6); B.m.G.rotation.y+=angDiff(B.ry,B.m.G.rotation.y)*Math.min(1,dt*3); }
   // Goldkarren: wartet an der Abzweigung, ab 5 s vor der Vorburg (Workout-Zeit) im Schritt den Burgweg hinauf, fährt durchs Tor und verschwindet
   const C=A.karren; if(C&&T.weg){ const W=C.P, L=T.wegL, ank=-C.Lr+(C.Lr+6)*bSm(A.kt/7.5), s=Math.min(L+4, ank<6?ank:6+Math.max(0,rt-(TRIFELS_T.rauf-5))*KARREN_TRI), v=C.sAlt==null?0:Math.abs(s-C.sAlt)/Math.max(dt,1e-3), lauf=!race.paused&&v>.05; C.sAlt=s; // bei der Kamerafahrt rollt er über die Kehre heran
     C.K.visible=s<L+3.5; let i=1; while(i<W.length-1&&W[i].L<s) i++; const a=W[i-1], b=W[i], f=Math.min(1,Math.max(0,(s-a.L)/Math.max(.01,b.L-a.L))), y=a.y+(b.y-a.y)*f-.17;
@@ -257,7 +257,7 @@ function poseSturz(dt,t,rt){ const A=anim.tri, S=A.sturzF, ich=riders3d[myKey]; 
       S.rad.visible=true; S.rad.position.set(p.x,roadY(d)+.12,p.z); S.rad.rotation.set(0,-hd,0); S.rad.children[0].rotation.x=1.45*(1-hb); }
     else { ich.g.visible=true; ich.wank=0; ich.lenk=0; } } // wieder aufgestiegen
   if(s>.45&&s<.5) for(let i=0;i<40;i++){ const a=Math.random()*Math.PI*2, v=.6+Math.random()*1.4; partSpawn(parts.dust,p.x+Math.sin(hd)*-.8,y+.15,p.z+Math.cos(hd)*.8,Math.cos(a)*v,.3+Math.random()*.6,Math.sin(a)*v,1.8,Math.random()<.5?'#b98466':'#a8765a'); } // Staubwolke
-  if(s>1.2&&s<5){ const r=A.reiter[A.reiter.length-1].p.G.position, k=r.clone(); k.y+=3.4; triBlaseText(A.spott,kText(TRI_SPOTT)); triBlaseUeber(A.spott,k,null); A.spott.visible=true; } }
+  if(s>1.2&&s<5){ const r=A.reiter[A.reiter.length-1].p.G.position, k=r.clone(); k.y+=3.4; triSag('ritter',kText(TRI_SPOTT)); triBlaseText(A.spott,kText(TRI_SPOTT)); triBlaseUeber(A.spott,k,null); A.spott.visible=true; } }
 const TRI_RUF=[TRIFELS_T.rauf+2, TRIFELS_T.rauf+TRIFELS_T.hof/2], TRI_RUF_TXT='Halt! Ihr seid doch [der Bursche, der|die Magd, die] sich für das Gold meldet?'; // Workout-Zeit (s): Burgherr ruft dich an, bis du vor ihm hältst
 // Audienz (Workout-Zeit wie der Halt in trifelsDef): du steigst ab und verbeugst dich, der Burgherr spricht (Hochdeutsch), danach Tafel „Der Auftrag des Burgherrn“ (kampagne.js)
 const TRI_AUD=[TRIFELS_T.rauf+TRIFELS_T.hof/2, TRIFELS_T.rauf+TRIFELS_T.hof/2+TRIFELS_T.audienz];
@@ -270,7 +270,7 @@ function poseAudienz(dt,t,rt){ const A=anim.tri, B=A.burgherr, V=A.ichV, ich=rid
   // Verbeugung zu Beginn und beim Abschied: Oberkörper vor, Kopf gesenkt, Hand auf die Brust
   const vb=Math.max(bSm((s-.6)/.8)*bSm((4.6-s)/.8), bSm((s-31.6)/.6)*bSm((34.6-s)/.6)); m.G.rotation.x=.42*vb; m.kopf.rotation.x=.45*vb; m.arme[1].rotation.x=-1.1*vb; m.arme[1].rotation.z=.12-.5*vb;
   const z=TRI_AUD_TXT.filter(x=>s>=x[0]).pop(), ge=z&&z[1]?z[2]:'', tx=z&&z[1]?kText(z[1]):'';
-  B.blase.visible=!!tx; if(tx){ triBlaseText(B.blase,tx); const p=bp.clone(); p.y+=2.6; triBlaseUeber(B.blase,p,m.G); }
+  B.blase.visible=!!tx; if(tx){ triSag('burgherr',tx); triBlaseText(B.blase,tx); const p=bp.clone(); p.y+=2.6; triBlaseUeber(B.blase,p,m.G); }
   const a1=ge==='zeig'?-1.55:ge==='segen'?-2.4:ge==='offen'?-.7:0, a0=ge==='brust'?-1.2:ge==='offen'?-.5:0; // rechter Arm zeigt, segnet oder öffnet sich; linke Hand an die Brust
   B.m.arme[1].rotation.x+=(a1-B.m.arme[1].rotation.x)*k; B.m.arme[0].rotation.x+=(a0-B.m.arme[0].rotation.x)*k; B.m.kopf.rotation.y=ge==='zeig'?-.5:.08*Math.sin(t*.8);
   // Kamera: Totale von der Innenseite der Kehre (du, Burgherr, Wachen), ab dem Auftrag über deine Schulter auf den Burgherrn
@@ -515,7 +515,7 @@ function poseFriedel(dt,t,rt){ const A=anim.tri, F=A.friedel, T=R.tri; if(!F) re
     fm.arme[0].rotation.x+=((sp('friedel')?(zs>=19&&zs<23?-1.45:-.6+.4*Math.sin(t*3.6)):0)-fm.arme[0].rotation.x)*k5;
     if(ziel){ const a=Math.atan2(ziel.x-fm.G.position.x,ziel.z-fm.G.position.z); fm.G.rotation.y+=angDiff(a,fm.G.rotation.y)*Math.min(1,dt*3); }
     if(szene){ const fp=fm.G.position; ichM.G.rotation.y=Math.atan2(fp.x-ichM.G.position.x,fp.z-ichM.G.position.z); if(zs>=27) ichM.kopf.rotation.x=.18*Math.max(0,Math.sin((zs-27)*5)); } }
-  for(const w of ['dorfmann','dorfweib']){ const D=A.dorf[w]; if(!D) continue; const s=akt.find(x=>x.wer===w); D.blase.visible=!!s; if(s){ triBlaseText(D.blase,kText(s.txt)); const k=D.m.G.position.clone(); k.y+=2.4; triBlaseUeber(D.blase,k,null); } }
+  for(const w of ['dorfmann','dorfweib']){ const D=A.dorf[w]; if(!D) continue; const s=akt.find(x=>x.wer===w); D.blase.visible=!!s; if(s){ triSag(w,kText(s.txt)); triBlaseText(D.blase,kText(s.txt)); const k=D.m.G.position.clone(); k.y+=2.4; triBlaseUeber(D.blase,k,null); } }
   { const s=akt.find(x=>x.wer==='friedel'), B=F.blase, wo=vorher?F.steher.G:F.r.g; let im=false; const p=wo.position.clone(); p.y+=2.9; if(s&&wo.visible){ const q=p.clone().project(camera); im=q.z<1&&Math.abs(q.x)<.9&&Math.abs(q.y)<.9&&camera.position.distanceTo(p)<45; }
-    B.visible=!!s&&im; if(B.visible){ triBlaseText(B,kText(s.txt)); triBlaseUeber(B,p,vorher?null:ich&&ich.g); } if(s&&!im) unten='Friedel: '+kText(s.txt); }
+    if(s) triSag('friedel',kText(s.txt)); B.visible=!!s&&im; if(B.visible){ triBlaseText(B,kText(s.txt)); triBlaseUeber(B,p,vorher?null:ich&&ich.g); } if(s&&!im) unten='Friedel: '+kText(s.txt); }
   if(el){ if(unten){ el.textContent=unten; el.classList.add('zeig'); } else el.classList.remove('zeig'); } }
