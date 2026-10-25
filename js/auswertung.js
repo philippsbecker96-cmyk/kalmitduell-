@@ -8,6 +8,9 @@ $('sprungT').onkeydown=e=>{ e.stopPropagation(); if(e.key!=='Enter') return; con
   if(!m||race.state!=='run'||race.mode!=='train'||me.done) return; const t=Math.min((race.woT||0)-1, m[2]!=null?parseInt(m[1])*60+ +m[2]:parseFloat(m[1].replace(',','.'))*60); // „7:25“ = min:s, „7“ oder „7,5“ = Minuten
   race.t=Math.max(0,t); race.sprung=true; if(R.def.planbar||R.ring) me.d=planD(race.t); camS.init=false;
   const F=anim.tri&&anim.tri.friedel; if(F) F.d=me.d-1.3; flash('Gesprungen auf '+Math.floor(race.t/60)+':'+String(Math.floor(race.t%60)).padStart(2,'0')); };
+// Sprung auf einen Streckenkilometer (Testmodus): „5,4“ oder „5.4“, Enter – nicht auf geplanten Strecken (dort über die Workout-Zeit)
+$('sprungKm').onkeydown=e=>{ e.stopPropagation(); if(e.key!=='Enter') return; const v=parseFloat(e.target.value.trim().replace(',','.')); e.target.blur();
+  if(!(v>=0)||race.state!=='run'||me.done||R.def.planbar||R.ring) return; me.d=Math.min(raceLen()-1,v*1000); race.sprung=true; camS.init=false; flash('Gesprungen auf km '+de(me.d/1000,2)); };
 /* ---------- Fotofinish: beide innerhalb einer Sekunde im Ziel ---------- */
 const fmtMs=s=>{ const m=Math.floor(s/60), x=s-m*60; return `${m}:${x.toFixed(3).padStart(6,'0').replace('.',',')}`; };
 function finishCheck(){

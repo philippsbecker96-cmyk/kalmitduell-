@@ -29,6 +29,12 @@ function prepSuedpfalz(r){ const T=r.def.typisch, S=r.S, q=rng(321), P=r.sp={hae
   const K=SP_KALMITCHEN; for(let i=0;i<7;i++){ const a=i/7*6.28+q()*.5, o=16+q()*14; S.tree.push({x:K.x+Math.cos(a)*o, y:K.z+Math.sin(a)*o, s:2.6+q()*1.4, c:q(), pine:i%3===0, ht:9+q()*4}); }
   // Weinverkauf, Weingut, Straußwirtschaft über einem Teil der Hoftore
   for(const o of S.tor){ const z=zoneOf(r,o.d); if(!z||z[0]!=='ort'||o.w<2.6||q()>.3) continue; const u=q(); P.wein.push({o, art:u<.2?2:u<.6?1:0, n:SP_WEINGUT[q()*SP_WEINGUT.length|0]}); }
+  if(r.def.rathaus){ const [d,sd]=r.def.rathaus, o=S.house.filter(h=>h.side===sd&&!h.stil).reduce((b,h)=>Math.abs(h.d-d)<Math.abs(b.d-d)?h:b); // Rathaus Leinsweiler statt des nächsten Hauses
+    const W=12, T=9, Z=2.4, s=1.15, a0=o.d-W*s/2, a1=o.d+W*s/2, nx=-Math.sin(o.h)*sd, ny=Math.cos(o.h)*sd, k=(Z+T/2)*s-o.dep/2; // Maße im Modell, s: um 15 % vergrößert
+    S.house=S.house.filter(h=>{ if(h===o) return false; if(h.side!==sd||h.stil) return true; const a=h.d-h.w/2, b=h.d+h.w/2, nb=h.d<o.d?Math.min(b,a0)-a:b-Math.max(a,a1); if(nb>=h.w) return true; if(nb<4) return false; // Nachbarn bündig kürzen
+      const dl=(h.d<o.d?-1:1)*(h.w-nb)/2; h.d+=dl; h.x+=Math.cos(h.h)*dl; h.y+=Math.sin(h.h)*dl; h.w=nb; return true; });
+    S.tor=S.tor.filter(t=>t.side!==sd||t.d<a0-1||t.d>a1+1); S.ranke=S.ranke.filter(q=>q.side!==sd||q.d<a0-1||q.d>a1+1);
+    P.rathaus={x:o.x+nx*k, y:o.y+ny*k, h:o.h, side:sd, d:o.d, W, T, Z, s}; } // zurückgesetzt: davor ein kleiner Platz mit dem Brunnen
   if(r.def.weinberg) prepWeinberg(r); } // Weinstände, Weinlese (welt-weinberg.js)
 
 // ---- Aufbau (aus build3D) ----
@@ -37,6 +43,7 @@ function buildSuedpfalz(plainY){ const P=R.sp; if(!P) return;
   const grp=(x,y,z,ry=0)=>{ const G=new THREE.Group(); G.position.set(x,y,z); G.rotation.y=ry; world.add(G); return G; };
   for(const [art,x,z] of SP_KUPPEN) spBurg(art,x,z,plainY,B,add);
   spHaardtWald(plainY);
+  if(P.rathaus) spRathaus(P.rathaus);
 
   // Kapelle auf der Kleinen Kalmit: weiß, Ziegeldach, Dachreiter mit Kreuz
   { const K=SP_KALMITCHEN, G=grp(K.x,bodenY(K.x,K.z)-.3,K.z,.4), wand=lam('#eee8dc'), dach=lam('#9c4a36'), dunkel=lam('#3a3330'); G.userData.ohneBoden=true;
@@ -106,3 +113,44 @@ function spHaardtWald(plainY){ const q=rng(4711), L=[], HB=race.season==='herbst
   const GR=['#7d9a3e','#6a8a3a','#4f6e35','#5d7d3a'], HE=['#c9a040','#b8862e','#a8682a','#8a7a3a']; // Kastanie hellgrün, Buche, Eiche · Herbst: golden, rostbraun
   L.forEach((o,i)=>{ qq.setFromAxisAngle(up,o.c*6); m4.compose(new THREE.Vector3(o.x,o.y+o.s*.6,o.z),qq,new THREE.Vector3(o.s,o.s*.85,o.s)); im.setMatrixAt(i,m4); im.setColorAt(i,c.set((HB?HE:GR)[o.c*4|0]).lerp(SP_DUNST,o.k)); });
   im.instanceMatrix.needsUpdate=true; im.instanceColor.needsUpdate=true; world.add(im); }
+
+// ---- Rathaus Leinsweiler (nach Fotos): unten weiß verputzt mit zwei offenen Sandstein-Rundbögen zur Straße, Holztor links, ein Bogen an der Giebelseite;
+// oben rotbraunes Fachwerk mit Andreaskreuzen und geschwungenen Streben, Sprossenfenster mit Geranien; steiles Ziegeldach, Gauben, Sirenenmast; Weinranken; Fahne am Giebeleck; Sandsteinbrunnen davor ----
+function spRathaus(p){ const {W,T,Z}=p, H0=3.2, H=6, RH=5.6, pm=40, G=new THREE.Group(), y0=roadY(p.d)+.15; G.position.set(p.x,y0,p.y); G.scale.setScalar(p.s); G.rotation.y=Math.atan2(-Math.sin(p.h)*-p.side, Math.cos(p.h)*-p.side); world.add(G); // Front (+z) zur Straße
+  const M=c=>lam(c), B=(w,h,d,m,x,y,z,par=G)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); b.position.set(x,y,z); par.add(b); return b; };
+  const FW='#5e2a1e', PUTZ='#f4f1ea', SST='#b5644a';
+  const fach=(g,x0,x1,yo,yu,fen)=>{ const L=(a,b,c,d,w=6)=>{ g.strokeStyle=FW; g.lineWidth=w; g.beginPath(); g.moveTo(a,b); g.lineTo(c,d); g.stroke(); }; // Fachwerk zwischen yo (oben) und yu (unten), fen: Fenstermitten in px
+    L(x0,yu-4,x1,yu-4,10); L(x0,yu-14,x1,yu-14,5); L(x0,yo+4,x1,yo+4,8); const st=[]; for(let x=x0+4;x<=x1-4;x+=(x1-x0-8)/Math.round((x1-x0)/44)) st.push(x); st.forEach(x=>L(x,yo+4,x,yu-14,7));
+    for(let i=0;i<st.length-1;i++){ const a=st[i], b=st[i+1], m=(a+b)/2; if(fen.some(f=>Math.abs(f-m)<(b-a)*.6)) continue;
+      if(i%3===0){ L(a,yo+6,b,yu-16,5); L(b,yo+6,a,yu-16,5); } else { g.strokeStyle=FW; g.lineWidth=5; g.beginPath(); g.moveTo(a,yu-16); g.quadraticCurveTo(a+(b-a)*.15,yo+(yu-yo)*.3,b,yo+8); g.stroke(); } } // Andreaskreuz oder geschwungene Strebe
+    for(const f of fen){ const fw=26, fh=(yu-yo)*.5, fy=yo+(yu-yo)*.2; g.fillStyle='#fff'; g.fillRect(f-fw/2-3,fy-3,fw+6,fh+6); g.fillStyle='#3a4250'; g.fillRect(f-fw/2,fy,fw,fh); g.fillStyle='#fff'; g.fillRect(f-1,fy,2,fh); g.fillRect(f-fw/2,fy+fh*.38,fw,2); } };
+  const bogen=(g,x,b,h,yb)=>{ g.fillStyle=SST; g.beginPath(); g.moveTo(x-b/2-10,yb); g.lineTo(x-b/2-10,yb-h+b/2); g.arc(x,yb-h+b/2,b/2+10,Math.PI,0); g.lineTo(x+b/2+10,yb); g.fill();
+    g.fillStyle='#2a2420'; g.beginPath(); g.moveTo(x-b/2,yb); g.lineTo(x-b/2,yb-h+b/2); g.arc(x,yb-h+b/2,b/2,Math.PI,0); g.lineTo(x+b/2,yb); g.fill(); }; // Sandsteingewände, dunkle Halle dahinter
+  const tex=(w,h,draw)=>new THREE.MeshLambertMaterial({map:canvasTex(w*pm,h*pm,draw)});
+  const front=tex(W,H,g=>{ const yu=(H-H0)*pm, yb=H*pm; g.fillStyle=PUTZ; g.fillRect(0,0,W*pm,H*pm); g.fillStyle=SST; g.fillRect(0,yb-10,W*pm,10);
+    g.fillStyle='#6b4226'; g.fillRect(.5*pm,yb-2.7*pm,2.6*pm,2.7*pm); g.fillStyle='#4a2c18'; for(let x=.5*pm;x<3.1*pm;x+=13) g.fillRect(x,yb-2.7*pm,2,2.7*pm); g.fillRect(1.8*pm-2,yb-2.7*pm,4,2.7*pm); // Holztor
+    g.fillStyle='#c8d4dc'; for(const x of [.7,1.2,2.2,2.7]) g.fillRect(x*pm,yb-2.5*pm,14,22);
+    bogen(g,5.1*pm,2.1*pm,2.85*pm,yb); bogen(g,7.8*pm,2.1*pm,2.85*pm,yb); g.fillStyle='#e8e2d4'; g.fillRect(10.4*pm,yb-2.1*pm,30,8); // Hausnummernschild
+    fach(g,0,W*pm,0,yu,[1.2,3,4.6,6.4,8.2,10,11.3].map(x=>x*pm)); });
+  const seite=tex(T,H,g=>{ const yu=(H-H0)*pm, yb=H*pm; g.fillStyle=PUTZ; g.fillRect(0,0,T*pm,H*pm); g.fillStyle=SST; g.fillRect(0,yb-10,T*pm,10); bogen(g,T*.62*pm,1.9*pm,2.8*pm,yb); fach(g,0,T*pm,0,yu,[2.2,4.5,6.8].map(x=>x*pm)); });
+  const putz=M(PUTZ), body=new THREE.Mesh(new THREE.BoxGeometry(W,H,T),[seite,seite,putz,putz,front,putz]); body.position.y=H/2; G.add(body);
+  B(W+.02,8,T+.02,M(SST),0,-4+.05,0); // Sandsteinsockel bis in den Boden
+  const roof=new THREE.Mesh(dachGeo(W,T,W+.6,T+1,RH),[hMat('d#8a3f2a',()=>new THREE.MeshLambertMaterial({map:dachTex('#8a3f2a'),side:THREE.DoubleSide})),M('#f2ede2')]); roof.position.y=H; G.add(roof); // steiles Dach
+  for(const s of [-1,1]){ const x=s*(W/2+.31), fw=M(FW); B(.06,.16,T*.98,fw,x,H+.1,0); B(.06,.14,T*.5,fw,x,H+RH*.5,0); for(const z of [-T*.25,0,T*.25]) B(.06,RH*(1-Math.abs(z)/(T/2+.5))*.95,.14,fw,x,H+RH*(1-Math.abs(z)/(T/2+.5))*.475,z); } // Fachwerk im Giebeldreieck
+  const a=Math.atan(2*RH/T); for(const x of [-2.4,2.4]){ const gb=new THREE.Group(); gb.position.set(x,H+RH*.42,T*.29); G.add(gb); B(1.1,.9,.9,putz,0,0,0,gb); const d=new THREE.Mesh(dachGeo(1.1,.9,1.3,1.1,.45),[hMat('d#8a3f2a',()=>null),putz]); d.position.y=.45; gb.add(d); B(.6,.5,.04,M('#3a4250'),0,0,.46,gb); } // Gauben vorn
+  B(.07,1.8,.07,M('#555'),-W*.3,H+RH+.8,0); const si=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.12,14),M('#3a3a3a')); si.position.set(-W*.3,H+RH+1.75,0); G.add(si); // Sirenenmast
+  // Geranien unter den Fenstern oben, Weinranken über der Halle
+  const rot=M('#d6322a'), rosa=M('#e8607a'), blatt=M('#3d6b2e'), kasten=M('#6b4a2e');
+  for(const x of [1.2,3,4.6,6.4,8.2,10,11.3]){ const lx=x-W/2; B(.75,.18,.22,kasten,lx,H0+.55,T/2+.12); for(let i=0;i<6;i++){ const b=new THREE.Mesh(new THREE.SphereGeometry(.11,6,5),i%3?blatt:(i%2?rosa:rot)); b.position.set(lx-.3+i*.12,H0+.72+(i%2)*.06,T/2+.16); G.add(b); } }
+  for(let i=0;i<16;i++){ const b=new THREE.Mesh(new THREE.IcosahedronGeometry(.35+(i%3)*.12,0),i%4?blatt:M('#4f7d36')); b.position.set(-W/2+.6+i*.42,H0-.1+Math.sin(i*1.7)*.25,T/2+.2); G.add(b); }
+  for(let i=0;i<5;i++){ const b=new THREE.Mesh(new THREE.IcosahedronGeometry(.3,0),blatt); b.position.set(-W/2+3.9,H0-.6-i*.5,T/2+.18); G.add(b); } // Rebstock am Pfeiler
+  // Fahne am vorderen Giebeleck: blau mit weißem Löwen
+  { const fx=W/2+.05; B(.05,.05,1.3,M('#555'),fx+.1,H0+2.4,T/2-.6); const fl=new THREE.Mesh(new THREE.PlaneGeometry(1,1.7),new THREE.MeshLambertMaterial({side:THREE.DoubleSide,map:canvasTex(60,100,g=>{ g.fillStyle='#2b6cb0'; g.fillRect(0,0,60,100); g.fillStyle='#f4f4f4'; g.beginPath(); g.ellipse(30,48,14,20,0,0,7); g.fill(); g.beginPath(); g.arc(30,24,8,0,7); g.fill(); g.fillRect(16,64,6,14); g.fillRect(38,64,6,14); })}));
+    fl.position.set(fx+.12,H0+1.55,T/2+.05); fl.rotation.y=Math.PI/2; G.add(fl); }
+  // Platz davor (Pflaster) und Sandsteinbrunnen vor dem linken Bogen
+  B(W+1,.4,Z+.3,M('#8f857a'),0,-.18,T/2+(Z+.3)/2);
+  const st=M(SST), was=M('#4d6470'), bx=-2.2, bz=T/2+Z*.5;
+  B(2.6,.62,1.3,st,bx,.31,bz); B(2.36,.04,1.06,was,bx,.55,bz); B(.36,1.5,.36,st,bx,1.3,bz-.3); B(.5,.18,.5,st,bx,2.1,bz-.3); // Becken, Wasser, Brunnenstock
+  { const f=new THREE.Mesh(new THREE.CylinderGeometry(.11,.15,.55,8),st); f.position.set(bx,2.46,bz-.3); G.add(f); const k=new THREE.Mesh(new THREE.SphereGeometry(.1,8,6),st); k.position.set(bx,2.82,bz-.3); G.add(k); } // Figur
+  { const r=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.35,6),M('#6a6a6a')); r.rotation.x=Math.PI/2; r.position.set(bx,1.25,bz-.02); G.add(r); } B(.8,.42,.5,st,bx+1.75,.21,bz+.3); B(.64,.04,.34,was,bx+1.75,.4,bz+.3); // Röhre, Trog
+}

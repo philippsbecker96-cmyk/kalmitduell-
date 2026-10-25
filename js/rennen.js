@@ -168,7 +168,7 @@ function hud(P,wkg){
   $('powRows').innerHTML=rows;
 }
 let msgT=null; function flash(t){ const m=$('msg'); m.textContent=t; m.style.display='block'; clearTimeout(msgT); msgT=setTimeout(()=>m.style.display='none',4500); }
-function enterRaceView(){ race.speed=1; race.sprung=false; $('sprungBox').style.display=race.mode==='train'?'':'none'; document.querySelectorAll('#speedBox button').forEach(x=>x.classList.toggle('sel',x.dataset.s==='1')); $('speedBox').style.display=race.test&&!(conn&&conn.open)?'flex':'none'; $('setup').style.display='none'; $('hud').style.display='flex'; $('woNow').style.display=race.mode==='train'?'block':'none'; if(live.src==='sim') $('simBox').style.display='block'; camS.init=false; }
+function enterRaceView(){ race.speed=1; race.sprung=false; $('sprungBox').style.display=race.mode==='train'?'':'none'; $('sprungKmBox').style.display=R.def.planbar||R.ring?'none':''; document.querySelectorAll('#speedBox button').forEach(x=>x.classList.toggle('sel',x.dataset.s==='1')); $('speedBox').style.display=race.test&&!(conn&&conn.open)?'flex':'none'; $('setup').style.display='none'; $('hud').style.display='flex'; $('woNow').style.display=race.mode==='train'?'block':'none'; if(live.src==='sim') $('simBox').style.display='block'; camS.init=false; }
 /* ---------- Wake Lock: Bildschirm bleibt an, solange eine Einheit läuft ---------- */
 let wakeLock=null;
 async function wakeOn(){ try{ if('wakeLock' in navigator && !wakeLock && document.visibilityState==='visible'){ wakeLock=await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release',()=>{ wakeLock=null; }); } }catch(e){} }

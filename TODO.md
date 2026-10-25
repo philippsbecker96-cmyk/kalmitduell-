@@ -12,7 +12,7 @@ Größere Punkte später in die passende Datei umziehen (`PLAENE.md`, `KAMPAGNE.
 - [x] Südpfalz-Klassiker, Silhouetten am Haardtrand: Madenburg (über Eschbach), Trifels mit Nachbarburgen, Kleine Kalmit mit Kapelle bei Ilbesheim. Aufwand: klein
 - [x] Südpfalz-Klassiker, Typisches am Weg: Wingertshäuschen, Bildstöcke/Wegkreuze, Bänke mit Blick, braune Schilder „Deutsche Weinstraße“ mit Traube, im Ort „Weinverkauf“/„Straußwirtschaft geöffnet“ an Hoftoren. Aufwand: klein
 - [x] Südpfalz-Klassiker, Esskastanien und Laubwald am Haardtrand statt nur Gehölz. Aufwand: klein
-- [ ] (später) Südpfalz-Klassiker, Leinsweiler Ortsmitte: Renaissance-Rathaus mit offener Halle, Brunnen davor, Slevogthof oben am Hang. Aufwand: mittel
+- [x] (später) Südpfalz-Klassiker, Leinsweiler Ortsmitte: Renaissance-Rathaus mit offener Halle, Brunnen davor, Slevogthof oben am Hang. Aufwand: mittel – Rathaus und Brunnen gebaut, Slevogthof weggelassen
 - [x] (später) Südpfalz-Klassiker, Weinstand/Straußwirtschaft am Ortsrand: Leute an Bierzeltgarnituren, stoßen an, prosten dir zu. Aufwand: klein bis mittel
 
 ## Kampagne
