@@ -71,7 +71,7 @@ const ED_FIELDS=[['name','Name','text'],['ui','Kennfarbe (Schild, Karte)','color
   ['helmet','Helm','color'],['jersey','Trikot / Jacke','color'],['sleeve','Ärmel','color'],['zigzag','Zickzack auf den Ärmeln','check'],['longSleeve','Lange Ärmel','check'],['hem','Farbiger Trikotsaum (Ärmelfarbe)','check'],
   ['pants','Hose','color'],['socks','Socken','color'],['shoes','Schuhe','color'],['frame','Rahmen','color'],['accent','Akzent am Rad','color'],['tape','Lenkerband','color'],
   ['glasses','Brille','sel',[['helm','steckt im Helm'],['nase','auf der Nase'],['keine','keine']]],['cap','Weiße Kappe unter dem Helm','check'],['bag','Satteltasche','sel',[['gross','groß'],['klein','klein'],['keine','keine']]]];
-function edPreview(){ if(ED.r) prev.sc.remove(ED.r.g); ED.r=makeRider(ED.key,ED.look); ED.r.tag.visible=false; ED.r.g.visible=false; prev.sc.add(ED.r.g); }
+function edPreview(){ if(ED.r) prev.sc.remove(ED.r.g); ED.r=makeRider(ED.key,ED.look,!!race.kamp); ED.r.tag.visible=false; ED.r.g.visible=false; prev.sc.add(ED.r.g); }
 function edForm(){ $('edForm').innerHTML=ED_FIELDS.map(([f,lab,typ,opts])=>{ const v=ED.look[f];
     const inp=typ==='text'?`<input type="text" data-f="${f}" maxlength="16" value="${esc(v)}">`:typ==='color'?`<input type="color" data-f="${f}" value="${v}">`:
       typ==='range'?`<input type="range" data-f="${f}" min="0" max="100" value="${Math.round(v*100)}">`:typ==='check'?`<input type="checkbox" data-f="${f}"${v?' checked':''}>`:

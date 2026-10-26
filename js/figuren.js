@@ -1,12 +1,12 @@
 /* ---------- Becker & Dengel als 3D-Figuren ---------- */
 const riders3d={becker:null,dengel:null,custom:null};
 const mittelalter=()=>!!(R&&R.def&&(R.def.burg||R.def.ma));
-const kampBaeuerin=k=>!!(R&&R.def&&R.def.ma)&&k===myKey&&typeof KST!=='undefined'&&KST.stand==='baeuerin'; // Kampagne als Bäuerin: eigene Fahrerin mit Rock und Kopftuch // Burg Berwartstein und Kampagne (def.ma): Holzrad und Mittelalter-Kleidung für alle (Lobby-Vorschau bleibt modern)
+const kampBaeuerin=k=>!!(race.kamp||R&&R.def&&R.def.ma)&&k===myKey&&typeof KST!=='undefined'&&KST.stand==='baeuerin'; // Kampagne als Bäuerin: eigene Fahrerin mit Rock und Kopftuch // Burg Berwartstein und Kampagne (def.ma): Holzrad und Mittelalter-Kleidung für alle (Lobby-Vorschau nur in der Kampagne mittelalterlich: prevBauen)
 function buildRiders(){ const ma=mittelalter(); RKEYS.forEach(k=>{ riders3d[k]=makeRider(k,undefined,ma); world.add(riders3d[k].g); }); riders3d.devil=makeDevil(ma); riders3d.devil.g.visible=false; world.add(riders3d.devil.g); }
 function rebuildRiders(){ refreshRiders(); // nach einer Änderung am Aussehen: Fahrer in Welt und Lobby-Vorschau neu bauen
   if(world) RKEYS.forEach(k=>{ const o=riders3d[k]; if(o) world.remove(o.g); const r=makeRider(k,undefined,mittelalter()); riders3d[k]=r; world.add(r.g); if(anim.stadium) addFloodShadows(r);
     if(R&&!R.space&&!R.island) r.g.traverse(m=>{ if(m.isMesh){ m.receiveShadow=true; m.castShadow=!(m.geometry&&m.geometry.type==='PlaneGeometry')&&!m.material.transparent; } }); });
-  RKEYS.forEach(k=>{ prev.sc.remove(prev.rs[k].g); const r=makeRider(k); r.tag.visible=false; prev.rs[k]=r; prev.sc.add(r.g); });
+  prevBauen();
   renderRiderCards(); }
 const UNIT_Y=new THREE.Vector3(0,1,0);
 function cyl(r,mat,r2){ return new THREE.Mesh(new THREE.CylinderGeometry(r,r2??r,1,8),mat); }
@@ -243,10 +243,14 @@ const prev=(()=>{ const c=document.createElement('canvas'); c.width=400; c.heigh
   const sc=new THREE.Scene(); sc.add(new THREE.HemisphereLight(0xffffff,0x556655,.9)); const l=new THREE.DirectionalLight(0xffffff,.7); l.position.set(2,3,2); sc.add(l);
   const cam=new THREE.PerspectiveCamera(32,400/380,.1,50);
   const ground=new THREE.Mesh(new THREE.CircleGeometry(1.4,32), new THREE.MeshLambertMaterial({color:'#5a5d60'})); ground.rotation.x=-Math.PI/2; sc.add(ground);
-  const rs={}; RKEYS.forEach(k=>{ rs[k]=makeRider(k); rs[k].tag.visible=false; sc.add(rs[k].g); });
-  return {c,rr,sc,cam,rs,crank:0}; })();
+  return {c,rr,sc,cam,ground,rs:{},crank:0}; })();
+function prevBauen(){ const ma=!!race.kamp; prev.ma=ma; prev.st=ma&&typeof KST!=='undefined'?KST.stand:''; // Vorschau-Fahrer neu bauen, in der Kampagne mit Holzrad und Mittelalter-Kleidung
+  RKEYS.forEach(k=>{ if(prev.rs[k]) prev.sc.remove(prev.rs[k].g); const r=makeRider(k,undefined,ma); r.tag.visible=false; prev.rs[k]=r; prev.sc.add(r.g); });
+  prev.ground.material.color.set(ma?'#5b6338':'#5a5d60'); } // Bodenscheibe: Kampagne Wiese/Erde, sonst Asphaltgrau
+prevBauen();
 function drawPreviews(dt){
   prev.crank+=dt*5; const t=performance.now()/1000;
+  if(prev.ma!==!!race.kamp||race.kamp&&typeof KST!=='undefined'&&prev.st!==KST.stand) prevBauen(); // Kampagne betreten/verlassen oder Bauer/Bäuerin gewechselt
   document.querySelectorAll('.rcard').forEach(card=>{ const k=card.dataset.k, cv2=card.querySelector('canvas');
     for(const kk in prev.rs) prev.rs[kk].g.visible = kk===k;
     const r=prev.rs[k]; poseRider(r,prev.crank); r.g.position.set(0,0,0); r.g.rotation.y=-0.65+Math.sin(t*.5)*.35;
