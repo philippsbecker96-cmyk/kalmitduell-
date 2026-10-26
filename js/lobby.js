@@ -1,9 +1,9 @@
 /* ================= Lobby ================= */
 function profileCanvas(cv2, segs){
   const g=cv2.getContext('2d'), w=cv2.width, h=cv2.height; g.clearRect(0,0,w,h);
-  const L=segs.reduce((a,s)=>a+s.len,0); let e=0, max=1; segs.forEach(s=>{ e+=s.len*s.g/100; max=Math.max(max,e); });
-  let d=0; e=0; segs.forEach(s=>{ const e1=e+s.len*s.g/100, xa=d/L*w, xb=(d+s.len)/L*w+.6;
-    g.fillStyle=gradeColor(s.g); g.beginPath(); g.moveTo(xa,h); g.lineTo(xa,h-2-e/max*(h-6)); g.lineTo(xb,h-2-e1/max*(h-6)); g.lineTo(xb,h); g.fill(); d+=s.len; e=e1; });
+  const L=segs.reduce((a,s)=>a+s.len,0); let e=0, lo=0, hi=0; segs.forEach(s=>{ e+=s.len*s.g/100; lo=Math.min(lo,e); hi=Math.max(hi,e); }); // auch unter die Starthöhe (Trifels: rauf zur Burg, dann ins Tal)
+  const sp=Math.max(1,hi-lo), Y=v=>h-2-(v-lo)/sp*(h-6); let d=0; e=0; segs.forEach(s=>{ const e1=e+s.len*s.g/100, xa=d/L*w, xb=(d+s.len)/L*w+.6;
+    g.fillStyle=gradeColor(s.g); g.beginPath(); g.moveTo(xa,h); g.lineTo(xa,Y(e)); g.lineTo(xb,Y(e1)); g.lineTo(xb,h); g.fill(); d+=s.len; e=e1; });
 }
 function ovalCanvas(cv2){ const g=cv2.getContext('2d'), w=cv2.width, h=cv2.height; g.clearRect(0,0,w,h);
   const rr=h*0.38, cx=w/2, cy=h/2, L=rr*2.3; g.lineWidth=13; g.strokeStyle='#c2553c'; g.beginPath(); g.moveTo(cx-L/2,cy-rr); g.lineTo(cx+L/2,cy-rr); g.arc(cx+L/2,cy,rr,-Math.PI/2,Math.PI/2); g.lineTo(cx-L/2,cy+rr); g.arc(cx-L/2,cy,rr,Math.PI/2,Math.PI*1.5); g.stroke();
