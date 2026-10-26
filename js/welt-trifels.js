@@ -133,7 +133,7 @@ function wappenMal(g,w,h,k){ const F=[['#c8202a'],['#e9c22e'],['#c8202a'],['#2a4
   if(k===2){ g.strokeStyle='#f2eee6'; g.lineWidth=w*.1; for(const y of [.35,.65]){ g.beginPath(); g.moveTo(0,h*(y+.25)); g.lineTo(w/2,h*y); g.lineTo(w,h*(y+.25)); g.stroke(); } }
   if(k===3){ g.strokeStyle='#f2eee6'; g.lineWidth=w*.16; g.beginPath(); g.moveTo(0,0); g.lineTo(w,h); g.stroke(); } }
 const wappenTex=(k,w=128,h=192)=>canvasTex(w,h,g=>wappenMal(g,w,h,k));
-// Mensch, lokal +z nach vorn, Füße auf y=0 · o: kittel, hose, schuh, aermel, kette (Kettenhemd und -haube), rock (Wappen-Nr. für den Waffenrock), lang (Gewandfarbe), krone, bart, haar, mantel
+// Mensch, lokal +z nach vorn, Füße auf y=0 · o: kittel, hose, schuh, aermel, kette (Kettenhemd und -haube), rock (Wappen-Nr. für den Waffenrock), lang (Gewandfarbe), krone, bart, haar, mantel, tuch (Kopftuch)
 function trMensch(o={}){ const G=new THREE.Group(), haut=lam('#e3b48e'), kt=lam('#8a8d93'), kittel=lam(o.kittel||'#7a5a3a'), box=(P,w,h,d,m,x,y,z)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); b.position.set(x,y,z); P.add(b); return b; };
   const beine=[]; for(const x of [-.1,.1]){ const b=new THREE.Group(); b.position.set(x,.8,0); G.add(b); beine.push(b); if(!o.lang) box(b,.13,.78,.13,o.kette?kt:lam(o.hose||'#3a4a3a'),0,-.39,0); box(b,.14,.12,.25,lam(o.schuh||'#3e2a1c'),0,-.74,.05); }
   const rumpf=new THREE.Mesh(new THREE.CylinderGeometry(.19,.24,.72,10),o.kette?kt:kittel); rumpf.position.y=1.18; G.add(rumpf);
@@ -146,6 +146,8 @@ function trMensch(o={}){ const G=new THREE.Group(), haut=lam('#e3b48e'), kt=lam(
   const kopf=new THREE.Group(); kopf.position.y=1.6; G.add(kopf); const hk=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),haut); hk.position.y=.1; kopf.add(hk);
   if(o.kette){ const hb=new THREE.Mesh(new THREE.SphereGeometry(.15,12,9),kt); hb.position.set(0,.12,-.045); kopf.add(hb); const hl=new THREE.Mesh(new THREE.CylinderGeometry(.13,.17,.16,10),kt); hl.position.y=-.03; kopf.add(hl); }
   else { const hr=new THREE.Mesh(new THREE.SphereGeometry(.13,10,8,0,Math.PI*2,0,Math.PI*.55),lam(o.haar||'#4a3222')); hr.position.set(0,.12,-.02); kopf.add(hr); }
+  if(o.tuch){ const tm=lam(o.tuch), kt=new THREE.Mesh(new THREE.SphereGeometry(.14,10,8,0,Math.PI*2,0,Math.PI*.6),tm); kt.position.set(0,.11,-.025); kt.rotation.x=-.3; kopf.add(kt); // Kopftuch, im Nacken geknotet, Zipfel hängt über den Rücken
+    const kn=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),tm); kn.position.set(0,.03,-.13); kopf.add(kn); const zi=new THREE.Mesh(new THREE.ConeGeometry(.07,.2,4),tm); zi.scale.z=.4; zi.position.set(0,-.08,-.15); zi.rotation.x=-.25; kopf.add(zi); }
   if(o.bart){ const b=box(kopf,.2,.13,.1,lam(o.bart),0,.0,.08); b.rotation.x=.25; }
   if(o.krone){ const gold=new THREE.MeshPhongMaterial({color:'#e2b02a',shininess:90,specular:0xfff0b0}), k=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,.07,14,1,true),gold); k.position.y=.25; kopf.add(k);
     for(let i=0;i<6;i++){ const a=i/6*Math.PI*2, z=new THREE.Mesh(new THREE.ConeGeometry(.025,.08,4),gold); z.position.set(Math.sin(a)*.15,.32,Math.cos(a)*.15); kopf.add(z); } }
@@ -373,9 +375,9 @@ function buildFriedel(T){ const A=anim.tri, M=c=>lam(c), haar=M('#b8452a'), haar
   const F=A.friedel; F.steher=fs; F.rad=rad(dw+2.4,uF-2.6);
   const ichJ=lookOf(myKey).jersey, dA=T.aud, uA=-(roadW(R,dA)/2-.9), mv=o=>{ const m=steh(o,dA+1.8,uA); m.G.rotation.order='YXZ'; m.G.visible=false; return m; }; // Audienz: abgestiegen vor dem Burgherrn
   { const dS=T.sturz, uS=roadW(R,dS)/2-.3, ms=o=>{ const m=steh(o,dS,uS); m.G.rotation.order='YXZ'; m.G.visible=false; return m; };
-    A.sturzF={bauer:ms({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'}), baeuerin:ms({lang:'#7a4a3a',haar:'#6b4a2e'}), rad:rad(dS,uS)}; A.sturzF.rad.visible=false; A.spott=triBlase(); } // Sturz: aufstehende Figur und liegendes Rad
-  A.ichV={bauer:mv({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'}), baeuerin:mv({lang:'#7a4a3a',haar:'#6b4a2e'}), rad:rad(dA-.6,uA+1.1)}; A.ichV.rad.visible=false;
-  A.ich={bauer:steh({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'},dw-1.4,uF-2.2), baeuerin:steh({lang:'#7a4a3a',haar:'#6b4a2e'},dw-1.4,uF-2.2), rad:rad(dw-3,uF-2.9)}; A.uF=uF;
+    A.sturzF={bauer:ms({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'}), baeuerin:ms({lang:ichJ,kittel:ichJ,aermel:'#ece3cf',tuch:'#e6dcc4'}), rad:rad(dS,uS)}; A.sturzF.rad.visible=false; A.spott=triBlase(); } // Sturz: aufstehende Figur und liegendes Rad
+  A.ichV={bauer:mv({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'}), baeuerin:mv({lang:ichJ,kittel:ichJ,aermel:'#ece3cf',tuch:'#e6dcc4'}), rad:rad(dA-.6,uA+1.1)}; A.ichV.rad.visible=false;
+  A.ich={bauer:steh({kittel:ichJ,aermel:'#ece3cf',hose:'#3b342e',haar:'#6b4a2e'},dw-1.4,uF-2.2), baeuerin:steh({lang:ichJ,kittel:ichJ,aermel:'#ece3cf',tuch:'#e6dcc4'},dw-1.4,uF-2.2), rad:rad(dw-3,uF-2.9)}; A.uF=uF;
   A.elw=elwetritscheModell(); A.elw.G.visible=false; world.add(A.elw.G);
   A.elw.licht=new THREE.PointLight(0xffc860,0,9,2); world.add(A.elw.licht); F.licht=new THREE.PointLight(0xffd27a,0,16,1); world.add(F.licht); F.la=la; { const lm=lam('#d9d4c4'), lg=new THREE.Mesh(new THREE.BoxGeometry(.12,.16,.12),lm); lg.position.set(.62,.88,0); const lh=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.12,4),M('#2e2c2a')); lh.position.set(0,.11,0); lg.add(lh); A.meinL={m:lg,mat:lm,licht:new THREE.PointLight(0xffc870,0,18,1)}; world.add(A.meinL.licht); } // deine Öllaterne am Lenker, brennt ab Friedels Abschied (trifelsLicht)
   // leuchten in der Dunkelheit; hängen direkt in der Welt (nie unsichtbar), sonst übersetzt three.js bei jedem Ein-/Ausblenden alle Shader neu

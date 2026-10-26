@@ -61,6 +61,7 @@ function selectRider(k){
   myKey=k; document.querySelectorAll('.rcard').forEach(c=>{ c.classList.toggle('sel',c.dataset.k===k); });
   fillBotSelect(); if(!(conn&&conn.open)) oppKey=botKey; opp.name=RIDERS[oppKey].name;
   if(race.role==='host') sendCfg(); if(race.role==='guest') send({t:'hello',rider:myKey,look:LOOKS[myKey]});
+  if(world&&R&&R.def&&R.def.ma&&KST.stand==='baeuerin') rebuildRiders(); // Kampagne: Rock und Kopftuch wandern zum neu gewählten Fahrer
 }
 document.querySelectorAll('.rcard').forEach(c=>c.onclick=()=>{ if(c.classList.contains('taken')) return; selectRider(c.dataset.k); });
 $('botRider').onchange=()=>{ botKey=$('botRider').value; if(!(conn&&conn.open)){ oppKey=botKey; opp.name=RIDERS[oppKey].name; } };

@@ -1,6 +1,7 @@
 /* ---------- Becker & Dengel als 3D-Figuren ---------- */
 const riders3d={becker:null,dengel:null,custom:null};
-const mittelalter=()=>!!(R&&R.def&&(R.def.burg||R.def.ma)); // Burg Berwartstein und Kampagne (def.ma): Holzrad und Mittelalter-Kleidung für alle (Lobby-Vorschau bleibt modern)
+const mittelalter=()=>!!(R&&R.def&&(R.def.burg||R.def.ma));
+const kampBaeuerin=k=>!!(R&&R.def&&R.def.ma)&&k===myKey&&typeof KST!=='undefined'&&KST.stand==='baeuerin'; // Kampagne als Bäuerin: eigene Fahrerin mit Rock und Kopftuch // Burg Berwartstein und Kampagne (def.ma): Holzrad und Mittelalter-Kleidung für alle (Lobby-Vorschau bleibt modern)
 function buildRiders(){ const ma=mittelalter(); RKEYS.forEach(k=>{ riders3d[k]=makeRider(k,undefined,ma); world.add(riders3d[k].g); }); riders3d.devil=makeDevil(ma); riders3d.devil.g.visible=false; world.add(riders3d.devil.g); }
 function rebuildRiders(){ refreshRiders(); // nach einer Änderung am Aussehen: Fahrer in Welt und Lobby-Vorschau neu bauen
   if(world) RKEYS.forEach(k=>{ const o=riders3d[k]; if(o) world.remove(o.g); const r=makeRider(k,undefined,mittelalter()); riders3d[k]=r; world.add(r.g); if(anim.stadium) addFloodShadows(r);
@@ -31,7 +32,7 @@ function holzRad(body,M){ const holz=M('#7a5234'), dunkel=M('#4e3423'), eisen=M(
     const pd=new THREE.Mesh(new THREE.BoxGeometry(.07,.025,.1),eisen); pd.position.set(s*.17,0,-s*.13); crank.add(pd); } // Pedal 0 gehört zum linken Bein (z = -0,11)
   return crank; }
 function makeRider(key,Lo,ma){
-  const L=Lo||lookOf(key), S=Lo?specOf(key,Lo):RIDERS[key];
+  const L=Lo||lookOf(key), S=Lo?specOf(key,Lo):RIDERS[key], frau=ma&&!Lo&&kampBaeuerin(key);
   const g=new THREE.Group(), tilt=new THREE.Group(), body=new THREE.Group(); g.add(tilt); tilt.add(body); tilt.scale.setScalar(1);
   const M=c=>new THREE.MeshLambertMaterial({color:c});
   const black=M('#1b1b1d'), skin=M('#efc9a6'), tire=M('#151515'), white=M('#f4f4ef'), pantsM=M(ma?'#3b342e':L.pants), leinen=M('#ece3cf'), stiefel=M('#4a3222');
@@ -64,7 +65,7 @@ function makeRider(key,Lo,ma){
   const pants=new THREE.Mesh(new THREE.SphereGeometry(S.torsoR*1.05,10,8), pantsM); pants.scale.set(1.15,.8,S.torsoZ*1.05); pants.position.set(hip[0],hip[1],0); body.add(pants);
   if(ma){ // Wams: helle Knopfleiste vorn (Brust zeigt nach vorn unten), Schulterwülste in der Zweitfarbe mit Streifen, Ledergürtel
     const ax=[sh[0]-hip[0],sh[1]-hip[1]], al=Math.hypot(...ax), nx=ax[1]/al, ny=-ax[0]/al, kn=M('#e6d6a8');
-    for(let i=1;i<=4;i++){ const t=i/5.2, b=new THREE.Mesh(new THREE.SphereGeometry(.018,6,5),kn); b.position.set(hip[0]+ax[0]*t+nx*S.torsoR*.97, hip[1]+ax[1]*t+ny*S.torsoR*.97, 0); body.add(b); }
+    if(!frau) for(let i=1;i<=4;i++){ const t=i/5.2, b=new THREE.Mesh(new THREE.SphereGeometry(.018,6,5),kn); b.position.set(hip[0]+ax[0]*t+nx*S.torsoR*.97, hip[1]+ax[1]*t+ny*S.torsoR*.97, 0); body.add(b); }
     for(const z of [-S.zS,S.zS]){ const w=new THREE.Mesh(new THREE.SphereGeometry(.075,10,8),kitMat(L.sleeve)); w.scale.set(1.15,.85,1); w.position.set(sh[0]-.03,sh[1]-.01,z*.95); body.add(w);
       const st=new THREE.Mesh(new THREE.TorusGeometry(.068,.012,4,14),kitMat(L.jersey)); st.position.copy(w.position); st.rotation.y=Math.PI/2; body.add(st); }
     const gu=new THREE.Mesh(new THREE.CylinderGeometry(S.torsoR+.012,S.torsoR+.012,1,10),M('#5a3a22')); gu.scale.z=S.torsoZ; place(gu,[hip[0]+ax[0]*.12,hip[1]+ax[1]*.12,0],[hip[0]+ax[0]*.18,hip[1]+ax[1]*.18,0]); body.add(gu); }
@@ -80,7 +81,11 @@ function makeRider(key,Lo,ma){
   // Kopf, Helm, Brille, Kappe
   const ih=body.children.length, neck=cyl(.05,skin); place(neck,[sh[0]+.02,sh[1]+.02,0],[.36,1.47,0]); body.add(neck);
   const head=new THREE.Mesh(new THREE.SphereGeometry(.12,12,10), skin); head.scale.set(1.05,1.1,.95); head.position.set(.4,1.53,0); body.add(head);
-  if(ma){ // Bundhaube aus braunem Filz: eng anliegend, Ohrenklappen, Bänder unters Kinn
+  if(frau){ // Kopftuch aus Leinen, im Nacken geknotet, Zipfel hängt über den Rücken
+    const tm=M('#e6dcc4'), kt=new THREE.Mesh(new THREE.SphereGeometry(.136,14,10,0,Math.PI*2,0,Math.PI*.62),tm); kt.scale.set(1.1,1.08,1.02); kt.position.set(.385,1.53,0); kt.rotation.z=.45; body.add(kt);
+    const kn=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),tm); kn.position.set(.27,1.47,0); body.add(kn);
+    const zi=new THREE.Mesh(new THREE.ConeGeometry(.07,.2,4),tm); zi.scale.z=.4; zi.position.set(.24,1.37,0); zi.rotation.z=-.35; body.add(zi); }
+  else if(ma){ // Bundhaube aus braunem Filz: eng anliegend, Ohrenklappen, Bänder unters Kinn
     const hb=new THREE.Mesh(new THREE.SphereGeometry(.132,14,10,0,Math.PI*2,0,Math.PI*.58), M('#6b4a2e')); hb.scale.set(1.08,1.1,1); hb.position.set(.39,1.535,0); hb.rotation.z=.35; body.add(hb);
     for(const z of [-.112,.112]){ const ok=new THREE.Mesh(new THREE.SphereGeometry(.06,8,6), M('#6b4a2e')); ok.scale.set(1,1.15,.45); ok.position.set(.37,1.49,z); body.add(ok);
       const bd=cyl(.007,M('#4a3220')); place(bd,[.38,1.44,z*.95],[.45,1.41,z*.55]); body.add(bd); } }
@@ -96,12 +101,17 @@ function makeRider(key,Lo,ma){
     const brim=new THREE.Mesh(new THREE.BoxGeometry(.12,.014,.16), white); brim.position.set(.55,1.6,0); brim.rotation.z=.18; body.add(brim); } }
   // Beine: Hose, Socken, Schuhe
   const sockC=L.socks, shoeC=L.shoes, il=body.children.length;
-  const legs=[]; for(const z of [-.11,.11]){ const th=cyl(S.legR,pantsM,S.legR*.85), shn=cyl(S.legR*.72,ma?pantsM:skin,S.legR*.6), sk=cyl(S.legR*(ma?.74:.66),ma?stiefel:M(sockC),S.legR*.6), // Mittelalter: lange Hose, Lederstiefel
+  const legs=[], rockM=frau?new THREE.MeshLambertMaterial({color:L.jersey,side:THREE.DoubleSide}):null; for(const z of [-.11,.11]){ const th=cyl(S.legR,rockM||pantsM,S.legR*.85), // Bäuerin: Oberschenkel in der Rockfarbe, Knie wirken wie Stoff darüber
+      shn=cyl(S.legR*.72,ma?pantsM:skin,S.legR*.6), sk=cyl(S.legR*(ma?.74:.66),ma?stiefel:M(sockC),S.legR*.6), // Mittelalter: lange Hose, Lederstiefel
       sho=new THREE.Mesh(new THREE.BoxGeometry(.22,.075,.085), ma?stiefel:M(shoeC)); body.add(th,shn,sk,sho); legs.push({th,sh:shn,sk,sho,z}); }
+  let rock=null; if(frau){ // Rock in der Trikotfarbe über den Oberschenkeln, nach vorn zu den Knien geneigt, Saum in der Ärmelfarbe; folgt der Hüfte (poseRider)
+    rock=new THREE.Group(); rock.position.set(...hip); body.add(rock); const a=.7, l=.46, cx=Math.sin(a)*l/2, cy=-Math.cos(a)*l/2;
+    const rk=new THREE.Mesh(new THREE.CylinderGeometry(S.torsoR*1.05,.36,l,14,1,true),rockM); rk.scale.z=.85; rk.position.set(cx,cy,0); rk.rotation.z=a; rock.add(rk);
+    const sa=new THREE.Mesh(new THREE.TorusGeometry(.36,.018,4,18),kitMat(L.sleeve)); sa.rotation.x=Math.PI/2; sa.position.y=-l/2; rk.add(sa); }
 
   g.scale.setScalar(S.scale);
   const tag=nameSprite(S.name,S.ui); tag.scale.set(1.9,.475,1); g.add(tag); tag.position.set(0,2.3,laneKey(key)==='becker'?.55:-.55);
-  const r={key,g,tilt,body,legs,hip,tag,crankG:crank,wS:0,spec:S};
+  const r={key,g,tilt,body,legs,hip,tag,crankG:crank,wS:0,spec:S,rock};
   rigUpper(r,body.children.slice(i0,ih),body.children.slice(ih,il),[.36,1.47,0],arms); poseRider(r,0); return r;
 }
 /* ---------- Teufel-Bot: kleiner, süßer Teufel auf dem Rad (eigene Figur) ---------- */
@@ -192,7 +202,7 @@ function poseRider(r,crank){
   const st=r.st||0, ae=r.ae||0, hx=r.hip[0]+.18*st-.04*ae, hy=r.hip[1]+.12*st, l=.44+.06*st; // Wiegetritt: Hüfte deutlich vor und über den Sattel, Beine gestreckt · Aero: Rücken fast waagerecht, Hüfte etwas zurück
   // Wiegetritt: Rad und Beine pendeln unter dem ruhigen Oberkörper, ±7° (ab 90 U/min weniger, bis ±4°); der Oberkörper wird genau gegen das Pendeln verschoben und neigt sich kaum dagegen
   const cad=r.rs?r.rs.cad:0, th=Math.sin(crank)*(r.sw||0)*clampN(.12-Math.max(0,cad-90)*.0025,.07,.12), zc=-hy*Math.tan(th);
-  r.body.rotation.x=th; r.up.position.set(hx,hy,zc); r.up.rotation.set(-th*1.2,0,-.2*st-.6*ae); poseArms(r,ae);
+  r.body.rotation.x=th; r.up.position.set(hx,hy,zc); r.up.rotation.set(-th*1.2,0,-.2*st-.6*ae); poseArms(r,ae); if(r.rock) r.rock.position.set(hx,hy,zc);
   r.headG.rotation.z=-.05*st+.45*ae; r.headG.position.set(r.neckL[0]-.03*ae,r.neckL[1]-.05*ae,0); // Aero: Kopf tief zwischen den Schultern, Blick nach vorn
   r.crankG.rotation.z=-crank;
   r.legs.forEach((L,i)=>{ const pa=-crank+(i?Math.PI:0), px=Math.cos(pa)*.17, py=.3+Math.sin(pa)*.17;
