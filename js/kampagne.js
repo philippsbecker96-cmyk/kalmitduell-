@@ -4,7 +4,7 @@
 // Tafeln laufen fest 25 s, Start-Tafeln im Einfahren, Ende-Tafeln im Ausfahren, Mitte-Tafeln zu einer aus dem Workout berechneten Zeit (at() → s oder null). Texte: [Bauer|Bäuerin] wird je nach Auswahl ersetzt.
 const KT_DAUER=25;
 const KAMP=[
-  {id:'trifels', nr:1, titel:'Trifels – Die Elwetritsche-Wette', ort:'Burg Trifels · Annweiler · Queichtal', strecke:'trifels',
+  {id:'trifels', nr:1, titel:'Trifels – Die Elwetritsche-Wette', ort:'Burg Trifels · Annweiler · Queichtal', strecke:'trifels', bild:{src:'kampagne/bilder/lobby-trifels.jpg',n:'Trifels'},
     items:[S_('Einfahren',8,50,60),{k:'r',n:5,items:[S_('Locker',3,65),S_('Elwetritsche-Jagd',0.5,85)]},S_('Grundlage',5,65),S_('Ausfahren',5,50)],
     hart:[S_('Einfahren',8,50,65),{k:'r',n:5,items:[S_('Locker',3,75),S_('Elwetritsche-Jagd',0.5,117)]},S_('Grundlage',5,78),S_('Ausfahren',5,50)],
     start:[{at:10,titel:'Gold für den Trifels',text:'Du bist [ein einfacher Bauer|eine einfache Bäuerin] aus der Gegend und suchst Arbeit. Auf dem Trifels wird gerade das Lösegeld für Richard Löwenherz abgeladen – und es heißt, der Burgherr sucht Leute, die das Gold sicher nach Speyer bringen.'},
@@ -16,7 +16,7 @@ const KAMP=[
       {titel:'Auf zur Jagd',text:'Du hast dich bereit erklärt, Friedel zu helfen, eine Elwetritsche zu fangen. Gemeinsam macht ihr euch auf den Weg Richtung Wald.',at:()=>{ const S=race.woSegs||[]; return S[0]?S[0].t0+S[0].dur:null; }}, // nach dem Wirtshausgespräch (Ende des Einfahrens)
       {titel:'Die erste gute Tat',text:'Die Elwetritsche sitzt im Sack, Friedel hat seine Wette gewonnen – und du einen treuen Knappen. Doch der Weg bis zum Gasthaus beim Teufelstisch ist noch weit, und die Nacht bricht herein. Dies war erst der Anfang einer langen Reise. Die wahren Gefahren des Wasgaus warten noch auf dich.',at:()=>{ const K=anim.tri&&anim.tri.sk; return K?K.heim+12:null; }}], // wenn Friedel umgekehrt und außer Sicht ist
     ende:[{titel:'Rast am Teufelstisch',text:'Nach einer langen Fahrt durch die dunklen Wälder des Wasgaus hast du endlich das Gasthaus „Zum Teufelstisch“ erreicht. Ruh dich aus, [edler Held|edle Heldin] – die nächsten Tage werden gewiss nicht leichter.'}]},
-  {id:'teufelstisch', nr:2, titel:'Teufelstisch – Wette mit dem Teufel', ort:'Hinterweidenthal', bald:true},
+  {id:'teufelstisch', nr:2, titel:'Teufelstisch – Wette mit dem Teufel', ort:'Hinterweidenthal', bild:{src:'kampagne/bilder/lobby-teufelstisch.jpg',n:'Teufelstisch'}, bald:true},
   {id:'dahn', nr:3, titel:'Dahn – Der Jungfernsprung', ort:'Dahner Felsenland', bald:true},
   {id:'berwartstein', nr:4, titel:'Berwartstein – Drache und Flut', ort:'Erlenbach · Burg Berwartstein', bald:true}];
 // Strecke der Mission: aus dem Workout berechnet (trifelsDef) oder fest; Missionen ohne eigene Welt fahren Berwartstein als Platzhalter
@@ -41,10 +41,11 @@ function kampSegs(m){ const it=clone((KST.stufe==='hart'&&m.hart)||m.items||[]),
 
 // ---- Menü ----
 function kampUi(){ const B=$('kampBlock'); if(!B) return;
-  $('kampStand').innerHTML=[['bauer','🧑‍🌾 Bauer'],['baeuerin','👩‍🌾 Bäuerin']].map(([k,t])=>`<button class="kst${KST.stand===k?' sel':''}" data-st="${k}">${t}</button>`).join('');
+  const kBild=(src,n)=>`<span class="kpic"><img src="${src}" alt=""><i>${n}</i></span>`; // Bild aus kampagne/bilder/lobby-*.jpg, Name in Fraktur darüber
+  $('kampStand').innerHTML=[['bauer','Bauer'],['baeuerin','Bäuerin']].map(([k,t])=>`<button class="kst kwahl${KST.stand===k?' sel':''}" data-st="${k}">${kBild(`kampagne/bilder/lobby-${k}.jpg`,t)}</button>`).join('');
   $('kampStufe').innerHTML=[['leicht','🌿 Leicht'],['hart','🔥 Hart']].map(([k,t])=>`<button class="kst${(KST.stufe||'leicht')===k?' sel':''}" data-sf="${k}">${t}</button>`).join('');
   $('kampList').innerHTML=KAMP.map(m=>{ const fr=kampFrei(m), ok=KST.done.includes(m.id);
-    return `<button class="route kmis${race.kamp&&race.kamp.id===m.id?' sel':''}" data-id="${m.id}" ${fr?'':'disabled'}><div class="ph">${m.bald?'folgt':ok?'✓':fr?m.nr:'🔒'}</div><div><b>Mission ${m.nr}: ${esc(m.titel)}</b><span>${esc(m.ort)}${m.bald?' · kommt später':ok?' · geschafft':''}</span></div></button>`; }).join('');
+    return `<button class="route kmis${race.kamp&&race.kamp.id===m.id?' sel':''}" data-id="${m.id}" ${fr?'':'disabled'}>${m.bild?`<div class="kmbild">${kBild(m.bild.src,m.bild.n)}${ok?'<em>✓</em>':fr?'':'<em>🔒</em>'}</div>`:`<div class="ph">${m.bald?'folgt':ok?'✓':fr?m.nr:'🔒'}</div>`}<div><b>Mission ${m.nr}: ${esc(m.titel)}</b><span>${esc(m.ort)}${m.bald?' · kommt später':ok?' · geschafft':''}</span></div></button>`; }).join('');
   $('kampStand').querySelectorAll('button').forEach(b=>b.onclick=()=>{ KST.stand=b.dataset.st; kampSave(); kampUi(); renderRouteList(); if(world&&R&&R.def&&R.def.ma) rebuildRiders(); }); // Bauer/Bäuerin: eigene Figur neu bauen
   $('kampStufe').querySelectorAll('button').forEach(b=>b.onclick=()=>{ KST.stufe=b.dataset.sf; kampSave(); kampUi(); renderWo(); });
   $('kampList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ KST.sel=b.dataset.id; kampSave(); race.kamp=kampMission(); kampUi(); renderWo(); }); }
