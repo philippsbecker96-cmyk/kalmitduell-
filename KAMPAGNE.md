@@ -117,11 +117,61 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 - **Wasgau-Karte oben rechts** (vom Nutzer gewünscht: viel Grün, Burgen- und Felssymbole, Lage nur grob): in Missionen statt der Minimap (`kampKarte`/`karteBg` in `kampagne.js`, Hintergrund einmal gemalt). Pfälzerwald aus Baumkronen, Queich und Wieslauter mit Wiesentälern, Reiseweg gestrichelt (`KARTE_WEG`), Orte in `KARTE_ORT`: Trifels, Teufelstisch, Jungfernsprung, Berwartstein (Missionen: aktuelle leuchtet gelb, geschaffte mit Haken) und Lindelbrunn, Drachenfels (mit Drachenflügel), Weißenburg. Dein Punkt wandert bis zum Ziel-Meter auf dem Weg zur nächsten Station. **Noch vom Nutzer anzusehen.**
 - **Wirtshaus:** „Zack Zack“ (vom Nutzer), Schild am Ausleger.
 
-## Mission 2: Teufelstisch – Wette mit dem Teufel
-- **Ort:** Teufelstisch bei Hinterweidenthal (Felsen, auf dem laut Sage der Teufel speiste).
-- **Story:** Der Teufel, Trothas Handlanger, versperrt den Weg und will dich an seinen Tisch. Er wettet: Gewinnst du seine Duelle, darfst du passieren. Teufel-Bot gibt es schon (`figuren.js`).
-- **Rolle:** kurze harte Intervalle, jedes ein Duell.
-- **Workout-Entwurf (≈36 min):** 10 min Einfahren 50→65 % · 8 × (30 s 120 % Duell + 1:30 min 55 %) · 4 min locker 55 % · 1 min 115 % Schlussduell · 5 min Ausfahren 50 %.
+## Mission 2: Teufelstisch – Die Flucht vor dem Teufel (vom Nutzer)
+- **Ort:** Teufelstisch bei Hinterweidenthal (Sandsteinsäule mit Felsplatte, auf der laut Sage der Teufel speiste). Start am Gasthaus „Zum Teufelstisch“ (Ziel von Mission 1), Friedel fährt von Anfang an mit.
+- **Ablauf:**
+  1. **Anstieg** vom Gasthaus hinauf zum Teufelstisch, dabei wird das Gedicht vom Teufelstisch eingeblendet (siehe unten).
+  2. **Anschleichen:** Von Weitem sieht man den Teufel am Tisch beim Mittagessen. Friedel flüstert: „Ei, der isst jo aach mittags!“ (Witz: die Sage im Gedicht spielt um Mitternacht). Es gibt keinen anderen Weg, man muss genau am Tisch vorbei. Leise fahren = Szene, keine Watt-Mechanik: Figur geht automatisch in Aero-Haltung, ganz geduckt, und fährt am äußersten Wegrand, halb in den Büschen; Friedel duckt sich ebenso hinterher. Kurz vor dem Tisch macht Friedel etwas Lautes, Dummes (was genau, offen; z. B. niesen, über einen Eimer stolpern) – der Teufel entdeckt euch.
+  3. **Flucht 1:** Der Teufel verfolgt euch sichtbar, wirft erst mit Besteck, dann versucht er, mit dem Dreizack zu pieksen. Die Flucht führt durch eine weite Rechtskurve, bis man sich ≈ 180° gedreht hat.
+  4. **Weggabelung:** Friedel: „Ich kenn den Weg, mir misse rechts!“ Rechts abbiegen, kurz glaubt man, den Teufel abgeschüttelt zu haben …
+  5. **Wieder am Tisch:** … man fährt aber schon wieder auf den Teufelstisch zu, wo der verärgerte Teufel wieder sitzt – im Kreis gefahren.
+  6. **Flucht 2:** Die Runde wiederholt sich mehr oder weniger, der Teufel ist jetzt wütender: Er reißt den Tisch heraus und wirft ihn nach dir, dazu wieder Dreizack-Piekser. An der Gabelung diesmal **links** – weg vom Teufel.
+- **Gedicht am Anstieg (nur Text, vom Nutzer):** „Der Teufelstisch“ von Johann Martin Jäger alias „Fritz Claus“ (Pfälzer Mundart- und Heimatdichter, 1853–1923), entstanden 1884, gemeinfrei. 11 Strophen à 4 Zeilen über die 10 min Anstieg (5:00–15:00): ≈ 55 s je Strophe, je 2 Zeilen ≈ 25 s stehen, dann die nächsten zwei, kurze Pause zwischen den Strophen. Zu Beginn kurz Titel und Verfasser („Der Teufelstisch – Fritz Claus, 1884“). Darstellung dezent unten mittig, halbdurchsichtige Buchstaben (Pergament-/Frakturschrift), weich ein- und ausblenden, nicht bildfüllend; wörtliche Rede kursiv. Die letzte Strophe läuft aus, wenn oben der Teufel am Tisch auftaucht → Übergang ins Anschleichen (man ist jetzt selbst „der Keckste“).
+
+  > Im Kaltenbacher Tale / Ein Tisch von Felsen steht. / Dort saß der Teufel beim Mahle. / Hört, wie die Sage geht:
+  >
+  > Einst schritt in jenem Walde / Durch nächt'ges Dunkel schnell / Hinauf die Bergeshalde / Ein finsterer Gesell.
+  >
+  > Hell lodert in seinen Blicken / Unheimlich wilde Hast. / Nun will er sich erquicken, / Er schaut nach guter Rast.
+  >
+  > Umsonst! Kein Stein zum Sitzen, / Kein Tisch zum nächt'gen Mahl. / Vor Zorn seine Augen blitzen / Hin über Berg und Tal.
+  >
+  > Da – wie mit Blitzesschnelle / Packt jetzt zwei Felsen frisch / Der grimmige Geselle / Und stellt sie auf als Tisch.
+  >
+  > Nachdem er dran gegessen, / Ging durch die Nacht er fort. / Den Tisch, wo er gesessen, / Den ließ er einfach dort.
+  >
+  > Das war ein ängstlich Schauen / Des Morgens drunten im Tal! / Ein jeder sprach mit Grauen: / „Dort hielt der Teufel Mahl!“
+  >
+  > Nur einer voller Zweifel / Die andern hell verlacht: / „Ich geh“, spricht er, „zum Teufel / Zum Mahle dort heut Nacht!“
+  >
+  > Man warnt ihn in der Runde, / Er lacht und geht. Vom Turm / Tönt laut die zwölfte Stunde – / Da! – Welch ein Wind! Ein Sturm?
+  >
+  > Und jetzt? – Was ist geschehen? / Welch grässlicher Todesschrei! / Entsetzt die Lauscher stehen: / „Mit dem dort ist's vorbei!“
+  >
+  > Der Keckste nimmer weilte / Vorm Dorfe länger draus; / Er schlug ein Kreuz und eilte / Leis schaudernd fort nach Haus.
+
+- **Strecke:** Anstieg → Schleife (am Tisch vorbei, Rechtskurve, Gabelung, rechter Abzweig führt zurück auf den Weg vor dem Tisch) → dieselbe Schleife noch einmal → linker Abzweig hinaus. An der Gabelung beide Abzweige sichtbar. Teufel-Bot gibt es schon (`figuren.js`).
+- **Rolle:** ein langer Block am Anstieg und zwei mittellange Fluchten; keine zusätzlichen Intervalle, stattdessen kurze Spitzen in den Fluchten, die zur Geschichte passen (Besteckwurf, Dreizack, Tisch-Wurf).
+- **Workout (vom Nutzer bestätigt, 40:00):**
+
+| # | Zeit | Dauer | Szene | Hart | Leicht |
+|---|---|---|---|---|---|
+| 1 | 0:00–5:00 | 5:00 | Einfahren am Gasthaus (Tafeln) | 50 → 65 % | 45 → 60 % |
+| 2 | 5:00–15:00 | 10:00 | Anstieg zum Teufelstisch | 95 % | 77 % |
+| 3 | 15:00–18:00 | 3:00 | Anschleichen am Rand, halb in den Büschen | 65 % | 50 % |
+| 4 | 18:00–18:20 | 0:20 | Friedel macht Lärm, Teufel springt auf | 155 % | 120 % |
+| 5 | 18:20–23:20 | 5:00 | **Flucht 1**, weite Rechtskurve | 110 % | 92 % |
+|   |  |  | darin: 3 Besteckwürfe, je 10 s | 130 % | 110 % |
+|   |  |  | darin: Dreizack-Piekser am Ende, 20 s | 140 % | 115 % |
+| 6 | 23:20–27:00 | 3:40 | Gabelung rechts, „abgeschüttelt“ | 60 % | 45 % |
+| 7 | 27:00–27:20 | 0:20 | Der Tisch taucht wieder auf | 155 % | 120 % |
+| 8 | 27:20–33:20 | 6:00 | **Flucht 2**, dieselbe Schleife | 113 % | 95 % |
+|   |  |  | darin: Tisch rausreißen und werfen (nach ≈ 2 min), 30 s | 135 % | 110 % |
+|   |  |  | darin: 2 Dreizack-Piekser, je 15 s | 145 % | 115 % |
+| 9 | 33:20–33:40 | 0:20 | Gabelung links, Schlusssprint weg vom Teufel | 165 % | 125 % |
+| 10 | 33:40–40:00 | 6:20 | Ausfahren, Teufel bleibt zurück | 55 → 45 % | 50 → 40 % |
+
+  Flucht 2 bewusst länger und härter als Flucht 1; die Pause nach der ersten Flucht ist kurz, damit das Wiedersehen mit dem Tisch auch in den Beinen gemein ist. Leicht/Hart: Werte 5 Prozentpunkte unter bzw. über dem ersten Entwurf (Ein-/Ausfahren unverändert).
 
 ## Mission 3: Dahn – Der Jungfernsprung
 - **Ort:** Dahn, Felsen „Jungfernsprung“, Dahner Felsenland.
@@ -203,7 +253,7 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 
 ## Offene Fragen
 - **Berwartstein und Ankunftszeit (gelöst, vom Nutzer bestätigt):** Strecke 5,59 km mit ≈ 400 Hm (≈ 7 %), bei 80 kg mit 200 W ≈ 32 min, mit 150 W ≈ 42 min. Workout bis zum Tor ≈ 72 % FTP → Ankunft je nach FTP 29–57 min statt 35:00. Lösung: Strecke bleibt wie gebaut (Szenen an festen Metern), stattdessen Tempo anpassen – Faktor auf die Steigung in der Physik (gezeichnet bleibt sie, wie bei Space), laufend nachgeregelt, damit man bei ≈ 35:00 am Burgtor ist, auch wenn jemand ein Intervall nicht schafft. Korrektur vor allem in den Erholungen (v. a. die 4 min vor dem Tor), damit man in den Intervallen nichts merkt. Im ERG-Modus spürt man die Steigung nicht. Genau treffen müssen nur Zugbrücke (Ende Drache 2) und Burghof; der Drache fliegt und kann überall auftauchen. Neu zu bauen bleibt: Burghof als Halfpipe und Abfahrt ins Tal fürs Ausfahren.
-- Workouts: Mission 1 und 4 bestätigt, Vorschläge des Nutzers zu Mission 2–3 folgen.
+- Workouts: Mission 1, 2 und 4 bestätigt, Vorschlag des Nutzers zu Mission 3 folgt.
 - Namen: Knappe, Burgherr des Trifels.
 - Weitere Ideen: Bonusmission aus Sicht von Weißenburg (Stadt vor der Flut warnen).
 - Ideen Mission 1 (vom Nutzer, noch nicht ausgearbeitet): **Elwetritsche-Fallen** und **Neumond**.
