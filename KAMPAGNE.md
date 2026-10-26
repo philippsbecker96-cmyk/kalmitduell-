@@ -173,6 +173,25 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 
   Flucht 2 bewusst länger und härter als Flucht 1; die Pause nach der ersten Flucht ist kurz, damit das Wiedersehen mit dem Tisch auch in den Beinen gemein ist. Leicht/Hart: Werte 5 Prozentpunkte unter bzw. über dem ersten Entwurf (Ein-/Ausfahren unverändert).
 
+- **Ideen (vom Nutzer bestätigt):**
+  - **Elwetritsche fährt mit:** die gefangene Elwetritsche aus Mission 1 sitzt im Käfig auf Friedels Gepäckträger; bei der Flucht streckt sie dem Teufel die Zunge raus.
+  - **Dörfler warnen:** Leute am Gasthaus bzw. am Weg warnen schon beim Einfahren („Do hoch? Zum Deiwel?“, passt zur Strophe „Man warnt ihn in der Runde“).
+  - **Mittagessen des Teufels:** Pfälzer Dreierlei (Saumagen, Bratwurst, Leberknödel mit Sauerkraut und Kartoffelbrei) und Schorle im Dubbeglas.
+  - **Glocke läutet zwölf:** die Kirchenglocke unten im Kaltenbacher Tal läutet Mittag, wenn die letzte Strophe ausläuft und man den Teufel sieht (Gegenstück zu „Vom Turm tönt laut die zwölfte Stunde“, nur am Tag; Ton erst nach Rückfrage).
+  - **Teufel stolpert** bei der Verfolgung (z. B. über eine Wurzel) und schimpft.
+  - **Rückblick:** nach der zweiten Flucht Kamera-Rückblick (wie beim Bettler auf Berwartstein, `rueckblick`): der Teufel steht ohne Tisch da und schaut auf seinen leeren Felsen.
+  - **Hirte mit Ziegen** am Hang.
+  - **Ausfahren:** bergab Richtung Dahn, irgendwann Blick auf die Dahner Felsen mit dem Jungfernsprung (Ausblick auf Mission 3).
+- **Bauplan (Vorschlag):**
+  1. Gerüst: Mission 2 in `KAMP` (kampagne.js) mit Workout Leicht/Hart; Vorausberechnung von Mission 1 so verallgemeinern, dass jede Mission ihre eigene Definition hat (wie `trifelsDef`).
+  2. Strecke: Schleife zweimal befahren, Weg, Gelände und Szenen der Schleife aber nur **einmal** bauen (sonst liegt der Weg doppelt und flimmert); Gabelung mit beiden Abzweigen sichtbar, rechter führt zurück auf den Weg vor dem Tisch. **Entschieden (mit dem Nutzer): volle Schleife zweimal** (Linksabbiegen direkt nach dem Tisch wäre nicht einfacher: Stück am Tisch doppelt, dazu 2–3 km neues Wegstück für Flucht 2, Gabelung halb nutzlos, Pointe weg). Beide Abzweige gehören ohnehin zur Strecke (rechts Runde 1, links Runde 2). Meter zählen in Runde 2 weiter → Ereignisse je Runde sauber zuzuordnen. Zeiten: Tisch → Gabelung ≈ 5 min hart (Flucht 1); in Runde 2 nach ≈ 5 min an der Gabelung links, letzte Minute von Flucht 2 und Schlusssprint auf dem Weg hinaus. Prüfen: Gelände/Bodenhöhe über „nächster Streckenpunkt“ darf die doppelte Schleife nicht stören (Höhen gleich, im Selbsttest prüfen).
+  3. Landschaft: Pfälzerwald, Buntsandsteinfelsen, Kaltenbacher Tal mit Kirchturm, Teufelstisch als große Felsgruppe auf der Kuppe.
+  4. Teufel am Tisch (isst, kaut), dann Verfolgung **zu Fuß** mit Dreizack (Teufel-Bot ist Radfahrer → Lauf-Pose nötig), Gummiband-Abstand hinter dir.
+  5. Würfe: einfache Flugbahnen (Besteck, Tisch), getaktet nach den Spitzen im Workout, knapp daneben mit Staub/Splittern.
+  6. Runde 2 mit eigenem Zustand: Teufel sitzt wütend da, reißt den Tisch heraus, danach ist die Säule leer.
+  7. Gedicht-Einblendung, Anschleichen (Aero-Haltung, Fahrlinie am Rand), Friedels Missgeschick.
+  8. Tafeln, Texte, Ton (nur nach Rückfrage), dann Deko und Gags; nach jedem Schritt Selbsttest mit `--boden`.
+
 ## Mission 3: Dahn – Der Jungfernsprung
 - **Ort:** Dahn, Felsen „Jungfernsprung“, Dahner Felsenland.
 - **Story:** Eine Magd hat Trothas Pläne belauscht, seine Schergen jagen sie. Laut Sage sprang sie vom Felsen, ihr Rock bremste den Fall, wo sie aufkam, entsprang eine Quelle. Du hilfst ihr bei der Flucht und hältst die Verfolger auf Abstand; die Quelle unten ist Kontrollpunkt/Belohnung. Sie verrät dir, wo Trotha die Bauern gefangen hält (die du im Finale im Burghof befreist).
@@ -190,21 +209,23 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 - **Ort:** Erlenbach und Burg Berwartstein, bestehende Strecke (`welt-berwartstein.js`, `welt-dorf.js`, `berwartsteinDef`).
 - **Story (vom Nutzer bestätigt):** Man fährt im Grunde die Berwartstein-Strecke: Start am Bauernfest in Erlenbach, Wegelagerer, Bogenschütze, auf dem Weg hinauf zur Burg greift der Drache an. Im Burghof wartet Hans von Trotha (Hans Trapp) und wird besiegt wie der Schwarze Ritter in „Ritter der Kokosnuss“. Abschluss-Tafeln: Rückkehr zum Trifels, der Burgherr vertraut dir das Lösegeld an. Drache mit Überflügen und Feuer gibt es schon. Keine Flutwelle mehr (siehe Bausteine).
 - **Rolle:** Höhepunkt, härteste Intervalle; sie werden kürzer und härter bis zum Burghof.
-- **Workout (vom Nutzer bestätigt, 45:00):**
-  | Zeit | Abschnitt | Dauer | % FTP | Szene |
-  |---|---|---|---|---|
-  | 0:00 | Einfahren | 7:00 | 50 → 75 | Fest, Dorf Erlenbach |
-  | 7:00 | Locker | 3:00 | 60 | Ortsausgang, Bauern warnen |
-  | 10:00 | **Wegelagerer** | 4:00 | 88 → 100 | Flucht vor der Staubwolke |
-  | 14:00 | Erholung | 4:00 | 55 | Wald, Bach |
-  | 18:00 | **Bogenschütze** | 4:00 | 90 → 105 | Pfeile schlagen neben dir ein |
-  | 22:00 | Erholung | 3:00 | 55 | Waldrand, ein Schatten zieht über dich hinweg |
-  | 25:00 | **Drache 1** | 2:00 | 100 → 115 | Drache stößt vom Burgfelsen herab |
-  | 27:00 | Erholung | 2:00 | 55 | Deckung unter Felsnasen |
-  | 29:00 | **Drache 2** | 2:00 | 105 → 120 | Jagd den Burgweg hinauf, Feuer im Nacken |
-  | 31:00 | Erholung | 4:00 | 55 | Vorburg, Zugbrücke, Burgtor |
-  | 35:00 | **Burghof** | 6 × (0:20 / 0:20) | 130 / 55 | Hans Trapp verliert Arm um Arm, Ketten, Ehrenrunde |
-  | 39:00 | Ausfahren | 6:00 | 70 → 50 | Jubel, Abfahrt ins Tal, das Dorf am Weg |
+- **Workout (vom Nutzer bestätigt, 45:00, Leicht/Hart in % FTP; Watt bei FTP 290 für Hart):**
+  | Zeit | Abschnitt | Dauer | Leicht | Hart | Hart bei 290 W | Szene |
+  |---|---|---|---|---|---|---|
+  | 0:00 | Einfahren | 7:00 | 50 → 75 | 50 → 75 | 145 → 218 | Fest, Dorf Erlenbach |
+  | 7:00 | Locker | 3:00 | 60 | 60 | 174 | Ortsausgang, Bauern warnen |
+  | 10:00 | **Wegelagerer** | 4:00 | 83 → 95 | 95 → 120 | 276 → 348 | Flucht vor der Staubwolke |
+  | 14:00 | Erholung | 4:00 | 50 | 60 | 174 | Wald, Bach |
+  | 18:00 | **Bogenschütze** | 4:00 | 85 → 100 | 95 → 120 | 276 → 348 | Pfeile schlagen neben dir ein |
+  | 22:00 | Erholung | 3:00 | 50 | 60 | 174 | Waldrand, ein Schatten zieht über dich hinweg |
+  | 25:00 | **Drache 1** | 2:00 | 95 → 110 | 110 → 125 | 319 → 363 | Drache stößt vom Burgfelsen herab |
+  | 27:00 | Erholung | 2:00 | 50 | 60 | 174 | Deckung unter Felsnasen |
+  | 29:00 | **Drache 2** | 2:00 | 100 → 115 | 115 → 130 | 334 → 377 | Jagd den Burgweg hinauf, Feuer im Nacken |
+  | 31:00 | Erholung | 4:00 | 50 | 60 | 174 | Vorburg, Zugbrücke, Burgtor |
+  | 35:00 | **Burghof** | 6 × (0:20 / 0:20) | 125 / 50 | 160 / 55 | 464 / 160 | Hans Trapp verliert Arm um Arm, Ketten, Ehrenrunde |
+  | 39:00 | Ausfahren | 6:00 | 70 → 50 | 70 → 50 | 203 → 145 | Jubel, Abfahrt ins Tal, das Dorf am Weg |
+  - **Leicht:** Ø ≈ 69 % FTP, NP ≈ 77 %, TSS ≈ 44 (5 Punkte unter dem ersten Entwurf). **Hart:** Ø ≈ 78 % FTP (≈ 227 W bei FTP 290), NP ≈ 89 %, ≈ 614 kJ, TSS ≈ 60 – Spitzen gezielt angezogen, Steigerung bis zum Burghof bleibt (4-min-Blöcke bis 120 %, Drachen bis 125/130 %, Sprints 160 %).
+  - Art: gemischtes Intervalltraining – Schwelle (4 min), VO2max (Drachen, 2 min), anaerob (Burghof 20/20).
 - **Übergang zur Burg (vom Nutzer bestätigt):** Drache 2 endet damit, dass du gerade noch über die Zugbrücke kommst, das Tor kracht hinter dir zu, der Drache prallt dagegen – erledigt, ohne Kampf.
 - **Burghof wie eine Halfpipe (Nutzer-Idee):** Man fährt im Hof hin und her, je Durchfahrt (20 s) ein Hieb, an Burg bzw. Burgtor wenden (20 s Pause):
   1. Einfahrt in den Hof: linker Arm ab · Wende an der Burg
@@ -217,7 +238,7 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
   - **Ausgearbeitet (vom Nutzer bestätigt):**
     - **Air an der Burg:** Schmiede am Fuß der Burg, davor eine Schubkarre mit schräg angelehntem Brett als Rampe. Hochfahren, kurz abheben, in der Luft umdrehen, auf der Rampe landen, Kamera schwenkt mit, Zeitlupe (hilft auch, die Intervalle zu timen).
     - **Grind am Tor:** Heuwagen (Deichsel nach oben, Säcke/Fässer) vor Tor bzw. Mauer als Auffahrt. Oben ein Stück an Mauerkrone oder Torbalken entlangrutschen, Funken unter dem Rad, abspringen, zurück in den Hof.
-    - **Timing:** Durchfahrt = 20 s Intervall (130 %), Hieb gegen Trapp in der Mitte des Hofs. Air bzw. Grind und Rückfahrt bis zur nächsten Durchfahrt = 20 s Pause. Abwechselnd: Arm 1 → Air (Burg) → Arm 2 → Grind (Tor) → …
+    - **Timing:** Durchfahrt = 20 s Intervall (Leicht 125 %, Hart 160 %), Hieb gegen Trapp in der Mitte des Hofs. Air bzw. Grind und Rückfahrt bis zur nächsten Durchfahrt = 20 s Pause. Abwechselnd: Arm 1 → Air (Burg) → Arm 2 → Grind (Tor) → …
     - **Hans Trapp** bleibt in der Hofmitte, bewegt sich etwas hin und her (nicht zu viel).
     - **Zuschauer** (Burgbewohner, befreite Bauern) jubeln bei jedem Air und Grind.
     - Technik: Air und Grind für ein paar Sekunden fester Ablauf statt Physik (Rampe, Flugbahn, Landung vorgegeben), wie beim Jungfernsprung.
