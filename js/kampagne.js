@@ -16,7 +16,7 @@ const KAMP=[
       {titel:'Auf zur Jagd',text:'Du hast dich bereit erklärt, Friedel zu helfen, eine Elwetritsche zu fangen. Gemeinsam macht ihr euch auf den Weg Richtung Wald.',at:()=>{ const S=race.woSegs||[]; return S[0]?S[0].t0+S[0].dur:null; }}, // nach dem Wirtshausgespräch (Ende des Einfahrens)
       {titel:'Die erste gute Tat',text:'Die Elwetritsche sitzt im Sack, Friedel hat seine Wette gewonnen – und du einen treuen Knappen. Doch der Weg bis zum Gasthaus beim Teufelstisch ist noch weit, und die Nacht bricht herein. Dies war erst der Anfang einer langen Reise. Die wahren Gefahren des Wasgaus warten noch auf dich.',at:()=>{ const K=anim.tri&&anim.tri.sk; return K?K.heim+12:null; }}], // wenn Friedel umgekehrt und außer Sicht ist
     ende:[{titel:'Rast am Teufelstisch',text:'Nach einer langen Fahrt durch die dunklen Wälder des Wasgaus hast du endlich das Gasthaus „Zum Teufelstisch“ erreicht. Ruh dich aus, [edler Held|edle Heldin] – die nächsten Tage werden gewiss nicht leichter.'}]},
-  {id:'teufelstisch', nr:2, titel:'Teufelstisch – Die Flucht vor dem Teufel', ort:'Hinterweidenthal · Kaltenbacher Tal', strecke:'teufelstisch', bild:{src:'kampagne/bilder/lobby-teufelstisch.jpg',n:'Teufelstisch'}, tod:'tag', // Mittag: der Teufel isst
+  {id:'teufelstisch', nr:2, titel:'Teufelstisch – Die Flucht vor dem Teufel', ort:'Hinterweidenthal · Kaltenbacher Tal', strecke:'teufelstisch', bild:{src:'kampagne/bilder/lobby-teufelstisch.jpg',n:'Teufelstisch'}, tod:'tag', zu:true, // Mittag: der Teufel isst; zu: noch in Arbeit, nur mit Code
     // Labels Anstieg, Anschleichen, Ertappt, Abgeschüttelt, Wieder am Tisch: danach richtet sich die Strecke (teufelstischDef in strecke.js)
     items:[S_('Einfahren',5,45,60),S_('Anstieg',10,77),S_('Anschleichen',3,50),S_('Ertappt',1/3,120),
       S_('Flucht 1',2/3,92),S_('Besteckwurf',1/6,110),S_('Flucht 1',5/6,92),S_('Besteckwurf',1/6,110),S_('Flucht 1',5/6,92),S_('Besteckwurf',1/6,110),S_('Flucht 1',11/6,92),S_('Dreizack',1/3,115),
@@ -39,14 +39,10 @@ function kampRoute(){ const id=race.kamp&&race.kamp.strecke||'berwartstein', e=R
 function kampLoad(){ try{ const o=JSON.parse(localStorage.getItem('kd-kampagne')); if(o&&typeof o==='object') return {done:[],...o}; }catch(e){} return {stand:null,stufe:'leicht',done:[],sel:'trifels'}; }
 let KST=kampLoad();
 const kampSave=()=>{ try{ localStorage.setItem('kd-kampagne',JSON.stringify(KST)); }catch(e){} };
-const kampFrei=m=>!m.bald && (m.nr===1 || KST.done.includes(KAMP[m.nr-2].id) || !!KST.code); // nacheinander freigeschaltet – solange die Kampagne in Arbeit ist (Code), alle fertigen zum Testen
-// ---- Sperre: Kampagne noch in Arbeit, nur mit Code spielbar (Freischaltung je Gerät in kd-kampagne.code) ----
-const kampOffen=()=>!!KST.code;
-function kampSperre(){ const b=document.querySelector('.mode[data-m="kamp"]'); if(!b) return; b.classList.toggle('zu',!kampOffen());
-  let t=b.querySelector('.zuTag'); if(!kampOffen()&&!t){ t=document.createElement('em'); t.className='zuTag'; t.textContent='🔒 In Arbeit'; b.prepend(t); } else if(kampOffen()&&t) t.remove(); }
-function kampCode(){ const c=prompt('Die Kampagne ist noch in Arbeit.\nCode zum Freischalten:'); if(c==null) return false;
-  if(btoa(c.trim().replace(/^\./,''))==='MTEwNA=='){ KST.code=true; kampSave(); kampSperre(); return true; } alert('Falscher Code.'); return false; }
-kampSperre();
+const kampFrei=m=>!m.bald && (!m.zu||!!KST.code) && (m.nr===1 || KST.done.includes(KAMP[m.nr-2].id) || !!KST.code); // nacheinander freigeschaltet – mit Code alle fertigen zum Testen
+// ---- Sperre: Missionen in Arbeit (zu:true) nur mit Code spielbar (Freischaltung je Gerät in kd-kampagne.code) ----
+function kampCode(){ const c=prompt('Diese Mission ist noch in Arbeit.\nCode zum Freischalten:'); if(c==null) return false;
+  if(btoa(c.trim().replace(/^\./,''))==='MTEwNA=='){ KST.code=true; kampSave(); return true; } alert('Falscher Code.'); return false; }
 const kampMission=()=>KAMP.find(m=>m.id===KST.sel&&kampFrei(m))||KAMP[0];
 const kText=s=>s.replace(/\[name\]/g,()=>(RIDERS[myKey]&&RIDERS[myKey].name)||'Fremder').replace(/\[([^|\]]*)\|([^\]]*)\]/g,(_,a,b)=>KST.stand==='baeuerin'?b:a); // [name] = Name des eigenen Fahrers
 // Workout der Mission; Einfahren/Ausfahren mindestens so lang wie die Tafeln
@@ -59,10 +55,10 @@ function kampUi(){ const B=$('kampBlock'); if(!B) return;
   $('kampStand').innerHTML=[['bauer','Bauer'],['baeuerin','Bäuerin']].map(([k,t])=>`<button class="kst kwahl${KST.stand===k?' sel':''}" data-st="${k}">${kBild(`kampagne/bilder/lobby-${k}.jpg`,t)}</button>`).join('');
   $('kampStufe').innerHTML=[['leicht','🌿 Leicht'],['hart','🔥 Hart']].map(([k,t])=>`<button class="kst${(KST.stufe||'leicht')===k?' sel':''}" data-sf="${k}">${t}</button>`).join('');
   $('kampList').innerHTML=KAMP.map(m=>{ const fr=kampFrei(m), ok=KST.done.includes(m.id);
-    return `<button class="route kmis${race.kamp&&race.kamp.id===m.id?' sel':''}" data-id="${m.id}" ${fr?'':'disabled'}>${m.bild?`<div class="kmbild">${kBild(m.bild.src,m.bild.n)}${ok?'<em>✓</em>':fr?'':'<em>🔒</em>'}</div>`:`<div class="ph">${m.bald?'folgt':ok?'✓':fr?m.nr:'🔒'}</div>`}<div><b>Mission ${m.nr}: ${esc(m.titel)}</b><span>${esc(m.ort)}${m.bald?' · kommt später':ok?' · geschafft':''}</span></div></button>`; }).join('');
+    return `<button class="route kmis${race.kamp&&race.kamp.id===m.id?' sel':''}" data-id="${m.id}" ${fr||m.zu&&!m.bald?'':'disabled'}>${m.bild?`<div class="kmbild">${kBild(m.bild.src,m.bild.n)}${ok?'<em>✓</em>':fr?'':'<em>🔒</em>'}</div>`:`<div class="ph">${m.bald?'folgt':ok?'✓':fr?m.nr:'🔒'}</div>`}<div><b>Mission ${m.nr}: ${esc(m.titel)}</b><span>${esc(m.ort)}${m.bald?' · kommt später':ok?' · geschafft':''}</span></div></button>`; }).join('');
   $('kampStand').querySelectorAll('button').forEach(b=>b.onclick=()=>{ KST.stand=b.dataset.st; kampSave(); kampUi(); renderRouteList(); if(world&&R&&R.def&&R.def.ma) rebuildRiders(); }); // Bauer/Bäuerin: eigene Figur neu bauen
   $('kampStufe').querySelectorAll('button').forEach(b=>b.onclick=()=>{ KST.stufe=b.dataset.sf; kampSave(); kampUi(); renderWo(); });
-  $('kampList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ KST.sel=b.dataset.id; kampSave(); race.kamp=kampMission(); kampUi(); renderWo(); }); }
+  $('kampList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const m=KAMP.find(k=>k.id===b.dataset.id); if(m.zu&&!KST.code&&!kampCode()) return; KST.sel=b.dataset.id; kampSave(); race.kamp=kampMission(); kampUi(); renderWo(); }); }
 
 // ---- Tafeln im Rennen ----
 function kampTafel(tf){ let el=$('kampTafel'); if(!tf){ el.classList.remove('zeig'); el.dataset.k=''; return; }
