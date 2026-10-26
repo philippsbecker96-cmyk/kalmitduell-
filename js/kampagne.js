@@ -16,16 +16,30 @@ const KAMP=[
       {titel:'Auf zur Jagd',text:'Du hast dich bereit erklärt, Friedel zu helfen, eine Elwetritsche zu fangen. Gemeinsam macht ihr euch auf den Weg Richtung Wald.',at:()=>{ const S=race.woSegs||[]; return S[0]?S[0].t0+S[0].dur:null; }}, // nach dem Wirtshausgespräch (Ende des Einfahrens)
       {titel:'Die erste gute Tat',text:'Die Elwetritsche sitzt im Sack, Friedel hat seine Wette gewonnen – und du einen treuen Knappen. Doch der Weg bis zum Gasthaus beim Teufelstisch ist noch weit, und die Nacht bricht herein. Dies war erst der Anfang einer langen Reise. Die wahren Gefahren des Wasgaus warten noch auf dich.',at:()=>{ const K=anim.tri&&anim.tri.sk; return K?K.heim+12:null; }}], // wenn Friedel umgekehrt und außer Sicht ist
     ende:[{titel:'Rast am Teufelstisch',text:'Nach einer langen Fahrt durch die dunklen Wälder des Wasgaus hast du endlich das Gasthaus „Zum Teufelstisch“ erreicht. Ruh dich aus, [edler Held|edle Heldin] – die nächsten Tage werden gewiss nicht leichter.'}]},
-  {id:'teufelstisch', nr:2, titel:'Teufelstisch – Wette mit dem Teufel', ort:'Hinterweidenthal', bild:{src:'kampagne/bilder/lobby-teufelstisch.jpg',n:'Teufelstisch'}, bald:true},
+  {id:'teufelstisch', nr:2, titel:'Teufelstisch – Die Flucht vor dem Teufel', ort:'Hinterweidenthal · Kaltenbacher Tal', strecke:'teufelstisch', bild:{src:'kampagne/bilder/lobby-teufelstisch.jpg',n:'Teufelstisch'}, tod:'tag', // Mittag: der Teufel isst
+    // Labels Anstieg, Anschleichen, Ertappt, Abgeschüttelt, Wieder am Tisch: danach richtet sich die Strecke (teufelstischDef in strecke.js)
+    items:[S_('Einfahren',5,45,60),S_('Anstieg',10,77),S_('Anschleichen',3,50),S_('Ertappt',1/3,120),
+      S_('Flucht 1',2/3,92),S_('Besteckwurf',1/6,110),S_('Flucht 1',5/6,92),S_('Besteckwurf',1/6,110),S_('Flucht 1',5/6,92),S_('Besteckwurf',1/6,110),S_('Flucht 1',11/6,92),S_('Dreizack',1/3,115),
+      S_('Abgeschüttelt',11/3,45),S_('Wieder am Tisch',1/3,120),
+      S_('Flucht 2',2,95),S_('Tischwurf',.5,110),S_('Flucht 2',1,95),S_('Dreizack',.25,115),S_('Flucht 2',1.25,95),S_('Dreizack',.25,115),S_('Flucht 2',.75,95),
+      S_('Schlusssprint',1/3,125),S_('Ausfahren',19/3,50,40)],
+    hart:[S_('Einfahren',5,50,65),S_('Anstieg',10,95),S_('Anschleichen',3,65),S_('Ertappt',1/3,155),
+      S_('Flucht 1',2/3,110),S_('Besteckwurf',1/6,130),S_('Flucht 1',5/6,110),S_('Besteckwurf',1/6,130),S_('Flucht 1',5/6,110),S_('Besteckwurf',1/6,130),S_('Flucht 1',11/6,110),S_('Dreizack',1/3,140),
+      S_('Abgeschüttelt',11/3,60),S_('Wieder am Tisch',1/3,155),
+      S_('Flucht 2',2,113),S_('Tischwurf',.5,135),S_('Flucht 2',1,113),S_('Dreizack',.25,145),S_('Flucht 2',1.25,113),S_('Dreizack',.25,145),S_('Flucht 2',.75,113),
+      S_('Schlusssprint',1/3,165),S_('Ausfahren',19/3,55,45)],
+    // Platzhalter-Tafeln (Schritt 1) – endgültige Texte folgen
+    start:[{at:10,titel:'Hinauf zum Teufelstisch',text:'Im Gasthaus erzählt man sich, hoch über dem Kaltenbacher Tal stehe ein Tisch aus Fels, an dem der Teufel selbst gespeist hat. Friedel will ihn unbedingt sehen – und die Elwetritsche im Käfig muss natürlich mit.'}],
+    ende:[{titel:'Dem Teufel entwischt',text:'Hinter dir verhallt das Fluchen des Teufels zwischen den Felsen. Vor euch liegt der Weg hinab nach Dahn.'}]},
   {id:'dahn', nr:3, titel:'Dahn – Der Jungfernsprung', ort:'Dahner Felsenland', bald:true},
   {id:'berwartstein', nr:4, titel:'Berwartstein – Drache und Flut', ort:'Erlenbach · Burg Berwartstein', bald:true}];
 // Strecke der Mission: aus dem Workout berechnet (trifelsDef) oder fest; Missionen ohne eigene Welt fahren Berwartstein als Platzhalter
-function kampRoute(){ const id=race.kamp&&race.kamp.strecke||'berwartstein'; return id==='trifels'?genEntry(id):ROUTES.find(r=>r.id===id); }
+function kampRoute(){ const id=race.kamp&&race.kamp.strecke||'berwartstein', e=ROUTES.find(r=>r.id===id); return e.mode==='kamp'?genEntry(id):e; }
 // Spielstand: {stand:'bauer'|'baeuerin', stufe:'leicht'|'hart', done:[ids], sel:id} – geschafft zählt für beide Stufen
 function kampLoad(){ try{ const o=JSON.parse(localStorage.getItem('kd-kampagne')); if(o&&typeof o==='object') return {done:[],...o}; }catch(e){} return {stand:null,stufe:'leicht',done:[],sel:'trifels'}; }
 let KST=kampLoad();
 const kampSave=()=>{ try{ localStorage.setItem('kd-kampagne',JSON.stringify(KST)); }catch(e){} };
-const kampFrei=m=>!m.bald && (m.nr===1 || KST.done.includes(KAMP[m.nr-2].id)); // nacheinander freigeschaltet
+const kampFrei=m=>!m.bald && (m.nr===1 || KST.done.includes(KAMP[m.nr-2].id) || !!KST.code); // nacheinander freigeschaltet – solange die Kampagne in Arbeit ist (Code), alle fertigen zum Testen
 // ---- Sperre: Kampagne noch in Arbeit, nur mit Code spielbar (Freischaltung je Gerät in kd-kampagne.code) ----
 const kampOffen=()=>!!KST.code;
 function kampSperre(){ const b=document.querySelector('.mode[data-m="kamp"]'); if(!b) return; b.classList.toggle('zu',!kampOffen());

@@ -1,7 +1,7 @@
 // Selbsttest: lädt index.html unsichtbar in Chrome, baut eine Strecke, startet das Rennen, springt an die angegebenen Meter und meldet Fehler aus der Konsole.
 // Prüft nur auf Fehler – Aussehen und Spielgefühl testet der Nutzer selbst.
-// Aufruf: node werkzeuge/selbsttest.mjs [strecke=berwartstein|trifels|space|insel] [meter,meter,…] [--boden]
-//   trifels = Strecke von Kampagnen-Mission 1 (wird über die Kampagne gestartet) · --boden: listet zusätzlich alles, was laut __versunken() im Boden steckt oder schwebt (welt-kalmit.js)
+// Aufruf: node werkzeuge/selbsttest.mjs [strecke=berwartstein|trifels|teufelstisch|space|insel] [meter,meter,…] [--boden]
+//   trifels/teufelstisch = Strecke von Kampagnen-Mission 1/2 (wird über die Kampagne gestartet) · --boden: listet zusätzlich alles, was laut __versunken() im Boden steckt oder schwebt (welt-kalmit.js)
 import {spawn} from 'node:child_process'; import {mkdtempSync, rmSync} from 'node:fs'; import {tmpdir} from 'node:os'; import {join, dirname} from 'node:path'; import {fileURLToPath, pathToFileURL} from 'node:url';
 const arg=process.argv.slice(2).filter(a=>!a.startsWith('--')), strecke=arg[0]||'berwartstein', meter=(arg[1]||'').split(',').filter(Boolean).map(Number), warte=ms=>new Promise(r=>setTimeout(r,ms));
 const url=pathToFileURL(join(dirname(fileURLToPath(import.meta.url)),'..','index.html')).href, prof=mkdtempSync(join(tmpdir(),'kd-test-')), port=9300+Math.floor(Math.random()*500);
@@ -18,7 +18,7 @@ try{
   const geladen=new Promise(r=>{ const alt=ws.onmessage; ws.onmessage=e=>{ alt(e); if(JSON.parse(e.data).method==='Page.loadEventFired') r(); }; });
   await send('Page.navigate',{url}); await geladen; await warte(1500);
   const ev=async(ex,txt)=>{ const r=await send('Runtime.evaluate',{expression:`(()=>{ try{ ${ex} }catch(e){ return 'FEHLER '+e.stack; } })()`}); const v=r.result?.value; if(String(v).startsWith('FEHLER')){ fehler++; console.log(txt, v.slice(0,800)); } else if(v!==undefined) console.log(txt, v); };
-  if(strecke==='trifels') await ev(`openMode('kamp'); $('btnStart').disabled=false; return 'Kampagne';`,'Strecke:'); else if(['space','insel'].includes(strecke)) await ev(`openMode('train'); const e=genEntry('${strecke}'); routeId=e.id; setRoute(e.def); return 'aufgebaut, '+Math.round(R.len)+' m';`,'Strecke:'); else await ev(`const r=ROUTES.find(r=>r.id==='${strecke}'); if(!r) return 'FEHLER Strecke ${strecke} nicht gefunden'; routeId=r.id; setRoute(r.def); return 'aufgebaut';`,'Strecke:');
+  if(['trifels','teufelstisch'].includes(strecke)) await ev(`KST.done=['trifels']; KST.sel='${strecke}'; KST.stand=KST.stand||'bauer'; openMode('kamp'); $('btnStart').disabled=false; return 'Kampagne '+R.name+', '+Math.round(R.len)+' m';`,'Strecke:'); else if(['space','insel'].includes(strecke)) await ev(`openMode('train'); const e=genEntry('${strecke}'); routeId=e.id; setRoute(e.def); return 'aufgebaut, '+Math.round(R.len)+' m';`,'Strecke:'); else await ev(`const r=ROUTES.find(r=>r.id==='${strecke}'); if(!r) return 'FEHLER Strecke ${strecke} nicht gefunden'; routeId=r.id; setRoute(r.def); return 'aufgebaut';`,'Strecke:');
   await ev(`startRace(); return race.state;`,'Start:');
   for(let i=0;i<40;i++){ const r=await send('Runtime.evaluate',{expression:'race.state'}); if(r.result?.value==='run') break; await warte(500); } await ev(`return race.state;`,'Zustand:'); // Countdown abwarten
   for(const d of meter){ await ev(`me.d=${d}; me.v=6; return;`,''); await warte(800); }

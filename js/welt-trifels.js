@@ -15,17 +15,19 @@ function prepTrifels(r){ const O=r.def.orte, S=r.S, q=rng(77), kf=r.kf, [kx,ky]=
   { const sd=r.tri.sturz; for(let da=-14;da<=14;da+=4){ const [px,py]=posAt(r,sd+da), h=headingAt(r,sd+da); for(const o of [3.5,7]) frei.push([px-Math.sin(h)*(roadW(r,sd+da)/2+o), py+Math.cos(h)*(roadW(r,sd+da)/2+o), 3]); } } // Sturzstelle: rechts frei für Seitenkamera und Sturz
   { const zd=r.tri.ziel+10, [px,py]=posAt(r,zd), h=headingAt(r,zd), o=roadW(r,zd)/2+7; r.tri.gast={d:zd, x:px-Math.sin(h)*o, y:py+Math.cos(h)*o, h, o}; frei.push([r.tri.gast.x,r.tri.gast.y,13]); // Gasthaus „Zum Teufelstisch“ rechts am Ziel
     const tx=px+Math.cos(h)*380-Math.sin(h)*60, ty=py+Math.sin(h)*380+Math.cos(h)*60; r.tri.tisch=[tx,ty]; frei.push([tx,ty,26]); } // Teufelstisch auf einer Kuppe dahinter
-  // Dichter Pfälzerwald: zusätzliche Kiefern, Buchen und Unterholz im Wald, nie auf dem Weg oder auf benachbarten Kehren
-  { const C=8, gr=new Map(), key=(x,y)=>Math.floor(x/C)+','+Math.floor(y/C); for(let i=0;i<r.xs.length;i+=2){ const k=key(r.xs[i],r.ys[i]); (gr.get(k)||gr.set(k,[]).get(k)).push(i); }
-    const amWeg=(x,y,m)=>{ const cx=Math.floor(x/C), cy=Math.floor(y/C), w=Math.ceil(m/C); for(let a=-w;a<=w;a++) for(let b=-w;b<=w;b++){ const l=gr.get((cx+a)+','+(cy+b)); if(l) for(const i of l) if(Math.hypot(r.xs[i]-x,r.ys[i]-y)<m) return true; } return false; };
-    for(let d=0;d<r.len;d+=9){ if(zoneAt(r,d)!=='wald') continue; const [px,py]=posAt(r,d), hd=headingAt(r,d), nx=-Math.sin(hd), ny=Math.cos(hd);
-      for(const sd of [-1,1]) for(let t=0;t<2;t++){ const o=sd*(4+q()*72), al=(q()-.5)*7, x=px+nx*o+Math.cos(hd)*al, y=py+ny*o+Math.sin(hd)*al, rad=2+q()*3, busch=q()<.35;
-        if(amWeg(x,y,(busch?1.5:rad)+3.2)) continue; if(busch) S.bush.push({x,y,s:.6+q()*.9,c:q()}); else S.tree.push({x,y,s:rad,c:q(),pine:q()<.55,ht:9+q()*8}); } } }
+  kampWald(r,S,q); // dichter Pfälzerwald
   for(const k of ['tree','rock','bush','block','konif','grass']) S[k]=S[k].filter(o=>!frei.some(([x,y,m])=>Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m&&Math.hypot(o.x-x,o.y-y)<m));
   for(const h of S.house){ h.fw=q()<.75; h.gw=false; h.pv=false; if(h.roof==='#6f6f70'||q()<.4) h.roof=q()<.6?'#9e3a28':'#a8925c'; } // Fachwerk, Ziegel oder Stroh, keine Solardächer
   r.tri.wirt=S.house.filter(h=>h.side===1&&!h.gs).sort((a,b)=>Math.abs(a.d-r.tri.wirtD)-Math.abs(b.d-r.tri.wirtD))[0]||null;
   prepTrifelsLeben(r); } // Baulücken am Wirtshaus, Wege für Reh und Wildschwein (welt-trifels-leben.js) // Haus rechts, das dem Wirtshaus-Meter am nächsten steht
 
+// Dichter Pfälzerwald (Kampagne): zusätzliche Kiefern, Buchen und Unterholz im Wald bis 76 m neben dem Weg, nie auf dem Weg oder auf benachbarten Kehren · kiefer: Anteil Kiefern (Zahl oder Funktion des Meters)
+function kampWald(r,S,q,kiefer=.55){
+  { const C=8, gr=new Map(), key=(x,y)=>Math.floor(x/C)+','+Math.floor(y/C); for(let i=0;i<r.xs.length;i+=2){ const k=key(r.xs[i],r.ys[i]); (gr.get(k)||gr.set(k,[]).get(k)).push(i); }
+    const amWeg=(x,y,m)=>{ const cx=Math.floor(x/C), cy=Math.floor(y/C), w=Math.ceil(m/C); for(let a=-w;a<=w;a++) for(let b=-w;b<=w;b++){ const l=gr.get((cx+a)+','+(cy+b)); if(l) for(const i of l) if(Math.hypot(r.xs[i]-x,r.ys[i]-y)<m) return true; } return false; };
+    for(let d=0;d<r.len;d+=9){ if(zoneAt(r,d)!=='wald'||imDoppel(r,d)) continue; const [px,py]=posAt(r,d), hd=headingAt(r,d), nx=-Math.sin(hd), ny=Math.cos(hd);
+      for(const sd of [-1,1]) for(let t=0;t<2;t++){ const o=sd*(4+q()*72), al=(q()-.5)*7, x=px+nx*o+Math.cos(hd)*al, y=py+ny*o+Math.sin(hd)*al, rad=2+q()*3, busch=q()<.35;
+        if(amWeg(x,y,(busch?1.5:rad)+3.2)) continue; if(busch) S.bush.push({x,y,s:.6+q()*.9,c:q()}); else S.tree.push({x,y,s:rad,c:q(),pine:q()<(kiefer.call?kiefer(d):kiefer),ht:9+q()*8}); } } } }
 // ---- Gelände (aus build3D, vor dem Gelände-Mesh): Vorburg eben (nur absenken, damit nichts durch die Straße sticht), Burgberg unter dem Felsen ----
 function trifelsGelaende(h,src,dist){ const T=R.tri, n=TER.nx, res=TER.res, [kx,ky]=T.karren, [bx,by]=T.burg, hy=roadY((T.hof[0]+T.hof[1])/2)-.45, rp=T.rh+14; T.hofY=hy+.45;
   for(let k=0;k<h.length;k++){ const x=(k%n)*res+TER.x0, z=((k/n)|0)*res+TER.z0, dk=Math.hypot(x-kx,z-ky);
@@ -429,7 +431,8 @@ function gastTex(w,h,front,glow){ return canvasTex(w,h,g=>{ const B='#3e2a1c', b
   for(const [x,y] of fen){ if(glow){ const gr=g.createRadialGradient(x,y,4,x,y,34); gr.addColorStop(0,'#fff0b8'); gr.addColorStop(1,'#e8902e'); g.fillStyle=gr; g.fillRect(x-22,y-28,44,56); g.fillStyle='#000'; g.fillRect(x-2,y-28,4,56); g.fillRect(x-22,y-3,44,4); }
     else { g.fillStyle='#5a3a22'; g.fillRect(x-26,y-32,52,64); g.fillStyle='#2a2018'; g.fillRect(x-22,y-28,44,56); } }
   if(front){ if(glow){ g.fillStyle='#ffc060'; g.fillRect(232,h-96,48,87); } else { g.fillStyle='#5a3a22'; g.fillRect(226,h-104,60,95); g.fillStyle='#2a2018'; g.fillRect(232,h-96,48,87); } } }); } // offene Tür
-function buildGasthaus(T){ const A=anim.tri, G=T.gast, holz=lam('#4e3626'), box=(P,w,h,d,m,x,y,z)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); b.position.set(x,y,z); P.add(b); return b; };
+function buildGasthaus(T,A=anim.tri){ const G=T.gast, // A: Szenen-Zustand der Mission (Mission 1: anim.tri, Mission 2: anim.tt)
+  holz=lam('#4e3626'), box=(P,w,h,d,m,x,y,z)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); b.position.set(x,y,z); P.add(b); return b; };
   const H=haus({w:13,dep:9,hgt:6.4,fw:true,wall:0,shut:0,roof:'#7c3a2c',kam:.78}), y0=roadY(G.d)+.1, mf=new THREE.MeshLambertMaterial({map:gastTex(512,256,1),emissiveMap:gastTex(512,256,1,1),emissive:0xffffff}), ms=new THREE.MeshLambertMaterial({map:gastTex(256,256,0),emissiveMap:gastTex(256,256,0,1),emissive:0xffffff});
   H.children[0].material=[ms,ms,mf.clone(),mf.clone(),mf,mf]; H.children[0].material[2].emissive.set(0); H.children[0].material[3].emissive.set(0); // Front (+z, zur Straße) und Rückseite mit vielen Fenstern, Seiten mit zwei je Stockwerk
   H.position.set(G.x,y0,G.y); H.rotation.y=Math.atan2(Math.sin(G.h),-Math.cos(G.h)); world.add(H); H.updateMatrixWorld(true); // +z schaut zum Weg
@@ -452,11 +455,11 @@ function buildGasthaus(T){ const A=anim.tri, G=T.gast, holz=lam('#4e3626'), box=
   // Wirt: Schürze, Laterne in der rechten Hand, steht vor der Tür und winkt dir mit der linken
   const wirt=trMensch({kittel:'#6b4a2e',aermel:'#ece3cf',hose:'#3a3020',haar:'#8a8a86',bart:'#8a8a86'}); box(wirt.G,.36,.7,.04,lam('#e8e0d0'),0,.95,.25); // Schürze
   const lat=new THREE.Mesh(new THREE.BoxGeometry(.16,.22,.16),glow); lat.position.y=-.78; wirt.arme[1].add(lat); wirt.arme[1].rotation.x=-.35; const wl=new THREE.PointLight(0xffc870,1.4,10,2); wl.position.y=-.78; wirt.arme[1].add(wl);
-  const wp=loc(.6,0,5.6), wp0=loc(0,0,4.3); wp.y=bodenY(wp.x,wp.z); wp0.y=y0; wirt.G.position.copy(wp0); wirt.G.rotation.y=H.rotation.y; world.add(wirt.G);
+  const wp=loc(.6,0,5.6), wp0=loc(0,0,4.3); wp.y=bodenY(wp.x,wp.z); wp0.y=bodenY(wp0.x,wp0.z); // auf dem Boden vor der Tür (nicht auf Hausboden-Höhe) wirt.G.position.copy(wp0); wirt.G.rotation.y=H.rotation.y; world.add(wirt.G);
   // Teufelstisch: Sandsteinsäule mit breiter Felsplatte obendrauf, hebt sich als dunkle Silhouette vom Himmel ab (ohne Szenen-Nebel, sonst verschwimmt er hell im Dunst)
-  const [tx,tz]=T.tisch, F=new THREE.Group(), fm=lam('#4a2820'), fm2=lam('#3a1f19'); fm.fog=fm2.fog=false; F.position.set(tx,terrainAt(tx,tz)-2,tz); F.rotation.y=.4; world.add(F);
+  if(Array.isArray(T.tisch)){ const [tx,tz]=T.tisch, F=new THREE.Group(), fm=lam('#4a2820'), fm2=lam('#3a1f19'); fm.fog=fm2.fog=false; F.position.set(tx,terrainAt(tx,tz)-2,tz); F.rotation.y=.4; world.add(F);
   [[5.2,6,4.6,0,3,0,.05],[4.4,5.5,4,.3,8.5,.2,-.08],[4.8,5,4.3,-.2,13.6,-.1,.06],[3.8,3.6,3.4,.1,17.6,.1,0]].forEach(([w,h,d,x,y,z,r],i)=>{ const b=box(F,w,h,d,i%2?fm2:fm,x,y,z); b.rotation.y=r*3; b.rotation.z=r; });
-  const pt=box(F,17,2.8,10.5,fm,0,20.6,0); pt.rotation.z=.04; box(F,13,.9,8,fm2,-.4,19,.3); for(const [x,z,s] of [[6,4,2.6],[-5,-4,2],[4,-5,1.6]]){ const b=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),fm2); b.position.set(x,s*.6,z); F.add(b); } // Platte und Brocken am Fuß
+  const pt=box(F,17,2.8,10.5,fm,0,20.6,0); pt.rotation.z=.04; box(F,13,.9,8,fm2,-.4,19,.3); for(const [x,z,s] of [[6,4,2.6],[-5,-4,2],[4,-5,1.6]]){ const b=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),fm2); b.position.set(x,s*.6,z); F.add(b); } } // Platte und Brocken am Fuß (nur Mission 1: Silhouette auf der Kuppe)
   A.gast={H,sc,rauch,kp,wirt,wp,wp0,mats:[mf,ms]}; }
 function poseGasthaus(dt,t){ const A=anim.tri, G=A.gast; if(!G) return; const dk=A.dk||0, nah=R.tri.gast.d-me.d;
   G.sc.material.opacity=.75*dk; for(const m of G.mats) m.emissive.setScalar(.35+.65*dk); // in der Nacht leuchtet alles kräftiger

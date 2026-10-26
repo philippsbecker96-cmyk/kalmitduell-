@@ -123,7 +123,8 @@ const ROUTES=[{id:'kalmit', mode:'climb', title:'Kalmit-Ostrampe', sub:'ab Maika
   {id:'suedpfalz-runde', mode:'loop', title:'Südpfalz-Klassiker', sub:'Runde durch die Weinberge · echte GPX', def:suedpfalzDef(true)},
   {id:'space', mode:'space', title:'Space-Strecke', sub:'aus deinem Workout erzeugt', def:null},
   {id:'insel', mode:'space', title:'Insel-Strecke', sub:'tropischer Archipel · Untergrund je nach Intensität', def:null},
-  {id:'trifels', mode:'kamp', noTrain:true, title:'Trifels · Queichtal', sub:'Kampagne Mission 1 · aus deinem Workout berechnet', def:null}]; // Space nur im Training, Strecke entsteht aus dem Workout
+  {id:'trifels', mode:'kamp', noTrain:true, title:'Trifels · Queichtal', sub:'Kampagne Mission 1 · aus deinem Workout berechnet', def:null},
+  {id:'teufelstisch', mode:'kamp', noTrain:true, title:'Teufelstisch · Kaltenbacher Tal', sub:'Kampagne Mission 2 · aus deinem Workout berechnet', def:null}]; // Space nur im Training, Strecke entsteht aus dem Workout
 const raceLen=()=>race.mode==='train'?Infinity:R.loop?R.len*race.laps:R.len;
 const MODES={climb:{title:'Anstieg', soon:'Weitere Anstiege folgen'}, loop:{title:'Rundstrecke', soon:'Weitere Rundstrecken folgen'}, classic:{title:'Klassisches Rennen', soon:'Strecke folgt – kommt später'}, train:{title:'Training', soon:'Strecken aus allen Modi – in Dauerschleife'}, kamp:{title:'Kampagne', soon:''}}; // kamp läuft intern als train (kampagne.js)
 let routeId='kalmit';
@@ -151,7 +152,7 @@ function buildRoute(def){
   r.fans = def.burg||def.ma?r.len:Math.max(r.len*0.6, r.len-1000); // Burg: kein modernes Publikum
   r.kehren=[]; if(r.kalmit||def.burg) for(let dd=40; dd<len-40; dd+=STEP*5){ const dh=Math.abs(angDiff(headingAt(r,dd+25),headingAt(r,dd-25)));
     if(dh>1.25 && !r.kehren.some(k=>Math.abs(k-dd)<120) && !(def.burg&&(dd<1420||dd>5370))) r.kehren.push(dd); } // Burg: Ecken im Dorf und am Tor sind keine Kehren
-  prepFeld(r); makeScenery(r); if(def.typisch) prepSuedpfalz(r); if(def.burg) prepBurg(r); if(def.ma&&def.orte) prepTrifels(r); // Trifels: welt-trifels.js
+  prepFeld(r); makeScenery(r); if(def.typisch) prepSuedpfalz(r); if(def.burg) prepBurg(r); if(def.gpx==='trifels') prepTrifels(r); if(def.gpx==='teufelstisch') prepTeufelstisch(r); // Trifels: welt-trifels.js · Teufelstisch: welt-teufelstisch.js
   return r;
 }
 function posAt(r,d){ if(r.ring && d>r.len) d-=r.ring; // hinter dem Ziel: Umlaufbahn
@@ -232,7 +233,7 @@ function makeScenery(r){
     if(h){ S.house.splice(S.house.indexOf(h),1); for(const k of ['zaun','bush','konif','tree']) if(h.gid) S[k]=S[k].filter(o=>o.gid!==h.gid); S.tor=S.tor.filter(o=>o.side!==side||Math.abs(o.d-h.d)>h.w/2+o.w/2+1); } S.lamp=S.lamp.filter(o=>o.side!==side||Math.abs(o.d-d)>w/2+1.5); r.abzweig={d,side,w,len:70,geh:zo.geh??SIDEWALK}; }
 
   for(let d=0; d<r.len; d+=5){
-    const z=zoneAt(r,d); if(z==='ort'||z==='hain') continue;
+    const z=zoneAt(r,d); if(z==='ort'||z==='hain'||imDoppel(r,d)) continue;
     const f=frame(d);
     for(const side of [-1,1]){
       const inVine=z==='reben'||z==='feld', inFans=d>r.fans, tries=inVine?2:3;
@@ -287,7 +288,7 @@ function makeScenery(r){
     for(let i=0;i<4;i++){ const [x,y]=at(-22+R3()*44, off+18+R3()*10); S.tree.push({x, y, s:2.4+R3()*1.2, c:R3(), pine:false, ht:4}); } }
   if(!r.kalmit) for(let d=0; d<r.len; d+=50) if(zoneAt(r,d)==='reben'){ const f=frame(d), o=roadW(r,d)/2+.7; for(const side of [-1,1]) S.post.push({x:f.px+f.nx*side*o, y:f.py+f.ny*side*o, h:f.h}); }
   for(const hk of r.hecke){ const f=frame(hk), rw=roadW(r,hk)/2; for(const side of [-1,1]) for(let o=rw+4; o<rw+90; o+=1.6+R2()*1.6) if(R2()<.85) S.bush.push({x:f.px+f.nx*side*o+(R2()-.5), y:f.py+f.ny*side*o+(R2()-.5), s:1+R2()*.9, c:R2(), tree:R2()<.08}); }
-  for(let d=0; d<r.len; d+=8){ const f=frame(d);
+  for(let d=0; d<r.len; d+=8){ if(imDoppel(r,d)) continue; const f=frame(d);
     for(const side of [-1,1]) for(let t=0;t<3;t++){ const off=side*(50+R1()*170), x=f.px+f.nx*off+(R1()-.5)*8, y=f.py+f.ny*off+(R1()-.5)*8;
       if(zoneAt(r,d)!=='wald' && (Math.abs(off)<160 || (!r.kalmit && R1()<.8))) continue; const rad=2.4+R1()*3; if(distRoad(x,y)<rad+8) continue; S.tree.push({x,y,s:rad,c:R1(),pine:R1()<.5,ht:10+R1()*7}); } }
 
@@ -372,7 +373,7 @@ function spaceDef(segs, unit, f, kg){
 let spaceKey=null;
 const GEN_IDS=['space','insel'];
 function genEntry(id){ const e=ROUTES.find(r=>r.id===id), S=curSegs(), u=curUnit(), f=ftp(), kg=weight(); // Strecken, die aus dem Workout entstehen
-  const key=JSON.stringify([S.map(s=>[s.dur,s.a,s.b,!!s.free]),u,f,kg]); if(!e.def || e.key!==key){ e.def=(id==='insel'?islandDef:id==='trifels'?trifelsDef:spaceDef)(S,u,f,kg); e.key=key; } return e; }
+  const key=JSON.stringify([S.map(s=>[s.dur,s.a,s.b,!!s.free]),u,f,kg]); if(!e.def || e.key!==key){ e.def=({insel:islandDef,trifels:trifelsDef,teufelstisch:teufelstischDef}[id]||spaceDef)(S,u,f,kg); e.key=key; } return e; }
 
 /* ================= Insel-Strecke: flach, harte Abschnitte = schwerer Untergrund ================= */
 // Untergrund als gleichwertige Steigung: Rollwiderstand bremst wie Steigung (Crr 0,05 ≈ 5 %)
@@ -461,15 +462,18 @@ function turtle(st,teile,L){ const lb=teile.reduce((a,t)=>a+(t[0]==='b'?Math.abs
   const geh=(l,dh)=>{ st.h+=dh/2; st.x+=Math.sin(st.h)*l; st.y-=Math.cos(st.h)*l; st.h+=dh/2; st.P.push([st.x,st.y]); };
   for(const t of teile){ if(t[0]==='g'){ const l=fg?rest*t[1]/fg:0; if(l<.05) continue; const n=Math.max(1,Math.round(l/2)); for(let i=0;i<n;i++) geh(l/n,0); }
     else { const th=t[1]*Math.PI/180, r=t[2]*k, n=Math.max(2,Math.round(Math.abs(th)*r/2)); for(let i=0;i<n;i++) geh(Math.abs(th/n)*r,th/n); } } }
+// Kampagne: Strecke aus dem Workout – ein Stück je 2 s, Länge aus Watt, Gewicht und Steigung gFn(t,d,len) (len=0: fürs Tempo, sonst Mittel übers Stück, d: Meter am Anfang) · steht(t): Halt (man steht)
+function kampPlan(segs,unit,f,kg,gFn,steht){ const DT=2, T=segs.reduce((a,s)=>a+s.dur,0), raw=[], cum=[0]; let si=0;
+  for(let t=0;t<T;t+=DT){ while(si<segs.length-1 && t>=segs[si].t0+segs[si].dur) si++; const sg=segs[si], v=segVal(sg,Math.min(t+DT/2,sg.t0+sg.dur)), w=unit==='w'?v:v*f/100, d=cum[cum.length-1];
+    const len=steht&&steht(t)?.01:Math.round(vSteady(w,gFn(t+DT/2,d,0),kg)*DT*100)/100; raw.push({len, g:gFn(t+DT/2,d,len), p:Math.round(unit==='w'?v/f*100:v)}); cum.push(d+len); }
+  const dT=t=>{ const x=Math.max(0,Math.min(cum.length-1,t/DT)), i=Math.min(cum.length-2,Math.floor(x)); return cum[i]+(cum[i+1]-cum[i])*Math.max(0,x-i); }; // Meter zur Workout-Zeit
+  return {raw,cum,dT}; }
 function trifelsDef(segs, unit, f, kg){
-  const DT=2, T=segs.reduce((a,s)=>a+s.dur,0), tW=segs[0]?segs[0].t0+segs[0].dur:300, Tr=TRIFELS_T, NACH=600;
+  const tW=segs[0]?segs[0].t0+segs[0].dur:300, Tr=TRIFELS_T, NACH=600;
   const tF=Tr.sturz, tF2=tF+Tr.liegen, tA=Tr.rauf+Tr.hof/2, tA2=tA+Tr.audienz, tS=tW-Tr.szene, gAt=t=>t<Tr.rauf-Tr.rampe?7:t<Tr.rauf?10:t<Tr.rauf+Tr.hof+Tr.audienz?1.5:t<tS-Tr.aus?-5.5:t<tS?-1.5:t<tW?0:.3+.6*Math.sin(t/110);
-  const raw=[], cum=[0]; let si=0;
-  for(let t=0;t<T;t+=DT){ while(si<segs.length-1 && t>=segs[si].t0+segs[si].dur) si++; const sg=segs[si], v=segVal(sg,Math.min(t+DT/2,sg.t0+sg.dur)), w=unit==='w'?v:v*f/100, g=gAt(t+DT/2);
-    raw.push({len:t>=tS&&t<tW||t>=tA&&t<tA2||t>=tF&&t<tF2?.01:Math.round(vSteady(w,g,kg)*DT*100)/100, g, /* nach dem Sturz, beim Burgherrn und am Wirtshaus steht man */ p:Math.round(unit==='w'?v/f*100:v)}); cum.push(cum[cum.length-1]+raw[raw.length-1].len); }
+  const {raw,cum,dT}=kampPlan(segs,unit,f,kg,t=>gAt(t),t=>t>=tS&&t<tW||t>=tA&&t<tA2||t>=tF&&t<tF2); // nach dem Sturz, beim Burgherrn und am Wirtshaus steht man
   const out=raw.map((c,i)=>{ let s=0,n=0; for(let j=-4;j<=4;j++){ const o=raw[i+j]; if(o){ s+=o.g; n++; } } return {...c, g:Math.round(s/n*100)/100}; }); // Übergänge weich
   out.push({len:NACH,g:.3,p:-1}); // Reserve hinter dem Workout-Ende
-  const dT=t=>{ const x=Math.max(0,Math.min(cum.length-1,t/DT)), i=Math.min(cum.length-2,Math.floor(x)); return cum[i]+(cum[i+1]-cum[i])*Math.max(0,x-i); };
   const d1=dT(Tr.rauf), d2=dT(Tr.rauf+Tr.hof+Tr.audienz), dA=dT(tA), d3=dT(tS-Tr.aus), d4=dT(tS), dE=cum[cum.length-1];
   // Linie: Anstieg nach Norden, Rechtskehre um den Karren, Serpentinen nach Osten den Hang hinab, dann ostwärts durchs Tal
   const st={x:0,y:0,h:0,P:[[0,0]]}, rh=Math.max(12,(d2-d1)/Math.PI);
@@ -492,3 +496,43 @@ function trifelsDef(segs, unit, f, kg){
     belag:[['erde',-50,d1,0],['pflaster',d1,d2,.5],['erde',d2,d4-70,0],['pflaster',d4-70,d4+80,.5],['erde',d4+80,1e9,0]], // keine Straße: Sandweg, Kopfstein in der Vorburg und am Wirtshaus
     orte:{loewenherz:dT(75), sturz:dT(tF), hof:[d1,d2], audienz:dA, karren, burg:[karren[0],karren[1]-rh-55], wirtshaus:d4, tS, tW, jagd, wiesen, ziel:dE,
       gegen:Tr.gegen.filter(t=>jt[0]==null||tW+t<jt[0]-15).map(t=>[tW+t,dT(tW+t)]), reh:jt[0]!=null?dT(jt[0]+Tr.reh):null, sau:jt[3]!=null?dT(jt[3]+Tr.sau):null, tritsch:(a=>a?dT(a.t0+Tr.tritsch):null)(segs.find(s=>s.label==='Ausfahren'))}}; } // gegen: [s, Meter] Begegnung mit dem Gegenverkehr · reh, sau, tritsch: Meter // Meter für Welt und Ereignisse (Schritt 3–5)
+
+/* ================= Teufelstisch (Kampagne, Mission 2): wird aus dem Workout berechnet ================= */
+// Gasthaus „Zum Teufelstisch“ → Talweg (Einfahren) → Serpentinen (Anstieg) → gerade aufs Plateau (Anschleichen) → Schleife: Kreuzung, Tisch, gerade, 180°-Kurve um den Handschuhkopf,
+// gerade zurück, Gabelung, Bogen zurück auf den Weg vor der Kreuzung → zweite Runde bis zur Gabelung → links hinaus bergab Richtung Dahn.
+// Die Schleife liegt nur einmal in der Welt (doppelt: Meter der zweiten Runde, dort kein zweiter Weg und keine Bäume). Ihre Höhe hängt nur von der Stelle in der Schleife ab, nicht von der Zeit –
+// so liegt der Weg in beiden Runden gleich hoch. Schleifenlänge = Weg vom Tisch in Runde 1 bis zum Tisch in Runde 2 (bei den geplanten Watt), Gabelung = Ende von Flucht 1.
+const TEUFEL_T={vorJ:120, R:70, hub:-30, tisch:15}; // vorJ: Kreuzung so viele m vor dem Tisch · R: Radius der beiden Kurven · hub: Höhe der Schleife in der Mitte gegenüber dem Tisch (Tisch oben auf der Kuppe, Flucht bergab, rechter Abzweig wieder hinauf – so liegt die Gabelung auch mit wenig Watt am Ende von Flucht 1) · tisch: s nach Beginn von „Ertappt“ bzw. „Wieder am Tisch“ ist man am Tisch
+const imDoppel=(r,d)=>{ const D=r.def.doppelt; return !!D&&d>D[0]*r.kf&&d<D[1]*r.kf; }; // zweite Runde der Schleife: liegt schon in der Welt
+function teufelstischDef(segs, unit, f, kg){
+  const Tt=TEUFEL_T, NACH=600, t0=(l,v)=>{ const s=segs.find(s=>s.label===l); return s?s.t0:v; };
+  const tAn=t0('Anstieg',300), tSch=t0('Anschleichen',900), tT1=t0('Ertappt',1080)+Tt.tisch, tG1=t0('Abgeschüttelt',1400), tT2=t0('Wieder am Tisch',1620)+Tt.tisch;
+  const gVor=t=>tabLerp([[0,.4],[tAn-10,.4],[tAn+10,7],[tSch-10,7],[tSch+10,1.5],[tT1-60,1.5],[tT1-35,0]],t); // Talweg fast eben, Anstieg 7 %, Plateau sanft, an der Kreuzung eben
+  let dJ=1e9, L=4000, dX=1e9, gX=0, sG=0, rK=Tt.R, S=0, P=null;
+  const hl=s=>Tt.hub*(1-Math.cos(2*Math.PI*s/L))/2, hs=s=>Tt.hub*Math.PI/L*Math.sin(2*Math.PI*s/L)*100; // Höhe und Steigung an der Stelle s der Schleife (periodisch)
+  const gFn=(t,d,len)=>d<dJ?gVor(t):d<dX?(len?(hl(d+len-dJ)-hl(d-dJ))/len*100:hs(d-dJ)):tabLerp([[0,gX],[40,gX],[200,-1],[750,-3.5]],d-dX); // hinter der Gabelung bergab (die ersten 40 m wie der rechte Abzweig – dort liegen beide noch nebeneinander)
+  for(let k=0;k<5;k++){ P=kampPlan(segs,unit,f,kg,gFn); const d1=P.dT(tT1); dJ=d1-Tt.vorJ; L=Math.max(900,P.dT(tT2)-d1); // Schleife hängt von den Steigungen darin ab → ein paar Durchgänge
+    rK=Math.min(Tt.R,L*.06); S=(L-2*Math.PI*rK)/2; sG=Math.max(S+Math.PI*rK+60,Math.min(2*S+Math.PI*rK-60,P.dT(tG1)-dJ)); dX=dJ+L+sG; gX=hs(sG); } // Gabelung auf der Geraden zurück
+  const {raw,dT}=P, out=raw.map(c=>({...c})); out.push({len:NACH,g:-3.5,p:-1}); const dE=P.cum[P.cum.length-1], dAn=dT(tAn), dSch=dT(tSch);
+  // Linie: alles schmal nach Norden (hält die Karte klein, Geländeraster ≈ 7–8 m): Gasthaus, Talweg, Serpentinen (Kehren nach Norden, 60 m Abstand), gerade aufs Plateau
+  const st={x:0,y:0,h:0,P:[[0,0]]};
+  turtle(st,[['g',1],['b',-10,500],['g',1],['b',10,500],['g',1]],dAn);
+  const B=dSch-dAn, HP=Math.PI*30, n0=Math.floor((B-Math.PI*25+HP)/(220+HP)), n=Math.max(2,n0-n0%2), ser=[['g',.3],['b',-90,25]]; // gerade Zahl: endet im Osten, Schleife und Weg hinaus liegen östlich der Serpentinen
+  for(let i=0;i<n;i++){ ser.push(['g',1]); if(i<n-1) ser.push(['b',i%2?-180:180,30]); } ser.push(['b',n%2?90:-90,25],['g',.3]);
+  turtle(st,ser,B); turtle(st,[['g',1],['b',-8,500],['g',.5],['b',8,500],['g',1]],dJ-dSch);
+  // Schleife ab der Kreuzung: Gerade mit sanften Bögen (seitlich gleichen sie sich aus), 180° rechts um den Handschuhkopf, Gerade zurück, 180° rechts – endet genau an der Kreuzung
+  const iJ=st.P.length-1, wig=[['g',1],['b',-12,400],['b',12,400],['g',1],['b',12,400],['b',-12,400],['g',1]];
+  turtle(st,wig,S); const kopf=[st.x+Math.cos(st.h)*rK, st.y+Math.sin(st.h)*rK]; turtle(st,[['b',180,rK]],Math.PI*rK); turtle(st,wig,S); turtle(st,[['b',180,rK]],Math.PI*rK);
+  // zweite Runde: dieselben Punkte bis zur Gabelung, dann links hinaus
+  let c=0; for(let i=iJ+1;i<st.P.length&&c<sG;i++){ const a=st.P[i-1], b=st.P[i], l=Math.hypot(b[0]-a[0],b[1]-a[1]);
+    if(c+l>=sG){ const u=(sG-c)/l; st.P.push([a[0]+(b[0]-a[0])*u, a[1]+(b[1]-a[1])*u]); st.h=Math.atan2(b[0]-a[0],a[1]-b[1]); } else st.P.push(b); c+=l; }
+  [st.x,st.y]=st.P[st.P.length-1];
+  // hinaus: links nach Osten, dann in Schleifen hin und her (Kehren nach Süden: im Osten r 150, im Westen r 60 – bleibt ≥ 150 m östlich der Schleife) – hält die Karte klein
+  const E=dE+NACH-dX, HPm=Math.PI*105, m=Math.max(1,Math.round((E-Math.PI*112+HPm)/(750+HPm))), aus=[['b',-35,60],['b',-55,330]]; // erst scharf links (trennt sich schnell vom rechten Abzweig)
+  for(let i=0;i<m;i++){ aus.push(['g',1]); if(i<m-1) aus.push(i%2?['b',-180,60]:['b',180,150]); }
+  turtle(st,aus,E);
+  let e=0, lo=0; for(const s of out){ e+=s.len*s.g/100; lo=Math.min(lo,e); }
+  return {name:'Teufelstisch · Kaltenbacher Tal', start:'Gasthaus „Zum Teufelstisch“', finish:'Richtung Dahn', startElev:250, plainElev:250+lo-25, gpx:'teufelstisch', ma:true, planbar:true,
+    doppelt:[dJ+L,dX], poly:st.P, segs:out, zones:[['wiese',-50,dAn*.7],['wiese',dE-700,dE+NACH+50]], // Wiese im Kaltenbacher Tal und am Ende (Lichtung mit Blick auf die Dahner Felsen), sonst Pfälzerwald
+    breite:[[-50,1e9,4.4]], belag:[['erde',-50,1e9,0]],
+    orte:{anstieg:[dAn,dSch], kreuz:dJ, tisch:dJ+Tt.vorJ, kopf, rK, gabel:dJ+sG, L, raus:dX, ziel:dE, tT1, tG1, tT2}}; } // Meter; Tisch in Runde 2: tisch+L

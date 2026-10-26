@@ -121,7 +121,7 @@ function build3D(){
   if(world){ scene.remove(world); world.traverse(o=>{ o.geometry&&o.geometry.dispose&&o.geometry.dispose(); for(const mt of [].concat(o.material||[], o.userData.dry||[], (o.userData.dry&&o.userData.dry.userData.wm)||[])){ mt.map&&mt.map.dispose&&mt.map.dispose(); mt.dispose&&mt.dispose(); } }); }
   hausReset();
   world=new THREE.Group(); scene.add(world);
-  BODEN_FL.length=0; anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; anim.radler=null; anim.wb=null; anim.burg=null; anim.tri=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
+  BODEN_FL.length=0; anim.stadium=null; anim.fans=null; anim.space=null; anim.island=null; anim.autos=null; anim.radler=null; anim.wb=null; anim.burg=null; anim.tri=null; anim.tt=null; KX.on=false; KX.uK.value=0; anim.kxSpr=[]; renderer.setPixelRatio(DPR); dayLights();
   const sp=!!R.space; sky.visible=!sp; spaceSky.visible=sp; streaks.m.visible=false; scene.background.set(sp?SPACE_BG:HORIZON); scene.fog.color.set(sp?SPACE_BG:HORIZON);
   if(sp){ buildSpace(); return; }
   if(R.island){ buildIsland(); return; }
@@ -147,7 +147,7 @@ function build3D(){
   for(let pass=0;pass<12;pass++){ tmp.set(h); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; if(dist[k]<12) continue;
       h[k]=(tmp[k]*2+tmp[k-1]+tmp[k+1]+tmp[k-n]+tmp[k+n])/6; } }
   for(let k=0;k<N;k++) if(dist[k]<12) h[k]=roadY(src[k]*STEP)-STR_UNTER;
-  TER.vbw=null; TER.bach=BG?burgGelaende(h,src,dist):null; if(R.tri) trifelsGelaende(h,src,dist); // Burg: Bachbett und ebene Vorburg · Trifels: Vorburg und Burgberg (welt-trifels.js)
+  TER.vbw=null; TER.bach=BG?burgGelaende(h,src,dist):null; if(R.tri) trifelsGelaende(h,src,dist); if(R.tt) teufelstischGelaende(h,src,dist); // Burg: Bachbett und ebene Vorburg · Trifels: Vorburg und Burgberg (welt-trifels.js)
   // Höhe der nächstgelegenen Straßenstelle je Geländepunkt (geglättet) – danach richtet sich die Überhöhung, damit die Straße quer nicht kippt
   { const hr=new Float32Array(N), tq=new Float32Array(N); for(let k=0;k<N;k++) hr[k]=roadY(src[k]*STEP);
     for(let pass=0;pass<14;pass++){ tq.set(hr); for(let j=1;j<TER.nz-1;j++) for(let i=1;i<n-1;i++){ const k=j*n+i; hr[k]=(tq[k]*4+tq[k-1]+tq[k+1]+tq[k-n]+tq[k+n])/8; } }
@@ -189,7 +189,9 @@ function build3D(){
   const rtex=canvasTex(64,256,g=>{ g.fillStyle='#55575a'; g.fillRect(0,0,64,256); for(let t=0;t<600;t++){ const v=Math.random()<.5?0:255; g.fillStyle=`rgba(${v},${v},${v},.06)`; g.fillRect(Math.random()*64,Math.random()*256,2,2); }
     g.fillStyle='#ecebe4'; g.fillRect(3,0,3,256); g.fillRect(58,0,3,256); });
   rtex.wrapT=THREE.RepeatWrapping; rtex.anisotropy=8;
-  const strip=(d0,d1,inner,outer,lift,mat,uvLen,sides=[-1,1])=>{ for(const s of sides){ const i0=Math.max(0,Math.floor(d0/STEP)), i1=Math.min(R.xs.length-1,Math.ceil(d1/STEP)), m=i1-i0+1;
+  const strip=(d0,d1,inner,outer,lift,mat,uvLen,sides=[-1,1])=>{ const D=R.def.doppelt, da=D?D[0]*R.kf:0, db=D?D[1]*R.kf:0; // Teufelstisch: zweite Runde der Schleife liegt schon
+    if(D&&d0<db&&d1>da){ if(d0<da) strip(d0,da,inner,outer,lift,mat,uvLen,sides); if(d1>db) strip(db,d1,inner,outer,lift,mat,uvLen,sides); return; }
+    for(const s of sides){ const i0=Math.max(0,Math.floor(d0/STEP)), i1=Math.min(R.xs.length-1,Math.ceil(d1/STEP)), m=i1-i0+1;
       if(m<2) continue; const p=new Float32Array(m*6), uv=new Float32Array(m*4), id=[];
       for(let q2=0;q2<m;q2++){ const i=i0+q2, d=i*STEP, hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), y=roadY(d)+lift, a=s*(inner.call?inner(d):inner), b=s*(outer.call?outer(d):outer);
         p.set([R.xs[i]+nx*a,y,R.ys[i]+nz*a, R.xs[i]+nx*b,y,R.ys[i]+nz*b], q2*6); uv.set([0,d/uvLen,1,d/uvLen], q2*4);
@@ -287,7 +289,7 @@ function build3D(){
   inst(new THREE.BoxGeometry(1,1,1), lam('#fff'), S.block, o=>{ ps.set(o.x,roadY(0)+0,o.y); ps.y=terrainAt(o.x,o.y)+.32*o.s; qq.setFromAxisAngle(up,-o.h); sc.set(1.3*o.s,.62*o.s,.62*o.s); cc.set(o.s<1?'#b5866b':'#a5785f'); });
   // Herbst: einzelne Blätter auf und neben der Straße – fleckig verteilt: Laubhaufen am Rand, kahle Stücke, hier und da in die Fahrbahn geweht, im Wald stellenweise quer über die Straße
   if(HB){ const q=rng(777), L=[], AL=['#c9572a','#d9822e','#e0b33c','#a8452a','#9a6a32','#b88a3a'], AY=['#d9b03c','#e0c24a','#c99a34','#d49a38'], dens={wald:1,hain:.8,reben:.6,feld:.35,ort:.15};
-    for(let d=0; d<R.len; d+=1){ const zt=zoneAt(R,d), base=dens[zt]??.5, [x0,z0]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), tx=Math.cos(hd), tz=Math.sin(hd), w=rw(d), y=roadY(d);
+    for(let d=0; d<R.len; d+=1){ if(imDoppel(R,d)) continue; const zt=zoneAt(R,d), base=dens[zt]??.5, [x0,z0]=posAt(R,d), hd=headingAt(R,d), nx=-Math.sin(hd), nz=Math.cos(hd), tx=Math.cos(hd), tz=Math.sin(hd), w=rw(d), y=roadY(d);
       const put=(u,on)=>{ const t=q()-.5; L.push({x:x0+nx*u+tx*t, z:z0+nz*u+tz*t, y:y+(on?.135:.075), r:q()*6.3, c:(zt==='reben'?AY:AL)[q()*(zt==='reben'?4:6)|0], l:.75+q()*.4}); };
       for(const sd of [-1,1]){ const n=vnoise(d/35,sd*7.3), heap=vnoise(d/9,sd*3.1)>.78?3:1, drift=vnoise(d/22,sd*5+2)>.62?4:1, k=base*(.1+1.8*Math.max(0,n-.3))*heap*3;
         for(let i=Math.floor(k+q()); i>0; i--){ const inw=-Math.log(1-q()*.999)*.3*drift; if(q()<.3) put(sd*(w+q()*.8),false); else put(sd*Math.max(0,w-inw),true); } }
@@ -460,7 +462,7 @@ function build3D(){
     for(let i=0;i<4;i++){ box(2.4,.08,.8,lam('#7a5a3e'),-6+i*3.6,1.0,-11); box(2.4,.06,.3,lam('#7a5a3e'),-6+i*3.6,.6,-11.7); box(2.4,.06,.3,lam('#7a5a3e'),-6+i*3.6,.6,-10.3); }
     box(1.1,2.6,1.1,stoneM(.5,1),-9.5,1.8,-3.5); }
 
-  if(BG) buildBurg(); if(R.tri) buildTrifels();
+  if(BG) buildBurg(); if(R.tri) buildTrifels(); if(R.tt) buildTeufelstisch();
   buildRiders();
   world.traverse(o=>{ if(o.isMesh){ o.receiveShadow=true; o.castShadow=!(o.geometry&&o.geometry.type==='PlaneGeometry') && !o.material.transparent; } });
   kxSetup();
