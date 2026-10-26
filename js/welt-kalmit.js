@@ -505,10 +505,10 @@ function haardtY(x,z){ const H=HAARDT, gi=(H.fuss(z)-x-H.W0)/H.dw, gj=(z-H.Z0)/H
   const A=r(i,j), B=r(i+1,j), C=r(i,j+1); if(fx+fz<1) return A+(B-A)*fx+(C-A)*fz; const D=r(i+1,j+1); return D+(C-D)*(1-fx)+(B-D)*(1-fz); }
 function buildHaardt(plainY){ const H=HAARDT, sm=hSm;
   const nz=(H.Z1-H.Z0)/H.dz+1, nw=(H.W1-H.W0)/H.dw+1, pos=new Float32Array(nz*nw*3), col=new Float32Array(nz*nw*3), idx=[];
-  const cF=new THREE.Color('#34502e'), cF2=new THREE.Color('#47623a'), cH=new THREE.Color('#aab8c2'), c=new THREE.Color();
+  const cF=new THREE.Color('#34502e'), cF2=new THREE.Color('#47623a'), cH=new THREE.Color('#aab8c2'), cKu=new THREE.Color('#263d22'), c=new THREE.Color();
   for(let j=0;j<nz;j++) for(let i=0;i<nw;i++){ const z=H.Z0+j*H.dz, w=H.W0+i*H.dw, k=j*nw+i;
     pos.set([H.fuss(z)-w, plainY+haardtRise(w,z), z], k*3);
-    c.copy(cF).lerp(cF2, vnoise(w/300,z/300)).lerp(cH, .18+.45*sm(w/5000)); col.set([c.r,c.g,c.b], k*3);
+    const g=spKuppeG(H.fuss(z)-w,z); c.copy(cF).lerp(cF2, vnoise(w/300,z/300)*(1-g)).lerp(cH, (.18+.45*sm(w/5000))*(1-.45*g)).lerp(cKu, .35*g); col.set([c.r,c.g,c.b], k*3); // Burgberge dunkler bewaldet (spKuppeG, welt-suedpfalz.js)
     if(i<nw-1&&j<nz-1) idx.push(k,k+1,k+nw, k+1,k+nw+1,k+nw); }
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3)); g.setIndex(idx); g.computeVertexNormals();
   world.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({vertexColors:true, fog:false, side:THREE.DoubleSide}))); }

@@ -11,6 +11,7 @@ function spHaardt(x,z,rise){ const [[ax,az],[bx,bz]]=SP_QUEICH, ux=bx-ax, uz=bz-
   rise=rise*(1-.8*f)+f*(1-t)*60; // Talboden steigt Richtung Annweiler leicht an
   for(const [,kx,kz,H,r] of SP_KUPPEN) rise=Math.max(rise, H*Math.exp(-((x-kx)**2+(z-kz)**2)/(r*r)));
   return rise; }
+function spKuppeG(x,z){ let g=0; for(const [,kx,kz,,r] of SP_KUPPEN) g=Math.max(g, Math.exp(-((x-kx)**2+(z-kz)**2)/(r*r))); return g; } // 1 auf der Kuppe, 0 abseits (Farbe in buildHaardt, Wald unten)
 
 // ---- Kleine Kalmit: Kuppe im Gelände (aus build3D), Reben am Hang, oben Trockenrasen ----
 function spKalmitchenG(x,z){ const K=SP_KALMITCHEN; return Math.exp(-((x-K.x)**2+(z-K.z)**2)/(K.r*K.r)); }
@@ -109,6 +110,12 @@ function spHaardtWald(plainY){ const q=rng(4711), L=[], HB=race.season==='herbst
     if(SP_KUPPEN.some(([,kx,kz])=>Math.hypot(kx-x,kz-z)<70)) continue;
     let y=plainY+haardtY(x,z); if(inTer(x,z)) y=Math.max(y,terrainAt(x,z));
     L.push({x,z,y,s:5+q()*4,c:q(),k:.18+.45*hSm(w/5000)}); }
+  // Burgberge zugewachsen: großer Wald auf den Kuppen (weiter hinten größer, sonst aus 3–5 km nicht zu sehen), um die Burg frei
+  for(const [,kx,kz,,r] of SP_KUPPEN) for(let zz=kz-r; zz<kz+r; zz+=32) for(let xx=kx-r; xx<kx+r; xx+=32){ const x=xx+(q()-.5)*26, z=zz+(q()-.5)*26, d=Math.hypot(x-kx,z-kz), w=HAARDT.fuss(z)-x;
+    if(d>r*.95||d<75||w<1250) continue; // vorne macht das der Haardtwald oben
+    if(Math.exp(-((x-kx)**2+(z-kz)**2)/(r*r))<spKuppeG(x,z)-1e-6) continue; // Überlappung: nur die stärkste Kuppe
+    if(rp.some(([a,b])=>Math.abs(a-x)<240&&Math.abs(b-z)<240&&Math.hypot(a-x,b-z)<240)) continue;
+    L.push({x,z,y:plainY+haardtY(x,z),s:(5+q()*4)*(1+1.6*hSm((w-1000)/3000))*(.55+.45*hSm((d-75)/180)),c:q(),k:.12+.4*hSm(w/5000)}); }
   if(!L.length) return; const im=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,0), new THREE.MeshLambertMaterial({fog:false}), L.length), m4=new THREE.Matrix4(), qq=new THREE.Quaternion(), up=new THREE.Vector3(0,1,0), c=new THREE.Color();
   const GR=['#7d9a3e','#6a8a3a','#4f6e35','#5d7d3a'], HE=['#c9a040','#b8862e','#a8682a','#8a7a3a']; // Kastanie hellgrün, Buche, Eiche · Herbst: golden, rostbraun
   L.forEach((o,i)=>{ qq.setFromAxisAngle(up,o.c*6); m4.compose(new THREE.Vector3(o.x,o.y+o.s*.6,o.z),qq,new THREE.Vector3(o.s,o.s*.85,o.s)); im.setMatrixAt(i,m4); im.setColorAt(i,c.set((HB?HE:GR)[o.c*4|0]).lerp(SP_DUNST,o.k)); });
