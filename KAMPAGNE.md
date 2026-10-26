@@ -125,7 +125,7 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 
 ## Mission 3: Dahn – Der Jungfernsprung
 - **Ort:** Dahn, Felsen „Jungfernsprung“, Dahner Felsenland.
-- **Story:** Eine Magd hat Trothas Pläne belauscht, seine Schergen jagen sie. Laut Sage sprang sie vom Felsen, ihr Rock bremste den Fall, wo sie aufkam, entsprang eine Quelle. Du hilfst ihr bei der Flucht und hältst die Verfolger auf Abstand; die Quelle unten ist Kontrollpunkt/Belohnung. Sie verrät dir, wann der Damm brechen soll.
+- **Story:** Eine Magd hat Trothas Pläne belauscht, seine Schergen jagen sie. Laut Sage sprang sie vom Felsen, ihr Rock bremste den Fall, wo sie aufkam, entsprang eine Quelle. Du hilfst ihr bei der Flucht und hältst die Verfolger auf Abstand; die Quelle unten ist Kontrollpunkt/Belohnung. Sie verrät dir, wo Trotha die Bauern gefangen hält (die du im Finale im Burghof befreist).
 - **Rolle:** längere Bergintervalle.
 - **Workout-Entwurf (≈40 min):** 10 min Einfahren 50→65 % · 3 × (5 min 88–92 % Flucht bergauf + 3 min 55 %) · 6 min Ausfahren 50 %.
 - **Highlight Jungfernsprung (Nutzer-Idee):**
@@ -136,18 +136,51 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
   5. Landung: Einfedern, Kamerawackeln, weiterfahren. Wo sie aufkommt, entspringt die Quelle, sie winkt dir nach. Die Ritter bleiben oben an der Kante stehen.
   - Flug als kurze Verschnaufpause, danach Ausfahren. Technik: für ein paar Sekunden feste Bewegung statt Physik, Zeitlupe und Kamerafahrt (an `startKamera` und Kamerawackeln in `effekte.js` anlehnen). Neu: Mitfahrerin in Sitzhaltung auf dem Gepäckträger, Rock, der sich aufbläht und gleitet. Die Dahn-Welt braucht dafür eine Geländekante (Felsen oben, tiefere Stufe, Straße unten weiter).
 
-## Mission 4 (Finale): Berwartstein – Drache und Flut
+## Mission 4 (Finale): Berwartstein – Drache und Hans Trapp
 - **Ort:** Erlenbach und Burg Berwartstein, bestehende Strecke (`welt-berwartstein.js`, `welt-dorf.js`, `berwartsteinDef`).
-- **Story:** Start am Bauernfest in Erlenbach, alle ahnungslos. Der Drache vom Drachenfels greift an, Trotha lässt den Damm brechen. Du musst vor Drache **und** Flutwelle zur Burg fahren und Trotha besiegen. Trotha steht oben auf der Burgmauer, ruft höhnische Sprüche und hetzt den Drachen auf dich; erreichst du trotz Drache und Flut das Burgtor, ist er besiegt. Abschluss-Tafeln: Rückkehr zum Trifels, der Burgherr vertraut dir das Lösegeld an. Drache mit Überflügen und Feuer gibt es schon.
-- **Rolle:** Höhepunkt, härteste Intervalle.
-- **Workout-Entwurf (≈41 min):** 10 min Einfahren 50→65 % (Fest, Dorf) · 3 × (3 min 105 % Drachenflucht + 3 min 55 %) · 5 min 65 % · 3 min 105–110 % Flucht vor der Flutwelle ins Ziel · 5 min Ausfahren 50 %.
+- **Story (vom Nutzer bestätigt):** Man fährt im Grunde die Berwartstein-Strecke: Start am Bauernfest in Erlenbach, Wegelagerer, Bogenschütze, auf dem Weg hinauf zur Burg greift der Drache an. Im Burghof wartet Hans von Trotha (Hans Trapp) und wird besiegt wie der Schwarze Ritter in „Ritter der Kokosnuss“. Abschluss-Tafeln: Rückkehr zum Trifels, der Burgherr vertraut dir das Lösegeld an. Drache mit Überflügen und Feuer gibt es schon. Keine Flutwelle mehr (siehe Bausteine).
+- **Rolle:** Höhepunkt, härteste Intervalle; sie werden kürzer und härter bis zum Burghof.
+- **Workout (vom Nutzer bestätigt, 45:00):**
+  | Zeit | Abschnitt | Dauer | % FTP | Szene |
+  |---|---|---|---|---|
+  | 0:00 | Einfahren | 7:00 | 50 → 75 | Fest, Dorf Erlenbach |
+  | 7:00 | Locker | 3:00 | 60 | Ortsausgang, Bauern warnen |
+  | 10:00 | **Wegelagerer** | 4:00 | 88 → 100 | Flucht vor der Staubwolke |
+  | 14:00 | Erholung | 4:00 | 55 | Wald, Bach |
+  | 18:00 | **Bogenschütze** | 4:00 | 90 → 105 | Pfeile schlagen neben dir ein |
+  | 22:00 | Erholung | 3:00 | 55 | Waldrand, ein Schatten zieht über dich hinweg |
+  | 25:00 | **Drache 1** | 2:00 | 100 → 115 | Drache stößt vom Burgfelsen herab |
+  | 27:00 | Erholung | 2:00 | 55 | Deckung unter Felsnasen |
+  | 29:00 | **Drache 2** | 2:00 | 105 → 120 | Jagd den Burgweg hinauf, Feuer im Nacken |
+  | 31:00 | Erholung | 4:00 | 55 | Vorburg, Zugbrücke, Burgtor |
+  | 35:00 | **Burghof** | 6 × (0:20 / 0:20) | 130 / 55 | Hans Trapp verliert Arm um Arm, Ketten, Ehrenrunde |
+  | 39:00 | Ausfahren | 6:00 | 70 → 50 | Jubel, Abfahrt ins Tal, das Dorf am Weg |
+- **Übergang zur Burg (vom Nutzer bestätigt):** Drache 2 endet damit, dass du gerade noch über die Zugbrücke kommst, das Tor kracht hinter dir zu, der Drache prallt dagegen – erledigt, ohne Kampf.
+- **Burghof wie eine Halfpipe (Nutzer-Idee):** Man fährt im Hof hin und her, je Durchfahrt (20 s) ein Hieb, an Burg bzw. Burgtor wenden (20 s Pause):
+  1. Einfahrt in den Hof: linker Arm ab · Wende an der Burg
+  2. rechter Arm ab · Wende am Burgtor
+  3. rechtes Bein ab · Wende an der Burg
+  4. linkes Bein ab, übrig bleibt nur der Rumpf
+  5. Ketten der angeketteten Bauern und Burgbewohner abfahren, sie sind frei
+  6. Ehrenrunde, alle jubeln
+  - **Halfpipe-Enden (Nutzer-Idee):** An der Burg steht eine Hütte/ein Gebäude/ein Laden, davor eine Rampe (Schubkarren, angelehntes Brett o. ä.): man fährt hoch, springt oben kurz ab wie ein „Air“ beim Skateboarden und fährt an der Burg entlang wieder hinunter. Am anderen Ende (Burgtor/Mauer) ebenfalls etwas zum Hochfahren, oben „grindet“ man ein Stück an Burgtor oder Mauerkrone entlang und fährt wieder hinab.
+  - **Ausgearbeitet (vom Nutzer bestätigt):**
+    - **Air an der Burg:** Schmiede am Fuß der Burg, davor eine Schubkarre mit schräg angelehntem Brett als Rampe. Hochfahren, kurz abheben, in der Luft umdrehen, auf der Rampe landen, Kamera schwenkt mit, Zeitlupe (hilft auch, die Intervalle zu timen).
+    - **Grind am Tor:** Heuwagen (Deichsel nach oben, Säcke/Fässer) vor Tor bzw. Mauer als Auffahrt. Oben ein Stück an Mauerkrone oder Torbalken entlangrutschen, Funken unter dem Rad, abspringen, zurück in den Hof.
+    - **Timing:** Durchfahrt = 20 s Intervall (130 %), Hieb gegen Trapp in der Mitte des Hofs. Air bzw. Grind und Rückfahrt bis zur nächsten Durchfahrt = 20 s Pause. Abwechselnd: Arm 1 → Air (Burg) → Arm 2 → Grind (Tor) → …
+    - **Hans Trapp** bleibt in der Hofmitte, bewegt sich etwas hin und her (nicht zu viel).
+    - **Zuschauer** (Burgbewohner, befreite Bauern) jubeln bei jedem Air und Grind.
+    - Technik: Air und Grind für ein paar Sekunden fester Ablauf statt Physik (Rampe, Flugbahn, Landung vorgegeben), wie beim Jungfernsprung.
+  - Trapp gibt nicht auf („Is doch nur e Kratzer!“), Sprüche schreibe ich im Stil, Nutzer prüft. Ob der Drache Trapp gehört, ist egal.
+- **Ausfahren:** lockere Jubelrunde, dann Abfahrt von der Burg ins Tal, das ganze Dorf am Weg.
 
 ## Bausteine (grob)
 - Kampagnen-Menü in der Lobby, Missionsauswahl, Fortschritt speichern (`kd-kampagne`).
 - Missions-Definition: Workout-Blöcke (Dauer, % FTP) + Ereignisse pro Block (Text/Sprechblase, Verfolger starten/stoppen). An bestehende Workouts in `training.js` anlehnen.
 - Ablauf: Tafeln vor und nach der Mission, keine Bewertung.
 - Neue Welten: Trifels/Annweiler, Teufelstisch, Dahn – je eine Welt ist ungefähr so viel Arbeit wie Berwartstein bisher. Alternative zum Einstieg: erst Gerüst + Mission 4 auf der bestehenden Strecke bauen und testen.
-- Neue Effekte: Flutwelle als Verfolger (Finale), Verfolger-Schergen (Mission 3).
+- Neue Effekte: Verfolger-Schergen (Mission 3).
+- **Flutwelle (allgemeine Idee, nicht mehr in Mission 4):** Trotha lässt den Damm der Wieslauter brechen (geschichtlich belegt), eine Welle als Verfolger, vor der man davonfährt. Noch keiner Mission zugeordnet; passt z. B. zur Bonusmission aus Sicht von Weißenburg.
 - **Infotafeln – in Mission 1 umgesetzt:** Einträge mit `info:true` in `start`/`mitte` von `KAMP` (`kampagne.js`), Bild über `img` (Dateien in `kampagne/bilder/`, Bilder vom Nutzer im Buchmalerei-Stil, Seitenverhältnis bleibt), eigener Stil (helles Pergament, roter Rand mit Goldlinie, Titel dunkelrot; `#kampTafel.info` in `style.css`), je 25 s wie die Story-Tafeln. Mission 1: Richard Löwenherz und Gefangen auf dem Trifels (Anstieg nach dem Sturz, ab 1:28), Hans von Trotha (Abfahrt, 4:00; ergänzt die Tafel „Der Auftrag des Burgherrn“, ohne sie zu wiederholen), Die Elwetritsche (2 min nach dem Einfahren, vor Jagd 1). Weitere Infotafeln in Mission 1 nicht gewünscht.
 - **Ursprüngliche Idee Infokästen (vom Nutzer):** während der Fahrt kurze Infotafeln zu historischen Figuren (Richard Löwenherz, Hans von Trotha …), Burgen (Trifels, Berwartstein, Dahn), Sagen (Elwetritsche, Teufelstisch, Jungfernsprung) und der Region (Wasgau, Pfälzerwald, Queichtal). Klein am Bildrand, nicht bildfüllend wie die Story-Tafeln, ein paar Sätze, ≈ 15–20 s sichtbar; ausgelöst an Meter/Zeit, passend zum Ort oder zur gerade getroffenen Figur, am besten in den lockeren Workout-Phasen. Hochdeutsch, sachlich (Sage klar als Sage kennzeichnen). Optional im Menü abschaltbar.
 - Knappe: Figur + Holzrad, Abstandslogik (zurückfallen/aufholen je nach Workout-Block), Sprüche pro Block. Aufwand klein bis mittel, Esel wäre der größte Einzelposten.
@@ -169,9 +202,8 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
 5. Ablauf, Ereignisse und Texte; Story-Tafeln ohne Bild, Infotafeln mit Bildern vom Nutzer (`kampagne/bilder/`).
 
 ## Offene Fragen
-- **Berwartstein und Vorausberechnung:** Berwartstein ist 5,57 km fest gebaut, bei Anfängertempo ≈ 12–15 min. Für Mission 4 braucht es mehr Strecke (z. B. Anfahrt durchs Tal davor) und Szenen, die sich an die berechneten Meter anpassen.
-- Workouts: Mission 1 bestätigt, Vorschläge des Nutzers zu Mission 2–4 folgen.
-- Wie wird Trotha genau besiegt? (flieht von der Burg, ergibt sich, oder sein Drache wendet sich gegen ihn)
+- **Berwartstein und Ankunftszeit (gelöst, vom Nutzer bestätigt):** Strecke 5,59 km mit ≈ 400 Hm (≈ 7 %), bei 80 kg mit 200 W ≈ 32 min, mit 150 W ≈ 42 min. Workout bis zum Tor ≈ 72 % FTP → Ankunft je nach FTP 29–57 min statt 35:00. Lösung: Strecke bleibt wie gebaut (Szenen an festen Metern), stattdessen Tempo anpassen – Faktor auf die Steigung in der Physik (gezeichnet bleibt sie, wie bei Space), laufend nachgeregelt, damit man bei ≈ 35:00 am Burgtor ist, auch wenn jemand ein Intervall nicht schafft. Korrektur vor allem in den Erholungen (v. a. die 4 min vor dem Tor), damit man in den Intervallen nichts merkt. Im ERG-Modus spürt man die Steigung nicht. Genau treffen müssen nur Zugbrücke (Ende Drache 2) und Burghof; der Drache fliegt und kann überall auftauchen. Neu zu bauen bleibt: Burghof als Halfpipe und Abfahrt ins Tal fürs Ausfahren.
+- Workouts: Mission 1 und 4 bestätigt, Vorschläge des Nutzers zu Mission 2–3 folgen.
 - Namen: Knappe, Burgherr des Trifels.
 - Weitere Ideen: Bonusmission aus Sicht von Weißenburg (Stadt vor der Flut warnen).
 - Ideen Mission 1 (vom Nutzer, noch nicht ausgearbeitet): **Elwetritsche-Fallen** und **Neumond**.
