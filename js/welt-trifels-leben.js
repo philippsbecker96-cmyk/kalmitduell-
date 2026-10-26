@@ -253,7 +253,7 @@ function triTon(dt,t,rt){ const A=anim.tri, T=R.tri, L=A.leben, K=A.sk, run=race
   const tritschNah=E&&!E.fertig&&me.d>T.tritsch-60, fernGast=!G||me.d<G.d-700, aus=run&&K&&rt>=K.heim+2; // aus: Heimweg im Nebel nach Friedels Abschied, bis 700 m vor dem Gasthaus
   if(aus&&fernGast&&!tritschNah){ const x=rt-K.heim-8, n=Math.floor(x/150); grusel(x-n*150,.8,n,'uhA'+n); } // im Nebel
   for(const n of GR) triMusik(n,an&&n===gn?uh:0,dt,false);
-  if(run&&K&&K.J[1]&&einmal('wolf',rt>=K.J[1].t0+135&&rt<K.J[1].t0+145)) triEins('wolfsgehaeul'); // nach Jagd 2: Wolf heult, bevor Friedel fragt „Hosch du des Geheul ghört?“ (+140)
+  if(run&&K&&K.J[1]&&einmal('wolf',rt>=K.J[1].t0+135&&rt<K.J[1].t0+145)) triEins('wolfsgehaeul'); // nach Jagd 2: Wolf heult, bevor Friedel fragt „Hosch du des Geheul ghört?“ (+146)
   // Gemütlich (taverne): am Wirtshaus und am Gasthaus im Ziel (lauter, je näher) – still während der Ankunfts-Musik
   let gm=Math.max(triFern(W3,90),triFern(gp,130)); if(ank) gm=0; triMusik('taverne',an?gm:0,dt);
   // Unterwegs (folk1, folk2, happy): Wiedergabeliste, je Fahrt gemischt, 4–8 s Pause zwischen den Stücken – nach dem Thema bis zum Wirtshaus und auf den letzten 700 m vor dem Gasthaus (macht dort weiter, wo es aufgehört hat)

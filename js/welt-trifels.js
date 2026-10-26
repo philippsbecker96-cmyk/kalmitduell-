@@ -314,11 +314,11 @@ const TRI_TXT={dorfmann:'Zeh Gulde, dass du heit owend kä Elwetritsch fangsch!'
 function triSkript(){ const S=race.woSegs||[], tW=S[0]?S[0].t0+S[0].dur:480, tS=tW-TRIFELS_T.szene, J=S.filter(s=>/Jagd/.test(s.label)), L=[], X=TRI_TXT;
   const sag=(t0,dur,wer,txt)=>{ if(Array.isArray(txt)) txt.forEach((x,i)=>L.push({t0:t0+dur*i/txt.length,t1:t0+dur*(i+1)/txt.length,wer,txt:x})); else L.push({t0,t1:t0+dur,wer,txt}); }; // lange Sprüche: mehrere Blasen nacheinander
   sag(tS+1,6,'dorfmann',X.dorfmann); sag(tS+7,4,'friedel',X.friedel1); sag(tS+11,8,'dorfweib',X.dorfweib); sag(tS+19,11,'friedel',X.friedel2); // Zwischenszene am Wirtshaus
-  J.forEach((j,k)=>{ const a=j.t0; sag(a-7,7,'friedel',X.ank[k]); sag(a+3,5,'friedel',X.hopp); if(k<4) sag(a+10,6,'friedel',X.zurueck[k]);
+  J.forEach((j,k)=>{ const a=j.t0; sag(a-7,7,'friedel',X.ank[k]); if(k===0||k===4) sag(a+3,5,'friedel',X.hopp); if(k<4) sag(a+10,6,'friedel',X.zurueck[k]);
     if(k<4) sag(a+j.dur+1,6,'friedel',X.weg[k]); else sag(a+j.dur-3,9,'friedel',X.fang);
     if(k===0) sag(a+TRIFELS_T.schafe,9,'friedel',X.schafe); // nach den Schafen auf dem Weg (welt-trifels-wiesen.js)
     if(k<3){ if(k) sag(a+70,8,'friedel',X.lob[k-1]); // nach Jagd 1 kein Lob (vom Nutzer gewünscht: dort reichen die Schafe)
-      sag(a+140,9,'friedel',X.angst[k]); } if(k===3){ sag(a+42,6,'friedel',X.lampe); sag(a+TRIFELS_T.sau-2,13,'friedel',X.sau); } }); // Wildschwein nach Jagd 4 (welt-trifels-leben.js)
+      sag(a+(k===1?146:140),9,'friedel',X.angst[k]); } if(k===3){ sag(a+42,6,'friedel',X.lampe); sag(a+TRIFELS_T.sau-2,13,'friedel',X.sau); } }); // Wildschwein nach Jagd 4 (welt-trifels-leben.js) // Angst nach Jagd 2 erst, wenn das Wolfsgeheul (+135, 8 s) verklungen ist
   const G=S.find(s=>s.label==='Grundlage'), T=race.woT||0, heim=G?G.t0+Math.round(G.dur*.55):T-52; sag(heim-21,20,'friedel',X.ende); // Abschied in der Grundlage, dann kehrt er um – das Ausfahren fährt man allein
   const lampe=J[3]?J[3].t0+48:heim; // nach Friedels Lampen-Spruch gehen beide Laternen richtig an
   return {L,tS,tW,J,T,heim,lampe}; }

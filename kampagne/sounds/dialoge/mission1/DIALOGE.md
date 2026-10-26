@@ -62,7 +62,7 @@ Je Jagd: Ankündigung, Anfeuern, (Jagd 1–4) Zurückfallen, am Ende Entwischt b
 | `friedel_ank3` | vor Jagd 3 | Wie frech se uns aguckt, die mänt a, sie is de Kees! |
 | `friedel_ank4` | vor Jagd 4 | Uffbasse, die is gscheit wie sunscht was. |
 | `friedel_ank5` | vor Jagd 5 | Des is die letzscht Chance! Ich halt schummo de Sack uff! |
-| `friedel_hopp` | in jeder Jagd | Hopp, hopp, alleweil hemmer se! |
+| `friedel_hopp` | Jagd 1 und 5 | Hopp, hopp, alleweil hemmer se! |
 | `friedel_zurueck1` | Jagd 1, fällt zurück | Jetz wart doch bitte uff mich! |
 | `friedel_zurueck2` | Jagd 2 | Mein Bock is oich longsam… |
 | `friedel_zurueck3` | Jagd 3 | Mei Wade krampfen! |

@@ -96,7 +96,7 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
   3. „Wie frech se uns aguckt, die mänt a, sie is de Kees!“
   4. „Uffbasse, [name], die is gscheit wie sunscht was.“
   5. „Des is die letzscht Chance! Ich halt schummo de Sack uff, [name]!“
-- **Während der Jagd:** „Hopp, hopp, alleweil hemmer se!“ · Countdown: „Noch zeh Herzschläch…“, „Noch finf!“
+- **Während der Jagd:** „Hopp, hopp, alleweil hemmer se!“ (nur Jagd 1 und 5, vom Nutzer gewünscht) · Countdown: „Noch zeh Herzschläch…“, „Noch finf!“
 - **Friedel fällt zurück:** „Jetz wart doch bitte uff mich!“ · „Mein Bock is oich longsam…“ · „Mei Wade krampfen, [name]!“
 - **Elwetritsche entwischt (nach Jagd 1–4):**
   1. „Weg isse – ins Gebisch!“
