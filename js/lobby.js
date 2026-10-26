@@ -27,7 +27,7 @@ function renderRouteList(){
   const ok=list.some(r=>r.id===routeId) && R && R.def===list.find(r=>r.id===routeId).def;
   $('todBox').style.display=ok&&!R.space?'':'none'; $('todNight').style.display=ok&&R.stadium?'':'none'; $('rainOn').closest('.opt').style.display=ok?'':'none'; $('seaBox').style.display=ok&&!R.stadium&&!R.island&&!R.def.burg?'':'none'; document.querySelectorAll('.sea').forEach(b=>b.disabled=race.role==='guest'); // draußen nur Tag/Abend
   if(ok&&!R.stadium&&race.tod==='nacht'){ race.tod='abend'; document.querySelectorAll('.tod').forEach(b=>b.classList.toggle('sel',b.dataset.tod==='abend')); } document.querySelectorAll('.tod').forEach(b=>b.disabled=race.role==='guest'); $('rainOn').disabled=race.role==='guest';
-  if(race.kamp){ const T=woTotal(), on=!!(conn&&conn.open); if(race.tod!=='abend'){ race.tod='abend'; document.querySelectorAll('.tod').forEach(b=>b.classList.toggle('sel',b.dataset.tod==='abend')); applyEnv(); } $('todBox').style.display='none'; /* Kampagne: immer Abenddämmerung */ $('routeSub').textContent=ok?`Mission ${race.kamp.nr}: ${race.kamp.titel} · ${KST.stufe==='hart'?'Hart':'Leicht'} · Workout ${fmtT(T)} · Trainer hält die Watt (ERG) · ${R.def.planbar?`${R.name} · ${de(R.len/1000,1)} km, aus deinem Workout berechnet`:`Platzhalter-Strecke ${R.name} in Dauerschleife`}`:'';
+  if(race.kamp){ const T=woTotal(), on=!!(conn&&conn.open), tod=race.kamp.tod||'abend'; if(race.tod!==tod){ race.tod=tod; document.querySelectorAll('.tod').forEach(b=>b.classList.toggle('sel',b.dataset.tod===tod)); applyEnv(); } $('todBox').style.display='none'; /* Kampagne: Tageszeit je Mission (tod), sonst Abenddämmerung */ $('routeSub').textContent=ok?`Mission ${race.kamp.nr}: ${race.kamp.titel} · ${KST.stufe==='hart'?'Hart':'Leicht'} · Workout ${fmtT(T)} · Trainer hält die Watt (ERG) · ${R.def.planbar?`${R.name} · ${de(R.len/1000,1)} km, aus deinem Workout berechnet`:`Platzhalter-Strecke ${R.name} in Dauerschleife`}`:'';
     $('lapsInfo').textContent=''; $('btnStart').disabled=!ok||on||!KST.stand||!!race.kamp.bald||T<10;
     $('startHint').textContent=on?'Die Kampagne gibt es nur allein – nicht online.':!KST.stand?'Wähle zuerst, ob du Bauer oder Bäuerin bist.':'Die Tafeln laufen schon im Einfahren – einfach locker treten.'; return; }
   if(race.mode==='train'){ const T=woTotal(); $('routeSub').textContent = ok ? R.space?`Space-Strecke aus dem Workout · Steigung je nach Intensität · Schub ab 80 % FTP · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)`:R.island?`Insel-Strecke aus dem Workout · Untergrund je nach Intensität · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)`:`${R.name} in Dauerschleife · Workout ${fmtT(T)} · Trainer hält die Watt (ERG)` : 'Strecke wählen';
@@ -53,18 +53,8 @@ const setLaps=n=>{ race.laps=Math.max(1,Math.min(30,n)); $('lapsV').textContent=
 $('lapMinus').onclick=()=>setLaps(race.laps-1); $('lapPlus').onclick=()=>setLaps(race.laps+1);
 $('draftOn').onchange=()=>{ race.draft=$('draftOn').checked; draftLabel(); sendCfg(); };
 function draftLabel(){ $('draftLbl').textContent=$('draftOn').checked?'An – dicht hinter dem Gegner brauchst du weniger Watt':'Aus – jeder fährt im Wind'; }
-function renderRiderCards(){ document.querySelectorAll('.rcard').forEach(c=>{ const R2=RIDERS[c.dataset.k]; c.querySelector('b').textContent=R2.name; c.querySelector('span').textContent=R2.desc; });
-  document.querySelectorAll('.redit').forEach(b=>b.disabled=!!remoteLooks[b.dataset.k]); fillBotSelect(); }
-function fillBotSelect(){ const sl=$('botRider'); if(botKey===myKey) botKey=RKEYS.find(k=>k!==myKey);
-  sl.innerHTML=RKEYS.filter(k=>k!==myKey).map(k=>`<option value="${k}"${k===botKey?' selected':''}>als ${esc(RIDERS[k].name)}</option>`).join(''); }
-function selectRider(k){
-  myKey=k; document.querySelectorAll('.rcard').forEach(c=>{ c.classList.toggle('sel',c.dataset.k===k); });
-  fillBotSelect(); if(!(conn&&conn.open)) oppKey=botKey; opp.name=RIDERS[oppKey].name;
-  if(race.role==='host') sendCfg(); if(race.role==='guest') send({t:'hello',rider:myKey,look:LOOKS[myKey]});
-  if(world&&R&&R.def&&R.def.ma&&KST.stand==='baeuerin') rebuildRiders(); // Kampagne: Rock und Kopftuch wandern zum neu gewählten Fahrer
-}
-document.querySelectorAll('.rcard').forEach(c=>c.onclick=()=>{ if(c.classList.contains('taken')) return; selectRider(c.dataset.k); });
-$('botRider').onchange=()=>{ botKey=$('botRider').value; if(!(conn&&conn.open)){ oppKey=botKey; opp.name=RIDERS[oppKey].name; } };
+function renderRiderCards(){ document.querySelectorAll('.rcard').forEach(c=>{ const R2=RIDERS[c.dataset.k]; c.querySelector('b').textContent=R2.name; c.querySelector('span').textContent=R2.desc; }); }
+document.querySelectorAll('.rcard').forEach(c=>c.onclick=()=>openEditor(c.dataset.k)); // Klick auf den eigenen Fahrer: bearbeiten
 /* ---------- Fahrer-Editor ---------- */
 const ED={key:null,look:null,r:null};
 const ED_FIELDS=[['name','Name','text'],['ui','Kennfarbe (Schild, Karte)','color'],['build','Körperbau: klein/breit ↔ groß/schlank','range'],
@@ -77,14 +67,14 @@ function edForm(){ $('edForm').innerHTML=ED_FIELDS.map(([f,lab,typ,opts])=>{ con
       typ==='range'?`<input type="range" data-f="${f}" min="0" max="100" value="${Math.round(v*100)}">`:typ==='check'?`<input type="checkbox" data-f="${f}"${v?' checked':''}>`:
       `<select data-f="${f}">${opts.map(([o,t])=>`<option value="${o}"${o===v?' selected':''}>${t}</option>`).join('')}</select>`;
     return `<label class="ef${typ==='text'||typ==='range'?' wide':''}"><span>${lab}</span>${inp}</label>`; }).join(''); }
-function openEditor(k){ ED.key=k; ED.look={...LOOKS[k]}; $('edTitle').textContent=`${RIDERS[k].name} bearbeiten`; edForm(); edPreview(); $('editor').style.display='flex'; }
+function openEditor(k){ ED.key=k; ED.look={...LOOKS[k]}; $('edTitle').textContent=ichNeu?'Erstelle deinen Fahrer':`${RIDERS[k].name} bearbeiten`; edForm(); edPreview(); $('editor').style.display='flex'; }
 function closeEditor(){ $('editor').style.display='none'; if(ED.r) prev.sc.remove(ED.r.g); ED.r=null; ED.key=null; }
 $('edForm').addEventListener('input',e=>{ const f=e.target.dataset.f; if(!f) return; const el=e.target;
   ED.look[f]=el.type==='checkbox'?el.checked:el.type==='range'?el.value/100:el.value; edPreview(); });
-document.querySelectorAll('.redit').forEach(b=>b.onclick=()=>{ if(!b.disabled) openEditor(b.dataset.k); });
+document.querySelectorAll('.redit').forEach(b=>b.onclick=()=>openEditor(b.dataset.k));
 $('edCancel').onclick=closeEditor;
 $('edReset').onclick=()=>{ ED.look={...LOOK_DEF[ED.key]}; edForm(); edPreview(); };
-$('edSave').onclick=()=>{ const k=ED.key; if(!String(ED.look.name||'').trim()) ED.look.name=LOOK_DEF[k].name; LOOKS[k]={...ED.look}; saveLooks(); closeEditor(); rebuildRiders(); opp.name=RIDERS[oppKey].name;
+$('edSave').onclick=()=>{ const k=ED.key; if(!String(ED.look.name||'').trim()) ED.look.name=LOOK_DEF[k].name; LOOKS[k]={...ED.look}; saveLooks(); ichNeu=false; closeEditor(); rebuildRiders(); opp.name=RIDERS[oppKey].name;
   if(k===myKey){ if(race.role==='host') sendCfg(); if(race.role==='guest') send({t:'hello',rider:myKey,look:LOOKS[myKey]}); } };
 function setTod(tod,tell=true){ race.tod=['tag','abend','nacht'].includes(tod)?tod:'tag'; document.querySelectorAll('.tod').forEach(b=>b.classList.toggle('sel',b.dataset.tod===race.tod)); applyEnv(); renderRouteList(); if(tell) sendCfg(); }
 // Jahreszeit (Kalmit, Südpfalz): Farben werden beim Aufbau gesetzt – beim Wechsel wird die Welt neu gebaut

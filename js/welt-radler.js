@@ -16,8 +16,8 @@ function rlV(P,kg,g,cw){ const M=kg+BIKE_KG, th=Math.atan(g/100), a=M*G*(Math.si
   for(let i=0;i<22;i++){ const m=(lo+hi)/2; if(m*(a+c*m*m)<P) lo=m; else hi=m; } return lo; }
 
 // ---- Aufbau (aus build3D) ----
-function rlLook(o){ return Object.assign({},LOOK_DEF.custom,{ui:'#888',bag:'keine',zigzag:false,cap:false,glasses:'nase'},o); }
-function rlFahrer(L,s){ const r=makeRider('custom',rlLook(L),false); r.tag.visible=false; r.g.visible=false; if(s) r.g.scale.multiplyScalar(s); world.add(r.g); r.crank=Math.random()*6; return r; }
+function rlLook(o){ return Object.assign({},LOOK_DEF.gegner,{ui:'#888',bag:'keine',zigzag:false,cap:false,glasses:'nase'},o); }
+function rlFahrer(L,s){ const r=makeRider('gegner',rlLook(L),false); r.tag.visible=false; r.g.visible=false; if(s) r.g.scale.multiplyScalar(s); world.add(r.g); r.crank=Math.random()*6; return r; }
 function buildRadler(){ const M=c=>new THREE.MeshLambertMaterial({color:c}), q=rng(2024), F={};
   const bunt=['#c92a2a','#1971c2','#f08c00','#2b8a3e','#5f3dc4','#e64980','#0b7285','#212529'], helm=['#f8f9fa','#212529','#e03131','#1c7ed6'], pk=a=>a[Math.floor(q()*a.length)];
   F.gruppe=[...Array(5)].map(()=>{ const j=pk(bunt); return rlFahrer({jersey:j, sleeve:q()<.5?j:pk(bunt), hem:q()<.5, helmet:pk(helm), frame:pk(['#e9ecef','#212529','#c92a2a','#1864ab']), socks:q()<.5?'#f4f4ef':'#1b1b1d', build:q()}); });

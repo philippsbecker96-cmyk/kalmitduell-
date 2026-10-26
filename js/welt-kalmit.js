@@ -468,7 +468,7 @@ function build3D(){
 function poseFans(t, all){
   const A=anim.fans; if(!A) return; const m4=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(1,1,1), p=new THREE.Vector3(), up=new THREE.Vector3(0,1,0), e=new THREE.Euler(), c=new THREE.Color();
   const md=R.loop?((me.d%R.len)+R.len)%R.len:me.d, lo=all?0:md-200, hi=all?1e9:md+400;
-  const sb=myKey==='dengel'||(opp.active&&oppKey==='dengel'); // Sebbi fährt mit: Michel und Marion halten das Banner hoch
+  const sb=/dengel/i.test(RIDERS[myKey].name)||(opp.active&&/dengel/i.test(opp.name)); // Sebbi fährt mit: Michel und Marion halten das Banner hoch
   if(A.paar && A.sebbi!==sb){ A.sebbi=sb; A.paar.banner.visible=sb; A.paar.names.forEach(n=>n.sp.position.y=n.y+(sb?.45:0)); }
   const hopOf=o=>o.paar&&sb?0:Math.max(0,Math.sin(t*(5+o.ph%2)+o.ph))*(o.arms?0.12:0.04)*(o.paar?.5:1);
   A.F.forEach((o,i)=>{ if(o.d<lo||o.d>hi) return; const hop=hopOf(o), y=o.gy+hop, ty=o.tall;

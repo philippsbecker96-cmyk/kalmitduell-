@@ -350,7 +350,7 @@ function elwetritscheModell(){ const G=new THREE.Group(), K=new THREE.Group(); G
 
 // ---- Aufbau (aus buildTrifelsLeute): Friedel auf dem Holzrad mit Sack und Laterne, Dorfleute vor dem Wirtshaus, Elwetritsche ----
 function buildFriedel(T){ const A=anim.tri, M=c=>lam(c), haar=M('#b8452a'), haar2=M('#9c3a22');
-  const r=makeRider('custom',{...LOOK_DEF.custom,name:'Friedel',build:.9,jersey:'#5d7a3a',sleeve:'#a8862e'},true); r.g.scale.setScalar(.95); r.tag.visible=false; world.add(r.g); // schmächtig, Wams grün
+  const r=makeRider('gegner',{...LOOK_DEF.gegner,name:'Friedel',build:.9,jersey:'#5d7a3a',sleeve:'#a8862e'},true); r.g.scale.setScalar(.95); r.tag.visible=false; world.add(r.g); // schmächtig, Wams grün
   for(let i=0;i<16;i++){ const a=Math.PI*(.45+i/15*1.1), l=.2+((i*37)%7)*.03, st=new THREE.Mesh(new THREE.BoxGeometry(.035,l,.05),i%2?haar:haar2); // lange zottelige rote Haare unter der Haube
     st.position.set(.04+Math.cos(a)*.13,.02-l/2+.04,Math.sin(a)*.13); st.rotation.set(Math.sin(a)*.25,0,Math.cos(a)*-.25); r.headG.add(st); }
   for(let i=0;i<4;i++){ const st=new THREE.Mesh(new THREE.BoxGeometry(.03,.07,.05),haar); st.position.set(.15,.1,(i-1.5)*.05); r.headG.add(st); } // Fransen vorn

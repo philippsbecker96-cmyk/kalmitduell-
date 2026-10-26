@@ -265,9 +265,9 @@ function quitToLobby(){
   if(anim.stadium&&anim.stadium.pyro){ const Y=anim.stadium.pyro; Y.t0=null; Y.list.forEach(P=>{ P.glow.visible=P.core.visible=false; P.smoke.forEach(sm=>sm.visible=false); }); Y.sparks.visible=false; Y.lights.forEach(l=>l.intensity=0); }
   // Gast-Sperren der Lobby wieder aufheben
   document.querySelectorAll('.hostonly').forEach(t=>t.style.display='none'); $('modeTag').style.display='none'; $('btnBack').textContent='← Modus wechseln'; $('btnBack2').textContent='← Zurück';
-  for(const id of ['draftOn','lapMinus','lapPlus','botOn','botRider','botWkg','botKg','botStyle','botAgg','btnHost','btnStart']) $(id).disabled=false; $('botOn').checked=true;
-  document.querySelectorAll('.rcard').forEach(c=>c.classList.remove('taken')); setConn('');
-  if(Object.keys(remoteLooks).length){ for(const k in remoteLooks) delete remoteLooks[k]; rebuildRiders(); } oppKey=botKey; opp.name=RIDERS[oppKey].name; $('joinState').textContent='';
+  for(const id of ['draftOn','lapMinus','lapPlus','botOn','botWkg','botKg','botStyle','botAgg','btnHost','btnStart']) $(id).disabled=false; $('botOn').checked=true;
+  setConn('');
+  if(Object.keys(remoteLooks).length){ for(const k in remoteLooks) delete remoteLooks[k]; rebuildRiders(); } opp.name=RIDERS[oppKey].name; $('joinState').textContent='';
   $('setup').style.display=''; $('cfgScreen').style.display='none'; $('modeScreen').style.display=''; resetRiders(); me.d=0; me.v=0;
   if(wasGuest){ // Reste vom Ersteller entfernen: übernommene Strecke und Workout
     const hi=ROUTES.findIndex(r=>r.id==='host'); if(hi>=0) ROUTES.splice(hi,1);
@@ -290,7 +290,7 @@ function startRace(){
   if(race.kamp){ const e=kampRoute(); if(R.def!==e.def) setRoute(e.def); } // Kampagne: Strecke zum aktuellen Workout // Space/Insel: Strecke passt zum aktuellen Workout
   resetRiders(); race.draft=!race.kamp&&$('draftOn').checked; race.wind=race.kamp?0:+$('windLvl').value; race.windDir=Math.random()*Math.PI*2; // Windrichtung zufällig pro Rennen
   if(conn && conn.open){ Object.assign(opp,{active:true,bot:false,watt:null,name:RIDERS[oppKey].name,d:0,target:0,v:0,done:false}); sendRoute(); send({t:'start',draft:race.draft,tod:race.tod,season:race.season,rain:race.rain,wind:race.wind,wd:race.windDir,mode:race.mode,laps:race.laps,wo:race.mode==='train'?WO:null}); }
-  else if($('botOn').checked && race.mode!=='train'){ oppKey=botKey; Object.assign(opp,{active:true,bot:true,watt:null,name:RIDERS[oppKey].name,d:0,v:0,done:false,wkgSum:0,avg:0}); opp.plan=botPlan(); }
+  else if($('botOn').checked && race.mode!=='train'){ botLook=zufallLook(); rebuildRiders(); Object.assign(opp,{active:true,bot:true,watt:null,name:RIDERS[oppKey].name,d:0,v:0,done:false,wkgSum:0,avg:0}); opp.plan=botPlan(); }
   else opp.active=false;
   countdown();
 }

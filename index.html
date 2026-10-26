@@ -107,9 +107,7 @@
         <div class="block">
           <h2>Dein Fahrer</h2>
           <div class="riders">
-            <div class="rwrap"><button class="rcard" data-k="becker"><canvas width="200" height="190"></canvas><b></b><span></span></button><button class="redit" data-k="becker">✎ Bearbeiten</button></div>
-            <div class="rwrap"><button class="rcard" data-k="dengel"><canvas width="200" height="190"></canvas><b></b><span></span></button><button class="redit" data-k="dengel">✎ Bearbeiten</button></div>
-            <div class="rwrap"><button class="rcard" data-k="custom"><canvas width="200" height="190"></canvas><b></b><span></span></button><button class="redit" data-k="custom">✎ Bearbeiten</button></div>
+            <div class="rwrap"><button class="rcard sel" data-k="ich"><canvas width="200" height="190"></canvas><b></b><span></span></button><button class="redit" data-k="ich">✎ Bearbeiten</button></div>
           </div>
           <label class="weight">Dein Gewicht <input type="number" id="weight" value="72" min="35" max="150"> kg · bleibt auf diesem Gerät</label>
         </div>
@@ -141,7 +139,7 @@
           </div>
           <div id="connState" class="small"></div>
           <div class="rowb" id="botRow" style="margin-top:12px">
-            <label class="check"><input type="checkbox" id="botOn" checked> <span id="botLbl">Allein gegen Bot</span></label> <select id="botRider" title="Fahrer des Bots"></select> <span class="small">mit Ø</span>
+            <label class="check"><input type="checkbox" id="botOn" checked> <span id="botLbl">Allein gegen Bot</span></label> <span class="small">mit Ø</span>
             <input type="number" id="botWkg" value="2.8" min="1" max="7" step="0.1" style="width:80px"> <span class="small">W/kg</span>
             <span class="small">· wiegt</span> <input type="number" id="botKg" value="75" min="40" max="130" step="1" style="width:70px"> <span class="small">kg</span>
           </div>

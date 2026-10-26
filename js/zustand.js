@@ -1,28 +1,35 @@
-/* ================= Fahrer: Aussehen von Becker, Dengel und eigenem Fahrer – im Lobby-Editor änderbar ================= */
-const RKEYS=['becker','dengel','custom'];
+/* ================= Fahrer: eigener Fahrer (im Lobby-Editor erstellt, im Browser gespeichert) und Gegner (Bot mit Zufallsaussehen oder online übertragen) ================= */
+const RKEYS=['ich','gegner'];
 const LOOK_DEF={
-  becker:{name:'Becker', desc:'pink-schwarz', ui:'#e64980', build:0, helmet:'#f29aa6', jersey:'#1b1b1d', sleeve:'#e6559a', zigzag:true, longSleeve:false, hem:true, pants:'#1b1b1d', socks:'#151517', shoes:'#18181a', frame:'#8e959d', accent:'#d9381e', accentOn:'fork', tape:'#d9381e', glasses:'helm', cap:false, bag:'gross', tanwall:true, bottle:'#ef6c1a'},
-  dengel:{name:'Dengel', desc:'schwarz-weiß', ui:'#2b3036', build:1, helmet:'#26282c', jersey:'#1d1e21', sleeve:'#1d1e21', zigzag:false, longSleeve:true, hem:false, pants:'#1b1b1d', socks:'#f4f4ef', shoes:'#f1f1ec', frame:'#2a2b2f', accent:'#b3261e', accentOn:'seat', tape:'#1b1b1d', glasses:'nase', cap:true, bag:'klein', tanwall:false, bottle:'#7d1b1b'},
-  custom:{name:'Neuer Fahrer', desc:'eigener Fahrer', ui:'#2f80ed', build:.5, helmet:'#2f80ed', jersey:'#f2c94c', sleeve:'#2f80ed', zigzag:false, longSleeve:false, hem:true, pants:'#1b1b1d', socks:'#f4f4ef', shoes:'#1b1b1d', frame:'#e8e8e8', accent:'#2f80ed', accentOn:'fork', tape:'#1b1b1d', glasses:'nase', cap:false, bag:'klein', tanwall:false, bottle:'#2f80ed'}};
-let LOOKS=(()=>{ let sv={}; try{ sv=JSON.parse(localStorage.getItem('kd-riders'))||{}; }catch(e){} const o={}; RKEYS.forEach(k=>o[k]={...LOOK_DEF[k],...(sv[k]||{})}); return o; })();
+  ich:{name:'Neuer Fahrer', desc:'dein Fahrer', ui:'#2f80ed', build:.5, helmet:'#2f80ed', jersey:'#f2c94c', sleeve:'#2f80ed', zigzag:false, longSleeve:false, hem:true, pants:'#1b1b1d', socks:'#f4f4ef', shoes:'#1b1b1d', frame:'#e8e8e8', accent:'#2f80ed', accentOn:'fork', tape:'#1b1b1d', glasses:'nase', cap:false, bag:'klein', tanwall:false, bottle:'#2f80ed'}};
+LOOK_DEF.gegner={...LOOK_DEF.ich, name:'Gegner', desc:'Gegner'};
+const ALT_DEF={custom:'Neuer Fahrer',becker:'Becker',dengel:'Dengel'}; // frühere drei Plätze: ein umbenannter wird zum eigenen Fahrer, sonst Becker (war vorausgewählt)
+let ichNeu=false; // noch kein eigener Fahrer gespeichert: Editor öffnet beim Start
+let LOOKS=(()=>{ let sv={}; try{ sv=JSON.parse(localStorage.getItem('kd-riders'))||{}; }catch(e){}
+  let L=sv.ich; if(!L){ const k=Object.keys(ALT_DEF).find(k=>sv[k]&&sv[k].name&&sv[k].name!==ALT_DEF[k])||(sv.becker?'becker':null); L=k?sv[k]:null; ichNeu=!L; }
+  return {ich:{...LOOK_DEF.ich,...(L||{}),desc:'dein Fahrer'}}; })();
 const remoteLooks={}; // Aussehen des Gegners, online übertragen
-const lookOf=k=>remoteLooks[k]||LOOKS[k];
-const saveLooks=()=>{ try{ localStorage.setItem('kd-riders',JSON.stringify(LOOKS)); }catch(e){} };
+const BOT_NAMEN=['Kurt','Heiner','Elke','Manni','Gerti','Jörg','Uschi','Bernd','Hildegard','Klaus','Sabine','Rudi','Inge','Walter','Moni','Erwin','Karin','Dieter','Lothar','Helga'];
+function zufallLook(){ const z=a=>a[Math.floor(Math.random()*a.length)], hsl=(h,s,l)=>'#'+new THREE.Color().setHSL(h,s,l).getHexString(), h=Math.random(), h2=(h+.35+Math.random()*.3)%1, f=hsl(h,.7,.48), f2=hsl(h2,.65,.5), dk='#1b1b1d', hell='#f4f4ef';
+  return {...LOOK_DEF.gegner, name:z(BOT_NAMEN), desc:'Bot', ui:f, build:Math.random(), helmet:z([f,f2,hell,dk]), jersey:z([f,f2,dk,hell]), sleeve:z([f,f2,dk]), zigzag:Math.random()<.25, longSleeve:Math.random()<.3, hem:Math.random()<.5,
+    pants:z([dk,dk,'#24324a']), socks:z([hell,dk,f]), shoes:z([dk,hell]), frame:z([f2,hell,dk,'#8e959d']), accent:f, tape:z([dk,f,hell]), glasses:z(['helm','nase','keine']), cap:Math.random()<.2, bag:z(['gross','klein','keine']), tanwall:Math.random()<.3, bottle:z([f,f2,hell])}; }
+let botLook=zufallLook(); // Aussehen des Bots, neu gewürfelt bei jedem Rennen
+const lookOf=k=>k==='ich'?LOOKS.ich:(remoteLooks.gegner||botLook);
+const saveLooks=()=>{ try{ localStorage.setItem('kd-riders',JSON.stringify({ich:LOOKS.ich})); }catch(e){} };
 const lum=c=>{ const x=new THREE.Color(c); return .2126*x.r+.7152*x.g+.0722*x.b; };
 const lineCol=c=>lum(c)>.7?'#1a1a1a':'#fff';
-function specOf(k,L){ const b=Math.min(1,Math.max(0,+L.build||0));
-  return {name:String(L.name||LOOK_DEF[k].name).trim().slice(0,16)||LOOK_DEF[k].name, desc:L.desc||LOOK_DEF[k].desc, ui:L.ui, dot:lum(L.ui)<.25?'#f1f3f5':L.ui, scale:.95+.13*b, torsoR:.15-.05*b, torsoZ:1.2-.2*b, legR:.072-.022*b, armR:.05-.014*b, zS:.19-.03*b, side:{becker:1.5,dengel:.1,custom:-1.3}[k]}; }
+function specOf(k,L){ const b=Math.min(1,Math.max(0,+L.build||0)), D=LOOK_DEF[k]||LOOK_DEF.gegner;
+  return {name:String(L.name||D.name).trim().slice(0,16)||D.name, desc:L.desc||D.desc, ui:L.ui, dot:lum(L.ui)<.25?'#f1f3f5':L.ui, scale:.95+.13*b, torsoR:.15-.05*b, torsoZ:1.2-.2*b, legR:.072-.022*b, armR:.05-.014*b, zS:.19-.03*b, side:k==='ich'?1.5:.1}; }
 const RIDERS={devil:{name:'Teufel',desc:'Teufel-Bot',ui:'#c81e1e',dot:'#c81e1e',side:-1.3}};
 function refreshRiders(){ RKEYS.forEach(k=>RIDERS[k]=specOf(k,lookOf(k))); }
 refreshRiders();
-let myKey='becker', oppKey='dengel', botKey='dengel';
-const laneKey=k=>k!=='custom'?k:(myKey==='becker'||oppKey==='becker'?'dengel':'becker'); // eigener Fahrer nimmt die Spur des fehlenden Standardfahrers
+const myKey='ich', oppKey='gegner';
 
 /* ================= Zustand ================= */
 const $=id=>document.getElementById(id);
 const live={power:0,cadence:null,hr:null,src:'sim'};
 const me={d:0,v:0,crank:0,done:false,time:0,wkgSum:0,maxWkg:0};
-const opp={active:false,bot:false,name:RIDERS.dengel.name,d:0,v:0,target:0,crank:0,wkg:0,done:false,time:0,lastAt:0,wkgSum:0};
+const opp={active:false,bot:false,name:RIDERS.gegner.name,d:0,v:0,target:0,crank:0,wkg:0,done:false,time:0,lastAt:0,wkgSum:0};
 const race={state:'setup',t:0,last:0,role:null,hrMax:0,draft:true,mode:'climb',laps:5,tod:'tag',season:'sommer',rain:false,wind:0,windDir:0,frozen:false,resultShown:false};
 let peer=null, conn=null, ftmsCtrl=null, fecWr=null, writeQ=Promise.resolve(), lastSlopeSent=null, lastSlopeAt=0, camOverride=null;
 const weight=()=>Math.max(35,+$('weight').value||72), botKg=()=>Math.min(130,Math.max(40,+$('botKg').value||75));

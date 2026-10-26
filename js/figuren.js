@@ -1,10 +1,10 @@
-/* ---------- Becker & Dengel als 3D-Figuren ---------- */
-const riders3d={becker:null,dengel:null,custom:null};
+/* ---------- Fahrer (eigener und Gegner) als 3D-Figuren ---------- */
+const riders3d={ich:null,gegner:null};
 const mittelalter=()=>!!(R&&R.def&&(R.def.burg||R.def.ma));
 const kampBaeuerin=k=>!!(race.kamp||R&&R.def&&R.def.ma)&&k===myKey&&typeof KST!=='undefined'&&KST.stand==='baeuerin'; // Kampagne als Bäuerin: eigene Fahrerin mit Rock und Kopftuch // Burg Berwartstein und Kampagne (def.ma): Holzrad und Mittelalter-Kleidung für alle (Lobby-Vorschau nur in der Kampagne mittelalterlich: prevBauen)
 function buildRiders(){ const ma=mittelalter(); RKEYS.forEach(k=>{ riders3d[k]=makeRider(k,undefined,ma); world.add(riders3d[k].g); }); riders3d.devil=makeDevil(ma); riders3d.devil.g.visible=false; world.add(riders3d.devil.g); }
 function rebuildRiders(){ refreshRiders(); // nach einer Änderung am Aussehen: Fahrer in Welt und Lobby-Vorschau neu bauen
-  if(world) RKEYS.forEach(k=>{ const o=riders3d[k]; if(o) world.remove(o.g); const r=makeRider(k,undefined,mittelalter()); riders3d[k]=r; world.add(r.g); if(anim.stadium) addFloodShadows(r);
+  if(world) RKEYS.forEach(k=>{ const o=riders3d[k]; if(o) world.remove(o.g); const r=makeRider(k,undefined,mittelalter()); riders3d[k]=r; world.add(r.g); if(anim.stadium) addFloodShadows(r); if(R&&R.space) rakete(r);
     if(R&&!R.space&&!R.island) r.g.traverse(m=>{ if(m.isMesh){ m.receiveShadow=true; m.castShadow=!(m.geometry&&m.geometry.type==='PlaneGeometry')&&!m.material.transparent; } }); });
   prevBauen();
   renderRiderCards(); }
@@ -110,7 +110,7 @@ function makeRider(key,Lo,ma){
     const sa=new THREE.Mesh(new THREE.TorusGeometry(.36,.018,4,18),kitMat(L.sleeve)); sa.rotation.x=Math.PI/2; sa.position.y=-l/2; rk.add(sa); }
 
   g.scale.setScalar(S.scale);
-  const tag=nameSprite(S.name,S.ui); tag.scale.set(1.9,.475,1); g.add(tag); tag.position.set(0,2.3,laneKey(key)==='becker'?.55:-.55);
+  const tag=nameSprite(S.name,S.ui); tag.scale.set(1.9,.475,1); g.add(tag); tag.position.set(0,2.3,key==='ich'?.55:-.55);
   const r={key,g,tilt,body,legs,hip,tag,crankG:crank,wS:0,spec:S,rock};
   rigUpper(r,body.children.slice(i0,ih),body.children.slice(ih,il),[.36,1.47,0],arms); poseRider(r,0); return r;
 }
@@ -212,7 +212,7 @@ function poseRider(r,crank){
     place(L.sk,[kx+(px-kx)*.5,ky+(py-ky)*.5,(kz+L.z)/2],[px,py+.02,L.z]); L.sho.position.set(px+.03,py-.02,L.z*1.25); });
   if(r.tail) animTail(r,performance.now()/1000);
 }
-const ownLane=k=>{ const q=laneKey(k); return R.stadium?(q==='becker'?1.3:2.7):RIDERS[q].side; };
+const ownLane=k=>R.stadium?(k==='ich'?1.3:2.7):RIDERS[k].side;
 function putRider(r,d,crank){
   const hd=headingAt(R,d), u=r.lane;
   if(R.stadium){ const p=trackPt(d,u); r.g.position.set(p[0],p[1]+0.03,p[2]); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(-R.outSign*bankAt(d),0,0); }

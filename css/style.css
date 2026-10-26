@@ -30,7 +30,7 @@ input[type=text],input[type=number]{font:600 16px Barlow,sans-serif;padding:8px 
 .filebtn{display:inline-block;background:var(--pine);border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;font-size:15px}
 .filebtn input{display:none}
 #connState{margin-top:8px;font-size:15px}
-.riders{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.riders{display:grid;grid-template-columns:minmax(0,220px);gap:10px;margin-bottom:12px}
 .rwrap{display:flex;flex-direction:column;gap:6px}
 .redit{padding:5px 8px;font-size:13px;background:#14241c;border:2px solid var(--pine)}
 #editor{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:14;background:rgba(18,32,25,.78)}

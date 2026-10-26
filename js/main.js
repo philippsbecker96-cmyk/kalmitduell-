@@ -31,6 +31,6 @@ window.__scene=o=>{ race.state='run'; race.frozen=true; if(o.laps) race.laps=o.l
   const mr=riders3d[myKey], or=riders3d[oppKey]; mr.wS=(o.watt??250)/weight(); or.wS=opp.wkg; if(o.pyro && anim.stadium){ anim.stadium.pyro.t0=performance.now()/1000-o.pyro; } };
 
 $('botStyle').onchange=botStyleUi; botStyleUi();
-lobbyBackdrop(); renderRiderCards(); selectRider('becker'); draftLabel();
+lobbyBackdrop(); renderRiderCards(); draftLabel(); if(ichNeu) openEditor('ich'); // erster Start: eigenen Fahrer erstellen
 setRoute(ROUTES[0].def);
 requestAnimationFrame(loop);
