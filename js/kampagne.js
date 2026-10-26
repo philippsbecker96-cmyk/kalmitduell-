@@ -45,7 +45,7 @@ const kampOffen=()=>!!KST.code;
 function kampSperre(){ const b=document.querySelector('.mode[data-m="kamp"]'); if(!b) return; b.classList.toggle('zu',!kampOffen());
   let t=b.querySelector('.zuTag'); if(!kampOffen()&&!t){ t=document.createElement('em'); t.className='zuTag'; t.textContent='🔒 In Arbeit'; b.prepend(t); } else if(kampOffen()&&t) t.remove(); }
 function kampCode(){ const c=prompt('Die Kampagne ist noch in Arbeit.\nCode zum Freischalten:'); if(c==null) return false;
-  if(btoa(c.trim())==='LjExMDQ='){ KST.code=true; kampSave(); kampSperre(); return true; } alert('Falscher Code.'); return false; }
+  if(btoa(c.trim().replace(/^\./,''))==='MTEwNA=='){ KST.code=true; kampSave(); kampSperre(); return true; } alert('Falscher Code.'); return false; }
 kampSperre();
 const kampMission=()=>KAMP.find(m=>m.id===KST.sel&&kampFrei(m))||KAMP[0];
 const kText=s=>s.replace(/\[name\]/g,()=>(RIDERS[myKey]&&RIDERS[myKey].name)||'Fremder').replace(/\[([^|\]]*)\|([^\]]*)\]/g,(_,a,b)=>KST.stand==='baeuerin'?b:a); // [name] = Name des eigenen Fahrers
