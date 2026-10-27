@@ -187,6 +187,23 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
   - **Hirte mit Ziegen** am Hang.
   - **Ausfahren:** bergab Richtung Dahn, irgendwann Blick auf die Dahner Felsen mit dem Jungfernsprung (Ausblick auf Mission 3).
   - **Ende: Lager aufschlagen (vom Nutzer, noch offen):** am Schluss halten Friedel und du an (Halt wie die Wirtshaus-Szene in Mission 1, `R.def.halte`), Friedel sagt sinngemäß „Loss mol Lager uffschlage, 's werd dunkel …“, dann wird das Bild dunkel und die Mission ist beendet. Offen: Text auf Pfälzisch (vom Nutzer), ob es dafür im Ausfahren langsam dämmern soll (Mission läuft mittags, `tod:'tag'`) und ob der Halt am Ausblick auf die Dahner Felsen liegt.
+- **Sprechblasen – Ideen zum Füllen (Vorschlag 27.10.2026, Texte vom Nutzer):** Ziel: die ganze Mission mit Musik und Sprüchen füllen (Musik/Geräusche: `kampagne/sounds/effekte/EFFEKTE.md`)
+  - Gasthaus beim Start: Wirt oder Dörfler warnt „Do hoch? Zum Deiwel?“
+  - Anstieg mit den Hunden (10 min, längste Lücke): Friedel bei jedem Klau verzweifelter, dazwischen Bauer und Ritter (schon da), am Ende Klage um die letzte Wurst
+  - Idylle: Familie am Jungfernsprung-Weg grüßt; Friedel: „Do gehts zum Jungfernsprung“ (Ausblick Mission 3)
+  - Unwetter: Friedel „Is des Gewitter oder de Deiwel?“
+  - Anschleichen: Friedel flüstert, du „Pssst!“; Friedel macht den Lärm, der den Teufel aufschreckt
+  - Teufel: Flüche beim Ertappen, bei jedem Wurf, beim Stolpern (pfälzisch fluchend)
+  - Flucht: Friedel „Schneller!“, „Der kummt!“; Dreizack-Aua (schon da)
+  - Abgeschüttelt: frecher Spruch übers Steintor (schon da), dann Durchschnaufen
+  - Wieder am Tisch: „Ach du liewer Gott, mir sinn im Kreis gfahre!“
+  - Ausfahren: erleichtertes Lachen, Wehmut um die Wurst, Blick auf die Dahner Felsen (Mission 3), „Loss mol Lager uffschlage“
+- **Ton – noch offen (Stand 27.10.2026, Musik/Geräusche eingebaut in `js/welt-teufelstisch-ton.js`, Einzelheiten in `EFFEKTE.md`):**
+  1. Verfolgungsstück `musik/teufelsjagd.mp3` für Flucht 1 und 2 (bis dahin Platzhalter `omniouswaldnachts`)
+  2. Unwetter: Donner, Regen, Wind (bisher stumm)
+  3. Teufel: Gebrüll, Schritte, Schmatzen beim Essen
+  4. Bessere Ersatzgeräusche: Zischen der Würfe, Aufprall/Steinbrocken (bisher `sturz`/`peitsche` tiefer), Friedels Aufschrei beim Dreizack, Schotter, Käuzchen
+  5. Sprechblasen-Texte (Platzhalter, siehe oben) · Lagerfeuer-Knistern, sobald die Schlussszene steht
 - **Bauplan (Vorschlag):**
   1. Gerüst: Mission 2 in `KAMP` (kampagne.js) mit Workout Leicht/Hart; Vorausberechnung von Mission 1 so verallgemeinern, dass jede Mission ihre eigene Definition hat (wie `trifelsDef`).
   2. Strecke: Schleife zweimal befahren, Weg, Gelände und Szenen der Schleife aber nur **einmal** bauen (sonst liegt der Weg doppelt und flimmert); Gabelung mit beiden Abzweigen sichtbar, rechter führt zurück auf den Weg vor dem Tisch. **Entschieden (mit dem Nutzer): volle Schleife zweimal** (Linksabbiegen direkt nach dem Tisch wäre nicht einfacher: Stück am Tisch doppelt, dazu 2–3 km neues Wegstück für Flucht 2, Gabelung halb nutzlos, Pointe weg). Beide Abzweige gehören ohnehin zur Strecke (rechts Runde 1, links Runde 2). Meter zählen in Runde 2 weiter → Ereignisse je Runde sauber zuzuordnen. Zeiten: Tisch → Gabelung ≈ 5 min hart (Flucht 1); in Runde 2 nach ≈ 5 min an der Gabelung links, letzte Minute von Flucht 2 und Schlusssprint auf dem Weg hinaus. Prüfen: Gelände/Bodenhöhe über „nächster Streckenpunkt“ darf die doppelte Schleife nicht stören (Höhen gleich, im Selbsttest prüfen).

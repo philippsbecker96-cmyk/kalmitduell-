@@ -37,7 +37,7 @@ function draw(dt){
   if(anim.stadium) poseStadium(performance.now()/1000);
   if(anim.space) poseSpace(dt, performance.now()/1000);
   if(anim.island) poseIsland(dt, performance.now()/1000);
-  if(anim.burg) poseBurg(dt); if(anim.tri) poseTrifels(dt); else triTonAus(); if(anim.tt) poseTeufelstisch(dt); // Trifels: welt-trifels.js, Geräusche in welt-trifels-leben.js · Teufelstisch: welt-teufelstisch.js
+  if(anim.burg) poseBurg(dt); if(anim.tri) poseTrifels(dt); else if(!anim.tt) triTonAus(); if(anim.tt){ poseTeufelstisch(dt); sicher('Teufelstisch-Ton',()=>ttTon(dt)); } // Trifels: welt-trifels.js, Geräusche in welt-trifels-leben.js · Teufelstisch: welt-teufelstisch.js, Geräusche in welt-teufelstisch-ton.js
   if(anim.autos) poseAutos(dt);
   if(anim.radler) poseRadler(dt); // Südpfalz: andere Radfahrer (welt-radler.js)
   if(anim.wb) poseWeinberg(dt); // Südpfalz: Weinstände, Traktor, Weinlese (welt-weinberg.js)
