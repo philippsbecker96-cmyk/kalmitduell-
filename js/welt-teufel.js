@@ -3,8 +3,9 @@
    angelegte Fledermausflügel, Schwanz mit Pfeilspitze, zerlumpter Kapuzenumhang mit verkohltem Saum, Gürtel mit Schädeln und Ketten, rostiger Dreizack (≈ 17 m).
    Sitzt auf einem Felsstuhl hinter dem Tisch und isst Pfälzer Dreierlei (links die Gabel, rechts hält er den Dreizack), du schleichst geduckt am rechten Wegrand vorbei (ttGeduckt),
    mit Beginn von „Ertappt“ entdeckt er dich (kurz bevor du auf seiner Höhe bist), steigt auf den Stuhl, springt auf den Weg
-   und verfolgt dich zu Fuß (Gummiband-Abstand hinter dir, beim Dreizack dicht dran und pieksend). Nach Flucht 1 bleibt er hinter der Gabelung stehen und stapft quer
-   durch den Wald zurück an den Tisch – vorher stolpert er über das Steintor hinter der Gabelung (tfSteintor, TF_STURZ) –, nach Flucht 2 bleibt er an der Gabelung und tobt.
+   und verfolgt dich zu Fuß (Gummiband-Abstand hinter dir, beim Dreizack dicht dran und pieksend). Nach Flucht 1 stolpert er über das Steintor hinter der Gabelung (tfSteintor, TF_STURZ),
+   flucht dort und stapft quer durch den Wald zurück an den Tisch – kommt an, wenn du aus der letzten Kurve kommst (TF_R2), steigt auf den Stuhl, ext seinen Schoppen (tfExen, tfGlas),
+   reißt die Platte heraus und springt wieder auf den Weg. Im Schlusssprint fällt er zurück und steht außer Atem da, Hände auf den Knien, Rauch aus den Ohren (TF_ABH, TF_PUST).
    In Dreizack 1 und 2 sticht er zuerst Friedel in den Hintern (TT_PIEK, ttPiekF). Besteckwürfe in Flucht 1 (Gabel, Messer), Runde 2 wütend (Flügel offen, Augen heller, Rauch,
    haut auf den Tisch), reißt die Tischplatte heraus, trägt sie über dem Kopf und wirft sie im Tischwurf neben den Weg (tfWuerfe, tfWurf, tfPlatte, tfGroll). Ablauf aus dem Workout (teufelSkript), Rückblicke der Kamera: teufelKamera */
 
@@ -12,12 +13,17 @@ const TEUFEL={k:12.5, hoch:2.5, abst:16, nah:9, schritt:12, geh:3.5}; // k: Maß
 // Haltungen: b Beine [Hüfte, Knie, Fessel] (links, rechts) · l Oberkörper vor · k Kopf [nicken, drehen] · a Arme [vor, nach innen, Ellbogen] (links Gabel, rechts Dreizack) · j Kiefer
 const TF_SITZ={b:[[-1.2,1.6,-.6],[-1.2,1.6,-.6]], l:.25, k:[.25,0], a:[[-.25,.2,-1.2],[-.35,-.15,-1.25]], j:.05};
 const TF_STEH={b:[[-.35,.9,-.75],[-.35,.9,-.75]], l:.05, k:[.15,0], a:[[.1,.15,-.5],[-.5,-.15,-1.1]], j:.1};
-const TF_WUT={b:[[-.45,1,-.75],[-.25,.8,-.75]], l:-.08, k:[.2,0], a:[[-1.4,.1,-.8],[-2.6,-.25,1]], j:.38}; // Gabel-Faust vor, Dreizack hoch über dem Kopf, brüllt
+const TF_WUT={b:[[-.45,1,-.75],[-.25,.8,-.75]], l:-.08, k:[.2,0], a:[[-1.4,.1,-.8],[-2.6,-.25,1]], j:.38}; // Gabel-Faust vor, Dreizack hoch über dem Kopf, bruellt
 const TF_LIEG={b:[[-.1,.2,-.1],[-.15,.3,-.1]], l:0, k:[-.6,0], a:[[-2.8,-.5,-.2],[-2.8,-.5,-.2]], j:.3}; // der Länge nach hingefallen, Arme nach vorn
 const TT_TOR={nach:45, h:5, breit:1.3}; // Steintor nach Flucht 1 (vom Nutzer): so viele m hinter der Gabelung auf dem rechten Abzweig (nur in Runde 1), Durchfahrtshöhe, Pfeiler so weit neben dem Weg
 const TF_STURZ={fall:1.8, liegen:6.5, auf:2.2, pitch:1.5, lift:.104}; // Teufel stolpert über das Tor: Fallen, Liegenbleiben, Aufrappeln (s) · liegt so weit vornüber, so hoch (× Größe) über dem Weg, damit er flach aufliegt
 const TT_TOR_BAEUME=[[9,1,13],[13,-1,15],[18,1,12],[22,-1,14],[27,1,13]]; // Kiefern, die der stürzende Teufel umreißt: [m nach dem Tor, Seite (+1 = rechts), Höhe]
 const TT_PIEK={stich:5.6, abst:14, zurueck:4.5}; // Friedel wird in Dreizack 1 und 2 gepiekst: s nach Beginn · Abstand des Teufels hinter dir · so viele m fällt Friedel hinter dich zurück
+const TF_PUST={b:[[-.65,1.15,-.8],[-.65,1.15,-.8]], l:.8, k:[-.55,0], a:[[-1,.05,-.25],[-1,.05,-.25]], j:.35}; // außer Atem: vornübergebeugt, Hände auf den Knien, schaut hoch, Maul offen
+const TF_R2={an:1.2, blick:.7, steig:1.4, exD:2.6, weg:.8, rip:.3, bruell:1.6}; // Runde 2 (vom Nutzer): am Felsstuhl so viele s, nachdem du an der Kreuzung bist (man sieht die letzten Schritte) · dann nacheinander (s): sieht dich, steigt auf den Stuhl, ext den Schoppen, wirft das Glas weg, reißt die Platte heraus, bruellt – springt frühestens 1 s, nachdem du am Tisch bist
+const TF_ABH={zurueck:8, brems:2.4, kam:[-1.5,5]}; // Schlusssprint (vom Nutzer): so viele s vor dem Ende fällt er zurück, bremst mit m/s² · Blick zurück [s zum Ende, Dauer]
+const tfTobe=y=>({...TF_WUT, a:[TF_WUT.a[0].map((v,k)=>k?v:v+.22*Math.sin(y*7)),TF_WUT.a[1].map((v,k)=>k?v:v+.28*Math.sin(y*5.5))], j:.3+.12*Math.sin(y*11)}); // schüttelt Faust und Dreizack, bruellt
+const tfHeimZiel=S=>{ const x=S.x+Math.cos(S.ry)*6, z=S.z-Math.sin(S.ry)*6; return [x,bodenY(x,z),z]; }; // neben dem Felsstuhl
 const TF_SPRUNG={b:[[-1.3,1.9,-.5],[-.6,1.2,-.7]], l:.35, k:[-.1,0], a:[[-1.8,-.2,-.6],[-.5,-.15,-1.1]], j:.35};
 const tfMix=(a,b,w)=>Array.isArray(a)?a.map((v,i)=>tfMix(v,b[i],w)):a+(b-a)*w;
 const tfMixP=(a,b,w)=>({b:tfMix(a.b,b.b,w), l:tfMix(a.l,b.l,w), k:tfMix(a.k,b.k,w), a:tfMix(a.a,b.a,w), j:tfMix(a.j,b.j,w)});
@@ -123,8 +129,8 @@ function tfTischEssen(P,q){ const M=c=>lam(c), add=(P,g,m,x,y,z)=>{ const o=new 
   kug(T,.2,M('#5e4030'),.62,.24,-.05); for(let i=0;i<6;i++) kug(T,.03,M('#3e7a2a'),.62+(q()-.5)*.2,.42,-.05+(q()-.5)*.2); // Leberknödel mit Petersilie
   kug(T,.08,M('#d8241c'),-.62,.13,-.5); // Kirschtomate
   anim.tt.tischMesser=[add(P,new THREE.BoxGeometry(.07,.02,1),new THREE.MeshPhongMaterial({color:'#b8bcc0',shininess:80}),-1.35,3.11,-2.15), add(P,new THREE.BoxGeometry(.11,.08,.42),M('#4a3222'),-1.35,3.14,-1.45)]; // Messer
-  { const D=piv(P,-2.2,3.1,-1.7), glas=new THREE.MeshPhongMaterial({color:'#e6efe2',transparent:true,opacity:.3,shininess:90,specular:0xffffff,depthWrite:false,side:THREE.DoubleSide}), delle=new THREE.MeshPhongMaterial({color:'#ffffff',transparent:true,opacity:.45,shininess:90,depthWrite:false});
-    zyl(D,.4,.4,.85,new THREE.MeshLambertMaterial({color:'#e9d27a',transparent:true,opacity:.8}),0,.45,0); // Weißweinschorle
+  { const D=piv(P,-2.7,3.1,-1.4), glas=new THREE.MeshPhongMaterial({color:'#e6efe2',transparent:true,opacity:.3,shininess:90,specular:0xffffff,depthWrite:false,side:THREE.DoubleSide}), delle=new THREE.MeshPhongMaterial({color:'#ffffff',transparent:true,opacity:.45,shininess:90,depthWrite:false});
+    D.scale.setScalar(1.8); const wein=zyl(D,.4,.4,.85,new THREE.MeshLambertMaterial({color:'#e9d27a',transparent:true,opacity:.8}),0,.45,0); anim.tt.glas={G:D, wein, par:P, L:{p:D.position.clone(),q:D.quaternion.clone(),s:D.scale.clone()}, st:'tisch'}; // Weißweinschorle (vom Nutzer: groß, damit man ihn von unten sieht; in Runde 2 ext er ihn)
     add(D,new THREE.CylinderGeometry(.47,.4,1.15,18,1,true),glas,0,.575,0); zyl(D,.4,.4,.05,glas,0,.025,0); // Glas, leicht konisch
     for(let r=0;r<5;r++) for(let i=0;i<10;i++){ const a=(i+r%2*.5)/10*Math.PI*2, y=.2+r*.19, rr=.405+.07*y/1.15, d=kug(D,.07,delle,Math.sin(a)*rr,y,Math.cos(a)*rr,1,1,.35); d.rotation.y=a; } // Dellen in Reihen
     for(let i=0;i<10;i++) kug(D,.015,M('#fffbe8'),(q()-.5)*.5,.15+q()*.7,(q()-.5)*.5); } } // Bläschen
@@ -132,12 +138,14 @@ function tfTischEssen(P,q){ const M=c=>lam(c), add=(P,g,m,x,y,z)=>{ const o=new 
 // Ablauf aus dem Workout: zwei Runden {tT am Tisch, tE Ende der Flucht, dB Meter des Tischs}, Dreizack-Abschnitte, Rückblicke der Kamera [Beginn, Dauer]
 function teufelSkript(){ const S=race.woSegs||[], f=l=>S.find(s=>s.label===l), T=R.tt, e1=f('Ertappt'), a1=f('Abgeschüttelt'), e2=f('Wieder am Tisch'), z=f('Schlusssprint'), tt=TEUFEL_T.tisch;
   if(!e1||!a1||!e2||!z) return null;
-  const K={r:[{tT:e1.t0+tt, tE:a1.t0, dB:T.tisch}, {tT:e2.t0+tt, tE:z.t0, dB:T.tisch+T.L}], dz:S.filter(s=>s.label==='Dreizack').map(s=>[s.t0,s.dur]), kam:[]};
-  for(const r of K.r){ K.kam.push([r.tT+1.2,4.5]); for(let t=r.tT+40;t<r.tE-12;t+=45) if(!K.dz.some(([a,d])=>t+5>a&&t<a+d+2)) K.kam.push([t,3.5]); } // Sprung auf den Weg, dann alle 45 s ein Blick zurück
+  const Z2=TF_R2, t2=e2.t0+tt, zE=z.t0+z.dur, tA=T.tKr!=null?T.tKr+Z2.an:t2-10, tSt=tA+Z2.blick, ex=tSt+Z2.steig, rip=ex+Z2.exD+Z2.weg+Z2.rip, tS=Math.max(t2+1,rip+Z2.bruell); // Runde 2: tA wieder am Felsstuhl, tSt steigt auf, ex ext, rip Platte, tS Sprung
+  const K={r:[{tT:e1.t0+tt, tS:e1.t0+tt+1, tE:a1.t0, dB:T.tisch}, {tT:t2, tA, tSt, tS, tE:zE-TF_ABH.zurueck, dB:T.tisch+T.L}], dz:S.filter(s=>s.label==='Dreizack').map(s=>[s.t0,s.dur]), kam:[]};
+  for(const r of K.r){ K.kam.push([r.tS+.2,4.5]); for(let t=r.tT+40;t<Math.min(r.tE,r.tA?z.t0:1e9)-12;t+=45) if(!K.dz.some(([a,d])=>t+5>a&&t<a+d+2)) K.kam.push([t,3.5]); } // Sprung auf den Weg, dann alle 45 s ein Blick zurück
   for(const [a] of K.dz) K.kam.push([a+.8,3.2]); // beim Dreizack
   const bw=S.filter(s=>s.label==='Besteckwurf'); K.bw=bw.length?[bw[0].t0]:[]; for(const t0 of K.bw) K.kam.unshift([t0-.6,1.6]); const tw=f('Tischwurf'); K.tw=tw?tw.t0:null; if(K.tw!=null) K.kam.unshift([K.tw-.4,2]); // Besteckwurf in Flucht 1: nur die Gabel (vom Nutzer: ein Besteckwurf reicht), Blick zurück beim Ausholen, dann sieht man sie vor sich stecken · Tischwurf in Flucht 2 (kurzer Blick zurück beim Ausholen)
   K.kam=K.kam.filter(([a,T])=>T!==3.5||![...K.bw,K.tw].some(w=>w!=null&&a>w-5&&a<w+7)); // keine 45-s-Rückblicke um die Würfe – dann sieht man Gabel und Platte vor sich
-  K.rip=K.r[1].tT-TEUFEL_T.tisch+2.5; return K; } // Runde 2: reißt die Tischplatte heraus, sobald er auf dem Felsstuhl steht
+  K.kam.push([zE+TF_ABH.kam[0],TF_ABH.kam[1]]); // Schlusssprint: Blick zurück auf den abgehängten Teufel
+  K.rip=rip; K.ex=ex; return K; } // Runde 2: ext den Schoppen, dann reißt er die Tischplatte heraus
 
 // ---- Bewegung (jeden Frame, aus poseTeufelstisch) ----
 function poseTeufel(dt){ const D=anim.tt&&anim.tt.teufel; if(!D) return; const run=race.state==='run', rt=run?race.t:0, t=performance.now()/1000, lauf=run&&!race.paused?dt*simSpeed():0, Z=TEUFEL, S=D.sitz;
@@ -145,22 +153,24 @@ function poseTeufel(dt){ const D=anim.tt&&anim.tt.teufel; if(!D) return; const r
   const sitzP=[S.x,S.y-.86*Z.k,S.z], oben=[S.x,S.y,S.z], zuMir=(x,z,v)=>rp?Math.atan2(rp.x-x,rp.z-z):v, kopfZu=(x,z,ry)=>clampN(Math.atan2(Math.sin(zuMir(x,z,ry)-ry),Math.cos(zuMir(x,z,ry)-ry)),-1.1,1.1);
   const amWeg=d=>{ const p=wegPos(d,-.4); return [p.x,bodenY(p.x,p.z),p.z]; };
   let i=0, rr=null, x=0, ph='sitz'; const e=TEUFEL_T.tisch; // entdeckt dich mit Beginn von „Ertappt“ (e s vor dem Tisch)
-  if(K){ i=rt<K.r[1].tT-15?0:1; rr=K.r[i]; x=rt-rr.tT;
-    ph=x<-e?'sitz':x<1-e?'merkt':x<3-e?'auf':x<1?'oben':x<3.5?'sprung':rt<rr.tE?'jagd':i?'tobt':'zurueck'; }
-  if(i===1&&ph==='sitz') D.heim=null;
+  if(K){ i=rt<K.r[1].tA?0:1; rr=K.r[i]; x=rt-rr.tT; const Z2=TF_R2;
+    ph=i?(rt<rr.tSt?'da':rt<K.ex?'steigt':rt<rr.tS?'oben':rt<rr.tS+2.5?'sprung':rt<rr.tE?'jagd':'abh'):(x<-e?'sitz':x<1-e?'merkt':x<3-e?'auf':x<1?'oben':x<3.5?'sprung':rt<rr.tE?'jagd':'zurueck'); } // Runde 2: kommt gerade zurück, sieht dich, steigt auf den Stuhl
   let P, pos=sitzP, ry=S.ry, wut=ph!=='sitz'&&ph!=='zurueck'; const zorn=!!K&&(i===1||ph==='zurueck'&&D.trip!=null), sitzt=zorn?tfGroll(t):tfEssen(t); // Runde 2: wütend (Flügel offen, Augen heller, Rauch), isst nicht mehr, haut mit der Faust auf den Tisch
   if(ph==='sitz') P=sitzt;
   else if(ph==='merkt'){ const w=bSm((x+e)/.5); P=tfMixP(sitzt,{...TF_SITZ,k:[0,kopfZu(S.x,S.z,S.ry)],j:.2},w); } // hält inne und schaut dich an
   else if(ph==='auf'){ const w=bSm((x+e-1)/2); P=tfMixP({...TF_SITZ,k:[0,kopfZu(S.x,S.z,S.ry)]},TF_STEH,w); pos=tfMix(sitzP,oben,w); ry=D.ry=tfWinkel(S.ry,zuMir(S.x,S.z,S.ry),w*.5); } // steigt auf den Felsstuhl
-  else if(ph==='oben'){ D.ry=tfWinkel(D.ry,zuMir(S.x,S.z,D.ry),Math.min(1,dt*3)); ry=D.ry; pos=oben; const w=bSm((x+e-3)/1.2), W={...TF_WUT,a:[TF_WUT.a[0].map((v,k)=>k?v:v+.2*Math.sin(x*7)),TF_WUT.a[1].map((v,k)=>k?v:v+.25*Math.sin(x*6))],j:.3+.12*Math.sin(x*11)}; P=tfMixP(TF_STEH,W,w); } // tobt oben, dreht sich nach dir
-  else if(ph==='sprung'){ const w=(x-1)/2.5, e=amWeg(rr.dB+4), hd=headingAt(R,rr.dB+4); pos=tfMix(oben,e,bSm(w)); pos[1]+=7*Math.sin(Math.PI*w); ry=tfWinkel(D.ry,Math.PI/2-hd,bSm(w));
+  else if(ph==='da'){ pos=tfHeimZiel(S); D.ry=ry=tfWinkel(D.ry,zuMir(pos[0],pos[2],D.ry),Math.min(1,dt*2.5)); const y=rt-rr.tA; P=tfMixP(tfLauf(D.phi,.45*(1-bSm(y/.6)),0),{...TF_STEH,k:[.1,0],j:.15+.1*Math.sin(t*6)},bSm(y/.8)); } // Runde 2: gerade angekommen, sieht dich, schnaubt
+  else if(ph==='steigt'){ const w=bSm((rt-rr.tSt)/TF_R2.steig); pos=tfMix(tfHeimZiel(S),oben,w); pos[1]+=3*Math.sin(Math.PI*w); D.ry=ry=tfWinkel(D.ry,zuMir(S.x,S.z,D.ry),Math.min(1,dt*3)); P=tfMixP(TF_STEH,TF_STEH,0); } // springt auf den Felsstuhl
+  else if(ph==='oben'){ D.ry=tfWinkel(D.ry,zuMir(S.x,S.z,D.ry),Math.min(1,dt*3)); ry=D.ry; pos=oben; const w=i?bSm((rt-K.ex-TF_R2.exD)/1):bSm((x+e-3)/1.2); P=tfMixP(TF_STEH,tfTobe(x),w); if(i) tfExen(P,rt-K.ex); } // tobt oben, dreht sich nach dir · Runde 2: erst den Schoppen exen
+  else if(ph==='sprung'){ const w=(rt-rr.tS)/2.5, e=amWeg(rr.dB+4), hd=headingAt(R,rr.dB+4); pos=tfMix(oben,e,bSm(w)); pos[1]+=7*Math.sin(Math.PI*w); ry=tfWinkel(D.ry,Math.PI/2-hd,bSm(w));
     P=w<.7?tfMixP(TF_WUT,TF_SPRUNG,bSm(w/.3)):tfMixP(TF_SPRUNG,tfLauf(0,1,0),bSm((w-.7)/.3)); D.jagd=-1; }
   const jag=gap=>{ D.v=clampN(me.v+((me.d-gap)-D.d)*.6,0,me.v+5); D.d+=D.v*lauf; D.phi+=D.v/Z.schritt*2*Math.PI*lauf; const m=Math.min(1,D.v/4); pos=amWeg(D.d); pos[1]+=.025*Z.k*m*Math.abs(Math.cos(D.phi)); ry=D.ry=Math.PI/2-headingAt(R,D.d); return m; };
-  const heim=t0=>{ if(!D.heim){ const a=amWeg(D.d), zx=S.x+Math.cos(S.ry)*6, zz=S.z-Math.sin(S.ry)*6; D.heim={a, z:[zx,bodenY(zx,zz),zz], t0, T:Math.max(4,Math.hypot(zx-a[0],zz-a[2])/Z.geh)}; } // quer durch den Wald zurück, neben den Felsstuhl
-    const H=D.heim, u=Math.max(0,(rt-H.t0)/H.T); wut=false;
-    if(u<1){ const p=tfMix(H.a,H.z,u); p[1]=bodenY(p[0],p[2]); pos=p; ry=D.ry=Math.atan2(H.z[0]-H.a[0],H.z[2]-H.a[2]); D.phi+=Z.geh/(Z.schritt*.6)*2*Math.PI*lauf; P=tfLauf(D.phi,.45,0); P.k=[.15,0]; }
-    else { const w=bSm((rt-H.t0-H.T)/1.8); pos=tfMix(H.z,sitzP,w); pos[1]+=4*Math.sin(Math.PI*w); ry=tfWinkel(D.ry,S.ry,w); P=w<1?tfMixP(TF_STEH,TF_SITZ,w):tfGroll(t); } }; // hüpft auf den Stuhl und grollt
-  let pitch=0, pf=null; D.dzL=0;
+  const heim=t0=>{ if(!D.heim){ const a=amWeg(D.d), z=tfHeimZiel(S), tA=K.r[1].tA; let T=Math.hypot(z[0]-a[0],z[2]-a[2])/Z.geh; if(tA-t0<T) T=Math.max(4,tA-t0); D.heim={a, z, t0:Math.max(t0,tA-T), T}; } // quer durch den Wald zurück, neben den Felsstuhl – kommt an, wenn du aus der letzten Kurve kommst
+    const H=D.heim, u=(rt-H.t0)/H.T; wut=false;
+    if(u<0){ pos=H.a; ry=D.ry=tfWinkel(D.ry,zuMir(pos[0],pos[2],D.ry),Math.min(1,dt*2)); P=tfMixP(TF_STEH,tfTobe(rt),bSm(Math.sin(rt*.5)*2)); wut=true; } // steht erst noch fluchend am Steintor
+    else if(u<1){ const p=tfMix(H.a,H.z,u); p[1]=bodenY(p[0],p[2]); pos=p; ry=D.ry=Math.atan2(H.z[0]-H.a[0],H.z[2]-H.a[2]); D.phi+=Z.geh/(Z.schritt*.6)*2*Math.PI*lauf; P=tfLauf(D.phi,.45,0); P.k=[.15,0]; }
+    else { pos=H.z; P=tfMixP(TF_STEH,TF_STEH,0); } }; // angekommen (dann beginnt Runde 2)
+  let pitch=0, pf=null; D.dzL=0; D.pust=0;
   if(ph==='jagd'){ if(D.jagd!==i){ D.jagd=i; D.d=rr.dB+4; D.v=7; } if(me.d-D.d>150||D.d>me.d) D.d=me.d-Z.abst; // nach einem Sprung im Testmodus: gleich hinter dir
     pf=ttPiekF(rt,8); const dz=K.dz.find(([a,d])=>rt>a-2&&rt<a+d+2), nw=dz?bSm((rt-dz[0]+1.5)/1.5)*bSm((dz[0]+dz[1]+1.5-rt)/1.5):0, g=Z.abst+3*Math.sin(rt*.35);
     const m=jag(pf?TT_PIEK.abst:g+(Z.nah-g)*nw); let st=0; if(dz&&nw>.5&&!pf){ const c=((rt-dz[0])%2.2)/2.2; st=c<.15?bSm(c/.15):c<.35?1:1-bSm((c-.35)/.5); } // Dreizack-Piekser – in Dreizack 1 und 2 zuerst auf Friedel
@@ -176,9 +186,9 @@ function poseTeufel(dt){ const D=anim.tt&&anim.tt.teufel; if(!D) return; const r
         pos=pL; pos[1]+=.5*Math.abs(Math.sin(z*8))*Math.exp(-z*5); pitch=PL; P={...TF_LIEG,k:[-.6,z>2?.35*Math.sin(z*2.2):0]}; D.dzL=1; } // schlägt auf, federt nach, liegt, schüttelt den Kopf
       else if(y<F.fall+F.liegen+F.auf){ const w=bSm((y-F.fall-F.liegen)/F.auf); pos=tfMix(pL,amWeg(dU),w); pitch=PL*(1-w); P=tfMixP(TF_LIEG,TF_STEH,w); D.dzL=1-w; }
       else { D.d=dU; heim(D.trip+F.fall+F.liegen+F.auf); } } }
-  else if(ph==='tobt'){ if(D.halt==null){ D.halt=rt; if(D.jagd!==i||me.d-D.d>150){ D.d=R.tt.gabel+R.tt.L-10; D.v=0; } } const y=rt-rr.tE; // nach Flucht 2: bremst und tobt an der Gabelung
-    D.v=Math.max(0,D.v-6*lauf); D.d+=D.v*lauf; D.phi+=D.v/Z.schritt*2*Math.PI*lauf; pos=amWeg(D.d); D.ry=ry=tfWinkel(D.ry,zuMir(pos[0],pos[2],D.ry),Math.min(1,dt*2));
-    const m=Math.min(1,D.v/4), W={...TF_WUT,a:[TF_WUT.a[0].map((v,k)=>k?v:v+.25*Math.sin(y*7)),TF_WUT.a[1].map((v,k)=>k?v:v+.3*Math.sin(y*5))],j:.3+.12*Math.sin(y*11)}; P=tfMixP(tfLauf(D.phi,m,0),W,bSm((y-1.5)/1.5)); }
+  else if(ph==='abh'){ const y=rt-rr.tE; if(D.jagd!==i||me.d-D.d>400){ D.d=me.d-(y>3?70:Z.abst); D.v=y>3?0:me.v; } D.jagd=i; // Schlusssprint: kommt nicht mehr mit, wird langsamer und bleibt außer Atem stehen
+    D.v=Math.max(0,D.v-TF_ABH.brems*lauf); D.d+=D.v*lauf; D.phi+=D.v/Z.schritt*2*Math.PI*lauf; pos=amWeg(D.d); if(D.v>.3) D.ry=Math.PI/2-headingAt(R,D.d); ry=D.ry; const m=Math.min(1,D.v/4), w=1-bSm((D.v-.5)/3), b=Math.sin(t*5);
+    P=tfMixP(tfLauf(D.phi,m,0),{...TF_PUST, l:TF_PUST.l+.06*b, k:[TF_PUST.k[0]+.08*b,0], j:.3+.12*b},w); pos[1]-=.055*Z.k*w; D.pust=w; } // Hände auf den Knien, schnauft
   const wa=pf?bSm((pf.y-4.4)/.4)*(1-bSm((pf.y-6.6)/.4)):0; if(wa>0) P.a[1]=tfMix(P.a[1],[-.7,-.05,-.2],wa); // Arm zum Stich auf Friedel
   const aus=(t0,rel)=>{ const y=rt-t0; return K&&y>-.1&&y<rel-t0+.5?(y<rel-t0?bSm(y/(rel-t0-.15)):1-bSm((y-(rel-t0))/.5)):0; }, wurfArm=(t0,rel)=>{ const y=rt-t0, r=rel-t0; return y<r-.15?[-3,-.1,-.6]:[-1.3,.1,-.2]; }; // Ausholen und Werfen mit links
   if(K) for(const t0 of K.bw){ const w=aus(t0,t0+1.15); if(w>0) P.a[0]=tfMix(P.a[0],wurfArm(t0,t0+1.15),w); }
@@ -186,7 +196,7 @@ function poseTeufel(dt){ const D=anim.tt&&anim.tt.teufel; if(!D) return; const r
   tfPose(D,P); D.G.position.set(...pos); D.G.rotation.y=ry; D.G.rotation.x=pitch; D.schwanz.forEach((s,k)=>s.rotation.z=.12*Math.sin(t*1.8+k*.7));
   D.flW=(D.flW||0)+((zorn?1:0)-(D.flW||0))*Math.min(1,dt*2); D.fluegel.forEach((f,k)=>{ const s=k?-1:1, w=D.flW; f.rotation.set(-.15+.3*w,s*(1.25-1.05*w),s*w*(.15+.1*Math.sin(t*3.2))); f.scale.x=.5+.5*w; }); // Flügel spreizen sich, schlagen leicht
   D.augM.color.set(zorn?'#fffbe6':wut?'#fff27a':'#ffc21a'); { const f=zorn?1.35:1; D.augen.forEach(a=>a.scale.set(1.2*f,.7*f,.6*f)); }
-  tfWuerfe(D,K,rt,run,zorn,ph,t);
+  tfWuerfe(D,K,rt,run,zorn,ph,t); tfGlas(D,K,rt);
   // Stich auf Friedel: Dreizack zielt auf seinen Hintern, gleitet in der Faust nach vorn bis knapp hinein
   const Fr=anim.tt.friedel, dz=D.dz; dz.position.copy(D.dz0); dz.quaternion.set(0,0,0,1); if(D.dzL>0) dz.rotation.x=1.5*D.dzL; // liegt beim Sturz flach neben ihm
  
@@ -194,12 +204,26 @@ function poseTeufel(dt){ const D=anim.tt&&anim.tt.teufel; if(!D) return; const r
     const hp=new THREE.Vector3(); dz.getWorldPosition(hp); const y=pf.y, S2=TT_PIEK.stich, th=y<5?-.3:y<S2?-.3+.35*bSm((y-5)/(S2-5)):.05-.35*bSm((y-S2-.2)/.6);
     dz.position.add(new THREE.Vector3(0,0,1).applyQuaternion(dz.quaternion).multiplyScalar((hp.distanceTo(tg)/Z.k-1.21+th)*wa)); }
   // Staubwolke beim Sturz
-  // Rauch in Runde 2: steigt aus Nüstern und zwischen den Hörnern auf
-  { const kp=D.kopf.getWorldPosition(new THREE.Vector3()); D.rauch.forEach((s,k)=>{ s.visible=zorn; if(!zorn) return; const a=((t*.6+k/D.rauch.length)%1), sd=k%2?1:-1; s.position.set(kp.x+sd*.6+Math.sin(k*2.1+t)*.8*a, kp.y+1.2+a*7*Z.k/12.5, kp.z+Math.cos(k*1.7)*.6*a); s.scale.setScalar(1.2+a*4); s.material.opacity=.55*Math.sin(Math.PI*a); }); }
+  // Rauch in Runde 2: steigt aus Nüstern und zwischen den Hörnern auf, im Schlusssprint aus den Ohren
+  { const kp=D.kopf.getWorldPosition(new THREE.Vector3()), ohr=D.pust>.3, r=D.G.rotation.y; D.rauch.forEach((s,k)=>{ s.visible=zorn; if(!zorn) return; const a=((t*(ohr?1.1:.6)+k/D.rauch.length)%1), sd=k%2?1:-1;
+    if(ohr){ const o=D.kopf.localToWorld(new THREE.Vector3(sd*.11,.12,-.01)); s.position.set(o.x+Math.cos(r)*sd*a*3,o.y+a*5,o.z-Math.sin(r)*sd*a*3); s.scale.setScalar(1+a*4); s.material.opacity=.75*Math.sin(Math.PI*a); return; } // außer Atem: Rauch aus den Ohren
+    s.position.set(kp.x+sd*.6+Math.sin(k*2.1+t)*.8*a, kp.y+1.2+a*7*Z.k/12.5, kp.z+Math.cos(k*1.7)*.6*a); s.scale.setScalar(1.2+a*4); s.material.opacity=.55*Math.sin(Math.PI*a); }); }
   tfPuffTick(D,rt,run);
   { const a=D.staubT!=null&&run?rt-D.staubT:9, A=D.staubP, B=D.staubB||A, n=D.staub.length; D.staub.forEach((s,k)=>{ s.visible=a<3.2; if(!s.visible) return; const f=k/(n-1), sd=k%2?1:-1, r=1.5+a*5*(.6+.4*(k%3)/2), x=A[0]+(B[0]-A[0])*f, z=A[2]+(B[2]-A[2])*f, hd=headingAt(R,R.tt.tor.d); // Staubwalze den ganzen Körper entlang
     s.position.set(x-Math.sin(hd)*sd*r,A[1]+(B[1]-A[1])*f+.8+a*2+k%3*.6,z+Math.cos(hd)*sd*r); s.scale.setScalar(4+a*7); s.material.opacity=.8*(1-a/3.2); }); }
   tfBaeumeUm(D,rt,run); }
+// Runde 2 auf dem Felsstuhl: greift den Schoppen, setzt an, kippt ihn in einem Zug hoch (Kopf in den Nacken), wirft das leere Glas über die Schulter
+function tfExen(P,y){ const Z=TF_R2; if(y<0||y>Z.exD+Z.weg) return; const GR=[-1.3,.1,-.4], MU=[-.7,.45,-2.2], HO=[-1.3,.45,-2.3], WU=[-2.9,.4,-.5];
+  P.a[0]=y<.5?tfMix(P.a[0],GR,bSm(y/.5)):y<1?tfMix(GR,MU,bSm((y-.5)/.5)):y<Z.exD?tfMix(MU,HO,bSm((y-1)/(Z.exD-1))):tfMix(HO,WU,bSm((y-Z.exD)/(Z.weg*.5)));
+  const k=bSm((y-.8)/.6)*(1-bSm((y-Z.exD)/.3)); P.k=[P.k[0]-.6*k,P.k[1]*(1-k)]; P.l-=.15*k; if(y>.9&&y<Z.exD) P.j=.22; }
+function tfGlas(D,K,rt){ const Gl=anim.tt.glas; if(!Gl) return; const o=Gl.G, V=THREE.Vector3, Z=TF_R2, y=rt-(K&&K.ex!=null?K.ex:1e9);
+  if(y<0){ if(Gl.st!=='tisch'){ Gl.par.add(o); o.position.copy(Gl.L.p); o.quaternion.copy(Gl.L.q); o.scale.copy(Gl.L.s); o.visible=true; Gl.st='tisch'; } Gl.wein.scale.y=1; Gl.wein.position.y=.45; return; }
+  if(Gl.st==='tisch'){ if(y>Z.exD+Z.weg+1){ o.visible=false; Gl.st='weg'; return; } Gl.a=o.getWorldPosition(new V()); world.attach(o); Gl.st='hand'; Gl.h=1.15*o.scale.y; } // Sprung im Testmodus: schon weg
+  if(Gl.st==='hand'){ D.G.updateMatrixWorld(true); const hp=D.arme[0].ha.getWorldPosition(new V()), kp=D.kopf.getWorldPosition(new V()), up=new V(0,1,0), ax=up.clone().lerp(kp.sub(hp).normalize(),bSm(y/.9)*.6).normalize(), ki=bSm((y-.9)/(Z.exD-1.1));
+    ax.y-=1.3*ki; ax.normalize(); o.quaternion.setFromUnitVectors(up,ax); const p=hp.clone().addScaledVector(ax,-Gl.h*.45); o.position.copy(y<.5?Gl.a.clone().lerp(p,bSm(y/.5)):p); // greift das Glas vom Tisch, setzt an, kippt es hoch über den Mund
+    const f=1-.95*bSm((y-1)/(Z.exD-1.2)); Gl.wein.scale.y=f; Gl.wein.position.y=.025+.425*f; // wird leer
+    if(y>=Z.exD+Z.weg*.4){ const r=D.G.rotation.y, bx=o.position.x-Math.sin(r)*14+Math.cos(r)*10, bz=o.position.z-Math.cos(r)*14-Math.sin(r)*10; Gl.b=new V(bx,bodenY(bx,bz)+.4,bz); Gl.a=o.position.clone(); Gl.t=rt; Gl.st='flug'; } return; } // über die linke Schulter nach hinten in den Wald
+  if(Gl.st==='flug'){ const w=Math.min(1,(rt-Gl.t)/1.3); o.position.copy(Gl.a).lerp(Gl.b,w); o.position.y+=8*4*w*(1-w); o.rotation.set(w*7,0,w*3); if(w>=1){ Gl.st='liegt'; o.rotation.set(Math.PI/2,0,.4); tfPuff(D,rt,Gl.b,.6); } } }
 // Runde 2 am Tisch: isst nicht mehr, haut mit der Faust auf den Tisch, mahlt mit dem Kiefer, schaut sich um
 function tfGroll(t){ const h=Math.pow(Math.max(0,Math.sin(t*4.5)),6); return {...TF_SITZ, a:[[-1.3+.6*h,.15,-1.2+.6*h],TF_SITZ.a[1]], k:[.05,.35*Math.sin(t*.7)], j:.12+.08*Math.sin(t*13)}; }
 // Würfe: Gabel (Besteckwurf 1) und Messer (Besteckwurf 2) fliegen im Bogen und stecken knapp neben dir im Weg, die Tischplatte (Runde 2) reißt er heraus, trägt sie über dem Kopf und wirft sie links neben den Weg
@@ -231,7 +255,7 @@ function ttPiekF(rt,T){ const D=anim.tt&&anim.tt.teufel, K=D&&D.sk; if(!K||race.
 const TT_DUCK=75; // s vor „Ertappt“ duckt man sich (vom Nutzer gewünscht: erst ein paar hundert Meter vor dem Tisch)
 function ttGeduckt(){ if(!R||!R.tt||race.state!=='run') return 0; const S=race.woSegs||[], a=S.find(s=>s.label==='Anschleichen'), e=S.find(s=>s.label==='Ertappt'); if(!a||!e) return 0; const rt=race.t;
   return bSm((rt-Math.max(a.t0,e.t0-TT_DUCK))/3)*(1-bSm((rt-e.t0)/1.5)); } // 0 … 1, Haltung in rideState (figuren.js)
-function ttSpur(d,t){ const w=Math.max(ttGeduckt(),ttAusweich(d)); return w?t+(roadW(R,d)/2+(ttGeduckt()>ttAusweich(d)?.15:-.4)-t)*w:t; } // Spur (aus rennen.js)
+function ttSpur(d,t){ const w=Math.max(ttGeduckt(),ttAusweich(d)), wi=ttWind(d); let u=w?t+(roadW(R,d)/2+(ttGeduckt()>ttAusweich(d)?.15:-.4)-t)*w:t; if(wi) u+=(wi.s*(roadW(R,d)/2-.45)-u)*wi.w*TT_LICHTUNG.wind; return u; } // Spur (aus rennen.js) · auf Lichtungen drückt der Wind dich (und Friedel neben dir) an den Rand
 // Ausweichen 0 … 1 (du nach rechts, Friedel nach links): an der Gabel im Weg, wenn der Ritter überholt
 function ttAusweich(d){ const A=anim.tt; if(!A||race.state!=='run') return 0; let w=0; const G=A.teufel&&A.teufel.gabelW; if(G&&G.dWeg!=null&&G.st==='liegt'){ const g=G.dWeg-d; w=Math.max(w,bSm((25-g)/8)*bSm((g+4)/3)); }
   const Ri=A.ritter; if(Ri&&Ri.G.visible){ const g=Ri.d-d; w=Math.max(w,bSm((g+22)/6)*bSm((8-g)/5)); } return w; }

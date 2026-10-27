@@ -6,16 +6,27 @@
 
 const TT_DAHN={vor:1000, seite:380, breit:40}; // Dahner Felsen mit dem Jungfernsprung: so viele m voraus hinter dem Workout-Ende, so weit links (Seite des Lagerplatzes) – ≈ 1 km entfernt auf dem Horizont (nach Skizze des Nutzers) · breit: halbe Breite der Sichtschneise
 const TT_SICHT={vor:400, breit:9}; // vor dem Tisch: keine Bäume zwischen Weg (die letzten 400 m) und Teufel, halbe Breite der Schneise
+const TT_ABZW={n:14, dreh:.012}; // Abzweigung „sicher rechts“ am Beginn der letzten Kurve vor Runde 2: Waldweg geradeaus (Stücke à 4 m, Drehung je Stück nach links), der Weg zum Tisch biegt rechts ab
+const TT_LICHTUNG={bei:[.16,.3,.45,.58,.72,.86], lang:70, wind:.9}; // Lichtungen in der Schleife: Mitte bei so viel der Schleifenlänge (zu nah an Tisch, Gabelung oder Abzweigung: fällt weg), m lang · Wind drückt die Fahrer so weit an den Rand (0 … 1)
 const TT_HUEGEL={r:20, h:4.5}; // Felshügel unter dem Teufelstisch: Radius, Höhe über dem Gelände (Tisch steht 13 m neben der Wegmitte)
 // ---- Vorbereitung (beim Streckenbau): Plätze für Gasthaus, Kirche, Häuser, Felsen; dichter Wald, Bach, Heide ----
 function prepTeufelstisch(r){ const O=r.def.orte, kf=r.kf, S=r.S, q=rng(66), at=(d,u)=>{ const [x,y]=posAt(r,d), h=headingAt(r,d); return [x-Math.sin(h)*u, y+Math.cos(h)*u]; }, rw=d=>roadW(r,d)/2; // u: m neben der Wegmitte (positiv = rechts)
-  const T=r.tt={kreuz:O.kreuz*kf, tisch:O.tisch*kf, gabel:O.gabel*kf, L:O.L*kf, raus:O.raus*kf, ziel:O.ziel*kf, kopf:O.kopf, an:O.anstieg.map(d=>d*kf), felsen:[], haeuser:[], heide:[], bach:[]};
+  const T=r.tt={kreuz:O.kreuz*kf, tisch:O.tisch*kf, gabel:O.gabel*kf, L:O.L*kf, raus:O.raus*kf, ziel:O.ziel*kf, ecke:O.ecke*kf, tEcke:O.tEcke, tKr:O.tKr, kopf:O.kopf, an:O.anstieg.map(d=>d*kf), felsen:[], haeuser:[], heide:[], bach:[]};
   const nah=ttWegNah(r), frei=[];
   T.tischPos=at(T.tisch,-(rw(T.tisch)+13)); frei.push([...T.tischPos,TT_HUEGEL.r+2]); frei.push([...T.kopf,18]); // Teufelstisch links am Weg · Handschuhkopf
   const a=at(T.gabel+16,0), b=at(T.raus+16,0); T.schild=[(a[0]+b[0])/2,(a[1]+b[1])/2]; frei.push([...T.schild,3]); // Wegweiser im Zwickel zwischen den Abzweigen
   T.hundePl=TT_HUND_PL.map(([dd,uu])=>{ const d=T.an[0]+dd, [x,y]=at(d,rw(d)+uu); frei.push([x,y,1.4]); return {d,u:rw(d)+uu}; }); // Hunde sitzen rechts im Gebüsch, wo man mit Beginn des Anstiegs vorbeikommt (welt-teufelstisch-leben.js)
   { const d=T.idyll=O.idyll*kf, h=headingAt(r,d), [sx,sy]=at(d,rw(d)), P=[[sx,sy]]; let a=h+TT_IDYLL.winkel; for(let k=1;k<=TT_IDYLL.n;k++){ a-=.035; const [px,py]=P[k-1]; P.push([px+Math.cos(a)*4,py+Math.sin(a)*4]); } T.seitenweg=P; // Idylle vor dem Ducken (welt-teufelstisch-leben.js): Seitenweg nach rechts Richtung Jungfernsprung
-    for(const [x,y] of P) frei.push([x,y,3.2]); const [wx,wy]=at(d-3,rw(d)+1.4); T.idyllSchild=[wx,wy]; frei.push([wx,wy,1.5]); }
+    for(const [x,y] of P) frei.push([x,y,3.2]); const [wx,wy]=at(d-3,rw(d)+1.4); T.idyllSchild=[wx,wy]; frei.push([wx,wy,1.5]); 
+    const [x0,y0]=P[0], [x1,y1]=P[P.length-1], ab=Math.atan2(y1-y0,x1-x0)+TT_BOGEN.dreh; T.bogenPos=[x0+Math.cos(ab)*TT_BOGEN.weit,y0+Math.sin(ab)*TT_BOGEN.weit]; { const bx=T.bogenPos[0]-wx, by=T.bogenPos[1]-wy, bl=Math.hypot(bx,by); T.bogenSicht=[wx,wy,wx+bx/bl*TT_IDYLL.schneise,wy+by/bl*TT_IDYLL.schneise]; } // Regenbogen weit hinten rechts am Horizont, Schneise dahin vom Wegweiser aus (dort steht die Kamera), wird nach hinten breiter
+    const amPfad=(x,y,m)=>P.some((p,i)=>i&&ttSegAbst(x,y,P[i-1],p)<m), a1=Math.atan2(y1-y0,x1-x0); // dichter Wald im Zwickel zwischen Weg zum Teufelstisch und dem Seitenweg (verdeckt auch den Blick auf Dahn)
+    for(let i=0;i<TT_IDYLL.wald;i++){ const o=6+Math.sqrt(q())*TT_IDYLL.tief, w=h+.04+q()*(a1-h-.04), x=x0+Math.cos(w)*o, y=y0+Math.sin(w)*o, rad=2+q()*2.5, busch=q()<.4;
+      if(nah(x,y,(busch?1.5:rad)+3)||amPfad(x,y,(busch?1.2:rad)+1.2)) continue; if(busch) S.bush.push({x,y,s:.7+q()*.9,c:q()}); else S.tree.push({x,y,s:rad,c:q(),pine:q()<.4,ht:10+q()*7}); } }
+  { const d=T.ecke, h=headingAt(r,d), [sx,sy]=posAt(r,d), P=[[sx,sy]]; let a=h; for(let k=1;k<=TT_ABZW.n;k++){ a-=TT_ABZW.dreh; const [px,py]=P[k-1]; P.push([px+Math.cos(a)*4,py+Math.sin(a)*4]); } T.abzweig=P; // Abzweigung „sicher rechts“ (vom Nutzer): Waldweg geradeaus, der Weg zum Tisch biegt rechts ab
+    for(const [x,y] of P.slice(2)) frei.push([x,y,3]); }
+  T.lichtung=[]; { const s0=T.tisch-T.kreuz, sG=T.gabel-T.kreuz, sE=T.ecke-T.kreuz; let k=0; for(const f of TT_LICHTUNG.bei){ const s=f*T.L; if(s<s0+60||s>sG-60&&s<sG+110||Math.abs(s-sE)<60) continue; // Lichtungen in der Schleife (vom Nutzer: dort bläst der Wind die Fahrer an den Rand), nicht am Tisch, an der Gabelung (Steintor) und an der Abzweigung
+    const d0=T.kreuz+s-TT_LICHTUNG.lang/2, d1=d0+TT_LICHTUNG.lang; T.lichtung.push({d0,d1,s:k++%2?-1:1}); for(let d=d0-15;d<=d1+15;d+=8) for(const u of [-1,1]) for(const o of [9,24,40]) frei.push([...at(d,u*(rw(d)+o)),o<10?7:13]);
+      for(let d=d0;d<d1;d+=1.5){ const sd=q()<.5?-1:1, [x,y]=at(d,sd*(rw(d)+1.2+q()*30)); if(!nah(x,y,2.2)) T.heide.push({x,y,s:.6+q()*.8,c:q(),r:q()*6}); } } } // keine Bäume, viel Heide
   T.tor={d:T.gabel+TT_TOR.nach}; for(const s of [-1,1]) frei.push([...at(T.tor.d,s*(rw(T.tor.d)+TT_TOR.breit)),4]); for(const [dd,sd] of TT_TOR_BAEUME) frei.push([...at(T.tor.d+dd,sd*(rw(T.tor.d+dd)+2.6)),3.5]); // Steintor auf dem rechten Abzweig, Platz für die Kiefern, die der Teufel umreißt (welt-teufel.js)
   { const zd=14, [px,py]=posAt(r,zd), h=headingAt(r,zd), o=rw(zd)+7; T.gast={d:zd, x:px-Math.sin(h)*o, y:py+Math.cos(h)*o, h, o}; frei.push([T.gast.x,T.gast.y,13]); } // Gasthaus rechts am Start
   // Kaltenbacher Tal: Kirche links hinter dem Bach, ein paar Häuser drumherum
@@ -40,19 +51,19 @@ function prepTeufelstisch(r){ const O=r.def.orte, kf=r.kf, S=r.S, q=rng(66), at=
     for(let i=0;i<30;i++){ const dd=e+(q()-.5)*55, [bx,by]=at(dd,-s*(rw(dd)+4+q()*14)); if(!nah(bx,by,2)&&Math.hypot(bx-cx,by-cy)>6&&Math.hypot(bx-hx,by-hy)>6) S.bush.push({x:bx,y:by,s:.6+q()*.8,c:q()}); } }
   kampWald(r,S,q,d=>d<T.an[0]?.3:d<T.an[1]?.45:.75); // dichter Pfälzerwald: unten Buchen, oben Kiefern
   const imBlick=(x,y)=>T.blick.some(p=>ttSegAbst(x,y,p,[T.dahn.x,T.dahn.y])<TT_DAHN.breit);
-  const tb=[]; for(let d=T.tisch-TT_SICHT.vor; d<T.tisch-12; d+=20) tb.push(posAt(r,d)); const zumTisch=(x,y)=>tb.some(p=>ttSegAbst(x,y,p,T.tischPos)<TT_SICHT.breit); // Sicht auf den Teufel beim Heranfahren (vom Nutzer gewünscht)
-  for(const k of ['tree','rock','bush','block','konif','grass']) if(S[k]) S[k]=S[k].filter(o=>!frei.some(([x,y,m])=>Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m&&Math.hypot(o.x-x,o.y-y)<m)&&!(k!=='grass'&&imBlick(o.x,o.y))&&!((k==='tree'||k==='konif'||k==='block')&&zumTisch(o.x,o.y))); }
+  const tb=[]; for(let d=T.tisch-TT_SICHT.vor; d<T.tisch-12; d+=20) tb.push(posAt(r,d)); const zumTisch=(x,y)=>tb.some(p=>ttSegAbst(x,y,p,T.tischPos)<TT_SICHT.breit); const B=T.bogenSicht, zumBogen=(x,y)=>{ if(!B) return false; const dx=B[2]-B[0], dy=B[3]-B[1], t=Math.max(0,Math.min(1,((x-B[0])*dx+(y-B[1])*dy)/(dx*dx+dy*dy))); return Math.hypot(x-B[0]-dx*t,y-B[1]-dy*t)<TT_IDYLL.breit+t*TT_IDYLL.weit; }; // Sicht auf den Teufel beim Heranfahren (vom Nutzer gewünscht)
+  for(const k of ['tree','rock','bush','block','konif','grass']) if(S[k]) S[k]=S[k].filter(o=>!frei.some(([x,y,m])=>Math.abs(o.x-x)<m&&Math.abs(o.y-y)<m&&Math.hypot(o.x-x,o.y-y)<m)&&!(k!=='grass'&&imBlick(o.x,o.y))&&!((k==='tree'||k==='konif'||k==='block')&&zumTisch(o.x,o.y))&&!((k==='tree'||k==='konif')&&zumBogen(o.x,o.y))); }
 const ttSegAbst=(x,y,[ax,ay],[bx,by])=>{ const dx=bx-ax, dy=by-ay, t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy))); return Math.hypot(x-ax-dx*t,y-ay-dy*t); }; // Abstand zur Strecke a–b
 // Abstand zum Weg (alle Wegpunkte, Gitter 8 m): nah(x,y,m) = näher als m
 function ttWegNah(r){ const C=8, gr=new Map(), key=(x,y)=>Math.floor(x/C)+','+Math.floor(y/C); for(let i=0;i<r.xs.length;i+=2){ const k=key(r.xs[i],r.ys[i]); (gr.get(k)||gr.set(k,[]).get(k)).push(i); }
   return (x,y,m)=>{ const cx=Math.floor(x/C), cy=Math.floor(y/C), w=Math.ceil(m/C); for(let a=-w;a<=w;a++) for(let b=-w;b<=w;b++){ const l=gr.get((cx+a)+','+(cy+b)); if(l) for(const i of l) if(Math.hypot(r.xs[i]-x,r.ys[i]-y)<m) return true; } return false; }; }
 
 // ---- Aufbau (aus build3D) ----
-// Waldweg vor dem Tisch (Belag „schotter“, schmal): graue Spitzsteine schauen aus dem braunen Boden, dichter am Rand, wenige in der Mitte
-function ttWaldweg(){ const Z=(R.belag||[]).find(b=>b[0]==='schotter'); if(!Z) return; const q=rng(77), N=Math.round((Z[2]-Z[1])*2.6), g=new THREE.ConeGeometry(.5,1,5), m=new THREE.InstancedMesh(g,lam('#8e8b86'),N), o=new THREE.Object3D(), C=new THREE.Color();
-  for(let i=0;i<N;i++){ const d=Z[1]+q()*(Z[2]-Z[1]), rw=roadW(R,d)/2, rand=q()<.7, u=rand?(q()<.5?-1:1)*(rw-.15+q()*.9):(q()-.5)*rw*1.4, p=wegPos(d,u), s=rand?.18+q()*.35:.1+q()*.16, h=s*(1+q()*1.2);
-    o.position.set(p.x,bodenY(p.x,p.z)+h*.2,p.z); o.rotation.set((q()-.5)*.7,q()*6,(q()-.5)*.7); o.scale.set(s*(1+q()*.5),h,s); o.updateMatrix(); m.setMatrixAt(i,o.matrix); m.setColorAt(i,C.set(q()<.3?'#a29d95':q()<.5?'#77736d':'#8b857c')); }
-  m.userData.ohneBoden=true; world.add(m); } // ein Teil steckt im Boden (gewollt)
+// Schotterweg vor dem Tisch und auf der ganzen Schleife (Belag „schotter“): flache, runde Kiesel in Grau und Beige, dichter am Rand, wenige in der Mitte (vom Nutzer: nicht spitz, normaler Schotter)
+function ttWaldweg(){ const Z=(R.belag||[]).find(b=>b[0]==='schotter'); if(!Z) return; const e=Math.min(Z[2],R.tt.kreuz+R.tt.L), q=rng(77), N=Math.round((e-Z[1])*2.2), g=new THREE.DodecahedronGeometry(.5,0), m=new THREE.InstancedMesh(g,lam('#ffffff'),N), o=new THREE.Object3D(), C=new THREE.Color(); // Runde 2 liegt schon in der Welt
+  for(let i=0;i<N;i++){ const d=Z[1]+q()*(e-Z[1]), rw=roadW(R,d)/2, rand=q()<.6, u=rand?(q()<.5?-1:1)*(rw-.2+q()*.8):(q()-.5)*rw*1.6, p=wegPos(d,u), s=rand?.08+q()*.16:.05+q()*.08;
+    o.position.set(p.x,bodenY(p.x,p.z)+s*.08,p.z); o.rotation.set((q()-.5)*.3,q()*6,(q()-.5)*.3); o.scale.set(s*(1+q()*.6),s*(.35+q()*.25),s*(.8+q()*.4)); o.updateMatrix(); m.setMatrixAt(i,o.matrix); m.setColorAt(i,C.set(['#a39e94','#8c8780','#b5ab98','#7a756e','#c2b8a4'][Math.floor(q()*5)])); }
+  m.userData.ohneBoden=true; world.add(m); } // flach, halb im Boden (gewollt)
 function buildTeufelstisch(){ ttWaldweg(); const T=R.tt, q=rng(612), A=anim.tt={}, FT=felsTex(), M=(c,map)=>new THREE.MeshLambertMaterial(map?{map,color:c}:{color:c});
   const fels=M('#ffffff',FT), rot=M('#f2a48a',FT), grau=M('#c9bcb2',FT), hell=M('#f6efe4',FT), moos=M('#7d8a52'), holz=lam('#6b4a32'), nadel=lam('#36552d'), nadel2=lam('#2e4a27'), stamm=lam('#8f5136');
   const add=(P,m,x,y,z)=>{ m.position.set(x,y,z); P.add(m); return m; }, grp=(x,y,z)=>{ const G=new THREE.Group(); G.position.set(x,y,z); G.userData.ohneBoden=true; world.add(G); return G; };
@@ -157,7 +168,11 @@ function teufelstischGelaende(h,src,dist){ const T=R.tt, H=TT_HUEGEL, n=TER.nx, 
   for(let j=0;j<TER.nz;j++) for(let i=0;i<n;i++){ const x=i*res+TER.x0, z=j*res+TER.z0, k=j*n+i; if(dist[k]<12) continue;
     let w=0, tgt=1e9; for(const p of T.blick){ const a=ttSegAbst(x,z,p,D), dx=D[0]-p[0], dz=D[1]-p[1], t=Math.max(0,Math.min(1,((x-p[0])*dx+(z-p[1])*dz)/(dx*dx+dz*dz))); w=Math.max(w,1-bSm((a-TT_DAHN.breit-20)/60)); tgt=Math.min(tgt,yE-1-30*bSm(t*1.3)); }
     if(w>0&&h[k]>tgt) h[k]+=(tgt-h[k])*w*Math.min(1,(dist[k]-12)/12);
-    const rl=Math.hypot(x-L.x,z-L.y); if(rl<16) h[k]+=(yE-h[k])*(1-bSm((rl-9)/7)); } }
+    const rl=Math.hypot(x-L.x,z-L.y); if(rl<16) h[k]+=(yE-h[k])*(1-bSm((rl-9)/7)); }
+  // Idylle: rechts der Abzweigung fällt das Gelände zum Hang ab (der Seitenweg zum Jungfernsprung führt hinunter)
+  if(T.seitenweg){ const Z=TT_IDYLL.hang, [sx,sz]=posAt(R,T.idyll), hd=headingAt(R,T.idyll), c=Math.cos(hd), sn=Math.sin(hd), y0=roadY(T.idyll)-.45;
+    for(let j=0;j<TER.nz;j++) for(let i=0;i<n;i++){ const x=i*res+TER.x0, z=j*res+TER.z0, k=j*n+i; if(dist[k]<6) continue; const a=(x-sx)*c+(z-sz)*sn, b=-(x-sx)*sn+(z-sz)*c; if(b<4) continue;
+      const w=(1-bSm((Math.abs(a-Z.mitte)-Z.lang)/Z.rand))*bSm((b-4)/10)*Math.min(1,(dist[k]-6)/12), tgt=y0-Math.min(Z.tief,(b-4)*Z.steil); if(w>0&&h[k]>tgt) h[k]+=(tgt-h[k])*w; } } }
 
 // ---- Bewegung (jeden Frame, aus rennen.js) ----
 function poseTeufelstisch(dt){ const A=anim.tt; if(!A) return; ttLicht(race.state==='run'?race.t:0); poseTeufel(dt); poseTeufelstischLeben(dt);
@@ -167,11 +182,14 @@ function poseTeufelstisch(dt){ const A=anim.tt; if(!A) return; ttLicht(race.stat
 // Stufe k: 0 wie beim Start (Tag, auch Herbst) · 1 goldener Spätnachmittag · 2 Sonnenuntergang; Himmel als eigener Verlauf, fließend vom Tag- zum Abendhimmel
 const TT_LICHT={sun:[0,0xffc078,0xff7a44], sunI:[0,1.3,1.1], sunY:[0,.25,.04], sunZ:[0,.42,.42], hemi:[0,0xd8c8b0,0x9c8cb8], boden:[0,0x4a3a2a,0x3a2a26], hemiI:[0,.7,.6], bg:[0,0xf0c890,0xf09a6a]};
 const TT_HIMMEL=[[0,'#3f7dbf','#22305e'],[.22,'#5f97ce','#5b4a7e'],[.3,'#7fb0dc','#a05e74'],[.36,'#a8c8e3','#c46a6a'],[.45,'#cfe0ea','#f0955e'],[.5,'#e9e6dc','#f6b46e'],[1,'#e9e6dc','#f6b46e']]; // [Höhe, Tag, Abend]
-// Unwetter oben am Berg (vom Nutzer): ab kurz vor dem Waldweg dunkler, grau, Wolken, Wind und Regen, bleibt bis ins Ausfahren, dann klart es zum Sonnenuntergang auf · 0 … 1
-const TT_WETTER={vor:60, auf:200, wolkVor:320, wolkAuf:420, klar:.3, sun:0x9aa2aa, sunI:.3, hemi:0x8c949e, hemiI:.72, bg:0x5c646e, himmel:0x707882, nebel:[60,750], wind:.5};
-function ttWetterW(rt,d0){ const Z=TT_WETTER, au=(race.woSegs||[]).find(s=>s.label==='Ausfahren'), k=au?1-bSm((rt-au.t0)/(au.dur*Z.klar)):1; return [bSm((me.d-(d0-Z.vor))/Z.auf)*k, bSm((me.d-(d0-Z.wolkVor))/Z.wolkAuf)*k]; } // [Licht/Regen, Wolken]
-function ttLicht(rt){ const A=anim.tt, Z=TT_WETTER, wb=(R.belag||[]).find(b=>b[0]==='schotter'); if(race.rain||race.state!=='run'&&race.state!=='count') return; // nach dem Ziel bleibt der Sonnenuntergang
-  const S=race.woSegs||[], au=S.find(s=>s.label==='Ausfahren'), k=race.state==='run'&&au?2*bSm((rt-au.t0)/au.dur):0, [w,wk]=race.state==='run'&&wb?ttWetterW(rt,wb[1]):[0,0]; ttWolken(wk,rt); regen.extra=clampN((w-.25)/.6,0,1); regen.wind=Z.wind*w;
+// Unwetter oben am Berg (vom Nutzer): schlagartig, sobald die Kamera vom Jungfernsprung zurück bei den Fahrern ist (ohne Kamerafahrt so viele m hinter dem Wegweiser) – dunkel, grau, Wolken, Wind und Regen, bleibt bis ins Ausfahren, dann klart es zum Sonnenuntergang auf
+const TT_WETTER={nach:45, klar:.3, sun:0x9aa2aa, sunI:.3, hemi:0x8c949e, hemiI:.72, bg:0x5c646e, himmel:0x707882, nebel:[60,750], wind:.5, boe:1.4}; // boe: Wind auf den Lichtungen (schräger Regen, Laub)
+function ttWetterW(rt){ const Z=TT_WETTER, A=anim.tt, T=R.tt, au=(race.woSegs||[]).find(s=>s.label==='Ausfahren'), k=au?1-bSm((rt-au.t0)/(au.dur*Z.klar)):1, C=TT_BOGEN.kam, ik=A&&A.ikT;
+  const an=ik!=null&&ik>0&&rt>=ik+C[1]+C[2]-.8||me.d>=T.idyll+Z.nach; return an?[k,k]:[0,0]; } // [Licht/Regen, Wolken]
+// Wind auf den Lichtungen der Schleife (beide Runden): {w 0 … 1, s Seite, zu der er drückt (+1 = rechts)}
+function ttWind(d){ const T=R&&R.tt; if(!T||!T.lichtung||race.state!=='run') return null; const e=d>=T.kreuz+T.L&&d<T.raus?d-T.L:d; for(const Li of T.lichtung){ const w=bSm((e-Li.d0+12)/14)*bSm((Li.d1+12-e)/14); if(w>0) return {w,s:Li.s}; } return null; }
+function ttLicht(rt){ const A=anim.tt, Z=TT_WETTER; if(race.rain||race.state!=='run'&&race.state!=='count') return; // nach dem Ziel bleibt der Sonnenuntergang
+  const S=race.woSegs||[], au=S.find(s=>s.label==='Ausfahren'), k=race.state==='run'&&au?2*bSm((rt-au.t0)/au.dur):0, [w,wk]=race.state==='run'?ttWetterW(rt):[0,0], bo=ttWind(me.d); A.boe=(A.boe||0)+((bo?bo.w*w:0)-(A.boe||0))*.08; ttWolken(wk,rt); regen.extra=clampN((w-.25)/.6,0,1); regen.wind=Z.wind*w+Z.boe*A.boe*(bo?bo.s:1);
   if(k<=0&&w<=0){ if(A.l0){ applyEnv(); sky.material.color.set(0xffffff); scene.fog.near=A.l0.fn; scene.fog.far=A.l0.ff; A.l0=null; A.hk=-1; } return; } // vor dem Waldweg und vor dem Ausfahren (oder nach einem Sprung zurück): normales Tageslicht
   if(!A.l0) A.l0={sun:sun.color.getHex(), sunI:sun.intensity, sunY:-SUN_DIR.y/SUN_DIR.x, sunZ:-SUN_DIR.z/SUN_DIR.x, hemi:hemi.color.getHex(), boden:hemi.groundColor.getHex(), hemiI:hemi.intensity, bg:scene.background.getHex(), fn:scene.fog.near, ff:scene.fog.far}; // Startwerte merken
   const L=TT_LICHT, i=k<1?0:1, f=k-i, v=(n,j)=>j?L[n][j]:A.l0[n], c=(n,o)=>o.set(v(n,i)).lerp(new THREE.Color(v(n,i+1)),f), z=n=>v(n,i)+(v(n,i+1)-v(n,i))*f;
@@ -190,4 +208,4 @@ function ttWolken(wk,rt){ const A=anim.tt, T=R.tt; if(!A.wolken){ if(wk<=0) retu
       s.userData={x:tx+Math.cos(a)*r, z:tz+Math.sin(a)*r, y:ty+110+q()*90, sc:180+q()*160}; s.userData.ohneBoden=true; s.scale.set(s.userData.sc,s.userData.sc*.45,1); world.add(s); A.wolken.push(s); }
     const n=160, p=new Float32Array(n*3); A.laub={P:new THREE.Points(new THREE.BufferGeometry().setAttribute('position',new THREE.BufferAttribute(p,3)),new THREE.PointsMaterial({color:'#5a4228',size:.12,transparent:true,opacity:0})), p, o:Array.from({length:n},()=>[(q()-.5)*40,q()*9,(q()-.5)*40,.6+q()*.8])}; A.laub.P.frustumCulled=false; A.laub.P.userData.ohneBoden=true; world.add(A.laub.P); }
   const Z=TT_WETTER, [tx,tz]=T.tischPos, wx=Math.cos(.6)*14, wz=Math.sin(.6)*14; A.wolken.forEach((s,i)=>{ const u=s.userData; s.visible=wk>0; let x=u.x+wx*rt%1400, z=u.z+wz*rt%1400; x=tx+((x-tx+700)%1400+1400)%1400-700; z=tz+((z-tz+700)%1400+1400)%1400-700; s.position.set(x,u.y,z); s.material.opacity=.85*wk; }); // ziehen schnell über den Berg
-  const L=A.laub, c=camera.position, on=wk>.5; L.P.visible=on; if(!on) return; L.P.material.opacity=bSm((wk-.5)/.3); L.o.forEach((o,i)=>{ const x=((o[0]+rt*9*o[3])%40+60)%40-20, z=((o[2]+rt*6*o[3])%40+60)%40-20, y=o[1]+Math.sin(rt*3+i)*1.2; L.p.set([c.x+x,c.y-2+y,c.z+z],i*3); }); L.P.geometry.attributes.position.needsUpdate=true; } // Laub fliegt im Wind
+  const L=A.laub, c=camera.position, on=wk>.5; L.P.visible=on; if(!on) return; L.P.material.opacity=bSm((wk-.5)/.3); const dl=rt-(A.lt!=null?A.lt:rt); A.lt=rt; A.lph=(A.lph||0)+Math.max(0,Math.min(1,dl))*(1+2.5*(A.boe||0)); const ph=A.lph; L.o.forEach((o,i)=>{ const x=((o[0]+ph*9*o[3])%40+60)%40-20, z=((o[2]+ph*6*o[3])%40+60)%40-20, y=o[1]+Math.sin(rt*3+i)*1.2; L.p.set([c.x+x,c.y-2+y,c.z+z],i*3); }); L.P.geometry.attributes.position.needsUpdate=true; } // Laub fliegt im Wind
