@@ -43,11 +43,11 @@ function draw(dt){
   if(anim.wb) poseWeinberg(dt); // Südpfalz: Weinstände, Traktor, Weinlese (welt-weinberg.js)
   // Kamera: hinten oben, läuft den Anstieg mit
   const focusD=me.d; let tx,ty,tz,lx,ly,lz;
-  // Tempo-Gefühl: sp 0 (≤25 km/h) … 1 (≥54 km/h), acc = geglättete Beschleunigung
+  // Tempo-Gefühl: sp 0 (≤18 km/h) … 1 (≥45 km/h) nach dem gefühlten Tempo vG (bergauf höher, gefTempo in effekte.js), acc = geglättete Beschleunigung
   // Space: Abstand und Sichtfeld nach dem Grundtempo; Zünden/Hochschalten des Schubs gibt einen Stoß st, der in 3–4 s abklingt
-  const vC=race.state==='run'&&(!me.done||me.free)?me.v:0; if(R.space&&dt>0&&!race.paused){ const k=me.sk||1; camS.st=clampN((camS.st||0)*Math.exp(-dt/1.3)+Math.max(0,k-(camS.sk0??k))*.35,0,1); camS.sk0=k; }
+  const vC=race.state==='run'&&(!me.done||me.free)?me.v:0, vG=gefTempo(vC); if(R.space&&dt>0&&!race.paused){ const k=me.sk||1; camS.st=clampN((camS.st||0)*Math.exp(-dt/1.3)+Math.max(0,k-(camS.sk0??k))*.35,0,1); camS.sk0=k; }
   if(dt>0&&!race.paused){ camS.acc=(camS.acc||0)+(((vC-(camS.vp??vC))/dt)-(camS.acc||0))*Math.min(1,dt*2); camS.vp=vC; }
-  camS.sp=(camS.sp||0)+(clampN(((R.space?Math.min(vC,me.vb||0):vC)-7)/8,0,1)-(camS.sp||0))*Math.min(1,dt*1.5); if(!race.paused) kickStep(dt); const sp=camS.sp, aK=R.space?2*(camS.st||0):clampN(camS.acc||0,0,2), ext=sp*1.5+aK*0.8+(camS.kx||0); // ext: Kamera fällt bei Tempo und Antritt zurück
+  camS.sp=(camS.sp||0)+(clampN(((R.space?Math.min(vC,me.vb||0):vG)-5)/7.5,0,1)-(camS.sp||0))*Math.min(1,dt*1.5); if(!race.paused) kickStep(dt); const sp=camS.sp, aK=R.space?2*(camS.st||0):clampN(camS.acc||0,0,2), ext=sp*1.5+aK*0.8+(camS.kx||0); // ext: Kamera fällt bei Tempo und Antritt zurück
   let rollT=0; if(R.stadium){ const kc=clampN((bankAt(focusD)*180/Math.PI-ST.BANK0)/(ST.BANK1-ST.BANK0),0,1), u=mine.lane*0.8, pb=trackPt(focusD-(9-3*kc)-ext,u), pl=trackPt(focusD+12,u); [tx,ty,tz]=[pb[0],pb[1]+3.4-1.3*kc-sp*0.8,pb[2]]; [lx,ly,lz]=[pl[0],pl[1]+1.0,pl[2]]; rollT=R.outSign*bankAt(focusD)*.5*kc; } // Steilkurve: Kamera tiefer, näher und mitgeneigt
   else if(R.gpx){ const back=Math.max(0,focusD-6-ext), [bx,bz]=posAt(R,back), [ax,az]=posAt(R,R.loop?focusD+10:Math.min(R.len,focusD+10)); // auf der Straße 6 m hinter dir, knapp 2 m über der Straße, Blick waagerecht
     tx=bx; tz=bz; ty=visRoadY(back)+1.9-sp*0.5; lx=ax; lz=az; ly=ty-0.33+sp*0.15; }
@@ -66,7 +66,7 @@ function draw(dt){
   else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); if(anim.burg) burgKamera(dt); if(anim.tri) trifelsKamera(dt); countKamera(dt,mine,theirs); // Berwartstein: kurzer Schwenk auf die eingestaubten Wegelagerer
     camS.roll=(camS.roll||0)+(rollT-(camS.roll||0))*Math.min(1,dt*3); if(Math.abs(camS.roll)>1e-4) camera.rotateZ(camS.roll); camShake(dt,vC); }
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
-  sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vC); regenFx(race.paused?0:dt); luftFx(race.paused?0:dt,theirs,opp.active&&race.draft&&!me.done?me.draftR||0:0); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);
+  sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vG); regenFx(race.paused?0:dt); luftFx(race.paused?0:dt,theirs,opp.active&&race.draft&&!me.done?me.draftR||0:0); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);
   for(const r of [mine,theirs]){ const dist=camera.position.distanceTo(r.g.position), ds=Math.max(1,dist/14); r.tag.scale.set(1.9*ds,.475*ds,1); r.tag.visible=dist>6&&!R.def.burg&&!R.def.ma; } // Namensschild (nicht auf Berwartstein) bleibt auch aus der Ferne lesbar
   renderer.render(scene,camera); fotoTick(); // Fotos der Fahrt (auswertung.js): direkt nach dem Zeichnen, sonst ist das Bild leer
   ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H); miniMap(); miniProfile();

@@ -1,6 +1,6 @@
 /* ================= Effekte: Fahrtwind, Regen, Partikel, Windschatten-Linien, Kamerawackeln, Antritt-Kick =================
    Werden in rennen.js (draw) aufgerufen; camS (Kamerazustand) liegt dort. */
-// Tempo-Effekte ab 40 km/h: Fahrtwind-Linien am Bildrand (hängen an der Kamera) und Randunschärfe (CSS-Overlay #speedfx)
+// Tempo-Effekte ab 28 km/h gefühltem Tempo (gefTempo): Fahrtwind-Linien am Bildrand (hängen an der Kamera), Randschlieren (Canvas #schlieren) und Randunschärfe (CSS-Overlay #speedfx)
 const wind=(()=>{ const N=60, p=new Float32Array(N*6), q=rng(4711), seed=[];
   const spawn=(o,first)=>{ const a=q()*Math.PI*2, z=-8-q()*14, k=0.35+q()*0.4; Object.assign(o,{x:Math.cos(a)*k*-z*1.4, y:Math.sin(a)*k*-z*0.8, z:first?z*q():z, l:1.5+q()*3}); };
   for(let i=0;i<N;i++){ const o={}; spawn(o,true); seed.push(o); }
@@ -42,7 +42,20 @@ function luftFx(dt,lead,dr){ const L=luft, f=clampN(dr/.35,0,1); L.m.visible=f>.
   L.m.position.copy(lead.g.position); L.m.rotation.copy(lead.g.rotation); L.m.material.opacity=.12+.4*f;
   L.s.forEach((o,i)=>{ o.u=(o.u+dt*1.1)%1; const at=u=>[-.5-u*6, o.y+(1-o.y)*u*.7, o.z*(1-u*.75)], a=at(o.u), b=at(Math.min(1,o.u+.09)); L.p.set([...a,...b],i*6); });
   L.m.geometry.attributes.position.needsUpdate=true; }
-function speedFx(dt,v){ const f=clampN((v-10.42)/5.56,0,1), W=wind; // 0 bei 37,5 km/h, 1 bei 57,5 km/h
+// Gefühltes Tempo: bergauf zählt jede km/h mehr (× 1 + 0,15 je % Steigung, höchstens × 3; 18 km/h bei 8 % wirken wie 40), bergab und im Stadion/Space das echte Tempo; Steigung über 50 m gemittelt
+function gefTempo(v){ if(!R||R.space||R.stadium||!(v>0)) return v; let g=0; for(let k=-30;k<=20;k+=10) g+=gradeAt(me.d+k); return v*Math.min(3,1+.15*Math.max(0,g/6)); }
+// Randschlieren: weiche helle Striche laufen am Bildrand von innen nach außen (Canvas in halber Auflösung, liegt unter #speedfx und wird dort mit verwischt)
+const schl=(()=>{ const q=rng(77), s=[]; for(let i=0;i<28;i++){ const o={}; o.neu=erst=>{ o.a=q()*Math.PI*2; o.r=erst?.5+q()*.7:.5+q()*.15; o.k=.7+q()*.6; o.w=1+q()*1.6; }; o.neu(true); s.push(o); } return {s,el:null,cx:null,an:false}; })();
+function schlierenFx(dt,v,f){ const S=schl, el=S.el||(S.el=document.getElementById('schlieren')); if(!el) return;
+  if(!(f>.01&&!R.space&&!camOverride)){ if(S.an){ el.style.display='none'; S.an=false; } return; } if(!S.an){ el.style.display='block'; S.an=true; }
+  const W=Math.round(innerWidth/2), H=Math.round(innerHeight/2); if(el.width!==W||el.height!==H){ el.width=W; el.height=H; S.cx=null; } const c=S.cx||(S.cx=el.getContext('2d'));
+  c.clearRect(0,0,W,H); c.lineCap='round'; const mx=W/2, my=H*.55, n=Math.round(10+18*f);
+  S.s.forEach((o,i)=>{ o.r+=dt*v*.09*o.k; if(o.r>1.25) o.neu(false); if(i>=n) return; // r: 0,5 innen (noch unsichtbar) … ab ≈ 0,85 aus dem Bild
+    const L=.08+.22*f*o.k, ca=Math.cos(o.a)*W*.6, sa=Math.sin(o.a)*H*.6, x0=mx+ca*o.r, y0=my+sa*o.r, x1=mx+ca*(o.r+L), y1=my+sa*(o.r+L), gr=c.createLinearGradient(x0,y0,x1,y1);
+    gr.addColorStop(0,'rgba(240,246,252,0)'); gr.addColorStop(1,`rgba(240,246,252,${((.12+.28*f)*Math.min(1,(o.r-.5)*4)).toFixed(3)})`);
+    c.strokeStyle=gr; c.lineWidth=o.w*(.6+.8*f); c.beginPath(); c.moveTo(x0,y0); c.lineTo(x1,y1); c.stroke(); }); }
+function speedFx(dt,v){ const f=clampN((v-7.78)/6.11,0,1), W=wind; // 0 bei 28 km/h, 1 bei 50 km/h (gefühltes Tempo)
+  schlierenFx(dt,v,f);
   W.m.visible=f>0.01&&!R.space&&!camOverride; W.m.material.opacity=0.12+f*0.5;
   if(W.m.visible){ const n=Math.round(20+40*f); W.seed.forEach((o,i)=>{ o.z+=v*1.3*dt; if(o.z>-0.5||Math.abs(o.x)>-o.z*1.3) W.spawn(o,false);
       const L=i<n?o.l*(0.8+f*1.0):0; W.p.set([o.x,o.y,o.z, o.x,o.y,o.z-L], i*6); }); W.m.geometry.attributes.position.needsUpdate=true; }
