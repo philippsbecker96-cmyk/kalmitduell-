@@ -1,9 +1,9 @@
 /* ===== Mission 2 (Teufelstisch): Musik und Geräusche =====
    Helfer aus Mission 1 (triEins, triLoop, triMusik, triMusikNeu, triFern in welt-trifels-leben.js) · Plan, Dateien und was noch fehlt: kampagne/sounds/effekte/EFFEKTE.md
    ttTon aus rennen.js · fehlende Dateien bleiben still (Verfolgungsstück teufelsjagd: bis es da ist, läuft omniouswaldnachts als Platzhalter) */
-Object.assign(TRI_TON_VOL,{hundemeute:.7, hund_gross:.6});
+Object.assign(TRI_TON_VOL,{hundemeute:.7, hund_gross:.6, vogel_wald:.5}); // vogel_wald fehlt noch (bleibt still)
 Object.assign(TRI_MUSIK,{teufelsweg:['musik/teufelsweg',.5,.6], waldamb:['musik/waldambient',.35], tjagd:['musik/teufelsjagd',.55,2], tjagdP:['musik/omniouswaldnachts',.5,2]}); // tjagdP: Platzhalter fürs Verfolgungsstück
-const TT_TON={hund:35, bell:[2,6], jagdLang:31, thema:36, teufelsweg:86}; // Hunde hörbar bis m · Bellen alle s · Jagdmusik spielt s · Thema bis s · teufelsweg endet mit „Ertappt“
+const TT_TON={hund:35, bell:[2,6], jagdLang:31, thema:36, teufelsweg:86, froh:3}; // Hunde hörbar bis m · Bellen alle s · Jagdmusik spielt s · Thema bis s · teufelsweg endet mit „Ertappt“ · fröhliche Musik so viele s, nachdem der Teufel am Steintor aufschlägt
 let ttTonVor=null, ttJagdDa=null; // ttJagdDa: liegt musik/teufelsjagd.mp3 schon im Ordner?
 function ttTon(dt){ const A=anim.tt; if(!A) return; const run=race.state==='run', an=(run||race.state==='count')&&!race.paused, rt=run?race.t:0, t=performance.now()/1000, T=R.tt, Z=TT_TON;
   if(!A.tonAn){ A.tonAn=1; triTonAus(); } triDuck=1; // Töne von Mission 1 aus
@@ -21,6 +21,9 @@ function ttTon(dt){ const A=anim.tt; if(!A) return; const run=race.state==='run'
   triMusik('jagd',an?jm:0,dt,false);
   // Idylle am Wegweiser zum Jungfernsprung: kurz fröhlich, bricht mit dem Unwetter ab
   const idy=run&&T.idyll!=null&&me.d>=T.idyll-250&&me.d<T.idyll+45&&sturm<=0; if(einmal('idy',idy)) triMusikNeu('happy');
+  // Pause nach Flucht 1: wenn es aufklart, fröhliche Musik und Vögel – verklingt, wenn es wieder zuzieht
+  const pw=run&&a1&&rt>=a1.t0&&T.ecke!=null&&me.d<T.ecke+TT_PAUSE.kipp[0]+TT_PAUSE.kipp[1]?ttPauseW(rt):1, froh=D&&D.trip!=null&&rt>=D.trip+TF_STURZ.fall+TT_TON.froh?clampN((.55-pw)/.3,0,1):0; // erst ein paar s, nachdem der Teufel am Steintor auf dem Boden liegt if(einmal('froh',froh>0)) triMusikNeu('happy'); if(triLoops.mhappy) triLoops.mhappy.a.loop=froh>0;
+  triLoop('ttVoegel','vogel_wald',an?froh:0,dt);
   // Anschleichen: teufelsweg (86 s) so, dass es mit „Ertappt“ endet, wird zum Tisch hin lauter – danach kurz Stille
   const tw0=e1?e1.t0-Z.teufelsweg:1e9, tw=run&&rt>=tw0&&rt<e1.t0?.7+.3*(rt-tw0)/Z.teufelsweg:0; if(einmal('tw',tw>0)) triMusikNeu('teufelsweg'); triMusik('teufelsweg',an?tw:0,dt,false);
   // Flucht 1 und 2: Verfolgungsstück (Runde 2 lauter), solange es fehlt, der Platzhalter
@@ -28,11 +31,11 @@ function ttTon(dt){ const A=anim.tt; if(!A) return; const run=race.state==='run'
   triMusik('tjagd',an&&ttJagdDa?fl:0,dt); triMusik('tjagdP',an&&!ttJagdDa?fl:0,dt);
   // Unterwegs (folk1, folk2, happy) wie in Mission 1: im Einfahren unter Friedels Erzählung und dem Gedicht, im Ausfahren nach dem Thema
   const PL=O.pl||(O.pl=['folk1','folk2','happy'].sort(()=>Math.random()-.5)), PA=triLoops['m'+PL[O.pi|0]];
-  const unt=run&&!ank&&(rt>=Z.thema+2&&an1&&rt<an1.t0-15||rt>=zE+45)?.8:0, hp=Math.max(unt,idy?1:0);
+  const unt=run&&!ank&&(rt>=Z.thema+2&&an1&&rt<an1.t0-15||rt>=zE+45)?.8:0, hp=Math.max(unt,idy?1:0,froh), hap=idy||froh>0;
   if(unt>0&&PA&&PA.a.ended){ if(!O.plNeu) O.plNeu=t+4+Math.random()*4; else if(t>O.plNeu){ O.plNeu=0; O.pi=((O.pi|0)+1)%PL.length; triMusikNeu(PL[O.pi]); } }
-  for(const n of PL) triMusik(n,an&&(idy?n==='happy':n===PL[O.pi|0])?hp:0,dt,false);
+  for(const n of PL) triMusik(n,an&&(hap?n==='happy':n===PL[O.pi|0])?hp:0,dt,false);
   // Wald-Teppich (waldambient): ab den Hunden bis „Ertappt“ und nach Flucht 1, leiser im Unwetter – aus bei Jagd, Idylle, teufelsweg und Flucht
-  const wald=run&&an1&&(rt>=an1.t0-15&&e1&&rt<e1.t0||a1&&K&&rt>=K.r[0].tE&&rt<K.r[1].tT)?(sturm>0?.5:.7)*(1-jm)*(idy?0:1)*(tw>0?0:1):0; triMusik('waldamb',an?wald:0,dt);
+  const wald=run&&an1&&(rt>=an1.t0-15&&e1&&rt<e1.t0||a1&&K&&rt>=K.r[0].tE&&rt<K.r[1].tT)?(sturm>0?.5:.7)*(1-jm)*(idy?0:1)*(tw>0?0:1)*(1-froh):0; triMusik('waldamb',an?wald:0,dt);
   // Ankunft: mit den Ende-Tafeln einmal das kurze Stück
   if(einmal('ankunft',ank)) triMusikNeu('ankunft'); triMusik('ankunft',an&&ank?1:0,dt,false);
   // ---- Geräusche ----

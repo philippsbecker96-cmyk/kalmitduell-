@@ -7,7 +7,11 @@
 
 // Friedels Sprüche: [s nach dem Start, Dauer, Text] – PLATZHALTER, Texte schreibt der Nutzer
 const TT_TXT={hunde:{sehen:'[PLATZHALTER] Oh weia … guck mol do im Gebüsch. Die gucke awwer hungrich …', start:'[PLATZHALTER] Oh nee – die Kläffer vum Dorf! Die rieche mei Worscht!', klau:['[PLATZHALTER] He! Gebb des her!','[PLATZHALTER] Net de Speck!!','[PLATZHALTER] Mei scheen Fleeschworscht!','[PLATZHALTER] Mei Schinke! Ihr Bagaasch!','[PLATZHALTER] Hört uff! Ich hab doch nix mehr!'],
-    biss:['[PLATZHALTER] Aua! Der beißt mich in die Wad!','[PLATZHALTER] Loss los, du Mistvieh!','[PLATZHALTER] Schon widder in die Wad!'], letzt:'[PLATZHALTER] Mei letscht Worscht!!! … Jetzt is alles fort.'},
+    biss:['[PLATZHALTER] Aua! Der beißt mich in die Wad!','[PLATZHALTER] Loss los, du Mistvieh!','[PLATZHALTER] Schon widder in die Wad!'], letzt:'[PLATZHALTER] Mei letscht Worscht!!! … Jetzt is alles fort.',
+    zieh:['[PLATZHALTER] He! Der hängt an mei Worschtkett! Loss los, du Mistvieh!','[PLATZHALTER] Der loss sich ziehe wie de Graf in de Kutsch!','[PLATZHALTER] Do – jetzt is se gerisse. Verschluck dich dra!'], // Tauziehen: Beginn, Mitte, Kette reißt
+    katze:['[PLATZHALTER] Kschtt! Ihr Dreckskäärle! Losst mei Katz in Ruh!','[PLATZHALTER] Merci, Fraa! Haue Se nur feschd druff!']}, // [Bäuerin, Friedel]
+  verrat:'[PLATZHALTER] Mmmh … so en Schoppe unn e Dreierlei, des hätt ich jetzt aach gern …', // kurz vor „Ertappt“ – dadurch merkt der Teufel euch
+  wetter:['[PLATZHALTER] Guck emol, die Sunn kummt raus! Der Deiwel hot des Sauwetter mitgenomme.','[PLATZHALTER] Hm … des gfallt mer gar net, wie des do hinne widder zuzieht.','[PLATZHALTER] Do kummt’s widder runner! Wie aus Kiwwele!'], // Pause nach Flucht 1: klart auf, zieht zu, nach der Abzweigung
   duck:'[PLATZHALTER] Do vorne geht’s zum Jungfernsprung – awwer des is en Umweg. Der Deiwel entdeckt uns doch eh net. Ich wääß, wie mer des mache: Mir mache uns halt klä!',
   gabel:'[PLATZHALTER] Hoho – vorbei! Zum Glück kann der net ziele mit seim Schoppe im Kopp!',
   bauer:['[PLATZHALTER] Ei Friedel! Fütterscht du jetzt die Dorfköter? Do bleibt jo nix mehr fer dich!','[PLATZHALTER] Halt die Gosch, Schorsch, unn hilf mer liewer!','[PLATZHALTER] Hä hä … Worschtfriedel!'], // [Bauer, Friedel, Bauer]
@@ -47,8 +51,9 @@ const TT_HUND_SZ=[['quer',25],['sturz',75],['busch',120],['quer',185],['sturz',2
 function ttHundePlan(){ const S=race.woSegs||[], a=S.find(s=>s.label==='Anstieg'); if(!a) return null; const Z=TT_HUND, t0=a.t0, t1=a.t0+a.dur, n=TT_KLAU.length, dt=(t1-Z.nach-(t0+Z.vor))/(n-1), h=TT_HUND_FORM.length;
   const klau=TT_KLAU.map((x,k)=>({t:t0+Z.vor+k*dt, k, h:k%h})), biss=[1.5,4.5,8.5].map((x,j)=>({t:t0+Z.vor+x*dt, h:(j+2)%h})), ende=klau[n-1].t+.9, sz=[];
   const frei=(j,von,bis)=>!klau.some(e=>e.h===j&&bis>e.t-4&&von<e.t+Z.frei)&&!biss.some(e=>e.h===j&&bis>e.t-3&&von<e.t+3)&&!sz.some(e=>e.h===j&&bis>e.t-2&&von<e.t+e.dur+2);
+  const Z2=ttTierePlan(klau,frei,sz,dt); // Tauziehen, Katze mit Bäuerin (welt-teufelstisch-tiere.js) – zuerst, damit die übrigen Szenen ausweichen
   TT_HUND_SZ.forEach(([art,s],k)=>{ const t=t0+s, dur=TT_HUND_DAUER[art]; if(t+dur>ende-5) return; for(let i=0;i<h;i++){ const j=(k+i)%h; if(frei(j,t,t+dur)){ sz.push({art,t,dur,h:j,s:k%2?1:-1}); return; } } }); // s: Seite (+1 = rechts)
-  return {t0, t1, klau, biss, ende, sz, frei, kehren:ttKehren()}; }
+  return {t0, t1, klau, biss, ende, sz, frei, kehren:ttKehren(), ...Z2}; }
 // Kehren am Anstieg (Richtung dreht sich um mehr als 115°), ohne Felsen auf der Abkürzung
 function ttKehren(){ const T=R.tt, K=[]; let p=headingAt(R,T.an[0]), a=null, sum=0;
   for(let d=T.an[0]; d<T.an[1]; d+=5){ const hd=headingAt(R,d), dh=Math.atan2(Math.sin(hd-p),Math.cos(hd-p)); p=hd; if(Math.abs(dh)>.01){ if(a==null){ a=d; sum=0; } sum+=dh; } else if(a!=null){ if(Math.abs(sum)>2) K.push({d1:a-5, d2:d}); a=null; } }
@@ -77,7 +82,10 @@ function ttSagPlan(){ const L=[...TT_TXT.erzaehl], P=ttHundePlan(), D=anim.tt.te
   if(P){ L.push([P.t0-12,7,X.hunde.sehen],[P.t0+6,7,X.hunde.start]); [0,2,4,7,9].forEach((k,i)=>L.push([P.klau[k].t+1,5,X.hunde.klau[i]])); P.biss.forEach((b,i)=>L.push([b.t+.2,5,X.hunde.biss[i]])); L.push([P.ende+.2,7,X.hunde.letzt]); }
   if(K) K.dz.slice(0,2).forEach(([a],i)=>L.push([a+TT_PIEK.stich+.1,5,X.piek[i]]));
   const B=ttBegZeit(P); if(B){ L.push([B.tB-7,5,X.bauer[0],'bauer'],[B.tB-.5,4,X.bauer[1]],[B.tB+4,4,X.bauer[2],'bauer'],[B.tR-3,5,X.ritter[0],'ritter'],[B.tR+3,4,X.ritter[1],'ritter'],[B.tR+8,5,X.ritter[2]]); }
-  const S=race.woSegs||[], e=S.find(s=>s.label==='Ertappt'); if(e) L.push([e.t0-TT_DUCK-14-15,8,X.duck]); if(K&&K.bw[0]!=null) L.push([K.bw[0]+3.6,5,X.gabel]); const T=R.tt; if(T.tEcke) L.push([T.tEcke-8,7,X.rechts]); if(K&&K.r[1].tA) L.push([K.r[1].tA+.8,4,X.schwoer]); return L; } // Friedel vor der Abzweigung zum Jungfernsprung (am Wegweiser bist du e.t0−TT_DUCK−14) · nach dem Gabelwurf · vor der Abzweigung „sicher rechts“ (am Beginn der letzten Kurve, geplante Zeit) · wenn der Teufel am Tisch ankommt
+  if(P&&P.zieh){ const Z=P.zieh; L.push([Z.t+1,5,X.hunde.zieh[0]],[Z.t+Z.dur*.5,5,X.hunde.zieh[1]],[Z.t+Z.dur+.3,5,X.hunde.zieh[2]]); } if(P&&P.katze){ const tk=P.katze.t; L.push([tk-1,5,X.hunde.katze[0],'baeuerin'],[tk+5,5,X.hunde.katze[1]]); }
+  const S=race.woSegs||[], e=S.find(s=>s.label==='Ertappt'), ab=S.find(s=>s.label==='Abgeschüttelt'); if(e) L.push([e.t0-TT_DUCK-14-15,8,X.duck],[e.t0-TF_MERK.vor,TF_MERK.vor,X.verrat]);
+  if(ab&&R.tt.tEcke){ const Z=TT_PAUSE, tE=R.tt.tEcke, kl=Math.max(ab.t0+20,Math.min(ab.t0+Z.klar,tE-30)); L.push([ab.t0+(kl-ab.t0)*.6,6,X.wetter[0]],[kl+(tE-kl)*.55,6,X.wetter[1]]); if(!K||tE+19<K.r[1].tA) L.push([tE+14,5,X.wetter[2]]); } // Wetter in der Pause (geplante Zeiten)
+  if(K&&K.bw[0]!=null) L.push([K.bw[0]+3.6,5,X.gabel]); const T=R.tt; if(T.tEcke) L.push([T.tEcke-8,7,X.rechts]); if(K&&K.r[1].tA) L.push([K.r[1].tA+.8,4,X.schwoer]); return L; } // Friedel vor der Abzweigung zum Jungfernsprung (am Wegweiser bist du e.t0−TT_DUCK−14) · nach dem Gabelwurf · vor der Abzweigung „sicher rechts“ (am Beginn der letzten Kurve, geplante Zeit) · wenn der Teufel am Tisch ankommt
 // Zeiten der Begegnungen am Anstieg (zwischen den Klau-Szenen der Hunde): tB Dorfbewohner bei dir, tR Ritter neben dir
 function ttBegZeit(P){ if(!P) return null; const Z=TT_BEG, k=(n,s)=>P.klau[Math.min(n,P.klau.length-1)].t+s; return {tB:k(...Z.bauer), tR:k(...Z.ritter)}; } // Fernbild des Teufelstischs: so groß, als stünde er 520 m entfernt (etwas kleiner als am Ende von Mission 1, vom Nutzer gewünscht) · blendet auf den letzten 300 m vor dem Anstieg aus
 
@@ -86,8 +94,8 @@ function buildTeufelstischLeben(){ const A=anim.tt, T=R.tt;
   { const F=friedelModell(); F.sack.visible=F.raus.G.visible=false; F.r.lane=null; A.friedel={...F, d:0, crank:0, blase:triBlase(), wurst:ttWurstladung(F.r)};
     const q=rng(321); A.hunde=[0,1,2,3].map(c=>ttHund(c,q)); const W=A.friedel.wurst; A.beute=TT_KLAU.map(([w,i],k)=>{ const o=(w==='k'?W.kette[i]:W.teile[i]).clone(true); o.position.set(0,0,0); o.rotation.set(0,0,0); o.visible=false; A.hunde[k%4].maul.add(o); return o; }); // Beute im Maul (Kopie)
     if(!document.getElementById('triSag')){ const el=document.createElement('div'); el.id='triSag'; document.body.appendChild(el); } } // Friedels Worte, wenn er nicht im Bild ist
-  if(!document.getElementById('ttGedicht')){ const el=document.createElement('div'); el.id='ttGedicht'; document.body.appendChild(el); } // Gedicht unten mittig
-  buildBegegnungen(A); buildIdylle(A,T); if(T.abzweig) ttPfad(T.abzweig,1.5); // Abzweigung „sicher rechts“ vor Runde 2: Waldweg geradeaus
+  if(!document.getElementById('ttGedicht')){ const el=document.createElement('div'); el.id='ttGedicht'; document.body.appendChild(el); } // Gedicht oben mittig (über den Fahrern)
+  buildBegegnungen(A); buildIdylle(A,T); sicher('Tiere',()=>buildTiere(A,T)); if(T.abzweig) ttPfad(T.abzweig,1.5); // Abzweigung „sicher rechts“ vor Runde 2: Waldweg geradeaus
   { const [tx,tz]=T.tischPos, c=new THREE.Color(), f=scene.fog?scene.fog.color:new THREE.Color('#c8d4dc'), F=tischSilhouette('#'+c.set('#6a3a2c').lerp(f,.45).getHexString(),'#'+c.set('#58302a').lerp(f,.45).getHexString(),true); // dunstig wie in der Ferne
     F.position.set(tx,bodenY(tx,tz)-2,tz); F.rotation.y=.4; world.add(F); A.fern=F; } }
 
@@ -114,7 +122,7 @@ function poseTeufelstischLeben(dt){ const A=anim.tt, F=A.friedel; if(!F) return;
   // Sprechblase über Friedel, sonst unten im Bild
   if(run&&(A.sagS!==race.woSegs||A.sagK!==(A.teufel&&A.teufel.sk))){ A.sag=ttSagPlan(); A.sagS=race.woSegs; A.sagK=A.teufel&&A.teufel.sk; }
   const Tf=A.teufel, tor=Tf&&Tf.trip!=null?[Tf.trip+TF_STURZ.fall+.8,6,TT_TXT.tor]:null, akt=run?[...(tor?[tor]:[]),...(A.sag||[])].filter(([a,d])=>rt>=a&&rt<a+d):[], el=document.getElementById('triSag'); let unten='';
-  for(const [wer,name,G,B,hy] of [['friedel','Friedel',F.r.g,F.blase,2.9],['bauer','Schorsch',A.bauer.m.G,A.bauer.blase,2.4],['ritter','Ritter',A.ritter.G,A.ritter.blase,3.4]]){ // Sprechblase über dem Sprecher, sonst unten im Bild
+  for(const [wer,name,G,B,hy] of [['friedel','Friedel',F.r.g,F.blase,2.9],['bauer','Schorsch',A.bauer.m.G,A.bauer.blase,2.4],['ritter','Ritter',A.ritter.G,A.ritter.blase,3.4],...(A.katze?[['baeuerin','Bäuerin',A.katze.frau.m.G,A.katze.blase,2.4]]:[])]){ // Sprechblase über dem Sprecher, sonst unten im Bild
     const s=akt.find(x=>(x[3]||'friedel')===wer), txt=s?kText(s[2]):null, p=G.position.clone(); p.y+=hy; let im=false;
     if(txt&&G.visible){ const q=p.clone().project(camera); im=q.z<1&&Math.abs(q.x)<.9&&Math.abs(q.y)<.9&&camera.position.distanceTo(p)<45; triSag(wer,txt); }
     B.visible=!!txt&&im; if(B.visible){ triBlaseText(B,txt); triBlaseUeber(B,p,ich&&ich.g); } if(txt&&!im&&!unten) unten=name+': '+txt; }
@@ -130,6 +138,7 @@ function poseTeufelstischLeben(dt){ const A=anim.tt, F=A.friedel; if(!F) return;
 // laufen im Galopp um sein Hinterrad, springen zum Gepäckträger und schnappen ein Stück (bleiben damit zurück), beißen ihn in die Wade, ziehen am Ende ab
 // Dazwischen (TT_HUND_SZ): flitzen von Rand zu Rand über den Weg ins Gras, überschlagen sich über den Wegrand und rappeln sich auf, verschwinden im Gebüsch und warten weiter vorn, kürzen in Kehren den Hang hinauf ab und warten um die Ecke
 function poseHunde(dt,rt,run,lauf,t){ const A=anim.tt, F=A.friedel, H=A.hunde, T=R.tt; if(!H||!T.hundePl) return; if(run&&A.hS!==race.woSegs){ A.hp=ttHundePlan(); A.hS=race.woSegs; } const P=run?A.hp:null, W=F.wurst, ich=riders3d[myKey];
+  sicher('Tiere',()=>poseTiere(P,rt,run,t,dt));
   TT_KLAU.forEach(([w,i],k)=>{ const e=P&&P.klau[k]; (w==='k'?W.kette[i]:W.teile[i]).visible=!(e&&rt>=e.t+.9); A.beute[k].visible=!!e&&rt>=e.t+.9&&(rt<e.t+TT_HUND.frei||k===TT_KLAU.length-1); }); // Stück weg vom Gepäckträger, im Maul
   if(P&&rt<P.ende) for(const k of P.kehren){ if(k.los||F.d<k.d1-6||F.d>k.d1+10) continue; k.los=true; // ein freier Hund kürzt die Kehre ab
     const j=H.findIndex((h,j)=>h.d!=null&&!h.kz&&rt>P.t0+j*.9+3&&P.frei(j,rt,rt+40)); if(j<0) continue; const h=H[j]; h.kz={d2:k.d2, x0:h.G.position.x, z0:h.G.position.z, q:0}; }
@@ -146,23 +155,26 @@ function poseHunde(dt,rt,run,lauf,t){ const A=anim.tt, F=A.friedel, H=A.hunde, T
         h.vs=(h.vs??h.v)+(h.v-(h.vs??0))*Math.min(1,dt*2); h.phi+=h.vs/(h.vs<4?1.3:2.4)*2*Math.PI*lauf; tfHundLauf(h,Math.min(1,h.vs/3),t,j); }
       else { h.G.position.set(B.x,bodenY(B.x,B.z),B.z); blick(B.x,B.z,Math.min(1,dt*3)); h.v=h.vs=0; tfHundHaltung(h,'sitz',t,j); h.sws.forEach((s,i)=>{ if(!i) s.rotation.z=.6*Math.sin(t*12); }); } // wedelt
       if(k.q>=L&&F.d>=k.d2-4){ h.d=k.d2; h.u=0; h.kz=null; } h.px=h.G.position.x; h.pz=h.G.position.z; return; }
+    if(ttZiehHund(h,j,P,rt,lauf,t,dt)) return; // Tauziehen an der Wurstkette
     const Fo=TT_HUND_FORM[j]; let td=F.d+Fo[0], tu=(F.r.lane||0)+Fo[1], spr=0, zerr=0, Hl=roadW(R,F.d)/2+.6, roll=0, hal=null, fest=false;
     const kl=P.klau.find(e=>e.h===j&&rt>=e.t-2.5&&rt<e.t+1.2), bi=P.biss.find(e=>e.h===j&&rt>=e.t-2&&rt<e.t+2.6), weg=P.klau.find(e=>e.h===j&&rt>=e.t+1.2&&rt<e.t+TT_HUND.frei);
-    const ep=!kl&&!bi&&!weg&&!ab&&h.d!=null?P.sz.find(e=>e.h===j&&rt>=e.t&&rt<e.t+e.dur&&h.fertig!==e):null, es=ep?rt-ep.t:0;
+    const kz=!kl&&!bi&&!weg&&!ab&&h.d!=null?ttKatzeZiel(j,P,rt):null, ep=!kl&&!bi&&!weg&&!kz&&!ab&&h.d!=null?P.sz.find(e=>e.h===j&&rt>=e.t&&rt<e.t+e.dur&&h.fertig!==e):null, es=ep?rt-ep.t:0;
     if(kl){ td=F.d-.75; tu=F.r.lane||0; const s=rt-(kl.t-.3); if(s>0&&s<1.2) spr=Math.sin(Math.PI*s/1.2)*.55; } // springt zum Gepäckträger
     else if(bi){ td=F.d-.15; tu=(F.r.lane||0)-.55; zerr=rt>=bi.t?1:0; } // beißt in die Wade und zerrt
     else if(weg) td=F.d-16-4*j; // bleibt mit der Beute zurück
+    else if(kz){ td=kz.td; tu=kz.tu; Hl+=3; fest=true; h.v=clampN((td-h.d)*1.6,0,me.v+6); h.d+=h.v*lauf; h.u+=(tu-h.u)*Math.min(1,dt*2.5); if(h.v<.8) hal='bell'; } // rennt zur Katze und kläfft sie an
     else if(ep&&ep.art==='quer'){ Hl+=1.6; td=F.d+3+1.5*Math.sin(es*1.3); tu=-ep.s*Hl*Math.cos(Math.PI*es/3.5); } // flitzt vor euch von einem Wegrand zum anderen, über den Rand hinaus ins Gras und zurück
     else if(ep&&ep.art==='sturz'){ Hl+=2.2; if(es>.4&&es<3){ const f=Math.min(1,(es-.4)/1.1); roll=ep.s*2*Math.PI*f; spr=.45*(1-Math.cos(roll)); tu=ep.s*Hl; h.v=Math.max(0,h.v-9*dt); fest='d'; if(es>1.5) hal=es<2.4?'lieg':'steh'; } } // überschlägt sich, kugelt über den Wegrand die Böschung hinunter, bleibt kurz liegen, schüttelt sich und holt wieder auf
     else if(ep&&ep.art==='busch'){ Hl+=4; if(es<1.8){ td=F.d+4; tu=ep.s*Hl; } else { if(h.wE!==ep){ h.wE=ep; h.wd=F.d+me.v*5+32; } fest=true; h.d=h.wd; h.u=ep.s*(Hl-2.4); h.v=0; if(F.d<h.wd-28) h.G.visible=false; else hal='sitz'; if(F.d>=h.wd-2) h.fertig=ep; } } // verschwindet im Gebüsch, sitzt ein Stück weiter vorn am Wegrand und wartet auf euch
     if(h.d==null){ if(rt-los<3){ h.d=pl.d; h.u=pl.u; } else { h.d=td; h.u=tu; } h.v=0; } else if(!ab&&!fest&&Math.abs(h.d-td)>80){ h.d=td; h.u=tu; } // springt aus dem Gebüsch (nach Sprüngen im Testmodus gleich dabei)
     if(fest==='d') h.d+=h.v*lauf; else if(fest); else if(ab){ h.v=-7; h.d+=h.v*lauf; } else { h.v=clampN(me.v+(td-h.d)*1.4,0,me.v+6); h.d+=h.v*lauf; } // am Ende kehrt um und ab ins Dorf
+    if(!kz) tu=ttUmFrau(h.d,tu,Hl); // Bogen um die Bäuerin mit dem Besen
     if(fest!==true) h.u+=(clampN(tu,-Hl,Hl)-h.u)*Math.min(1,dt*(roll?4:2.5)); if(ab&&h.d<me.d-TT_HUND.ab) h.G.visible=false; // quer über den Weg zu Friedel
     const p=wegPos(h.d,h.u), dx=p.x-(h.px??p.x), dz=p.z-(h.pz??p.z), sp=Math.hypot(dx,dz); h.G.position.set(p.x,bodenY(p.x,p.z)+spr,p.z); h.px=p.x; h.pz=p.z; // schaut in Laufrichtung (nach Sprüngen geradeaus)
-    if(hal==='sitz') blick(p.x,p.z,Math.min(1,dt*4)); else if(sp>2) h.G.rotation.y=h.ry=Math.PI/2-p.h+(ab?Math.PI:0); else if(sp>.004&&!roll) h.G.rotation.y=h.ry=tfWinkel(h.ry??h.G.rotation.y,Math.atan2(dx,dz),Math.min(1,dt*8)); h.G.rotation.z=roll;
+    if(hal==='bell'){ const c=A.katze.G.position; h.G.rotation.y=h.ry=tfWinkel(h.ry??0,Math.atan2(c.x-p.x,c.z-p.z),Math.min(1,dt*6)); } else if(hal==='sitz') blick(p.x,p.z,Math.min(1,dt*4)); else if(sp>2) h.G.rotation.y=h.ry=Math.PI/2-p.h+(ab?Math.PI:0); else if(sp>.004&&!roll) h.G.rotation.y=h.ry=tfWinkel(h.ry??h.G.rotation.y,Math.atan2(dx,dz),Math.min(1,dt*8)); h.G.rotation.z=roll;
     h.vs=(h.vs??Math.abs(h.v))+(Math.abs(h.v)-(h.vs??0))*Math.min(1,dt*2); h.phi+=h.vs/(h.vs<4?1.3:2.4)*2*Math.PI*lauf;
     if(hal){ tfHundHaltung(h,hal,t,j); if(hal==='steh') h.K.rotation.z=.25*Math.sin(t*28); else h.K.rotation.z=0; } else { h.K.rotation.z=0; tfHundLauf(h,Math.min(1,h.vs/3),t,j); } // schüttelt sich nach dem Sturz
-    h.ko.rotation.x=zerr?.3*Math.sin(t*20):h.ko.rotation.x; h.ko.rotation.y=zerr?.5*Math.sin(t*14):hal?h.ko.rotation.y:0; }); } // beim Zerren schüttelt er den Kopf · Tempo geglättet, Galopp mit langen Sprüngen (2,4 m), langsam im Trab
+    h.ko.rotation.x=zerr?.3*Math.sin(t*20):h.ko.rotation.x; h.ko.rotation.y=zerr?.5*Math.sin(t*14):hal?h.ko.rotation.y:0; }); sicher('Tiere',()=>ttZiehKette(P,rt)); } // beim Zerren schüttelt er den Kopf · Tempo geglättet, Galopp mit langen Sprüngen (2,4 m), langsam im Trab
 // Galopp: Vorder- und Hinterbeine greifen paarweise, der Rücken federt, Schlappohren wippen
 function tfHundLauf(h,m,t,j){ const f=h.phi, s=Math.sin(f), K=h.K, trab=h.vs<4; K.rotation.x=(trab?.02:.05)*m*Math.sin(2*f); K.position.y=(trab?.015:.03)*m*Math.abs(Math.sin(f));
   h.beine.forEach((b,k)=>{ const v=trab?f+(k===0||k===3?0:Math.PI):b.hinten?f+Math.PI+(k%2)*.25:f+(k%2)*.25, sv=Math.sin(v), A=trab?.45:.6; b.o.rotation.x=(b.hinten?-.15:.05)-A*m*sv; b.u.rotation.x=b.hinten?.35+.35*m*Math.max(0,Math.sin(v+1.2)):.15+.55*m*Math.max(0,-Math.sin(v+1.2)); }); // Trab: diagonale Paare · Galopp: vorn und hinten paarweise
@@ -173,6 +185,7 @@ function tfHundHaltung(h,art,t,j){ const K=h.K, B=h.beine, set=(k,o,u)=>{ B[k].o
   if(art==='sitz'){ K.rotation.x=-.55; K.position.y=0; for(const k of [0,1]) set(k,.55,0); for(const k of [2,3]) set(k,-1.25,2.1); }
   else if(art==='lieg'){ K.rotation.x=0; K.position.y=-.33; for(const k of [0,1]) set(k,-1.35,.1); for(const k of [2,3]) set(k,-1.3,2.3); }
   else { K.rotation.x=0; K.position.y=0; B.forEach(b=>{ b.o.rotation.x=b.hinten?-.15:.05; b.u.rotation.x=b.hinten?.35:.15; }); }
+  if(art==='bell'){ K.position.y=.025*Math.abs(Math.sin(t*13+j)); h.ko.rotation.set(-.2,0,0); h.maul.rotation.x=.12+.3*Math.abs(Math.sin(t*13+j)); h.zu.visible=true; tfHundSchwanz(h,t,j,.8); return; } // kläfft die Katze an
   h.ko.rotation.x=art==='steh'?.35+.15*Math.sin(t*3):art==='lieg'?.15:-.1; h.ko.rotation.y=art==='steh'?.3*Math.sin(t*.9):0; h.ko.ohren.forEach(o=>o.rotation.x=0); // schnuppert am Boden
   const leck=j===3&&(t%4)<.6; h.maul.rotation.x=leck?.25:.05; h.zu.visible=leck||art==='steh'; h.zu.rotation.x=leck?-.4:.7; tfHundSchwanz(h,t,j,.3); } // leckt sich das Maul
 

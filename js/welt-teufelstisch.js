@@ -194,7 +194,11 @@ const TT_HIMMEL=[[0,'#3f7dbf','#22305e'],[.22,'#5f97ce','#5b4a7e'],[.3,'#7fb0dc'
 // Unwetter oben am Berg (vom Nutzer): schlagartig, sobald die Kamera vom Jungfernsprung ganz zurück bei den Fahrern ist (ohne Kamerafahrt so viele m hinter dem Wegweiser) – dunkel, grau, Wolken, Wind und Regen, bleibt bis ins Ausfahren, dann klart es zum Sonnenuntergang auf
 const TT_WETTER={nach:45, klar:.3, sun:0x9aa2aa, sunI:.3, hemi:0x8c949e, hemiI:.72, bg:0x5c646e, himmel:0x707882, nebel:[60,750], wind:.5, boe:1.4}; // boe: Wind auf den Lichtungen (schräger Regen, Laub)
 function ttWetterW(rt){ const Z=TT_WETTER, A=anim.tt, T=R.tt, au=(race.woSegs||[]).find(s=>s.label==='Ausfahren'), k=au?1-bSm((rt-au.t0)/(au.dur*Z.klar)):1, C=TT_BOGEN.kam, ik=A&&A.ikT;
-  const an=ik!=null&&ik>0&&rt>=ik+C[1]+C[2]+.2||me.d>=T.idyll+Z.nach; return an?[k,k]:[0,0]; } // [Licht/Regen, Wolken]
+  const an=ik!=null&&ik>0&&rt>=ik+C[1]+C[2]+.2||me.d>=T.idyll+Z.nach, p=ttPauseW(rt); return an?[k*p,k*Math.max(p,TT_PAUSE.wolken)]:[0,0]; } // [Licht/Regen, Wolken]
+// Pause nach Flucht 1 (vom Nutzer): klart auf (nach klar s recht sonnig, aber nicht ganz wie vorher), verdüstert sich langsam wieder, nach der Abzweigung „sicher rechts“ wieder volles Unwetter
+const TT_PAUSE={klar:150, hell:.12, dunkel:.4, wolken:.3, kipp:[15,90]}; // s bis aufgeklart · Unwetter-Stärke dann · an der Abzweigung · Wolken bleiben mindestens · ab m nach der Abzweigung, über m wieder voll
+function ttPauseW(rt){ const T=R.tt, Z=TT_PAUSE, a=(race.woSegs||[]).find(s=>s.label==='Abgeschüttelt'); if(!a||T.ecke==null||rt<a.t0) return 1; const kipp=bSm((me.d-T.ecke-Z.kipp[0])/Z.kipp[1]); if(kipp>=1) return 1;
+  const tE=T.tEcke||a.t0+a.dur, kl=Math.max(a.t0+20,Math.min(a.t0+Z.klar,tE-30)), w=rt<kl?1-(1-Z.hell)*bSm((rt-a.t0)/(kl-a.t0)):Z.hell+(Z.dunkel-Z.hell)*bSm((rt-kl)/Math.max(1,tE-kl)); return Math.max(w,kipp); }
 // Wind auf den Lichtungen der Schleife (beide Runden): {w 0 … 1, s Seite, zu der er drückt (+1 = rechts)}
 function ttWind(d){ const T=R&&R.tt; if(!T||!T.lichtung||race.state!=='run') return null; const e=d>=T.kreuz+T.L&&d<T.raus?d-T.L:d; for(const Li of T.lichtung){ const w=bSm((e-Li.d0+12)/14)*bSm((Li.d1+12-e)/14); if(w>0) return {w,s:Li.s}; } return null; }
 function ttLicht(rt){ const A=anim.tt, Z=TT_WETTER; if(race.rain||race.state!=='run'&&race.state!=='count') return; // nach dem Ziel bleibt der Sonnenuntergang
