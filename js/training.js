@@ -71,9 +71,10 @@ function renderWo(){
 function woRefresh(){ const S=curSegs(), T=S.reduce((a,s)=>a+s.dur,0), cv=$('woChart'), g=cv.getContext('2d'), k=woKind(); g.clearRect(0,0,cv.width,cv.height);
   drawWo(g,8,10,cv.width-16,cv.height-14,S,Math.max(T,1),{unit:curUnit()});
   const avg=T?S.reduce((a,s)=>a+s.dur*toW(s.b==null?s.a:(s.a+s.b)/2,curUnit()),0)/T:0;
+  const tss=S.reduce((a,s)=>{ const x=toPct(s.a,curUnit())/100, y=s.b==null?x:toPct(s.b,curUnit())/100; return a+s.dur*(x*x+x*y+y*y)/3; },0)/36; // TSS = Σ Dauer·IF² /3600·100, Rampen über IF² gemittelt
   $('woSum').textContent= k==='ramp' ? `Stufen ab ${S[1]?S[1].a:0} W, +20 W pro Minute · Dauer je nach Stärke ca. ${fmtT(300+Math.max(0,(ftp()*1.3-(S[1]?S[1].a:0))/20+1)*60)} · bisherige FTP ${ftp()} W`
     : k==='t20' ? `Dauer ${fmtT(T)} · Testabschnitt 20:00 · bisherige FTP ${ftp()} W`
-    : T?`Dauer ${fmtT(T)} · ${S.length} Abschnitte · Ø ca. ${Math.round(avg)} W · FTP ${ftp()} W`:'Noch leer';
+    : T?`Dauer ${fmtT(T)} · ${S.length} Abschnitte · Ø ca. ${Math.round(avg)} W · TSS ${Math.round(tss)} · FTP ${ftp()} W`:'Noch leer';
   saveWo(); if(race.mode==='train') renderRouteList(); }
 function woGet(path){ const [i,j]=path.split('.').map(Number); return j==null?{arr:WO.items,i,o:WO.items[i]}:{arr:WO.items[i].items,i:j,o:WO.items[i].items[j]}; }
 $('woList').addEventListener('change',e=>{ const f=e.target.dataset.f, el=e.target.closest('[data-p]'); if(!f||!el) return; const {o}=woGet(el.dataset.p);

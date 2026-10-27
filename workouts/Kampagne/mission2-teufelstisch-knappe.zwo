@@ -1,0 +1,45 @@
+<workout_file>
+ <author>Kalmit-Duell</author>
+ <name>Teufelstisch – Die Flucht vor dem Teufel (Knappe)</name>
+ <description>Kampagne Mission 2 · Schwelle/VO2max · Stufe Knappe</description>
+ <sportType>bike</sportType>
+ <tags><tag name="Threshold"/></tags>
+ <workout>
+  <Warmup Duration="300" PowerLow="0.450" PowerHigh="0.600"/>
+  <SteadyState Duration="600" Power="0.750"/>
+  <SteadyState Duration="180" Power="0.500"/>
+  <SteadyState Duration="45" Power="1.150"/>
+  <SteadyState Duration="90" Power="0.860"/>
+  <SteadyState Duration="25" Power="1.100"/>
+  <SteadyState Duration="90" Power="0.860"/>
+  <SteadyState Duration="25" Power="1.150"/>
+  <SteadyState Duration="60" Power="0.860"/>
+  <SteadyState Duration="300" Power="0.450"/>
+  <SteadyState Duration="45" Power="1.200"/>
+  <SteadyState Duration="90" Power="0.880"/>
+  <SteadyState Duration="30" Power="1.150"/>
+  <SteadyState Duration="90" Power="0.900"/>
+  <SteadyState Duration="30" Power="1.200"/>
+  <SteadyState Duration="60" Power="0.920"/>
+  <SteadyState Duration="20" Power="1.200"/>
+  <Cooldown Duration="300" PowerLow="0.500" PowerHigh="0.400"/>
+  <textevent timeoffset="0" message="Einfahren"/>
+  <textevent timeoffset="300" message="Anstieg"/>
+  <textevent timeoffset="900" message="Anschleichen"/>
+  <textevent timeoffset="1080" message="Ertappt"/>
+  <textevent timeoffset="1125" message="Flucht 1"/>
+  <textevent timeoffset="1215" message="Besteckwurf"/>
+  <textevent timeoffset="1240" message="Flucht 1"/>
+  <textevent timeoffset="1330" message="Dreizack"/>
+  <textevent timeoffset="1355" message="Flucht 1"/>
+  <textevent timeoffset="1415" message="Abgeschüttelt"/>
+  <textevent timeoffset="1715" message="Wieder am Tisch"/>
+  <textevent timeoffset="1760" message="Flucht 2"/>
+  <textevent timeoffset="1850" message="Tischwurf"/>
+  <textevent timeoffset="1880" message="Flucht 2"/>
+  <textevent timeoffset="1970" message="Dreizack"/>
+  <textevent timeoffset="2000" message="Flucht 2"/>
+  <textevent timeoffset="2060" message="Schlusssprint"/>
+  <textevent timeoffset="2080" message="Ausfahren"/>
+ </workout>
+</workout_file>
