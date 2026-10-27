@@ -93,6 +93,8 @@ function miniMap(){
   if(race.wind&&!R.space){ const L=13; ctx.save(); ctx.translate(x0+26,y0+26); ctx.rotate(race.windDir); ctx.strokeStyle=ctx.fillStyle='#e9f1f7'; ctx.lineWidth=2.5; // Windpfeil: wohin der Wind weht (Karte genordet wie die Welt)
     ctx.beginPath(); ctx.moveTo(-L,0); ctx.lineTo(L-5,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(L,0); ctx.lineTo(L-8,-6); ctx.lineTo(L-8,6); ctx.fill(); ctx.restore();
     const hw=windHead(me.d); ctx.font='600 12px Barlow, sans-serif'; ctx.textAlign='left'; ctx.fillStyle='#c9d6cc'; ctx.fillText(`Wind ${Math.round(windNow()*3.6)} km/h`,x0+46,y0+22); ctx.fillText(hw>.5?'Gegenwind':hw<-.5?'Rückenwind':'Seitenwind / geschützt',x0+46,y0+37); }
+  if(!R.space){ const g=gradeAt(me.d); ctx.textAlign='right'; ctx.font='600 11px Barlow, sans-serif'; ctx.fillStyle='#c9d6cc'; ctx.fillText('STEIGUNG',x0+box-12,y0+box-38); // Steigung unten rechts, Farbe wie im Höhenprofil, bergab hellblau
+    ctx.font='700 24px Barlow, sans-serif'; ctx.fillStyle=g<-1?'#8cc8ec':gradeColor(g); ctx.fillText(de(g)+' %',x0+box-12,y0+box-13); }
 }
 function miniProfile(){
   const pad=16, h=56, w=W-pad*2, y0=H-pad;
@@ -156,7 +158,7 @@ function hud(P,wkg){
   const inPlay=race.state==='run'&&!race.paused&&$('pause').style.display!=='flex';
   $('btnMenu').style.display=inPlay?'block':'none'; // auch nach dem Ende (dann ohne Pause, mit Endwerten)
   $('hV').textContent=de(me.v*3.6,1);
-  $('hG').textContent=de(gradeAt(me.d))+' %'; $('sZ').style.display=race.mode==='train'||R.loop?'':'none'; // Steigung in allen Modi, Ziel-Watt bzw. Runde daneben
+  $('sG').style.display=race.kamp?'':'none'; if(race.kamp) $('hG').textContent=de(gradeAt(me.d))+' %'; $('sZ').style.display=race.mode==='train'||R.loop?'':'none'; // Steigung als Schild nur in der Kampagne (sonst auf der Minimap), Ziel-Watt bzw. Runde daneben
   if(race.mode==='train'){ const sg=woSeg(race.t); $('hZk').textContent='Ziel'; $('hZ').textContent=sg&&sg.free?'frei':Math.round(me.tgt||0)+' W'; woPanel(P,sg); }
   else if(R.loop){ $('hZk').textContent='Runde'; $('hZ').textContent=`${Math.min(race.laps,Math.floor(me.d/R.len)+1)} / ${race.laps}`; $('hRestk').textContent='bis Ziel'; }
   else $('hRestk').textContent=R.kalmit?'bis Gipfel':'bis Ziel';

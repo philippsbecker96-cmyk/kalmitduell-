@@ -1,10 +1,15 @@
 /* ================= Bluetooth ================= */
+let trDev=null; // Trainer global halten (Wiederverbinden)
 async function connectTrainer(){
   if(!navigator.bluetooth){ alert('Web Bluetooth ist hier nicht verfügbar. Bitte in Google Chrome öffnen.'); return; }
   try{
-    const dev=await navigator.bluetooth.requestDevice({filters:[{services:[0x1826]},{services:[0x1818]},{services:[FEC_SVC]}],optionalServices:[0x1826,0x1818,FEC_SVC]});
-    dev.addEventListener('gattserverdisconnected',()=>{ live.src='sim'; ftmsCtrl=null; fecWr=null; $('trainerState').textContent='Trainer getrennt – Simulation aktiv'; if(race.state!=='setup') $('simBox').style.display='block'; flash('Trainer getrennt'); $('btnTrainer').textContent='Trainer verbinden'; $('btnTrainer').classList.remove('verb'); });
+    const dev=await navigator.bluetooth.requestDevice({filters:[{services:[0x1826]},{services:[0x1818]},{services:[FEC_SVC]}],optionalServices:[0x1826,0x1818,FEC_SVC]}); trDev=dev;
+    dev.addEventListener('gattserverdisconnected',()=>trainerGetrennt(dev));
     $('trainerState').textContent='Verbinde mit '+dev.name+'…';
+    await trainerSetup(dev);
+  }catch(e){ if(e.name!=='NotFoundError') $('trainerState').textContent='Verbindung fehlgeschlagen: '+e.message; }
+}
+async function trainerSetup(dev){
     const server=await dev.gatt.connect();
     try{
       const f=await server.getPrimaryService(0x1826), data=await f.getCharacteristic(0x2AD2);
@@ -17,7 +22,20 @@ async function connectTrainer(){
     // Tacx: ohne FTMS-Steuerung über FE-C (Tacx-eigene Schnittstelle über Bluetooth) steuern
     fecWr=null; if(!ftmsCtrl){ try{ fecWr=await (await server.getPrimaryService(FEC_SVC)).getCharacteristic(FEC_WR); }catch(e){ fecWr=null; } }
     live.src='ble'; lastSlopeSent=null; lastErgW=null; $('trainerState').textContent=`Verbunden: ${dev.name}`+(ftmsCtrl||fecWr?' · Steigung und ERG steuerbar':' · nur Leistung'); $('btnTrainer').textContent='Trainer verbunden ✓'; $('btnTrainer').classList.add('verb');
-  }catch(e){ if(e.name!=='NotFoundError') $('trainerState').textContent='Verbindung fehlgeschlagen: '+e.message; }
+}
+function trainerGetrennt(dev){
+  live.src='sim'; ftmsCtrl=null; fecWr=null; if(race.state!=='setup') $('simBox').style.display='block'; $('btnTrainer').textContent='Trainer verbinden'; $('btnTrainer').classList.remove('verb');
+  if(dev!==trDev||dev._wv) return; // anderes Gerät gewählt oder Wiederverbinden läuft schon
+  $('trainerState').textContent='Trainer getrennt – verbinde neu …'; flash('Trainer getrennt – verbinde neu …');
+  wiederVerbinden(dev,()=>trainerSetup(dev),()=>dev===trDev,()=>{ $('simBox').style.display='none'; flash('Trainer wieder verbunden'); },
+    ()=>{ $('trainerState').textContent='Trainer getrennt – Simulation aktiv'; flash('Trainer nicht erreichbar – Simulation aktiv'); });
+}
+// Bekanntes Gerät ohne Klick neu verbinden: Versuche nach 1, 2, 4, 8 s, dann alle 15 s, insgesamt etwa eine Minute
+async function wiederVerbinden(dev,setup,noch,ok,aufgeben){
+  dev._wv=true;
+  for(const s of [1,2,4,8,15,15,15]){ await new Promise(r=>setTimeout(r,s*1000)); if(!noch()){ dev._wv=false; return; }
+    try{ await setup(); dev._wv=false; ok(); return; }catch(e){ try{ dev.gatt.disconnect(); }catch(e2){} } }
+  dev._wv=false; aufgeben();
 }
 function parseIndoorBike(dv){
   const L=dv.byteLength; if(L<2) return; const f=dv.getUint16(0,true); let i=2;
@@ -68,11 +86,16 @@ let hrDev=null; // Pulsgurt global halten, sonst kann Chrome das Gerät aufräum
 async function connectHr(){
   if(!navigator.bluetooth){ alert('Bitte in Google Chrome öffnen.'); return; }
   try{ const dev=await navigator.bluetooth.requestDevice({filters:[{services:[0x180D]}]}); hrDev=dev;
-    dev.addEventListener('gattserverdisconnected',()=>{ live.hr=null; live.hrStrap=false; flash('Pulsgurt getrennt'); $('btnHr').textContent='Pulsgurt verbinden'; $('btnHr').classList.remove('verb'); });
-    const c=await (await (await dev.gatt.connect()).getPrimaryService(0x180D)).getCharacteristic(0x2A37);
-    c.addEventListener('characteristicvaluechanged',e=>{ const v=e.target.value, h=(v.getUint8(0)&1)?v.getUint16(1,true):v.getUint8(1); if(h>0){ live.hr=h; live.hrAt=performance.now(); } });
-    await c.startNotifications(); live.hrStrap=true; $('btnHr').textContent='Pulsgurt verbunden ✓'; $('btnHr').classList.add('verb');
+    dev.addEventListener('gattserverdisconnected',()=>{ live.hr=null; live.hrStrap=false; $('btnHr').textContent='Pulsgurt verbinden'; $('btnHr').classList.remove('verb');
+      if(dev!==hrDev||dev._wv) return; flash('Pulsgurt getrennt – verbinde neu …');
+      wiederVerbinden(dev,()=>hrSetup(dev),()=>dev===hrDev,()=>flash('Pulsgurt wieder verbunden'),()=>flash('Pulsgurt nicht erreichbar')); });
+    await hrSetup(dev);
   }catch(e){ if(e.name!=='NotFoundError') alert('Pulsgurt: '+e.message); }
+}
+async function hrSetup(dev){
+  const c=await (await (await dev.gatt.connect()).getPrimaryService(0x180D)).getCharacteristic(0x2A37);
+  c.addEventListener('characteristicvaluechanged',e=>{ const v=e.target.value, h=(v.getUint8(0)&1)?v.getUint16(1,true):v.getUint8(1); if(h>0){ live.hr=h; live.hrAt=performance.now(); } });
+  await c.startNotifications(); live.hrStrap=true; $('btnHr').textContent='Pulsgurt verbunden ✓'; $('btnHr').classList.add('verb');
 }
 // Puls nur, wenn ein Gurt verbunden ist und in den letzten 5 s etwas geschickt hat
 function hrNow(){ return live.hrStrap&&live.hr&&performance.now()-(live.hrAt||0)<5000?live.hr:null; }
