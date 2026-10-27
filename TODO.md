@@ -23,3 +23,6 @@ Größere Punkte später in die passende Datei umziehen (`PLAENE.md`, `KAMPAGNE.
 
 ## Ideen
 - [ ] 
+
+## Trainingsmodus
+- Pulsskala testen: rote Pulslinie im Workout-Diagramm (60–210 bpm) im Spiel und auf den Fotos prüfen
