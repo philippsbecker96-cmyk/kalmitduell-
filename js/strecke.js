@@ -476,9 +476,10 @@ function turtle(st,teile,L){ const lb=teile.reduce((a,t)=>a+(t[0]==='b'?Math.abs
   for(const t of teile){ if(t[0]==='g'){ const l=fg?rest*t[1]/fg:0; if(l<.05) continue; const n=Math.max(1,Math.round(l/2)); for(let i=0;i<n;i++) geh(l/n,0); }
     else { const th=t[1]*Math.PI/180, r=t[2]*k, n=Math.max(2,Math.round(Math.abs(th)*r/2)); for(let i=0;i<n;i++) geh(Math.abs(th/n)*r,th/n); } } }
 // Kampagne: Strecke aus dem Workout – ein Stück je 2 s, Länge aus Watt, Gewicht und Steigung gFn(t,d,len) (len=0: fürs Tempo, sonst Mittel übers Stück, d: Meter am Anfang) · steht(t): Halt (man steht)
-function kampPlan(segs,unit,f,kg,gFn,steht){ const DT=2, T=segs.reduce((a,s)=>a+s.dur,0), raw=[], cum=[0]; let si=0;
+// bFn(d): Zusatz-Widerstand des Belags in % (wie belagAt) – macht langsamer, ändert die Höhe nicht
+function kampPlan(segs,unit,f,kg,gFn,steht,bFn){ const DT=2, T=segs.reduce((a,s)=>a+s.dur,0), raw=[], cum=[0]; let si=0;
   for(let t=0;t<T;t+=DT){ while(si<segs.length-1 && t>=segs[si].t0+segs[si].dur) si++; const sg=segs[si], v=segVal(sg,Math.min(t+DT/2,sg.t0+sg.dur)), w=unit==='w'?v:v*f/100, d=cum[cum.length-1];
-    const len=steht&&steht(t)?.01:Math.round(vSteady(w,gFn(t+DT/2,d,0),kg)*DT*100)/100; raw.push({len, g:gFn(t+DT/2,d,len), p:Math.round(unit==='w'?v/f*100:v)}); cum.push(d+len); }
+    const len=steht&&steht(t)?.01:Math.round(vSteady(w,gFn(t+DT/2,d,0)+(bFn?bFn(d)*(75+BIKE_KG)/(kg+BIKE_KG):0),kg)*DT*100)/100; raw.push({len, g:gFn(t+DT/2,d,len), p:Math.round(unit==='w'?v/f*100:v)}); cum.push(d+len); }
   const dT=t=>{ const x=Math.max(0,Math.min(cum.length-1,t/DT)), i=Math.min(cum.length-2,Math.floor(x)); return cum[i]+(cum[i+1]-cum[i])*Math.max(0,x-i); }; // Meter zur Workout-Zeit
   return {raw,cum,dT}; }
 function trifelsDef(segs, unit, f, kg){
@@ -515,7 +516,8 @@ function trifelsDef(segs, unit, f, kg){
 // gerade zurück, Gabelung, Bogen zurück auf den Weg vor der Kreuzung → zweite Runde bis zur Gabelung → links hinaus bergab Richtung Dahn.
 // Die Schleife liegt nur einmal in der Welt (doppelt: Meter der zweiten Runde, dort kein zweiter Weg und keine Bäume). Ihre Höhe hängt nur von der Stelle in der Schleife ab, nicht von der Zeit –
 // so liegt der Weg in beiden Runden gleich hoch. Schleifenlänge = Weg vom Tisch in Runde 1 bis zum Tisch in Runde 2 (bei den geplanten Watt), Gabelung = Ende von Flucht 1.
-const TEUFEL_T={vorJ:120, R:70, hub:-30, tisch:5}; // vorJ: Kreuzung so viele m vor dem Tisch · R: Radius der beiden Kurven · hub: Höhe der Schleife in der Mitte gegenüber dem Tisch (Tisch oben auf der Kuppe, Flucht bergab, rechter Abzweig wieder hinauf – so liegt die Gabelung auch mit wenig Watt am Ende von Flucht 1) · tisch: s nach Beginn von „Ertappt“ bzw. „Wieder am Tisch“ ist man am Tisch (vom Nutzer gewünscht: der Teufel entdeckt dich, das harte Intervall beginnt kurz bevor man auf seiner Höhe ist)
+const TEUFEL_T={vorJ:120, R:70, hub:-30, tisch:5, schotter:[220,20,1.2], weg:2}; // weg: Breite des Waldwegs auf dem Schotterstück (sonst 4,4 m)
+// vorJ: Kreuzung so viele m vor dem Tisch · R: Radius der beiden Kurven · hub: Höhe der Schleife in der Mitte gegenüber dem Tisch (Tisch oben auf der Kuppe, Flucht bergab, rechter Abzweig wieder hinauf – so liegt die Gabelung auch mit wenig Watt am Ende von Flucht 1) · tisch: s nach Beginn von „Ertappt“ bzw. „Wieder am Tisch“ ist man am Tisch (vom Nutzer gewünscht: der Teufel entdeckt dich, das harte Intervall beginnt kurz bevor man auf seiner Höhe ist) · schotter: Schotter von so vielen m vor bis so viele m nach dem Tisch, Zusatz-Widerstand in % (vom Nutzer gewünscht: langsamer, damit man den Teufel länger sieht)
 const imDoppel=(r,d)=>{ const D=r.def.doppelt; return !!D&&d>D[0]*r.kf&&d<D[1]*r.kf; }; // zweite Runde der Schleife: liegt schon in der Welt
 function teufelstischDef(segs, unit, f, kg){
   const Tt=TEUFEL_T, NACH=600, t0=(l,v)=>{ const s=segs.find(s=>s.label===l); return s?s.t0:v; };
@@ -524,7 +526,8 @@ function teufelstischDef(segs, unit, f, kg){
   let dJ=1e9, L=4000, dX=1e9, gX=0, sG=0, rK=Tt.R, S=0, P=null;
   const hl=s=>Tt.hub*(1-Math.cos(2*Math.PI*s/L))/2, hs=s=>Tt.hub*Math.PI/L*Math.sin(2*Math.PI*s/L)*100; // Höhe und Steigung an der Stelle s der Schleife (periodisch)
   const gFn=(t,d,len)=>d<dJ?gVor(t):d<dX?(len?(hl(d+len-dJ)-hl(d-dJ))/len*100:hs(d-dJ)):tabLerp([[0,gX],[40,gX],[200,-1],[750,-3.5]],d-dX); // hinter der Gabelung bergab (die ersten 40 m wie der rechte Abzweig – dort liegen beide noch nebeneinander)
-  for(let k=0;k<5;k++){ P=kampPlan(segs,unit,f,kg,gFn); const d1=P.dT(tT1); dJ=d1-Tt.vorJ; L=Math.max(900,P.dT(tT2)-d1); // Schleife hängt von den Steigungen darin ab → ein paar Durchgänge
+  const sch=d=>{ const a=dJ+Tt.vorJ-Tt.schotter[0], b=dJ+Tt.vorJ+Tt.schotter[1]; return d>=a&&d<b||d>=dJ+L&&d<b+L?Tt.schotter[2]:0; }; // Schotter vor dem Tisch, in Runde 2 ab der Kreuzung (dort liegt derselbe Weg)
+  for(let k=0;k<5;k++){ P=kampPlan(segs,unit,f,kg,gFn,null,sch); const d1=P.dT(tT1); dJ=d1-Tt.vorJ; L=Math.max(900,P.dT(tT2)-d1); // Schleife hängt von den Steigungen darin ab → ein paar Durchgänge
     rK=Math.min(Tt.R,L*.06); S=(L-2*Math.PI*rK)/2; sG=Math.max(S+Math.PI*rK+60,Math.min(2*S+Math.PI*rK-60,P.dT(tG1)-dJ)); dX=dJ+L+sG; gX=hs(sG); } // Gabelung auf der Geraden zurück
   const {raw,dT}=P, out=raw.map(c=>({...c})); out.push({len:NACH,g:-3.5,p:-1}); const dE=P.cum[P.cum.length-1], dAn=dT(tAn), dSch=dT(tSch);
   // Linie: alles schmal nach Norden (hält die Karte klein, Geländeraster ≈ 7–8 m): Gasthaus, Talweg, Serpentinen (Kehren nach Norden, 60 m Abstand), gerade aufs Plateau
@@ -547,5 +550,5 @@ function teufelstischDef(segs, unit, f, kg){
   let e=0, lo=0; for(const s of out){ e+=s.len*s.g/100; lo=Math.min(lo,e); }
   return {name:'Teufelstisch · Kaltenbacher Tal', start:'Gasthaus „Zum Teufelstisch“', finish:'Richtung Dahn', startElev:250, plainElev:250+lo-25, gpx:'teufelstisch', ma:true, planbar:true,
     doppelt:[dJ+L,dX], poly:st.P, segs:out, zones:[['wiese',-50,dAn*.7],['wiese',dE-700,dE+NACH+50]], // Wiese im Kaltenbacher Tal und am Ende (Lichtung mit Blick auf die Dahner Felsen), sonst Pfälzerwald
-    breite:[[-50,1e9,4.4]], belag:[['erde',-50,1e9,0]],
-    orte:{anstieg:[dAn,dSch], kreuz:dJ, tisch:dJ+Tt.vorJ, kopf, rK, gabel:dJ+sG, L, raus:dX, ziel:dE, tT1, tG1, tT2}}; } // Meter; Tisch in Runde 2: tisch+L
+    breite:(()=>{ const a=dJ+Tt.vorJ-Tt.schotter[0], b=dJ+Tt.vorJ+Tt.schotter[1], w=ROAD_W-4.4+Tt.weg; return [[-50,1e9,4.4],[a,b,w],[dJ+L,b+L,w]]; })(), belag:(()=>{ const a=dJ+Tt.vorJ-Tt.schotter[0], b=dJ+Tt.vorJ+Tt.schotter[1], x=Tt.schotter[2]; return [['erde',-50,a,0],['schotter',a,b,x],['erde',b,dJ+L,0],['schotter',dJ+L,b+L,x],['erde',b+L,1e9,0]]; })(),
+    orte:{idyll:dT(t0('Ertappt',1080)-TT_DUCK-14), anstieg:[dAn,dSch], kreuz:dJ, tisch:dJ+Tt.vorJ, kopf, rK, gabel:dJ+sG, L, raus:dX, ziel:dE, tT1, tG1, tT2}}; } // Meter; Tisch in Runde 2: tisch+L

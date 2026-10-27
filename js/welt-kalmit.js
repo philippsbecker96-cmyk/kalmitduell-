@@ -214,11 +214,13 @@ function build3D(){
     const tx=t==='erde'?canvasTex(64,128,g=>{ g.fillStyle='#a8765a'; g.fillRect(0,0,64,128); for(let t2=0;t2<500;t2++){ const v=Math.random(); g.fillStyle=v<.4?'rgba(70,40,25,.18)':v<.8?'rgba(225,180,140,.18)':'rgba(120,110,80,.25)'; g.fillRect(Math.random()*64,Math.random()*128,1+Math.random()*3,1+Math.random()*3); }
         g.fillStyle='rgba(80,50,30,.18)'; g.fillRect(14,0,7,128); g.fillRect(43,0,7,128); }) // Waldweg aus rotem Sandsteinsand, zwei dunklere Fahrspuren
       : t==='holz'?canvasTex(64,64,g=>{ for(let y=0;y<64;y+=8){ const v=.85+Math.random()*.25; g.fillStyle=`rgb(${120*v|0},${88*v|0},${60*v|0})`; g.fillRect(0,y,64,8); g.fillStyle='rgba(30,18,10,.6)'; g.fillRect(0,y+7,64,1); } }) // Bohlen quer zur Fahrtrichtung
+      : t==='schotter'?canvasTex(64,128,g=>{ g.fillStyle='#6f5840'; g.fillRect(0,0,64,128); for(let t2=0;t2<600;t2++){ const v=Math.random(), c=v<.4?'rgba(48,34,22,.35)':v<.75?'rgba(140,110,78,.3)':'rgba(90,70,50,.4)', s=1+Math.random()*3; g.fillStyle=c; g.fillRect(Math.random()*64,Math.random()*128,s,s*(.6+Math.random()*.8)); }
+        for(let t2=0;t2<55;t2++){ const x=Math.random()*64, y=Math.random()*128, r=1.2+Math.random()*3.2, n=5; g.fillStyle=Math.random()<.5?'#8f8b84':'#76726c'; g.beginPath(); for(let k=0;k<n;k++){ const a=k/n*6.28+Math.random()*.6, rr=r*(.6+Math.random()*.5); g.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr); } g.fill(); g.fillStyle='rgba(220,215,205,.45)'; g.fillRect(x-r*.4,y-r*.5,r*.6,r*.3); } }) // Waldweg: brauner Boden, graue Steine mit hellem Grat (Teufelstisch vor dem Tisch)
       : t==='pflaster'?canvasTex(128,64,g=>{ g.fillStyle='#6e6a64'; g.fillRect(0,0,128,64); for(let y=0;y<64;y+=8) for(let x=(y/8%2)*5-5;x<128;x+=10){ const v=95+Math.random()*45|0; g.fillStyle=`rgb(${v},${v-4},${v-10})`; g.fillRect(x+1,y+1,8,6); } })
       : canvasTex(64,128,g=>{ g.fillStyle='#b8b6ac'; g.fillRect(0,0,64,128); for(let t2=0;t2<400;t2++){ const v=Math.random()<.5?60:255; g.fillStyle=`rgba(${v},${v},${v},.07)`; g.fillRect(Math.random()*64,Math.random()*128,2,2); }
           g.fillStyle='#6f6d66'; g.fillRect(0,0,64,3); g.fillStyle='rgba(0,0,0,.1)'; g.fillRect(31,0,2,128); });
     tx.wrapT=THREE.RepeatWrapping; tx.anisotropy=8;
-    strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{userData:{wet:1},polygonOffsetFactor:-2})),t==='pflaster'?1.6:t==='erde'?6:t==='holz'?2:3.5,[1]); }
+    strip(a,d0,d=>-rw(d),rw,0.12,side2(Object.assign(new THREE.MeshLambertMaterial({map:tx}),{userData:{wet:1},polygonOffsetFactor:-2})),t==='pflaster'?1.6:t==='erde'?6:t==='schotter'?3:t==='holz'?2:3.5,[1]); }
   strip(d0,R.len,d=>-rw(d),rw,0.12,asph,9,[1]);
   // Landstraße: Leitlinie in der Mitte (6 m Strich, 12 m Lücke) · Radweg neben der Straße, hinter einem Grünstreifen
   if(R.def.mitte){ const dt=canvasTex(8,48,g=>{ g.fillStyle='#ecebe4'; g.fillRect(0,0,8,16); }); dt.wrapT=THREE.RepeatWrapping;

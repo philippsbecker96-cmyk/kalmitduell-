@@ -11,8 +11,8 @@ const wind=(()=>{ const N=60, p=new Float32Array(N*6), q=rng(4711), seed=[];
 const regen=(()=>{ const N=1800, p=new Float32Array(N*6), q=rng(99), info=[]; for(let i=0;i<N;i++) info.push([(q()-.5)*60,q()*30-8,(q()-.5)*60]);
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3));
   const m=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:'#d6dee8',transparent:true,opacity:.38,depthWrite:false})); m.frustumCulled=false; m.visible=false; scene.add(m); return {m,p,info}; })();
-function regenFx(dt){ const on=race.rain&&!R.stadium&&!R.space; regen.m.visible=on; if(!on) return; const c=camera.position;
-  regen.info.forEach((o,i)=>{ o[1]-=13*dt; if(o[1]<-8) o[1]+=30; const x=c.x+o[0]+o[1]*.06, y=c.y+o[1], z=c.z+o[2]; regen.p.set([x,y,z,x+.04,y+.6,z],i*6); }); regen.m.geometry.attributes.position.needsUpdate=true; }
+function regenFx(dt){ const ex=race.rain?1:anim.tt&&regen.extra||0, on=ex>0&&!R.stadium&&!R.space; regen.m.visible=on; if(!on) return; const c=camera.position, n=Math.round(regen.info.length*ex), wi=regen.wind||0; regen.m.geometry.setDrawRange(0,n*2); // extra: Regen nur an einer Stelle (Teufelstisch: Unwetter oben am Berg, ttWetter), wind: schräge Tropfen
+  regen.info.forEach((o,i)=>{ if(i>=n) return; o[1]-=13*dt; if(o[1]<-8) o[1]+=30; const x=c.x+o[0]+o[1]*(.06+wi), y=c.y+o[1], z=c.z+o[2]; regen.p.set([x,y,z,x+.04+wi*.6,y+.6,z],i*6); }); regen.m.geometry.attributes.position.needsUpdate=true; }
 // Partikel: Gischt hinter dem Hinterrad bei Regen, Staub auf dem Betonweg und dem Waldweg (Berwartstein), Blätter im Wald
 const parts=(()=>{ const dot=canvasTex(32,32,g=>{ const gr=g.createRadialGradient(16,16,0,16,16,16); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.5,'rgba(255,255,255,.6)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,32,32); });
   const mk=(N,size,op,grav,map)=>{ const g=new THREE.BufferGeometry(), p=new Float32Array(N*3).fill(-1e5), c=new Float32Array(N*3); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('color',new THREE.BufferAttribute(c,3));
@@ -64,11 +64,11 @@ function speedFx(dt,v){ const f=clampN((v-7.78)/6.11,0,1), W=wind; // 0 bei 28 k
 // Kamerawackeln je nach Belag und Tempo: Asphalt fein, Betonweg mit Fugen-Schlag alle 5 m, Pflaster grob; beim Belagwechsel ein Stoß
 function camShake(dt,v){ const S=camS.sh||(camS.sh={n:0,r:0,a:0,j:0,b:null,f:0}); if(!$('shakeOn').checked||race.paused||!(dt>0)){ S.a=S.j=0; return; }
   const b=R.belag&&R.belag.length?belagOf(R,me.d):null, t=R.stadium?'holz':R.space?'space':b?b[0]:'asph', kv=clampN(v/12,0,1);
-  S.a={asph:.003,beton:.006,pflaster:.025,erde:.009,holz:.0008,space:.001}[t]*kv;
+  S.a={asph:.003,beton:.006,pflaster:.025,erde:.009,schotter:.015,holz:.0008,space:.001}[t]*kv;
   if(S.b!==null&&S.b!==t&&v>2) S.j=.04*clampN(v/10,.3,1); S.b=t;
   const fu=t==='beton'?Math.floor(me.d/5):0; if(fu!==S.f){ S.f=fu; if(v>2) S.j=Math.max(S.j,.018*clampN(v/10,.3,1)); } // Betonfuge: ta-dong
   S.n+=((Math.random()*2-1)-S.n)*Math.min(1,dt*25); S.r+=((Math.random()*2-1)-S.r)*Math.min(1,dt*18); S.j*=Math.exp(-dt*14); // geglättetes Rauschen wie eine Federung, Stoß klingt ab
-  camera.position.y+=S.n*S.a-S.j; camera.rotateX(S.n*S.a*.25); if(t==='pflaster') camera.rotateZ(S.r*.007*kv); }
+  camera.position.y+=S.n*S.a-S.j; camera.rotateX(S.n*S.a*.25); if(t==='pflaster'||t==='schotter') camera.rotateZ(S.r*(t==='pflaster'?.007:.004)*kv); }
 // Antritt-Kick: springen die Watt deutlich über den Schnitt der letzten Sekunden, fällt die Kamera kurz zurück, das Sichtfeld weitet sich, die Kette klackt
 function kickStep(dt){ const P=race.state==='run'&&!me.done?curPower():0; camS.pf=(camS.pf??P)+(P-(camS.pf??P))*Math.min(1,dt/.5); camS.ps=(camS.ps??P)+(P-(camS.ps??P))*Math.min(1,dt/4);
   const now=performance.now()/1000; if(camS.pf>camS.ps*1.4&&camS.pf>1.3*ftp()&&now-(camS.kT||0)>3&&!race.paused){ camS.kT=now; camS.kv=14; klack(); }
