@@ -18,16 +18,16 @@ const KAMP=[
     ende:[{titel:'Rast am Teufelstisch',text:'Nach einer langen Fahrt durch die dunklen Wälder des Wasgaus hast du endlich das Gasthaus „Zum Teufelstisch“ erreicht. Ruh dich aus, [edler Held|edle Heldin] – die nächsten Tage werden gewiss nicht leichter.'}]},
   {id:'teufelstisch', nr:2, titel:'Teufelstisch – Die Flucht vor dem Teufel', ort:'Hinterweidenthal · Kaltenbacher Tal · Schwelle/VO2max', strecke:'teufelstisch', bild:{src:'kampagne/bilder/lobby-teufelstisch.jpg',n:'Teufelstisch'}, tod:'tag', zu:true, // Mittag: der Teufel isst; zu: noch in Arbeit, nur mit Code
     // Labels Anstieg, Anschleichen, Ertappt, Abgeschüttelt, Wieder am Tisch: danach richtet sich die Strecke (teufelstischDef in strecke.js)
-    // Flucht 1: Attacke (Antritt), dann Verfolgung knapp über der Schwelle (Over-Under) · Flucht 2: nach jeder Attacke schneller (der Teufel wird wütender) · Spitzen ≥ 15 s (ERG regelt ein paar Sekunden hoch) · 5 min Pause dazwischen
-    items:[S_('Einfahren',5,45,60),S_('Anstieg',10,75),S_('Anschleichen',3,50),S_('Ertappt',.5,115),
-      S_('Flucht 1',1.5,86),S_('Besteckwurf',.25,110),S_('Flucht 1',1,86),S_('Besteckwurf',.25,110),S_('Flucht 1',1,86),S_('Dreizack',1/3,115),S_('Flucht 1',.5,86),
-      S_('Abgeschüttelt',5,45),S_('Wieder am Tisch',.5,115),
-      S_('Flucht 2',1.5,85),S_('Tischwurf',.5,110),S_('Flucht 2',1.5,88),S_('Dreizack',.25,115),S_('Flucht 2',1,92),S_('Dreizack',.25,115),S_('Flucht 2',5/6,92),
+    // Flucht 1: Attacke (Antritt), dann Verfolgung knapp über der Schwelle (Over-Under) · Flucht 2: gleich aufgeteilt, aber härter und nach jeder Attacke schneller (der Teufel wird wütender) · Spitzen 25–45 s · 5 min Pause dazwischen
+    items:[S_('Einfahren',5,45,60),S_('Anstieg',10,75),S_('Anschleichen',3,50),S_('Ertappt',.75,115),
+      S_('Flucht 1',1.5,86),S_('Besteckwurf',25/60,110),S_('Flucht 1',1.5,86),S_('Dreizack',25/60,115),S_('Flucht 1',1,86),
+      S_('Abgeschüttelt',5,45),S_('Wieder am Tisch',.75,120),
+      S_('Flucht 2',1.5,88),S_('Tischwurf',.5,115),S_('Flucht 2',1.5,90),S_('Dreizack',.5,120),S_('Flucht 2',1,92),
       S_('Schlusssprint',1/3,120),S_('Ausfahren',5,50,40)],
-    hart:[S_('Einfahren',5,50,65),S_('Anstieg',10,95),S_('Anschleichen',3,65),S_('Ertappt',.5,150),
-      S_('Flucht 1',1.5,103),S_('Besteckwurf',.25,140),S_('Flucht 1',1,103),S_('Besteckwurf',.25,140),S_('Flucht 1',1,103),S_('Dreizack',1/3,150),S_('Flucht 1',.5,103),
-      S_('Abgeschüttelt',5,55),S_('Wieder am Tisch',.5,155),
-      S_('Flucht 2',1.5,100),S_('Tischwurf',.5,140),S_('Flucht 2',1.5,105),S_('Dreizack',.25,150),S_('Flucht 2',1,110),S_('Dreizack',.25,150),S_('Flucht 2',5/6,110),
+    hart:[S_('Einfahren',5,50,65),S_('Anstieg',10,95),S_('Anschleichen',3,65),S_('Ertappt',.75,150),
+      S_('Flucht 1',1.5,103),S_('Besteckwurf',25/60,140),S_('Flucht 1',1.5,103),S_('Dreizack',25/60,150),S_('Flucht 1',1,103),
+      S_('Abgeschüttelt',5,55),S_('Wieder am Tisch',.75,155),
+      S_('Flucht 2',1.5,105),S_('Tischwurf',.5,150),S_('Flucht 2',1.5,108),S_('Dreizack',.5,160),S_('Flucht 2',1,110),
       S_('Schlusssprint',1/3,170),S_('Ausfahren',5,55,45)],
     // Platzhalter-Tafeln (Schritt 1) – endgültige Texte folgen
     start:[{at:10,titel:'Hinauf zum Teufelstisch',text:'Im Gasthaus erzählt man sich, hoch über dem Kaltenbacher Tal stehe ein Tisch aus Fels, an dem der Teufel selbst gespeist hat. Friedel will ihn unbedingt sehen.'}],
