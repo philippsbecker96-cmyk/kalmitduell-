@@ -23,7 +23,7 @@ Größere Punkte später in die passende Datei umziehen (`PLAENE.md`, `KAMPAGNE.
 - [ ] 
 
 ## Ideen
-- [ ] 
+- [ ] (langfristig, wenn Mission 1–4 fertig sind) **Wasgau-Tour**: Missionen 1–4 als eine feste, zusammenhängende Strecke Trifels → Teufelstisch → Dahn → Berwartstein (≈ 40–60 km) für Rennen/freie Fahrt, ohne Story, Halte und Jagden. Weg: Missionsstrecken einmal mit festem Referenzfahrer vorausberechnen (`kampPlan`, z. B. FTP 250 / 75 kg / Leicht) → feste Meter; Stücke mit kurzen Übergängen (Talweg, Wald) hintereinander, Teufelstisch-Schleife nur einmal, Berwartstein schon fest. Offen: Gelände-Funktionen je Welt nur in ihrem Abschnitt (Übergänge glätten), Welten mit Meter-Versatz bauen (`R.tri`/`R.tt` relativ), nur Szenen in der Nähe sichtbar (EFFIZIENZ.md), eine Tageszeit (oder Sonne läuft über den Tag mit), Figuren nur als Kulisse. Aufwand: groß (mehrere Tage)
 
 ## Trainingsmodus
 - Pulsskala testen: rote Pulslinie im Workout-Diagramm (60–210 bpm) im Spiel und auf den Fotos prüfen
