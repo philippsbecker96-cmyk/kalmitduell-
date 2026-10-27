@@ -147,7 +147,7 @@ function buildRoute(def){
     if(def.island){ r.island=true; prepIsland(r); return r; }
     // Optische Überhöhung: Bahn wird 2,5 × so steil gezeichnet (max. 30 %); Physik flach mit Schub, Trainer bei 0 %
     let ve=0; segs.forEach(o=>{ o.vg=Math.sign(o.g)*Math.min(Math.abs(o.g)/SPACE_PHYS*SPACE_VX,30); o.ve0=ve; ve+=o.len*o.vg/100; }); r.vEnd=ve;
-    r.space=true; return r; }
+    r.space=true; prepMond(r); return r; }
   // Landschaftszonen: Dorf, Weinberge, Wald, Fans im letzten Kilometer
   r.fans = def.burg||def.ma?r.len:Math.max(r.len*0.6, r.len-1000); // Burg: kein modernes Publikum
   r.kehren=[]; if(r.kalmit||def.burg) for(let dd=40; dd<len-40; dd+=STEP*5){ const dh=Math.abs(angDiff(headingAt(r,dd+25),headingAt(r,dd-25)));
@@ -357,18 +357,23 @@ function spaceDef(segs, unit, f, kg){
   // Übergänge weich: gleitender Mittelwert über ±12 s
   const out=raw.map((c,i)=>{ let s=0,n=0; for(let j=-6;j<=6;j++){ const o=raw[i+j]; if(o){ s+=o.g; n++; } } const g=Math.round(s/n*SPACE_PHYS*100)/100;
     return {len:Math.round(Math.min(SPACE_VMAX,vSteady(c.w,0,kg)*spaceSchub(c.p))*DT*100)/100, g, p:Math.round(c.p)}; });
+  // Mond: nach 20 % der Workout-Zeit ~2 min Fahrt (2–5 km) über eine Mondkugel, Höhe und Anflug in prepMond (welt-space.js), Kurven über mz im Verlauf
+  const iM=Math.floor(out.length*.2), Lsum=out.reduce((a,s)=>a+s.len,0); let dM=0, lM=0; for(let i=0;i<iM;i++) dM+=out[i].len; for(let i=iM;i<Math.min(out.length,iM+60);i++) lM+=out[i].len; lM=Math.max(2000,Math.min(5000,lM));
+  const L1=lM*.4, Lb=Math.min(1400,lM*.35), L2=lM-L1-Lb, mond=dM>1500&&dM+lM+1500<Lsum?{d0:dM,d1:dM+lM,krater:dM+L1+Lb/2}:null;
+  const sn=(u,L,amp,hp)=>amp*Math.sin(Math.PI*Math.max(1,Math.round(L/hp))*u/L); // Schlangenlinie, beginnt und endet gerade
+  const mz=s=>{ const u=s-dM; if(!mond||u<=0||u>=lM) return 0; return u<L1?sn(u,L1,.75,260):u<L1+Lb?-.7*Math.sin(2*Math.PI*(u-L1)/Lb):sn(u-L1-Lb,L2,.6,350); }; // Mitte: weiter Linksbogen um den Riesenkrater
   const ring=2*Math.PI*SPACE_RING; out.push({len:ring,g:0,p:-1});
   // Verlauf in der Ebene: sanfte Bögen, aus dem Workout abgeleitet (gleiches Workout = gleiche Strecke)
   let hs=7; for(const s of segs) hs=(hs*31+Math.round(s.dur)+Math.round(s.a*7)+(s.b==null?3:Math.round(s.b*11))+(s.free?5:0))%2147483647;
   const r=rng(hs+1), l1=600+r()*300, l2=180+r()*90, f1=r()*6.28, f2=r()*6.28;
   const L=out.reduce((a,s)=>a+s.len,0), Lw=L-ring, poly=[[0,0]], DS=8; let x=0, y=0, d=0;
-  const hdAt=s=>0.7*Math.sin(s/l1+f1)+0.32*Math.sin(s/l2+f2);
+  const hdAt=s=>0.7*Math.sin(s/l1+f1)+0.32*Math.sin(s/l2+f2)+mz(s);
   const push=()=>poly.push([Math.round(x*100)/100,Math.round(y*100)/100]);
   while(d<Lw-1e-6){ const ds=Math.min(DS,Lw-d), h=hdAt(d+ds/2); x+=Math.cos(h)*ds; y+=Math.sin(h)*ds; d+=ds; push(); }
   // Umlaufbahn: geschlossener Kreis, endet genau am Anfang
   const n=Math.ceil(ring/DS), dr=ring/n; let h=hdAt(Lw);
   for(let i=0;i<n;i++){ h+=Math.PI/n; x+=Math.cos(h)*dr; y+=Math.sin(h)*dr; h+=Math.PI/n; push(); }
-  return {name:'Space-Strecke', start:'Start', finish:'Raumstation', startElev:1000, space:true, ring, poly, segs:out};
+  return {name:'Space-Strecke', start:'Start', finish:'Raumstation', startElev:1000, space:true, ring, poly, segs:out, mond};
 }
 let spaceKey=null;
 const GEN_IDS=['space','insel'];

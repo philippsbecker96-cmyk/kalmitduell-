@@ -23,6 +23,7 @@ const spaceSky=(()=>{ const G=new THREE.Group(); G.visible=false; scene.add(G); 
   const ringTex=canvasTex(256,8,g=>{ for(let x=0;x<256;x++){ const a=(Math.sin(x*.21)*.5+.5)*(x>30&&x<240?1:0)*(Math.sin(x*.07)>-.6?1:.25); g.fillStyle=`rgba(225,210,185,${a*.85})`; g.fillRect(x,0,1,8); } });
   const rg=new THREE.RingGeometry(380,700,96,1), uv=rg.attributes.uv, ps=rg.attributes.position; for(let i=0;i<uv.count;i++){ const l=Math.hypot(ps.getX(i),ps.getY(i)); uv.setXY(i,(l-380)/320,.5); }
   const ringM=new THREE.Mesh(rg, new THREE.MeshBasicMaterial({map:ringTex, transparent:true, side:THREE.DoubleSide, fog:false, depthWrite:false})); ringM.position.copy(p2.position); ringM.rotation.set(1.2,0.3,0.2); G.add(ringM);
+  G.children.forEach(o=>{ if(o===ringM) return; o.renderOrder=o.isMesh?-2:-3; o.material.depthTest=false; if(o.isSprite) o.material.transparent=false; }); // Hintergrund zuerst und ohne Tiefentest: die ferne Mondkugel verdeckt Sterne und Nebel
   return G; })();
 scene.add(camera);
 // Lichtstreifen bei hohem Tempo (hängen an der Kamera)
@@ -115,11 +116,12 @@ function buildSpace(){
 
   // Asteroiden: verstreut, dazu ein dichter Gürtel
   const ast=[], beltA=Lw*0.42, beltB=beltA+Math.min(900,Lw*0.25);
+  const MK=R.M, imMond=(x,y,z,r=0)=>!!MK&&Math.hypot(x-MK.cx,y-MK.cy,z-MK.cz)<MK.RP+r+40; // nichts in die Mondkugel stecken
   for(let d=40; d<Lw-60; d+=6){ const f=fr(d), belt=d>beltA&&d<beltB;
     const tries=belt?4:(rnd()<.3?1:0);
     for(let t=0;t<tries;t++){ const side=rnd()<.5?-1:1, off=side*(belt?9+rnd()*70:14+rnd()*140), s=belt?(rnd()<.08?3+rnd()*5:0.4+rnd()*2.2):(rnd()<.1?5+rnd()*9:0.6+rnd()*3);
       const off2=s>3?Math.sign(off)*Math.max(Math.abs(off),35+s*4):off; // große Brocken nicht direkt an der Bahn
-      ast.push({x:f.x+f.nx*off2+(rnd()-.5)*6, z:f.z+f.nz*off2+(rnd()-.5)*6, y:f.y+(belt?(rnd()-.5)*22:(rnd()-.55)*80), s, r1:rnd()*6, r2:rnd()*6, c:rnd()}); }
+      const o={x:f.x+f.nx*off2+(rnd()-.5)*6, z:f.z+f.nz*off2+(rnd()-.5)*6, y:f.y+(belt?(rnd()-.5)*22:(rnd()-.55)*80), s, r1:rnd()*6, r2:rnd()*6, c:rnd()}; if(!imMond(o.x,o.y,o.z,s)) ast.push(o); }
     if(ast.length>7000) break; }
   inst(new THREE.DodecahedronGeometry(1,0), new THREE.MeshLambertMaterial({color:'#ffffff'}), ast, (o,p,q,s,c,e)=>{ p.set(o.x,o.y,o.z); q.setFromEuler(e.set(o.r1,o.r2,o.r1*.5)); s.set(o.s,o.s*(.7+o.c*.4),o.s*(.8+o.c*.3)); c.set(o.c<.33?'#8a7f76':o.c<.66?'#6f6a66':'#9a8670'); });
   if(beltB<Lw-100){ const f=fr(beltA-30), sp=neonSprite('ASTEROIDENGÜRTEL','#ffb03a',9); sp.position.set(f.x,f.y+7,f.z); world.add(sp); }
@@ -129,8 +131,8 @@ function buildSpace(){
     if(kind==='gas'){ for(let y=0;y<128;y+=2){ const t=y/128; g.fillStyle=`hsl(${hue+Math.sin(t*17+q())*18},${50+q()*20}%,${45+Math.sin(t*29)*12+q()*6}%)`; g.fillRect(0,y,256,2); } }
     else { g.fillStyle=`hsl(${hue},${25+q()*20}%,${42+q()*12}%)`; g.fillRect(0,0,256,128); for(let i=0;i<70;i++){ const x=q()*256, y=q()*128, r=2+q()*12; g.fillStyle=`rgba(0,0,0,${.12+q()*.15})`; g.beginPath(); g.arc(x,y,r,0,7); g.fill(); g.strokeStyle='rgba(255,255,255,.12)'; g.lineWidth=1.5; g.beginPath(); g.arc(x-1,y-1,r,0,7); g.stroke(); } } });
   let side=1, k=0;
-  for(let d=900; d<Lw-400; d+=2200+rnd()*900, side=-side, k++){ const f=fr(d), off=side*(320+rnd()*380), rad=70+rnd()*130, kind=rnd()<.55?'gas':'rock';
-    const pl=new THREE.Mesh(new THREE.SphereGeometry(rad,40,28), new THREE.MeshLambertMaterial({map:ptex(kind,500+k)})); pl.position.set(f.x+f.nx*off, f.y-60+rnd()*240, f.z+f.nz*off); pl.rotation.set(rnd(),rnd()*6,rnd()*.5); world.add(pl);
+  for(let d=900; d<Lw-400; d+=2200+rnd()*900, side=-side, k++){ const f=fr(d), off=side*(320+rnd()*380), rad=70+rnd()*130, kind=rnd()<.55?'gas':'rock', py=f.y-60+rnd()*240; if(imMond(f.x+f.nx*off,py,f.z+f.nz*off,rad*2.2)) continue;
+    const pl=new THREE.Mesh(new THREE.SphereGeometry(rad,40,28), new THREE.MeshLambertMaterial({map:ptex(kind,500+k)})); pl.position.set(f.x+f.nx*off, py, f.z+f.nz*off); pl.rotation.set(rnd(),rnd()*6,rnd()*.5); world.add(pl);
     if(kind==='gas' && rnd()<.6){ const rg=new THREE.Mesh(new THREE.RingGeometry(rad*1.35,rad*2.1,72), new THREE.MeshBasicMaterial({color:new THREE.Color().setHSL(rnd(),.4,.7), transparent:true, opacity:.45, side:THREE.DoubleSide, depthWrite:false})); rg.position.copy(pl.position); rg.rotation.set(1.1+rnd()*.6,rnd(),0); world.add(rg); }
     if(rnd()<.5){ const mo=new THREE.Mesh(new THREE.SphereGeometry(rad*.18,20,14), new THREE.MeshLambertMaterial({map:ptex('rock',900+k)})); mo.position.copy(pl.position).add(new THREE.Vector3(rad*1.9,rad*.5,-rad*.8)); world.add(mo); } }
 
@@ -175,14 +177,16 @@ function buildSpace(){
   const fw=new THREE.Points(fg, new THREE.PointsMaterial({size:1.6, map:canvasTex(32,32,g=>{ const gr=g.createRadialGradient(16,16,0,16,16,16); gr.addColorStop(0,'#fff'); gr.addColorStop(.35,'rgba(255,255,255,.8)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,32,32); }), vertexColors:true, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, fog:false})); fw.visible=false; fw.frustumCulled=false; world.add(fw);
   const dirs=[]; for(let i=0;i<NB*NP;i++){ const u=rnd()*2-1, a=rnd()*Math.PI*2, s=Math.sqrt(1-u*u), sp=.75+rnd()*.25; dirs.push([Math.cos(a)*s*sp,u*sp,Math.sin(a)*s*sp]); }
 
+  const mond=buildMond(fr);
   buildRiders(); RKEYS.forEach(k=>rakete(riders3d[k]));
-  anim.space={edge, halo, wave:{mat:waveMat,t0:null,d0:0}, wheel, blink, fw:{pts:fw, pos:fp, col:fc, dirs, NB, NP, t0:null, bursts:null}};
+  anim.space={mond, edge, halo, wave:{mat:waveMat,t0:null,d0:0}, wheel, blink, fw:{pts:fw, pos:fp, col:fc, dirs, NB, NP, t0:null, bursts:null}};
 }
 function poseSpace(dt,t){
   const A=anim.space; if(!A) return;
   const br=0.5+0.5*Math.sin(t*2*Math.PI/6); A.edge.color.setScalar(0.82+0.18*br); A.halo.opacity=0.16+0.06*br; // sanftes Atmen, alle 6 s
   RB.uT.value=(t*0.06)%1; RB.uOn.value+=((RB.an?1:0)-RB.uOn.value)*Math.min(1,dt*2); // Regenbogen: ein Durchlauf in ~17 s, Ein-/Ausblenden über ~1 s
   const Wv=A.wave; if(Wv.t0!=null){ const T=t-Wv.t0; Wv.mat.uniforms.uFront.value=Wv.d0+T*90; Wv.mat.uniforms.uAmp.value=T<.15?T/.15:Math.max(0,1-(T-.15)/2.85); if(T>3.2){ Wv.t0=null; Wv.mat.uniforms.uAmp.value=0; } }
+  if(A.mond){ A.mond.nah.visible=me.d>A.mond.a2-1500&&me.d<A.mond.b2+1500; poseMond(A.mond,dt,t); } // Kugel immer, Oberfläche nur in der Nähe
   A.wheel.rotation.x=t*0.12; A.blink.forEach((b,i)=>b.visible=Math.sin(t*3+i*1.7)>0);
   updStreaks(dt, race.paused||(me.done&&!me.free)?0:me.v, race.paused?0:spaceWarp());
   const lauf=race.state==='run'&&!race.paused, rdt=race.paused?0:dt; // Raketenantrieb: % FTP aus den echten Watt, Gegner online mit seiner FTP
@@ -199,3 +203,135 @@ function poseSpace(dt,t){
   F.pts.visible=any||T<1; F.pts.geometry.attributes.position.needsUpdate=true; F.pts.geometry.attributes.color.needsUpdate=true;
 }
 
+
+/* ===== Mond: nach 20 % der Workout-Zeit ~2 min Fahrt über eine Mondkugel (Zone R.def.mond aus spaceDef, Kurven über mz dort), Bahnhöhe aus prepMond (Anflug hinab, Abflug hinauf), Kugel schon von Weitem zu sehen, Oberfläche mit Kratern nur im Streifen an der Bahn; Riesenkrater im großen Bogen, Mondfähre mit Astronauten, die die Pfalz-Flagge hissen, Erde am Himmel ===== */
+// Kugel unter die Zone legen, Bahnhöhe dort und im An-/Abflug in r.M.py, dahinter Versatz r.M.off (liest roadY); die übrige Bahn bleibt mindestens 25 m über der Kugel
+function prepMond(r){ r.M=null; const M0=r.def.mond; if(!M0) return; const a=M0.d0*r.kf, b=M0.d1*r.kf, Lw=r.len-r.ring;
+  const seg=d=>{ const s=r.segs; let lo=0, hi=s.length-1; while(lo<hi){ const m=(lo+hi+1)>>1; if(s[m].d0<=d) lo=m; else hi=m-1; } return s[lo]; }, ve=d=>{ const s=seg(d); return s.ve0+(d-s.d0)*s.vg/100; };
+  let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9; for(let d=a; d<=b; d+=20){ const [x,z]=posAt(r,d); x0=Math.min(x0,x); x1=Math.max(x1,x); z0=Math.min(z0,z); z1=Math.max(z1,z); }
+  const cx=(x0+x1)/2, cz=(z0+z1)/2; let rm=0; for(let d=a; d<=b; d+=20){ const [x,z]=posAt(r,d); rm=Math.max(rm,Math.hypot(x-cx,z-cz)); }
+  const RP=Math.max(5000,Math.min(9000,rm/.22)), kug=(x,z)=>{ const q=RP*RP-(x-cx)**2-(z-cz)**2; return q>0?Math.sqrt(q):-1e9; }, S=d=>{ const [x,z]=posAt(r,d); return kug(x,z); }; // Radius: Bahn auf dem Mond höchstens ~22 % steil
+  const frei=(d0,d1,f)=>{ let c=1e9; for(let d=d0; d<=d1; d+=10){ const [x,z]=posAt(r,d), h=kug(x,z); if(h>-1e8) c=Math.min(c,f(d,h)); } return c; }; // übrige Bahn mindestens 25 m über der Kugel
+  // Anflug: immer hinab auf den Mond, höchstens ~22 % im Schnitt (bis 2,5 km lang)
+  let ha=800, a2=a, cy=0; for(let it=0; it<4; it++){ a2=Math.max(60,a-ha); cy=Math.min(ve(a)-S(a), ve(a2)-S(a)-30, frei(0,a2,(d,h)=>ve(d)-25-h)); ha=Math.min(2500,Math.max(800,(ve(a2)-cy-S(a))/.22)); }
+  // Abflug: danach fährt die Bahn mit ihren eigenen Steigungen von der Abflughöhe aus weiter (Versatz off), bei Bedarf höher, damit sie nicht in die Kugel taucht
+  const Y=d=>cy+S(d), yB=Y(b), ex=Math.max(0,-frei(b+300,r.len,(d,h)=>ve(d)-ve(b)+yB-cy-h-25)), off=yB-ve(b)+ex, b2=Math.min(Lw-60,b+Math.min(2500,Math.max(500,ex/.2)));
+  const hm=(t,p0,m0,p1,m1,h)=>{ const t2=t*t, t3=t2*t; return (2*t3-3*t2+1)*p0+(t3-2*t2+t)*h*m0+(-2*t3+3*t2)*p1+(t3-t2)*h*m1; };
+  const ha2=a-a2, hb=b2-b, ya=ve(a2), ma=seg(a2).vg/100, yA=Y(a), mA=(Y(a+2)-Y(a-2))/4, mB=(Y(b+2)-Y(b-2))/4, yb=ve(b2)+off, mb=seg(b2).vg/100;
+  const n=Math.ceil((b2-a2)/STEP)+1, py=new Float32Array(n);
+  for(let i=0;i<n;i++){ const d=a2+i*STEP; let y=d<a?hm((d-a2)/ha2,ya,ma,yA,mA,ha2):d<=b?Y(d):hm(Math.min(1,(d-b)/hb),yB,mB,yb,mb,hb); if(d<a||d>b) y=Math.max(y,Y(d)+.3); py[i]=y; } // weicher Übergang, nie in die Kugel
+  r.M={a,b,a2,b2:a2+(n-1)*STEP,cx,cz,cy,RP,py,off,krater:M0.krater*r.kf};
+}
+function buildMond(fr){ const M=R.M; if(!M) return null; const {a,b,cx,cz,cy,RP}=M, q=rng(1969), W=600, C=12, CG=48, BK=160, TIEF=30, hw=ROAD_W/2;
+  const G=new THREE.Group(), nah=new THREE.Group(); G.userData.ohneBoden=true; G.add(nah); world.add(G); camera.far=30000; camera.updateProjectionMatrix(); // Kugel schon von Weitem
+  const kugel=(x,z)=>{ const s=RP*RP-(x-cx)**2-(z-cz)**2; return cy+(s>0?Math.sqrt(s):0); }, sm=t=>{ t=Math.max(0,Math.min(1,t)); return t*t*(3-2*t); };
+  // Kugel mit Kratertextur, 30 m unter der Oberfläche an der Bahn (der Streifen taucht am Rand darunter), Pol zur Seite gedreht
+  const kt=canvasTex(1024,512,g=>{ const r=rng(7); g.fillStyle='#9a9a97'; g.fillRect(0,0,1024,512);
+    for(let i=0;i<14;i++){ g.fillStyle=`rgba(60,60,64,${.15+r()*.2})`; g.beginPath(); g.ellipse(r()*1024,60+r()*392,40+r()*140,20+r()*70,r()*3,0,7); g.fill(); }
+    for(let i=0;i<700;i++){ const x=r()*1024, y=r()*512, rr=1.5+Math.pow(r(),3)*28; g.fillStyle=`rgba(0,0,0,${.12+r()*.18})`; g.beginPath(); g.arc(x,y,rr,0,7); g.fill(); g.strokeStyle='rgba(255,255,255,.16)'; g.lineWidth=Math.max(1,rr*.18); g.beginPath(); g.arc(x-rr*.12,y-rr*.12,rr,0,7); g.stroke(); } });
+  const ku=new THREE.Mesh(new THREE.SphereGeometry(RP-TIEF,160,96),new THREE.MeshLambertMaterial({map:kt, fog:false})); ku.position.set(cx,cy,cz); ku.rotation.x=Math.PI/2; G.add(ku);
+  // Bahnpunkte (Zone mit An- und Abflug) alle 8 m, in Fächern zu 160 m für die Abstandssuche
+  const P=[]; for(let d=M.a2; d<=M.b2; d+=8){ const f=fr(d); P.push([f.x,f.z,f.y]); }
+  const fk=(i,j)=>i*100003+j, fach=new Map(); for(let i=0;i<P.length-1;i++){ const k=fk(Math.floor((P[i][0]+P[i+1][0])/2/BK),Math.floor((P[i][1]+P[i+1][1])/2/BK)); let L=fach.get(k); if(!L) fach.set(k,L=[]); L.push(i); }
+  const naechst=(x,z,ring)=>{ let best=1e18, y=0; const bx=Math.floor(x/BK), bz=Math.floor(z/BK);
+    for(let u=-ring;u<=ring;u++) for(let v=-ring;v<=ring;v++){ const L=fach.get(fk(bx+u,bz+v)); if(!L) continue;
+      for(const i of L){ const p=P[i], c=P[i+1], ex=c[0]-p[0], ez=c[1]-p[1], l2=ex*ex+ez*ez||1, t=Math.max(0,Math.min(1,((x-p[0])*ex+(z-p[1])*ez)/l2)), dx=p[0]+ex*t-x, dz=p[1]+ez*t-z, dd=dx*dx+dz*dz; if(dd<best){ best=dd; y=p[2]+(c[2]-p[2])*t; } } }
+    return [Math.sqrt(best),y]; };
+  let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9; for(const p of P){ x0=Math.min(x0,p[0]); x1=Math.max(x1,p[0]); z0=Math.min(z0,p[1]); z1=Math.max(z1,p[1]); } x0-=W; x1+=W; z0-=W; z1+=W;
+  // grobes Abstandsgitter (48 m), fein nur nahe der Bahn
+  const gx=Math.ceil((x1-x0)/CG)+2, gz=Math.ceil((z1-z0)/CG)+2, GD=new Float32Array(gx*gz), GY=new Float32Array(gx*gz);
+  for(let j=0;j<gz;j++) for(let i=0;i<gx;i++){ const [dn,y]=naechst(x0+i*CG,z0+j*CG,5); GD[j*gx+i]=Math.min(dn,9999); GY[j*gx+i]=y; }
+  const dist=(x,z)=>{ const fx=(x-x0)/CG, fz=(z-z0)/CG, i=Math.max(0,Math.min(gx-2,Math.floor(fx))), j=Math.max(0,Math.min(gz-2,Math.floor(fz))), u=fx-i, v=fz-j, k=j*gx+i, bl=A=>(A[k]*(1-u)+A[k+1]*u)*(1-v)+(A[k+gx]*(1-u)+A[k+gx+1]*u)*v;
+    const dn=bl(GD); if(dn<150){ const e=naechst(x,z,1); if(e[0]<150) return e; } return [dn,bl(GY)]; };
+  // Krater: viele kleine an der Bahn entlang, dazu der Riesenkrater links im großen Bogen
+  const gk=fr(M.krater), GR=150, gross={x:gk.x+gk.nx*(GR+hw+24), z:gk.z+gk.nz*(GR+hw+24), r:GR, t:24}, kfach=new Map();
+  for(let i=0, nK=Math.round(P.length*.9); i<nK; i++){ const p=P[Math.floor(q()*P.length)], an=q()*6.283, ab=q()*W, r=8+Math.pow(q(),3)*62, o={x:p[0]+Math.cos(an)*ab, z:p[1]+Math.sin(an)*ab, r, t:r*.2};
+    const k=fk(Math.floor(o.x/BK),Math.floor(o.z/BK)); let L=kfach.get(k); if(!L) kfach.set(k,L=[]); L.push(o); }
+  const k1=(k,x,z,acc)=>{ const dx=x-k.x, dz=z-k.z; if(Math.abs(dx)>k.r*1.7||Math.abs(dz)>k.r*1.7) return; const u=Math.sqrt(dx*dx+dz*dz)/k.r;
+    if(u<1){ acc[0]-=k.t*(1-u*u); acc[1]-=.12*(1-u); } acc[0]+=k.t*.38*Math.exp(-(((u-1)/.22)**2)); if(Math.abs(u-1)<.2) acc[1]+=.06; };
+  const krater=(x,z)=>{ const acc=[0,0], bx=Math.floor(x/BK), bz=Math.floor(z/BK); k1(gross,x,z,acc); for(let u=-1;u<=1;u++) for(let v=-1;v<=1;v++){ const L=kfach.get(fk(bx+u,bz+v)); if(L) for(const k of L) k1(k,x,z,acc); } return acc; };
+  // Höhe: Kugel mit Kratern, an der Bahn bündig (abgetragen oder aufgefüllt, aber kein Damm unter dem hohen Anflug), Rand taucht unter die Kugel
+  const H=(x,z,dn,yr)=>{ const [kh,ks]=krater(x,z), wk=sm((dn-hw-6)/20), fl=(Math.sin(x*.07)*Math.cos(z*.06)+Math.sin(x*.023+z*.031))*.5;
+    let h=kugel(x,z)+(kh+fl)*wk; const dd=yr-.22-h, k=sm((dn-hw-1)/28); h+=dd<0?dd*(1-k):dd*(1-k)*Math.max(0,1-(dd-1)/4);
+    return [h-45*sm((dn-W+140)/140), ks*wk]; };
+  const hoehe=(x,z)=>{ const [dn,yr]=dist(x,z); return H(x,z,dn,yr)[0]; };
+  const nx=Math.ceil((x1-x0)/C)+1, nz=Math.ceil((z1-z0)/C)+1, idx=new Int32Array(nx*nz).fill(-1), pos=[], col=[], id=[];
+  for(let j=0;j<nz;j++) for(let i=0;i<nx;i++){ const x=x0+i*C, z=z0+j*C, [dn,yr]=dist(x,z); if(dn>W) continue; const [h,s]=H(x,z,dn,yr), g=.6+s+.05*Math.sin(x*.013+Math.cos(z*.011)*2)+(q()-.5)*.04;
+    idx[j*nx+i]=pos.length/3; pos.push(x,h,z); col.push(g,g*.98,g*.95); }
+  for(let j=0;j<nz-1;j++) for(let i=0;i<nx-1;i++){ const A=idx[j*nx+i], B=idx[j*nx+i+1], Cc=idx[(j+1)*nx+i], D=idx[(j+1)*nx+i+1]; if(A>=0&&B>=0&&Cc>=0&&D>=0) id.push(A,Cc,B, B,Cc,D); }
+  const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3)); geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3)); geo.setIndex(id); geo.computeVertexNormals();
+  const boden=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({vertexColors:true, fog:false})); boden.frustumCulled=false; nah.add(boden);
+  // Platz für Fähre und Astronauten: dort, wo man am längsten direkt darauf zufährt (Blick höchstens ~14° neben der Fahrtrichtung, außen in einer Kurve), nicht am Riesenkrater
+  let dL=a+(b-a)*.3, sL=1, best=-1; for(let sd=a+300; sd<b-200; sd+=20) for(const si of [-1,1]){ const f=fr(sd), qx=f.x+f.nx*si*(hw+8), qz=f.z+f.nz*si*(hw+8); if(Math.hypot(qx-gross.x,qz-gross.z)<GR+60) continue;
+    let lauf=0; for(let d=sd-50; d>Math.max(a-400,sd-1500); d-=10){ const [x,z]=posAt(R,d), w=Math.abs(angDiff(Math.atan2(qz-z,qx-x),headingAt(R,d))); if(w>.25) break; lauf=sd-d; }
+    if(lauf>best){ best=lauf; dL=sd; sL=si; } }
+  // Felsbrocken neben der Bahn
+  const auf=(d,u)=>{ const f=fr(d), x=f.x+f.nx*u, z=f.z+f.nz*u; return [x,hoehe(x,z),z]; };
+  const br=[]; for(let i=0, nB=Math.round((b-a)/5); i<nB; i++){ const d=a+q()*(b-a), sd=q()<.5?-1:1, u=sd*(hw+4+Math.pow(q(),1.6)*240), s=q()<.1?1.5+q()*3:.25+q()*1.1; if(sd===sL&&Math.abs(d-dL)<18&&Math.abs(u)<hw+24) continue; const [x,y,z]=auf(d,u); br.push({x,y:y+s*.3,z,s,a:q()*6,b:q()*6,c:q()}); } // Platz um Fähre und Astronauten frei
+  const im=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1,0),new THREE.MeshLambertMaterial({color:'#ffffff'}),br.length), m4=new THREE.Matrix4(), qu=new THREE.Quaternion(), e=new THREE.Euler(), cc=new THREE.Color();
+  br.forEach((o,i)=>{ m4.compose(new THREE.Vector3(o.x,o.y,o.z), qu.setFromEuler(e.set(o.a,o.b,0)), new THREE.Vector3(o.s,o.s*.6,o.s*.85)); im.setMatrixAt(i,m4); im.setColorAt(i,cc.setScalar(.5+o.c*.25)); }); nah.add(im);
+  // Mondfähre neben der Bahn, davor die Astronauten mit der Pfalz-Flagge (unten)
+  { const [x,y,z]=auf(dL+4,sL*(hw+15)), L=new THREE.Group(); L.position.set(x,y,z); L.rotation.y=-headingAt(R,dL)+.6; nah.add(L);
+    const gold=new THREE.MeshLambertMaterial({color:'#c99a3c', emissive:'#3a2808'}), grau=new THREE.MeshLambertMaterial({color:'#c9ccd2'}), dunkel=new THREE.MeshLambertMaterial({color:'#2b2e35'});
+    const unten=new THREE.Mesh(new THREE.CylinderGeometry(2.1,2.1,1.7,8),gold); unten.position.y=2.1; L.add(unten);
+    const oben=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.8,1.9,6),grau); oben.position.y=3.9; L.add(oben);
+    for(const wx of [1.2,-1.2]){ const fe=new THREE.Mesh(new THREE.BoxGeometry(.5,.5,.1),dunkel); fe.position.set(wx*.5,4.1,1.62); L.add(fe); }
+    const sch=new THREE.Mesh(new THREE.ConeGeometry(.6,.3,12,1,true),grau); sch.position.set(.9,5.3,-.4); sch.rotation.x=.6; L.add(sch);
+    for(let i=0;i<4;i++){ const w=i*Math.PI/2+Math.PI/4, bx=Math.cos(w), bz=Math.sin(w), bein=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,2.6,6),grau); bein.position.set(bx*2.4,1.1,bz*2.4); bein.rotation.set(-bz*.45,0,bx*.45); L.add(bein);
+      const fuss=new THREE.Mesh(new THREE.CylinderGeometry(.42,.42,.08,12),grau); fuss.position.set(bx*2.95,.04,bz*2.95); L.add(fuss); } }
+  // Schild vor der Landung, Erde hoch über dem Horizont voraus
+  { const f=fr(a-60), sp=neonSprite('MOND','#e6e9ef',8); sp.position.set(f.x,f.y+7,f.z); nah.add(sp); }
+  { const p=fr(a), o=fr(b), dl=Math.hypot(o.x-p.x,o.z-p.z)||1, vx=(o.x-p.x)/dl, vz=(o.z-p.z)/dl;
+    const et=canvasTex(512,256,g=>{ const r=rng(42); g.fillStyle='#1d5fb4'; g.fillRect(0,0,512,256);
+      for(let i=0;i<26;i++){ const x=r()*512, y=40+r()*176, s=10+r()*40; g.fillStyle=r()<.6?'#3f7f3a':'#9a8550'; g.beginPath(); g.ellipse(x,y,s*1.6,s,r()*3,0,7); g.fill(); }
+      g.fillStyle='#f4f7fb'; g.fillRect(0,0,512,18); g.fillRect(0,238,512,18); g.strokeStyle='rgba(255,255,255,.75)'; g.lineCap='round';
+      for(let i=0;i<40;i++){ const x=r()*512, y=r()*256; g.lineWidth=3+r()*6; g.beginPath(); g.arc(x,y,12+r()*30,r()*6,r()*6+1.5); g.stroke(); } });
+    const er=new THREE.Mesh(new THREE.SphereGeometry(1800,64,40),new THREE.MeshLambertMaterial({map:et, fog:false})); er.position.set(cx+vx*14000, cy+RP+3200, cz+vz*14000); er.rotation.set(.3,0,.4); G.add(er);
+    const at=new THREE.Mesh(new THREE.SphereGeometry(1900,64,40),new THREE.MeshBasicMaterial({color:'#6fb6ff', transparent:true, opacity:.22, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.BackSide, fog:false})); at.position.copy(er.position); G.add(at); }
+  // Astronauten hissen vor der Mondfähre dicht an der Bahn die Pfalz-Flagge: einer zieht, einer hält den Mast, einer salutiert, einer hüpft und winkt den Fahrern (1,3-fach, damit man sie im Vorbeifahren sieht)
+  const dF=dL, fF=fr(dF), hF=headingAt(R,dF), tx=Math.cos(hF), tz=Math.sin(hF), U=sL*(hw+6), sg=sL, an=(o,u)=>{ const x=fF.x+tx*o+fF.nx*u, z=fF.z+tz*o+fF.nz*u; return [x,hoehe(x,z),z]; };
+  const weiss=new THREE.MeshLambertMaterial({color:'#eef0f3'}), grau2=new THREE.MeshLambertMaterial({color:'#8d939d'}), visier=new THREE.MeshPhongMaterial({color:'#c8961e', emissive:'#3a2a06', shininess:90, specular:'#fff2c0'});
+  const astro=(col,o,u,blick)=>{ const g=new THREE.Group(), [x,y,z]=an(o,u), streif=new THREE.MeshLambertMaterial({color:col}); g.position.set(x,y,z); g.rotation.y=Math.atan2(blick[0],blick[1]); g.scale.setScalar(1.3); nah.add(g);
+    const leib=new THREE.Group(); g.add(leib); const box=(w,h,d,m,px,py,pz,o2=leib)=>{ const bx=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); bx.position.set(px,py,pz); o2.add(bx); return bx; };
+    for(const sx of [-.14,.14]){ const bn=new THREE.Mesh(new THREE.CylinderGeometry(.14,.13,.8,10),weiss); bn.position.set(sx,.48,0); leib.add(bn); box(.22,.14,.34,grau2,sx,.07,.04); box(.29,.06,.29,streif,sx,.62,0); }
+    box(.58,.66,.38,weiss,0,1.18,0); box(.5,.62,.26,weiss,0,1.22,-.31); box(.22,.14,.06,grau2,0,1.2,.21); box(.58,.07,.39,streif,0,.9,0);
+    const kopf=new THREE.Mesh(new THREE.SphereGeometry(.25,18,14),weiss); kopf.position.y=1.7; leib.add(kopf);
+    const vis=new THREE.Mesh(new THREE.SphereGeometry(.255,18,14,-Math.PI/2*1.15,Math.PI*1.15,Math.PI*.22,Math.PI*.42),visier); vis.position.y=1.7; vis.rotation.y=Math.PI/2; leib.add(vis);
+    const arm=sx=>{ const s=new THREE.Group(); s.position.set(sx,1.44,0); leib.add(s); const ob=new THREE.Mesh(new THREE.CylinderGeometry(.1,.09,.62,10),weiss); ob.position.y=-.31; s.add(ob); box(.21,.06,.21,streif,0,-.18,0,s);
+      const h=new THREE.Mesh(new THREE.SphereGeometry(.1,10,8),grau2); h.position.y=-.66; s.add(h); return s; };
+    return {g, leib, aL:arm(.38), aR:arm(-.38)}; };
+  const zuMast=(o,u)=>[-o*tx-(u-U)*fF.nx, -o*tz-(u-U)*fF.nz], zurBahn=[sg*-fF.nx, sg*-fF.nz];
+  const crew=[astro('#d8332a',0,U+sg*.8,zuMast(0,U+sg*.8)), astro('#2a6fd8',-.8,U+sg*.1,zuMast(-.8,U+sg*.1)), astro('#f0c419',1.7,U+sg*1.3,zuMast(1.7,U+sg*1.3)), astro('#2fae4f',-2.2,U-sg*2.6,zurBahn)];
+  const [mx,my,mz]=an(0,U), mast=new THREE.Group(); mast.position.set(mx,my,mz); mast.rotation.y=Math.atan2(sg*fF.nx,sg*fF.nz); nah.add(mast); // z: weg von der Bahn, Tuch zur Bahn hin lesbar
+  { mast.scale.setScalar(1.3); const st=new THREE.Mesh(new THREE.CylinderGeometry(.05,.06,5.6,8),grau2); st.position.y=2.8; mast.add(st); const kn=new THREE.Mesh(new THREE.SphereGeometry(.1,10,8),grau2); kn.position.y=5.63; mast.add(kn); } // Mast 7,3 m, Flagge 4,2 × 2,7 m
+  const lt=canvasTex(256,170,g=>{ g.fillStyle='#111'; g.fillRect(0,0,256,170); g.save(); g.translate(128,92); g.fillStyle='#f2c230'; g.strokeStyle='#f2c230'; g.lineCap='round'; g.lineJoin='round'; // Pfälzer Löwe: golden, rot gekrönt und bewehrt, auf Schwarz
+    g.beginPath(); g.ellipse(4,8,24,40,-.35,0,7); g.fill(); g.beginPath(); g.ellipse(-14,-38,20,22,0,0,7); g.fill(); // Leib, Kopf
+    for(let i=0;i<9;i++){ const w=-1.2+i*.38; g.beginPath(); g.moveTo(-14+Math.cos(w)*14,-38+Math.sin(w)*14); g.lineTo(-14+Math.cos(w+.18)*31,-38+Math.sin(w+.18)*31); g.lineTo(-14+Math.cos(w+.36)*16,-38+Math.sin(w+.36)*16); g.fill(); } // Mähne
+    g.lineWidth=11; for(const [p0,p1,p2,p3] of [[-16,-10,-44,-34],[-6,2,-40,-6],[10,38,-14,64],[22,34,34,66]]){ g.beginPath(); g.moveTo(p0,p1); g.lineTo(p2,p3); g.stroke(); } // Pranken, Hinterbeine
+    g.lineWidth=7; g.beginPath(); g.moveTo(26,36); g.bezierCurveTo(70,40,30,-10,60,-36); g.stroke(); g.beginPath(); g.arc(62,-40,9,0,7); g.fill(); // Schwanz mit Quaste
+    g.fillStyle='#d4232b'; for(const [x,y] of [[-44,-34],[-40,-6],[-14,64],[34,66]]) for(let k=-1;k<=1;k++){ g.beginPath(); g.arc(x+k*5,y+(y>0?5:-5)*.6,3,0,7); g.fill(); } // Krallen
+    g.beginPath(); g.moveTo(-32,-34); g.lineTo(-44,-30); g.lineTo(-32,-28); g.fill(); g.beginPath(); g.moveTo(-30,-58); g.lineTo(-27,-72); g.lineTo(-20,-62); g.lineTo(-13,-74); g.lineTo(-7,-62); g.lineTo(0,-72); g.lineTo(2,-56); g.closePath(); g.fill(); // Zunge, Krone
+    g.fillStyle='#111'; g.beginPath(); g.arc(-22,-42,3,0,7); g.fill(); g.restore(); });
+  const fahne=new THREE.Group(); mast.add(fahne);
+  { const q2=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,3.2,6),grau2); q2.rotation.z=Math.PI/2; q2.position.set(1.6,2.15,0); fahne.add(q2);
+    const tuch=new THREE.Mesh(new THREE.PlaneGeometry(3.2,2.1),new THREE.MeshLambertMaterial({map:lt, side:THREE.DoubleSide})); tuch.position.set(1.62,1.07,0); tuch.rotation.y=Math.PI; fahne.add(tuch); }
+  return {G, nah, a2:M.a2, b2:M.b2, crew, fahne, dF, lauf:best, hiss:null, blick:new THREE.Vector3(mx,my+2.5,mz), RP, kamT:null, kamGes:false};
+}
+// Mond: Flagge geht hoch, sobald ein Fahrer naht (~8 s vorher), Zieher zieht im Wechsel, danach Salut; der Grüne hüpft und winkt beim Vorbeifahren (geringe Schwerkraft)
+function poseMond(M,dt,t){ if(!M.G.visible) return; const v=Math.max(me.v||0,me.vb||0), vor=M.dF-me.d;
+  if(vor>Math.max(300,v*9)+50) M.hiss=null; else if(M.hiss==null && vor<Math.max(300,v*9)) M.hiss=t;
+  const k=M.hiss==null?0:Math.min(1,(t-M.hiss)/7), zieht=k>0&&k<1, oben=k>=1; M.fahne.position.y=.3+k*3.15;
+  const [A,B,C,D]=M.crew, w=Math.sin(t*9);
+  A.aL.rotation.x=zieht?-2.1-.5*Math.sin(t*6):-.15; A.aR.rotation.x=zieht?-2.1+.5*Math.sin(t*6):-.15; A.leib.rotation.x=zieht?.05*Math.sin(t*6):0;
+  B.aL.rotation.x=B.aR.rotation.x=-1.25; B.aL.rotation.z=-.25; B.aR.rotation.z=.25;
+  C.aR.rotation.x=oben?-2.5:-.1; C.aR.rotation.z=oben?.9:0; C.aL.rotation.x=-.1;
+  const nah=Math.abs(vor)<Math.max(60,v*2.5), hop=nah?Math.abs(Math.sin(t*3.2))*.55:0; D.leib.position.y=hop; D.aR.rotation.z=nah?-2.7+.35*w:-.15; D.aL.rotation.z=nah?2.7+.35*Math.sin(t*9+1.5):.15;
+}
+// Kamera (aus rennen.js, nach der normalen Kamera): kurz nach dem Vorbeifahren 4,5 s Schulterblick zurück auf die Astronauten wie bei den Wegelagerern auf Berwartstein; bei Tempo herangezoomt und angehoben, damit sie nicht hinter dem Mondhorizont verschwinden
+function mondKamera(dt){ const M=anim.space&&anim.space.mond, ich=riders3d[myKey]; if(!M||!ich||race.state!=='run'){ if(M) M.kamT=null; return; }
+  if(me.d<M.dF-100) M.kamGes=false; if(!M.kamGes&&me.d>M.dF+4&&me.d<M.dF+200){ M.kamGes=true; M.kamT=0; } if(M.kamT==null) return;
+  M.kamT+=race.paused?0:dt; const T=4.5; if(M.kamT>T){ M.kamT=null; return; }
+  const sm=x=>{ x=Math.max(0,Math.min(1,x)); return x*x*(3-2*x); }, w=sm(M.kamT/.6)*sm((T-M.kamT)/.7), rp=ich.g.position, hd=headingAt(R,me.d), fx=Math.cos(hd), fz=Math.sin(hd), bc=M.blick, sx=bc.x-rp.x, sz=bc.z-rp.z, sl=Math.hypot(sx,sz)||1;
+  const pos=new THREE.Vector3(rp.x+fx*5-sx/sl*2.5, rp.y+2.4+sl*sl/(2*M.RP)*1.4, rp.z+fz*5-sz/sl*2.5), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz);
+  camera.position.lerp(pos,w); camera.lookAt(now.lerp(bc,w));
+  const fz2=2*Math.atan(9/Math.max(1,camera.position.distanceTo(bc)))*180/Math.PI; camera.fov+=(Math.min(camera.fov,Math.max(5,fz2))-camera.fov)*w; camera.updateProjectionMatrix(); }
