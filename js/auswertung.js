@@ -198,7 +198,7 @@ document.addEventListener('click',e=>{ if(e.target.closest('.tcxBtn')) downloadT
 /* ================= Fotos der Fahrt: 3–4 Bilder je Strecke, Download neben der TCX =================
    Stellen in fotoStellen: t = Sekunden nach dem Start, d = Meter (Runden zählen mit), ziel = Zieleinlauf bzw. Workout-Ende,
    peak = höchste Leistung (3-s-Schnitt, wird ersetzt, wenn du später mehr trittst). Aufnahme direkt nach renderer.render (fotoTick aus draw in rennen.js):
-   genau das Bild, das du gesehen hast, ohne Anzeigen, unten eine Zeile mit Strecke, Stelle, Zeit und Watt. Strava nimmt Fotos nur von Hand an (API nur für Partner). */
+   genau das Bild, das du gesehen hast, mit allen Anzeigen (Leiste unten direkt von ov, HTML-Anzeigen über html2canvas), darunter eine Zeile mit Strecke, Stelle, Zeit und Watt. Strava nimmt Fotos nur von Hand an (API nur für Partner). */
 const fotoHoechst=()=>{ let b=-1e9, bd=R.len/2; for(let d=0;d<R.len;d+=10){ const e=elevAt(d); if(e>b){ b=e; bd=d; } } return bd; };
 const fotoSteil=()=>{ const A=[]; for(let d=R.len*.5;d<R.len;d+=5) A.push([d,bankAt(d)]); const b=Math.max(...A.map(x=>x[1])), S=A.filter(x=>x[1]>=b*.98); return (S[0][0]+S[S.length-1][0])/2; }; // Mitte der Steilkurve in der zweiten Rundenhälfte
 function fotoStellen(){ const T=race.mode==='train', L=!T&&R.loop&&race.laps>1?[{d:(race.laps-1)*R.len+R.len*.4,n:'Letzte Runde'}]:[], ziel=n=>({ziel:1,n:T?'Workout geschafft':n});
@@ -215,15 +215,20 @@ function fotoTick(){ if(race.state!=='run'||race.paused||race.frozen) return;
     if(s.peak){ const S=rec.s.slice(-3); if(race.t<30||S.length<3||race.t-(s.tp||-99)<15) continue; const p=S.reduce((a,x)=>a+x.p,0)/3;
       if(p>(s.p||0)*1.05){ s.p=p; s.tp=race.t; fotoNimm(s.n,p,true); return; } continue; }
     if(s.ziel?me.done:s.t!=null?race.t>=s.t:dd>=s.d){ s.ok=true; if(!s.ziel&&s.t==null&&dd>s.d+60) continue; fotoNimm(s.n); return; } } } // weit vorbei (Sprung im Testmodus, Ziel vor der Stelle): auslassen
+const FOTO_MIT=['hud','gapBox','powBox','draftChip','banner','kampTafel','woNow','msg']; // Renn-Anzeigen fürs Foto über html2canvas (3D und Leiste unten kommen direkt, Knöpfe und Fenster bleiben weg)
 function fotoNimm(n,p,ersetze){ const w=Math.min(1600,cv.width), h=Math.round(w*cv.height/cv.width), c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d');
-  g.drawImage(cv,0,0,w,h); p=Math.round(p??(rec.s[rec.s.length-1]||{}).p??0); const fs=Math.round(h/40);
-  g.fillStyle='rgba(14,22,19,.6)'; g.fillRect(0,h-fs*2.2,w,fs*2.2); g.font=`600 ${fs}px Barlow, sans-serif`; g.fillStyle='#e8ecef'; g.textBaseline='middle';
-  g.textAlign='left'; g.fillText(`Kalmit-Duell · ${R.name} · ${n}`,fs,h-fs*1.1); g.textAlign='right'; g.fillText(`${fmtT(race.t)} · ${p} W`,w-fs,h-fs*1.1);
-  const f={n,t:race.t,url:c.toDataURL('image/jpeg',.88)}, i=ersetze?rec.fotos.findIndex(x=>x.n===n):-1; if(i>=0) rec.fotos[i]=f; else rec.fotos.push(f);
-  rec.fotos.sort((a,b)=>a.t-b.t); tcxBtns(); }
+  g.drawImage(cv,0,0,w,h); g.drawImage(ov,0,0,w,h); p=Math.round(p??(rec.s[rec.s.length-1]||{}).p??0); const t=race.t; // 3D und Karte/Profil sofort, die HTML-Anzeigen kommen danach
+  const fertig=hud=>{ const fs=Math.round(h/40), b=Math.round(fs*2.2), o=document.createElement('canvas'); o.width=w; o.height=h+b; const q=o.getContext('2d'); q.drawImage(c,0,0); if(hud) q.drawImage(hud,0,0,w,h);
+    q.fillStyle='#0e1613'; q.fillRect(0,h,w,b); q.font=`600 ${fs}px Barlow, sans-serif`; q.fillStyle='#e8ecef'; q.textBaseline='middle'; // Zeile unter dem Bild, damit sie keine Anzeige verdeckt
+    q.textAlign='left'; q.fillText(`Kalmit-Duell · ${R.name} · ${n}`,fs,h+b/2); q.textAlign='right'; q.fillText(`${fmtT(t)} · ${p} W`,w-fs,h+b/2);
+    let url; try{ url=o.toDataURL('image/jpeg',.88); }catch(e){ return hud?fertig(null):undefined; } // Bild aus file:// (Infotafel) macht die Fläche unlesbar: dann ohne Anzeigen
+    const f={n,t,url}, i=ersetze?rec.fotos.findIndex(x=>x.n===n):-1; if(i>=0) rec.fotos[i]=f; else rec.fotos.push(f);
+    rec.fotos.sort((a,b)=>a.t-b.t); tcxBtns(); document.querySelectorAll('.fotoReihe').forEach(e=>e.outerHTML=fotoHtml()); };
+  if(!window.html2canvas) return fertig(null); // offline ohne Bibliothek: nur 3D mit Leiste
+  html2canvas(document.body,{backgroundColor:null,logging:false,scale:w/innerWidth,width:innerWidth,height:innerHeight,windowWidth:innerWidth,windowHeight:innerHeight,x:0,y:0,ignoreElements:e=>e.parentNode===document.body&&!FOTO_MIT.includes(e.id), onclone:d=>{ d.documentElement.style.background=d.body.style.background='transparent'; d.head.insertAdjacentHTML('beforeend','<style>*{box-shadow:none!important}.sign,.rcol{background:var(--g-bg2)!important}</style>'); }}).then(fertig,()=>fertig(null)); } // im Foto: innerer Schatten würde ein dunkler Kasten, Weichzeichner kann html2canvas nicht, darum dunkler statt Glas
 const fotoLabel=()=>`⬇ Bilder (${(rec.fotos||[]).length})`;
 const fotoBtnHtml=()=>(rec.fotos||[]).length?`<button class="fotoBtn">${fotoLabel()}</button>`:'';
-const fotoHtml=()=>(rec.fotos||[]).length?`<div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">${rec.fotos.map((f,i)=>`<img class="fotoMini" data-i="${i}" src="${f.url}" title="${esc(f.n)} – zum Speichern klicken" style="height:64px;border-radius:6px;cursor:pointer">`).join('')}</div>`:'';
+const fotoHtml=()=>(rec.fotos||[]).length?`<div class="fotoReihe" style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">${rec.fotos.map((f,i)=>`<img class="fotoMini" data-i="${i}" src="${f.url}" title="${esc(f.n)} – zum Speichern klicken" style="height:64px;border-radius:6px;cursor:pointer">`).join('')}</div>`:'';
 function fotoLaden(i){ const f=rec.fotos[i]; if(!f) return; const a=document.createElement('a'); a.href=f.url;
   a.download=tcxName().replace(/\.tcx$/,'')+`_${i+1}-${f.n.toLowerCase().replace(/[^a-z0-9äöüß]+/g,'-').replace(/^-|-$/g,'')}.jpg`; document.body.appendChild(a); a.click(); a.remove(); }
 function fotosLaden(){ rec.fotos.forEach((f,i)=>setTimeout(()=>fotoLaden(i),i*400)); flash(`${rec.fotos.length} Bilder gespeichert – in Strava unter „Fotos hinzufügen“ hochladen`); }
