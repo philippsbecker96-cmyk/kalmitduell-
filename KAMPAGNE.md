@@ -200,10 +200,11 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
   - Ausfahren: erleichtertes Lachen, Wehmut um die Wurst, Blick auf die Dahner Felsen (Mission 3), „Loss mol Lager uffschlage“
 - **Ton – noch offen (Stand 27.10.2026, Musik/Geräusche eingebaut in `js/welt-teufelstisch-ton.js`, Einzelheiten in `EFFEKTE.md`):**
   1. Verfolgungsstück `musik/teufelsjagd.mp3` für Flucht 1 und 2 (bis dahin Platzhalter `omniouswaldnachts`)
-  2. Unwetter: Donner, Regen, Wind (bisher stumm)
-  3. Teufel: Gebrüll, Schritte, Schmatzen beim Essen
-  4. Bessere Ersatzgeräusche: Zischen der Würfe, Aufprall/Steinbrocken (bisher `sturz`/`peitsche` tiefer), Friedels Aufschrei beim Dreizack, Schotter, Käuzchen
-  5. Sprechblasen-Texte (Platzhalter, siehe oben) · Lagerfeuer-Knistern, sobald die Schlussszene steht
+  2. Hunde-Jagd (vom Nutzer): bisher viermal `jagd.mp3` aus Mission 1 – austauschen oder mehrere verschiedene lustige, fröhliche Verfolgungsstücke (Comic-Jagd, Polka/Folk im Galopp, ≈ 30–60 s) im Wechsel, sonst wird es auf 10 min langweilig
+  3. Unwetter: Donner, Regen, Wind (bisher stumm)
+  4. Teufel: Gebrüll, Schritte, Schmatzen beim Essen
+  5. Bessere Ersatzgeräusche: Zischen der Würfe, Aufprall/Steinbrocken (bisher `sturz`/`peitsche` tiefer), Friedels Aufschrei beim Dreizack, Schotter, Käuzchen
+  6. Sprechblasen-Texte (Platzhalter, siehe oben) · Lagerfeuer-Knistern, sobald die Schlussszene steht
 - **Bauplan (Vorschlag):**
   1. Gerüst: Mission 2 in `KAMP` (kampagne.js) mit Workout Leicht/Hart; Vorausberechnung von Mission 1 so verallgemeinern, dass jede Mission ihre eigene Definition hat (wie `trifelsDef`).
   2. Strecke: Schleife zweimal befahren, Weg, Gelände und Szenen der Schleife aber nur **einmal** bauen (sonst liegt der Weg doppelt und flimmert); Gabelung mit beiden Abzweigen sichtbar, rechter führt zurück auf den Weg vor dem Tisch. **Entschieden (mit dem Nutzer): volle Schleife zweimal** (Linksabbiegen direkt nach dem Tisch wäre nicht einfacher: Stück am Tisch doppelt, dazu 2–3 km neues Wegstück für Flucht 2, Gabelung halb nutzlos, Pointe weg). Beide Abzweige gehören ohnehin zur Strecke (rechts Runde 1, links Runde 2). Meter zählen in Runde 2 weiter → Ereignisse je Runde sauber zuzuordnen. Zeiten: Tisch → Gabelung ≈ 5 min hart (Flucht 1); in Runde 2 nach ≈ 5 min an der Gabelung links, letzte Minute von Flucht 2 und Schlusssprint auf dem Weg hinaus. Prüfen: Gelände/Bodenhöhe über „nächster Streckenpunkt“ darf die doppelte Schleife nicht stören (Höhen gleich, im Selbsttest prüfen).
