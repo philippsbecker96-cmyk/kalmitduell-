@@ -66,6 +66,10 @@ function rakTick(r,p,dt,t){ const K=r&&r.rak; if(!K) return; const an=p>=80, qz=
     if(o.l>0){ o.l-=dt; K.pos[i*3]+=o.vx*dt; K.pos[i*3+1]+=o.vy*dt; K.pos[i*3+2]+=o.vz*dt; const a=Math.max(0,o.l/o.L), m=a*.6; K.col.set([(c.r+(1-c.r)*m)*a,(c.g+(1-c.g)*m)*a,(c.b+(1-c.b)*m)*a],i*3); } else K.col.set([0,0,0],i*3); } // Funken erst hell, dann in der Flammenfarbe verglühen
   K.acc=Math.min(K.acc,3); K.pts.geometry.attributes.position.needsUpdate=true; K.pts.geometry.attributes.color.needsUpdate=true; }
 
+/* ===== Regenbogen-Modus: Bahn fortlaufend bunt, Farben fließen dir sanft entgegen (Schalter rbOn in der Lobby, ersetzt die Intensitätsfarben) ===== */
+const RB={an:false, uT:{value:0}, uOn:{value:0}};
+const rbMat=m=>{ m.onBeforeCompile=sh=>{ sh.uniforms.uRbT=RB.uT; sh.uniforms.uRbOn=RB.uOn;
+  sh.vertexShader='attribute float aD; uniform float uRbT; uniform float uRbOn;\n'+sh.vertexShader.replace('#include <color_vertex>','#include <color_vertex>\n#ifdef USE_COLOR\n float rbH=fract(aD/140.0+uRbT); vec3 rbC=clamp(abs(mod(rbH*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0,0.0,1.0); rbC=mix(rbC,vec3(1.0),0.12)*(0.9+0.1*sin(aD/18.0+uRbT*37.699));\n vColor.rgb=mix(vColor.rgb,rbC*max(max(color.r,color.g),color.b),uRbOn);\n#endif'); }; return m; };
 function buildSpace(){
   scene.fog.near=350; scene.fog.far=3800;
   const n=R.xs.length, rnd=rng(2024), up=new THREE.Vector3(0,1,0);
@@ -74,21 +78,21 @@ function buildSpace(){
   for(let i=0;i<n;i++){ const p=segOf(Math.min(R.len-0.01,i*STEP)).p??-1, k=SPACE_COL(p); const c=cache[k]||(cache[k]=new THREE.Color(k)); cols.set([c.r,c.g,c.b],i*3); }
   const F=i=>{ const d=i*STEP, hd=headingAt(R,d); return {x:R.xs[i], z:R.ys[i], y:roadY(d), nx:-Math.sin(hd), nz:Math.cos(hd), d}; };
   const frames=[]; for(let i=0;i<n;i++) frames.push(F(i));
-  const ribbon=(fn,mat,uvLen=8,colScale=1)=>{ const p=new Float32Array(n*6), c=new Float32Array(n*6), uv=new Float32Array(n*4), id=[];
+  const ribbon=(fn,mat,uvLen=8,colScale=1)=>{ const p=new Float32Array(n*6), c=new Float32Array(n*6), uv=new Float32Array(n*4), dd=new Float32Array(n*2), id=[];
     for(let i=0;i<n;i++){ const f=frames[i], [a,b]=fn(f); p.set([...a,...b],i*6); const r=cols[i*3]*colScale, g=cols[i*3+1]*colScale, bl=cols[i*3+2]*colScale; c.set([r,g,bl,r,g,bl],i*6);
-      uv.set([0,f.d/uvLen,1,f.d/uvLen],i*4); if(i<n-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); }
-    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('color',new THREE.BufferAttribute(c,3)); g.setAttribute('uv',new THREE.BufferAttribute(uv,2)); g.setIndex(id);
+      uv.set([0,f.d/uvLen,1,f.d/uvLen],i*4); dd[i*2]=dd[i*2+1]=f.d; if(i<n-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); }
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('color',new THREE.BufferAttribute(c,3)); g.setAttribute('uv',new THREE.BufferAttribute(uv,2)); g.setAttribute('aD',new THREE.BufferAttribute(dd,1)); g.setIndex(id);
     const m=new THREE.Mesh(g,mat); m.frustumCulled=false; world.add(m); return m; };
   const P=(f,u,h)=>[f.x+f.nx*u, f.y+h, f.z+f.nz*u], hw=ROAD_W/2;
   // Fahrbahn: dunkel getönt, Querstreifen alle 8 m
   const rtex=canvasTex(64,128,g=>{ g.fillStyle='#3a3a44'; g.fillRect(0,0,64,128); g.fillStyle='rgba(255,255,255,.08)'; for(let x=8;x<64;x+=8) g.fillRect(x,0,1,128);
     g.fillStyle='#d8d8e0'; g.fillRect(0,0,64,5); }); // ohne Mittellinie
   rtex.wrapT=THREE.RepeatWrapping; rtex.anisotropy=8;
-  ribbon(f=>[P(f,-hw,.12),P(f,hw,.12)], new THREE.MeshBasicMaterial({map:rtex, vertexColors:true, side:THREE.DoubleSide}), 8);
+  ribbon(f=>[P(f,-hw,.12),P(f,hw,.12)], rbMat(new THREE.MeshBasicMaterial({map:rtex, vertexColors:true, side:THREE.DoubleSide})), 8);
   // Seitenwände der Bahn und Leuchtkanten
   const skin=new THREE.MeshBasicMaterial({color:'#15161f', side:THREE.DoubleSide});
   for(const s of [-1,1]) ribbon(f=>[P(f,s*hw,.12),P(f,s*hw,-.35)], skin);
-  const edge=new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-1, polygonOffsetUnits:-1});
+  const edge=rbMat(new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.DoubleSide, polygonOffset:true, polygonOffsetFactor:-1, polygonOffsetUnits:-1}));
   for(const s of [-1,1]){ ribbon(f=>[P(f,s*hw,.14),P(f,s*(hw+.32),.14)], edge); ribbon(f=>[P(f,s*(hw+.28),.13),P(f,s*(hw+.28),.5)], edge); }
 
   // Lichtimpuls beim Abschnittswechsel: eine helle Welle läuft die Bahn entlang
@@ -102,7 +106,7 @@ function buildSpace(){
   for(const s of [-1,1]){ waveRib(f=>[P(f,s*(hw-.6),.17),P(f,s*(hw+.6),.17)],1); waveRib(f=>[P(f,s*(hw+.32),.12),P(f,s*(hw+.32),1.1)],1); }
   waveRib(f=>[P(f,-hw,.15),P(f,hw,.15)],.6);
   // Leuchten unter der Bahn
-  const halo=new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.DoubleSide, transparent:true, opacity:.22, blending:THREE.AdditiveBlending, depthWrite:false});
+  const halo=rbMat(new THREE.MeshBasicMaterial({vertexColors:true, side:THREE.DoubleSide, transparent:true, opacity:.22, blending:THREE.AdditiveBlending, depthWrite:false}));
   ribbon(f=>[P(f,-hw-5,-.7),P(f,hw+5,-.7)], halo);
 
   const inst=(geo,mat,list,fn)=>{ if(!list.length) return null; const im=new THREE.InstancedMesh(geo,mat,list.length), m4=new THREE.Matrix4(), q=new THREE.Quaternion(), s=new THREE.Vector3(), p=new THREE.Vector3(), c=new THREE.Color(), e=new THREE.Euler();
@@ -177,6 +181,7 @@ function buildSpace(){
 function poseSpace(dt,t){
   const A=anim.space; if(!A) return;
   const br=0.5+0.5*Math.sin(t*2*Math.PI/6); A.edge.color.setScalar(0.82+0.18*br); A.halo.opacity=0.16+0.06*br; // sanftes Atmen, alle 6 s
+  RB.uT.value=(t*0.06)%1; RB.uOn.value+=((RB.an?1:0)-RB.uOn.value)*Math.min(1,dt*2); // Regenbogen: ein Durchlauf in ~17 s, Ein-/Ausblenden über ~1 s
   const Wv=A.wave; if(Wv.t0!=null){ const T=t-Wv.t0; Wv.mat.uniforms.uFront.value=Wv.d0+T*90; Wv.mat.uniforms.uAmp.value=T<.15?T/.15:Math.max(0,1-(T-.15)/2.85); if(T>3.2){ Wv.t0=null; Wv.mat.uniforms.uAmp.value=0; } }
   A.wheel.rotation.x=t*0.12; A.blink.forEach((b,i)=>b.visible=Math.sin(t*3+i*1.7)>0);
   updStreaks(dt, race.paused||(me.done&&!me.free)?0:me.v, race.paused?0:spaceWarp());

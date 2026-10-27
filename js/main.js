@@ -16,6 +16,7 @@ $('btnTrainer').onclick=connectTrainer; $('btnHr').onclick=connectHr;
 $('btnHost').onclick=host; $('btnJoin').onclick=join; $('btnStart').onclick=startRace;
 try{ localStorage.removeItem('kd-chase'); }catch(e){} // alte Verfolgungsrekorde (Modus entfernt)
 try{ if(localStorage.getItem('kd-shake')==='0') $('shakeOn').checked=false; }catch(e){} $('shakeOn').onchange=()=>{ try{ localStorage.setItem('kd-shake',$('shakeOn').checked?'1':'0'); }catch(e){} };
+try{ RB.an=localStorage.getItem('kd-regenbogen')==='1'; }catch(e){} $('rbOn').checked=RB.an; $('rbOn').onchange=()=>{ RB.an=$('rbOn').checked; try{ localStorage.setItem('kd-regenbogen',RB.an?'1':'0'); }catch(e){} }; // Space: Regenbogen-Bahn, nur Optik, je Spieler
 $('slopeK').oninput=()=>$('slopeKv').textContent=$('slopeK').value+' %';
 $('simP').oninput=()=>$('simPv').textContent=$('simP').value;
 addEventListener('keydown',e=>{ if(live.src!=='sim'||race.state==='setup') return;

@@ -6,7 +6,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `index.html` – nur HTML-Gerüst, bindet CDN-Libs (three.js r128, peerjs 1.5.4, qrcodejs, html2canvas 1.4.1 für die Fotos), `css/style.css` und die JS-Dateien ein
 - `js/strecke.js` – Streckendaten, Kalmit-GPX, `ROUTES`, Space-/Insel-/Stadion-Geometrie (`stadionDef`, `trackPt`)
 - `js/welt-stadion.js` – 3D-Stadion: Tribünen, Fußballspiel, Choreo, Anzeigetafel, Flutlicht
-- `js/physik.js` – Physik (Watt, Gewicht, CdA, Wind, Aero-Haltung, Windschatten) und Bot-Fahrweise; Space: flach mit Schub ab 80 % FTP (`SPACE_SCHUB` in strecke.js, bis 525 km/h, Trainer bei 0 %), Raketenantrieb ab 80 % FTP (`rakete`/`rakTick` in welt-space.js)
+- `js/physik.js` – Physik (Watt, Gewicht, CdA, Wind, Aero-Haltung, Windschatten) und Bot-Fahrweise; Space: flach mit Schub ab 80 % FTP (`SPACE_SCHUB` in strecke.js, bis 525 km/h, Trainer bei 0 %), Raketenantrieb ab 80 % FTP (`rakete`/`rakTick` in welt-space.js), Regenbogen-Modus (`RB`, `rbMat` in welt-space.js: Shader-Zusatz für Fahrbahn/Kanten/Leuchten, Schalter `rbOn` in der Lobby)
 - `js/zustand.js` – Fahrer-Aussehen: nur `ich` (eigener Fahrer, beim ersten Start im Editor erstellt, gespeichert in `kd-riders`) und `gegner` (Bot mit Zufallsaussehen `zufallLook`, neu bei jedem Rennen, oder online übertragen über `remoteLooks`), Spielzustand (`me`, `opp`, `race`), 3D-Grundgerüst (`scene`, `camera`, `renderer`), `setRoute`, `canvasTex`
 - `js/welt-bausteine.js` – Haus-Baukasten: `haus(o)` (Altort, Neubau, Fachwerk), Fassaden mit Leuchtkarte, Ziegeldach, `hoftor`, `hausLicht()` für Abendfenster
 - `js/welt-space.js`, `js/welt-insel.js`, `js/welt-kalmit.js` – die übrigen 3D-Welten
@@ -37,7 +37,7 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 ## Regeln
 - Klassische `<script>`-Tags, keine ES-Module: alle Dateien teilen sich globale Variablen. Reihenfolge in `index.html` ist wichtig – Code, der beim Laden läuft, darf nur Funktionen aus derselben oder früheren Dateien aufrufen.
 - Code und Kommentare auf Deutsch, kompakter Stil (viele Anweisungen pro Zeile) beibehalten.
-- localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`, `kd-shake`, `kd-kampagne`, `kd-wo-eigen` (hochgeladene .zwo-Workouts).
+- localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`, `kd-shake`, `kd-kampagne`, `kd-wo-eigen` (hochgeladene .zwo-Workouts), `kd-regenbogen` (Space-Bahn bunt).
 - Figuren und Gegenstände mit `bodenY(x,z)` aufstellen (`welt-kalmit.js`: sichtbarer Boden mit Fahrbahn, Bankett, Gehweg, Schulter und gezeichnetem Gelände), nicht mit `terrainAt` oder `roadY` – sonst stecken sie im Belag oder schweben am Hang. Große Gruppen am Hang Teil für Teil auf den Boden setzen. Absichtlich Eingegrabenes mit `userData.ohneBoden=true` markieren.
 
 ## Arbeitsweise
