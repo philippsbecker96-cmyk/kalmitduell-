@@ -147,7 +147,7 @@ function buildRoute(def){
     if(def.island){ r.island=true; prepIsland(r); return r; }
     // Optische Überhöhung: Bahn wird 2,5 × so steil gezeichnet (max. 30 %); Physik flach mit Schub, Trainer bei 0 %
     let ve=0; segs.forEach(o=>{ o.vg=Math.sign(o.g)*Math.min(Math.abs(o.g)/SPACE_PHYS*SPACE_VX,30); o.ve0=ve; ve+=o.len*o.vg/100; }); r.vEnd=ve;
-    r.space=true; prepMond(r); return r; }
+    r.space=true; prepMond(r); prepMars(r); return r; }
   // Landschaftszonen: Dorf, Weinberge, Wald, Fans im letzten Kilometer
   r.fans = def.burg||def.ma?r.len:Math.max(r.len*0.6, r.len-1000); // Burg: kein modernes Publikum
   r.kehren=[]; if(r.kalmit||def.burg) for(let dd=40; dd<len-40; dd+=STEP*5){ const dh=Math.abs(angDiff(headingAt(r,dd+25),headingAt(r,dd-25)));
@@ -347,6 +347,7 @@ const spaceSchub=p=>tabLerp(SPACE_SCHUB,p);
 function vSteady(P,g,kg,ph=PH_ROAD){ const M=kg+BIKE_KG, th=Math.atan(g/100), a=M*G*(Math.sin(th)+ph.crr*Math.cos(th)), b=0.5*RHO*cdaOf(kg,ph.cda);
   let lo=0, hi=40; for(let i=0;i<40;i++){ const v=(lo+hi)/2; if(v*a+b*v*v*v<P) lo=v; else hi=v; } return Math.max(1,(lo+hi)/2); }
 const SPACE_RING=160, SPACE_VX=2.5; // Radius der Umlaufbahn hinter der Raumstation
+const MARS_G=3.71, MARS_M0=.4, MARS_RAMPE=45; // Kratersprung: Marsschwerkraft, Steigung am Absprung, Länge der Schanze in m (Krater und Schanzen 1,5 × so groß wie nach der Schwerkraft)
 const SPACE_PHYS=0.5; // angezeigte Steigung = halbe Tabellen-Steigung, gezeichnet wird die volle × SPACE_VX; die Physik rechnet flach (mit Schub)
 function spaceDef(segs, unit, f, kg){
   const DT=2, T=segs.reduce((a,s)=>a+s.dur,0), raw=[];
@@ -362,18 +363,25 @@ function spaceDef(segs, unit, f, kg){
   const L1=lM*.4, Lb=Math.min(1400,lM*.35), L2=lM-L1-Lb, mond=dM>1500&&dM+lM+1500<Lsum?{d0:dM,d1:dM+lM,krater:dM+L1+Lb/2}:null;
   const sn=(u,L,amp,hp)=>amp*Math.sin(Math.PI*Math.max(1,Math.round(L/hp))*u/L); // Schlangenlinie, beginnt und endet gerade
   const mz=s=>{ const u=s-dM; if(!mond||u<=0||u>=lM) return 0; return u<L1?sn(u,L1,.75,260):u<L1+Lb?-.7*Math.sin(2*Math.PI*(u-L1)/Lb):sn(u-L1-Lb,L2,.6,350); }; // Mitte: weiter Linksbogen um den Riesenkrater
+  // Mars: nach 60 % der Workout-Zeit ebenso ~2 min über eine Marskugel (prepMars in welt-mars.js); Mitte Rechtsbogen um den Schildvulkan, danach gerade über den Kratersprung (Weite S aus dem geplanten Tempo und der Marsschwerkraft, × 1,5)
+  const iA=Math.floor(out.length*.6); let dA=0, lA=0; for(let i=0;i<iA;i++) dA+=out[i].len; for(let i=iA;i<Math.min(out.length,iA+60);i++) lA+=out[i].len; lA=Math.max(2000,Math.min(5000,lA));
+  const A1=lA*.3, Ab=Math.min(1400,lA*.3), A2=lA-A1-Ab, spA=dA+A1+Ab+A2*.4; let iJ=0; for(let s=0;iJ<out.length-1&&s+out[iJ].len<spA;iJ++) s+=out[iJ].len;
+  const vJ=out[iJ].len/DT, SJ=Math.round(1.5*Math.max(70,Math.min(220,2*MARS_M0*vJ*vJ/MARS_G))), GJ=SJ/2+MARS_RAMPE+120;
+  const mars=dA>(mond?mond.d1+3000:1500)&&dA+lA+1500<Lsum?{d0:dA,d1:dA+lA,vulkan:dA+A1+Ab/2,sprung:spA,S:SJ}:null;
+  const maz=s=>{ const u=s-dA; if(!mars||u<=0||u>=lA) return 0; if(u<A1) return sn(u,A1,.6,300); if(u<A1+Ab) return .7*Math.sin(2*Math.PI*(u-A1)/Ab);
+    const e=Math.abs(s-spA), w=e<GJ?1:Math.max(0,1-(e-GJ)/150), w2=w*w*(3-2*w), bs=x=>0.7*Math.sin(x/l1+f1)+0.32*Math.sin(x/l2+f2); return (1-w2)*sn(u-A1-Ab,A2,.5,350)-w2*(bs(s)-bs(spA)); }; // am Sprung schnurgerade: Grundbögen dort aufgehoben
   const ring=2*Math.PI*SPACE_RING; out.push({len:ring,g:0,p:-1});
   // Verlauf in der Ebene: sanfte Bögen, aus dem Workout abgeleitet (gleiches Workout = gleiche Strecke)
   let hs=7; for(const s of segs) hs=(hs*31+Math.round(s.dur)+Math.round(s.a*7)+(s.b==null?3:Math.round(s.b*11))+(s.free?5:0))%2147483647;
   const r=rng(hs+1), l1=600+r()*300, l2=180+r()*90, f1=r()*6.28, f2=r()*6.28;
   const L=out.reduce((a,s)=>a+s.len,0), Lw=L-ring, poly=[[0,0]], DS=8; let x=0, y=0, d=0;
-  const hdAt=s=>0.7*Math.sin(s/l1+f1)+0.32*Math.sin(s/l2+f2)+mz(s);
+  const hdAt=s=>0.7*Math.sin(s/l1+f1)+0.32*Math.sin(s/l2+f2)+mz(s)+maz(s);
   const push=()=>poly.push([Math.round(x*100)/100,Math.round(y*100)/100]);
   while(d<Lw-1e-6){ const ds=Math.min(DS,Lw-d), h=hdAt(d+ds/2); x+=Math.cos(h)*ds; y+=Math.sin(h)*ds; d+=ds; push(); }
   // Umlaufbahn: geschlossener Kreis, endet genau am Anfang
   const n=Math.ceil(ring/DS), dr=ring/n; let h=hdAt(Lw);
   for(let i=0;i<n;i++){ h+=Math.PI/n; x+=Math.cos(h)*dr; y+=Math.sin(h)*dr; h+=Math.PI/n; push(); }
-  return {name:'Space-Strecke', start:'Start', finish:'Raumstation', startElev:1000, space:true, ring, poly, segs:out, mond};
+  return {name:'Space-Strecke', start:'Start', finish:'Raumstation', startElev:1000, space:true, ring, poly, segs:out, mond, mars};
 }
 let spaceKey=null;
 const GEN_IDS=['space','insel'];

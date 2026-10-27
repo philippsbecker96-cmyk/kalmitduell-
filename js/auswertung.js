@@ -206,7 +206,7 @@ function fotoStellen(){ const T=race.mode==='train', L=!T&&R.loop&&race.laps>1?[
   if(R.kalmit) return [{t:6,n:'Start in Maikammer'}, {d:1500,n:'Durch die Weinberge'}, {d:R.kehren.length?R.kehren[R.kehren.length>>1]:R.len*.6,n:'In der Kehre'}, ziel('Gipfel')];
   if(R.def.burg) return [{t:4,n:'Bauernfest in Erlenbach'}, {d:BETR.d+10,n:'Der Betrunkene'}, {d:BETTLER.d+40,n:'Vor der Zugbrücke'}, ziel('Burg Berwartstein')];
   if(R.stadium) return [{t:4,n:'Start auf dem Betzenberg'}, {d:fotoSteil(),n:'Steilkurve'}, ...L, ziel('Zieleinlauf')];
-  if(R.space||R.island) return [{t:10,n:'Start'}, {peak:1,n:'Höchste Leistung'}, ...(R.goal?[{d:R.goal,n:R.island?'Strandbar':'Raumstation'}]:[]), ziel('Ziel')];
+  if(R.space||R.island) return [{t:10,n:'Start'}, {peak:1,n:'Höchste Leistung'}, ...(R.MA&&R.MA.sJ?[{d:R.MA.sJ,n:'Kratersprung'}]:[]), ...(R.goal?[{d:R.goal,n:R.island?'Strandbar':'Raumstation'}]:[]), ziel('Ziel')];
   const st={t:6,n:'Start'+(R.def.start?' in '+R.def.start:'')};
   return R.loop ? [st, {d:fotoHoechst(),n:'Höchster Punkt'}, ...L, ziel('Ziel')] : [st, {d:R.len*.4,n:'Unterwegs'}, {d:fotoHoechst(),n:'Höchster Punkt'}, ziel('Ziel')]; }
 function fotoTick(){ if(race.state!=='run'||race.paused||race.frozen) return;

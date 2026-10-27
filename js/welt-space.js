@@ -81,7 +81,7 @@ function buildSpace(){
   const frames=[]; for(let i=0;i<n;i++) frames.push(F(i));
   const ribbon=(fn,mat,uvLen=8,colScale=1)=>{ const p=new Float32Array(n*6), c=new Float32Array(n*6), uv=new Float32Array(n*4), dd=new Float32Array(n*2), id=[];
     for(let i=0;i<n;i++){ const f=frames[i], [a,b]=fn(f); p.set([...a,...b],i*6); const r=cols[i*3]*colScale, g=cols[i*3+1]*colScale, bl=cols[i*3+2]*colScale; c.set([r,g,bl,r,g,bl],i*6);
-      uv.set([0,f.d/uvLen,1,f.d/uvLen],i*4); dd[i*2]=dd[i*2+1]=f.d; if(i<n-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); }
+      uv.set([0,f.d/uvLen,1,f.d/uvLen],i*4); dd[i*2]=dd[i*2+1]=f.d; if(i<n-1&&!marsLuecke(f.d)) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); }
     const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('color',new THREE.BufferAttribute(c,3)); g.setAttribute('uv',new THREE.BufferAttribute(uv,2)); g.setAttribute('aD',new THREE.BufferAttribute(dd,1)); g.setIndex(id);
     const m=new THREE.Mesh(g,mat); m.frustumCulled=false; world.add(m); return m; };
   const P=(f,u,h)=>[f.x+f.nx*u, f.y+h, f.z+f.nz*u], hw=ROAD_W/2;
@@ -101,7 +101,7 @@ function buildSpace(){
     vertexShader:'attribute float aD; attribute float aW; attribute vec3 aCol; varying float vD; varying float vW; varying vec3 vCol; void main(){ vD=aD; vW=aW; vCol=aCol; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
     fragmentShader:'uniform float uFront; uniform float uAmp; varying float vD; varying float vW; varying vec3 vCol; void main(){ float x=(vD-uFront)/14.0; float k=min(1.0,exp(-x*x)*uAmp*vW); gl_FragColor=vec4(mix(vCol,vec3(1.0),0.7),k); }'});
   const waveRib=(fn,w)=>{ const p=new Float32Array(n*6), dd=new Float32Array(n*2), ww=new Float32Array(n*2).fill(w), c=new Float32Array(n*6), id=[];
-    for(let i=0;i<n;i++){ const f=frames[i], [a,b]=fn(f); p.set([...a,...b],i*6); dd[i*2]=dd[i*2+1]=f.d; const r=cols[i*3], g=cols[i*3+1], bl=cols[i*3+2]; c.set([r,g,bl,r,g,bl],i*6); if(i<n-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); }
+    for(let i=0;i<n;i++){ const f=frames[i], [a,b]=fn(f); p.set([...a,...b],i*6); dd[i*2]=dd[i*2+1]=f.d; const r=cols[i*3], g=cols[i*3+1], bl=cols[i*3+2]; c.set([r,g,bl,r,g,bl],i*6); if(i<n-1&&!marsLuecke(f.d)) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); }
     const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(p,3)); g.setAttribute('aD',new THREE.BufferAttribute(dd,1)); g.setAttribute('aW',new THREE.BufferAttribute(ww,1)); g.setAttribute('aCol',new THREE.BufferAttribute(c,3)); g.setIndex(id);
     const m=new THREE.Mesh(g,waveMat); m.frustumCulled=false; m.renderOrder=3; world.add(m); };
   for(const s of [-1,1]){ waveRib(f=>[P(f,s*(hw-.6),.17),P(f,s*(hw+.6),.17)],1); waveRib(f=>[P(f,s*(hw+.32),.12),P(f,s*(hw+.32),1.1)],1); }
@@ -116,7 +116,7 @@ function buildSpace(){
 
   // Asteroiden: verstreut, dazu ein dichter Gürtel
   const ast=[], beltA=Lw*0.42, beltB=beltA+Math.min(900,Lw*0.25);
-  const MK=R.M, imMond=(x,y,z,r=0)=>!!MK&&Math.hypot(x-MK.cx,y-MK.cy,z-MK.cz)<MK.RP+r+40; // nichts in die Mondkugel stecken
+  const imMond=(x,y,z,r=0)=>[R.M,R.MA].some(K=>K&&Math.hypot(x-K.cx,y-K.cy,z-K.cz)<K.RP+r+40); // nichts in die Mond- oder Marskugel stecken
   for(let d=40; d<Lw-60; d+=6){ const f=fr(d), belt=d>beltA&&d<beltB;
     const tries=belt?4:(rnd()<.3?1:0);
     for(let t=0;t<tries;t++){ const side=rnd()<.5?-1:1, off=side*(belt?9+rnd()*70:14+rnd()*140), s=belt?(rnd()<.08?3+rnd()*5:0.4+rnd()*2.2):(rnd()<.1?5+rnd()*9:0.6+rnd()*3);
@@ -177,9 +177,9 @@ function buildSpace(){
   const fw=new THREE.Points(fg, new THREE.PointsMaterial({size:1.6, map:canvasTex(32,32,g=>{ const gr=g.createRadialGradient(16,16,0,16,16,16); gr.addColorStop(0,'#fff'); gr.addColorStop(.35,'rgba(255,255,255,.8)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,32,32); }), vertexColors:true, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, fog:false})); fw.visible=false; fw.frustumCulled=false; world.add(fw);
   const dirs=[]; for(let i=0;i<NB*NP;i++){ const u=rnd()*2-1, a=rnd()*Math.PI*2, s=Math.sqrt(1-u*u), sp=.75+rnd()*.25; dirs.push([Math.cos(a)*s*sp,u*sp,Math.sin(a)*s*sp]); }
 
-  const mond=buildMond(fr);
+  const mond=buildMond(fr), mars=buildMars(fr);
   buildRiders(); RKEYS.forEach(k=>rakete(riders3d[k]));
-  anim.space={mond, edge, halo, wave:{mat:waveMat,t0:null,d0:0}, wheel, blink, fw:{pts:fw, pos:fp, col:fc, dirs, NB, NP, t0:null, bursts:null}};
+  anim.space={mond, mars, edge, halo, wave:{mat:waveMat,t0:null,d0:0}, wheel, blink, fw:{pts:fw, pos:fp, col:fc, dirs, NB, NP, t0:null, bursts:null}};
 }
 function poseSpace(dt,t){
   const A=anim.space; if(!A) return;
@@ -187,6 +187,7 @@ function poseSpace(dt,t){
   RB.uT.value=(t*0.06)%1; RB.uOn.value+=((RB.an?1:0)-RB.uOn.value)*Math.min(1,dt*2); // Regenbogen: ein Durchlauf in ~17 s, Ein-/Ausblenden über ~1 s
   const Wv=A.wave; if(Wv.t0!=null){ const T=t-Wv.t0; Wv.mat.uniforms.uFront.value=Wv.d0+T*90; Wv.mat.uniforms.uAmp.value=T<.15?T/.15:Math.max(0,1-(T-.15)/2.85); if(T>3.2){ Wv.t0=null; Wv.mat.uniforms.uAmp.value=0; } }
   if(A.mond){ A.mond.nah.visible=me.d>A.mond.a2-1500&&me.d<A.mond.b2+1500; poseMond(A.mond,dt,t); } // Kugel immer, Oberfläche nur in der Nähe
+  if(A.mars) poseMars(A.mars,dt,t);
   A.wheel.rotation.x=t*0.12; A.blink.forEach((b,i)=>b.visible=Math.sin(t*3+i*1.7)>0);
   updStreaks(dt, race.paused||(me.done&&!me.free)?0:me.v, race.paused?0:spaceWarp());
   const lauf=race.state==='run'&&!race.paused, rdt=race.paused?0:dt; // Raketenantrieb: % FTP aus den echten Watt, Gegner online mit seiner FTP
