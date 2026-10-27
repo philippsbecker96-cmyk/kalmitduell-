@@ -40,7 +40,7 @@ function neonSprite(text,col,w){ const tex=canvasTex(512,128,g=>{ g.font='800 80
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true, depthWrite:false, fog:false})); sp.scale.set(w,w/4,1); return sp; }
 
 /* ===== Raketenantrieb ab 80 % FTP: zwei Düsen hinter dem Sattel, Flamme wächst mit der Leistung (Blau → Orange → Violett), Zündstoß, Funken, Schein auf der Bahn ===== */
-const RAK_COL=['#5fb4ff','#ff8a2a','#c04bff'].map(c=>new THREE.Color(c)), RAK_NF=48;
+const RAK_COL=['#5fb4ff','#ff8a2a','#c04bff'].map(c=>new THREE.Color(c)), RAK_NF=128;
 const rakGlowTex=canvasTex(64,64,g=>{ const gr=g.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,'rgba(255,255,255,1)'); gr.addColorStop(.35,'rgba(255,255,255,.45)'); gr.addColorStop(1,'rgba(255,255,255,0)'); g.fillStyle=gr; g.fillRect(0,0,64,64); });
 function rakete(r){ const G=new THREE.Group(), add=m=>(G.add(m),m), metall=new THREE.MeshLambertMaterial({color:'#a3a9b4'}), dunkel=new THREE.MeshLambertMaterial({color:'#2a2c33'});
   const glut=(col,op)=>new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false});
@@ -48,7 +48,7 @@ function rakete(r){ const G=new THREE.Group(), add=m=>(G.add(m),m), metall=new T
   const fl=[]; for(const z of [-.1,.1]){ const rohr=add(cyl(.045,metall)); place(rohr,[-.06,.8,z],[-.34,.8,z]);
     const du=add(new THREE.Mesh(new THREE.CylinderGeometry(.045,.066,.08,10,1,true),dunkel)); du.rotation.z=Math.PI/2; du.position.set(-.37,.8,z);
     const halt=add(cyl(.012,dunkel)); place(halt,[-.2,.8,z],[-.2,.86,0]);
-    fl.push({aus:kegel(.065,glut('#ffffff',.75),z), kern:kegel(.035,glut('#fff4dc',1),z)}); }
+    fl.push({aus:kegel(.065,glut('#ffffff',.75),z), kern:kegel(.035,glut('#fff4dc',1),z), fan:kegel(.065,glut('#ffffff',.4),z)}); } // fan: Fächer am Flammenende ab 120 %
   const glow=add(new THREE.Sprite(new THREE.SpriteMaterial({map:rakGlowTex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}))); glow.position.set(-.5,.8,0); glow.visible=false;
   const boden=add(new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:rakGlowTex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}))); boden.rotation.x=-Math.PI/2; boden.position.set(-1.6,.02,0); boden.visible=false;
   const pos=new Float32Array(RAK_NF*3), col=new Float32Array(RAK_NF*3), pg=new THREE.BufferGeometry(); pg.setAttribute('position',new THREE.BufferAttribute(pos,3)); pg.setAttribute('color',new THREE.BufferAttribute(col,3));
@@ -56,12 +56,13 @@ function rakete(r){ const G=new THREE.Group(), add=m=>(G.add(m),m), metall=new T
   r.tilt.add(G); r.rak={fl,glow,boden,pts,pos,col,f:Array.from({length:RAK_NF},()=>({l:0,L:1,vx:0,vy:0,vz:0})),q:0,qc:0,stoss:0,an:false,acc:0,c:new THREE.Color()}; }
 function rakTick(r,p,dt,t){ const K=r&&r.rak; if(!K) return; const an=p>=80, qz=an?Math.min(1,(p-80)/70):0; // 80 % klein und blau, 115 % orange, 150 % groß und violett
   if(an&&!K.an) K.stoss=1; K.an=an; K.q+=((an?.3+.7*qz:0)-K.q)*Math.min(1,dt*6); K.qc+=(qz-K.qc)*Math.min(1,dt*3); K.stoss=Math.max(0,K.stoss-dt*2.5);
-  const s=K.q+K.stoss*.7, vis=s>.02, c=K.c, h=K.qc*2; c.copy(RAK_COL[h<1?0:1]).lerp(RAK_COL[h<1?1:2],h<1?h:h-1);
-  K.fl.forEach((f,i)=>{ const fk=1+.16*Math.sin(t*43+i*2.1)+.09*Math.sin(t*71+i), L=(.3+1.5*s)*fk, w=1+s*.5; f.aus.visible=f.kern.visible=vis; f.aus.scale.set(w,L,w); f.kern.scale.set(1,L*.55,1); f.aus.material.color.copy(c); });
-  K.glow.visible=K.boden.visible=vis; K.glow.material.color.copy(c); K.glow.material.opacity=Math.min(1,s*1.2); K.glow.scale.setScalar(.5+s*.9);
-  K.boden.material.color.copy(c); K.boden.material.opacity=Math.min(.7,s*.6); K.boden.scale.set(2.4+s*2,1.4+s*.6,1);
-  K.acc+=vis?dt*70*s:0; // Funken: bis 70 je Sekunde, fliegen 0,3–0,6 s nach hinten weg
-  for(const [i,o] of K.f.entries()){ if(o.l<=0&&K.acc>=1){ K.acc--; const z=i%2?.1:-.1; Object.assign(o,{l:.3+Math.random()*.3,vx:-5-Math.random()*7,vy:(Math.random()-.4)*1.2,vz:(Math.random()-.5)*1.2}); o.L=o.l; K.pos.set([-.45,.8,z],i*3); }
+  const s=K.q+K.stoss*.7, vis=s>.02, c=K.c, h=K.qc*2, fz=Math.max(0,(K.qc-.57)/.43); c.copy(RAK_COL[h<1?0:1]).lerp(RAK_COL[h<1?1:2],h<1?h:h-1);
+  K.fl.forEach((f,i)=>{ const fk=1+.16*Math.sin(t*43+i*2.1)+.09*Math.sin(t*71+i), L=(.3+1.5*s)*fk, w=1+s*3, wk=1+s*1.6; f.aus.visible=f.kern.visible=vis; f.aus.scale.set(w,L,w); f.kern.scale.set(wk,L*.55,wk); f.aus.material.color.copy(c);
+    const fw=w*(1.2+1.8*fz)*(1+.15*Math.sin(t*37+i*1.7)); f.fan.visible=vis&&fz>.01; f.fan.scale.set(fw,L*.45,fw); f.fan.position.x=-.41-L*.6; f.fan.material.color.copy(c); f.fan.material.opacity=.4*fz; }); // Fächer öffnet sich hinten, 120 % → 150 % breiter (Fächer im Verhältnis zur Flamme etwas kleiner, sonst zu riesig)
+  K.glow.visible=K.boden.visible=vis; K.glow.material.color.copy(c); K.glow.material.opacity=Math.min(1,s*1.2); K.glow.scale.setScalar(.5+s*1.3);
+  K.boden.material.color.copy(c); K.boden.material.opacity=Math.min(.7,s*.6); K.boden.scale.set(2.4+s*3,1.4+s*1.2,1);
+  K.acc+=vis?dt*(70+130*K.qc)*s:0; const fs=1+K.qc*.8, fq=1+K.qc*1.5; K.pts.material.size=.07+.05*K.qc; // Funken: 70 (80 %) bis 200 (150 %) je Sekunde, fliegen 0,3–0,6 s nach hinten weg, bei mehr Leistung schneller und breiter
+  for(const [i,o] of K.f.entries()){ if(o.l<=0&&K.acc>=1){ K.acc--; const z=i%2?.1:-.1; Object.assign(o,{l:.3+Math.random()*.3,vx:(-5-Math.random()*7)*fs,vy:(Math.random()-.4)*1.2*fq,vz:(Math.random()-.5)*1.2*fq}); o.L=o.l; K.pos.set([-.45,.8,z],i*3); }
     if(o.l>0){ o.l-=dt; K.pos[i*3]+=o.vx*dt; K.pos[i*3+1]+=o.vy*dt; K.pos[i*3+2]+=o.vz*dt; const a=Math.max(0,o.l/o.L), m=a*.6; K.col.set([(c.r+(1-c.r)*m)*a,(c.g+(1-c.g)*m)*a,(c.b+(1-c.b)*m)*a],i*3); } else K.col.set([0,0,0],i*3); } // Funken erst hell, dann in der Flammenfarbe verglühen
   K.acc=Math.min(K.acc,3); K.pts.geometry.attributes.position.needsUpdate=true; K.pts.geometry.attributes.color.needsUpdate=true; }
 
