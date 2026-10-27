@@ -19,6 +19,8 @@ Größere Punkte später in die passende Datei umziehen (`PLAENE.md`, `KAMPAGNE.
 
 ## Kampagne
 - [ ] Mission 1, Ziel: Teufelstisch (und die Kuppe darunter) spiegelt/blendet komisch am Ende – nach dem Aufreißen des Nebels (700 m vor dem Gasthaus) im Spiel prüfen; Teufelstisch in `buildGasthaus` (welt-trifels.js), Nebel `TRI_NEBEL`
+- [ ] Mission 2, Steintor: wenn der Teufel über das Felsentor stolpert, fröhlichere Musik; danach klart das Wetter kurz auf (keine Wolke am Himmel, mehr Blumen am Weg), bis man wieder auf dem ursprünglichen Weg ist (Kreuzung vor dem Tisch) – Musik in `welt-teufelstisch-ton.js`, Wetter `ttWetterW` (welt-teufelstisch.js)
+- [ ] Mission 2 selbst im Spiel testen (Stand 27.10.): Abzweigung „sicher rechts“ (≈ Meter 8874), Teufel kommt zurück an den Tisch, steigt auf den Stuhl, ext den Schoppen, reißt die Platte heraus (≈ 28:30–28:41), Schlusssprint: Teufel fällt zurück und schnauft (≈ 34:32), Schotter auf der Schleife, Wind auf den Lichtungen, Unwetter nach der Jungfernsprung-Kamera, Fernblick am Jungfernsprung mit Tal, See, Dorf und Regenbogen (≈ Meter 4514)
 
 ## Technik & Fehler
 - [ ] Testen: Wiederverbinden von Trainer und Pulsgurt (während der Fahrt kurz aus- und wieder einschalten: Meldung „verbinde neu …“, dazwischen Simulation, danach „wieder verbunden“, Steigung/ERG wieder aktiv) · Steigung auf der Minimap (unten rechts, Farbe nach Steilheit, bergab hellblau; Kampagne weiter mit Schild oben)
