@@ -19,6 +19,7 @@ Größere Punkte später in die passende Datei umziehen (`PLAENE.md`, `KAMPAGNE.
 - [ ] 
 
 ## Technik & Fehler
+- [ ] Testen: Wiederverbinden von Trainer und Pulsgurt (während der Fahrt kurz aus- und wieder einschalten: Meldung „verbinde neu …“, dazwischen Simulation, danach „wieder verbunden“, Steigung/ERG wieder aktiv) · Steigung auf der Minimap (unten rechts, Farbe nach Steilheit, bergab hellblau; Kampagne weiter mit Schild oben)
 - [ ] 
 
 ## Ideen
