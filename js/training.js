@@ -44,7 +44,10 @@ function drawWo(g,x,y,w,h,S,T,o={}){
     else { const n=Math.max(1,Math.round((x1-x0)/3)); for(let i=0;i<n;i++){ const p0=pa+(pb-pa)*i/n, p1=pa+(pb-pa)*(i+1)/n, xa=x0+(x1-x0)*i/n, xb=x0+(x1-x0)*(i+1)/n; g.fillStyle=zoneCol((p0+p1)/2); g.beginPath(); g.moveTo(xa,y+h); g.lineTo(xa,Y(p0)); g.lineTo(xb,Y(p1)); g.lineTo(xb+.4,y+h); g.fill(); } } });
   g.strokeStyle='rgba(255,255,255,.25)'; g.lineWidth=1; g.setLineDash([4,4]); g.beginPath(); g.moveTo(x,Y(100)); g.lineTo(x+w,Y(100)); g.stroke(); g.setLineDash([]);
   if(o.cur!=null){ const xc=X(Math.min(T,o.cur)); g.fillStyle='rgba(10,20,15,.45)'; g.fillRect(x,y,xc-x,h);
-    if(o.trace&&o.trace.length>1){ g.strokeStyle='#ffffff'; g.lineWidth=2; g.beginPath(); o.trace.forEach(([t,p],i)=>{ const px=X(t), py=Y(p/ftp()*100); i?g.lineTo(px,py):g.moveTo(px,py); }); g.stroke(); }
+    if(o.trace&&o.trace.length>1){ g.strokeStyle='#ffffff'; g.lineWidth=2; g.beginPath(); o.trace.forEach(([t,p],i)=>{ const px=X(t), py=Y(p/ftp()*100); i?g.lineTo(px,py):g.moveTo(px,py); }); g.stroke();
+      if(o.trace.some(q=>q[2])){ const YH=b=>y+h-Math.max(0,Math.min(1,(b-60)/150))*h; // Puls rot, feste Skala 60–210 bpm
+        g.strokeStyle='#ff3b3b'; g.lineWidth=2; g.beginPath(); let an=false; o.trace.forEach(([t,,b])=>{ if(!b){ an=false; return; } const px=X(t), py=YH(b); an?g.lineTo(px,py):g.moveTo(px,py); an=true; }); g.stroke();
+        g.fillStyle='#ff6b6b'; g.font='600 11px Barlow, sans-serif'; g.textAlign='right'; [100,150,200].forEach(b=>g.fillText(b,x+w-3,YH(b)+4)); } }
     g.fillStyle='#fff'; g.fillRect(xc-1.5,y-4,3,h+8); }
 }
 function fmtDur(s){ s=Math.round(s); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
@@ -139,7 +142,7 @@ function trainStep(dt,P,wkg){
     if(me.lowT>=8){ flash('Stufe nicht mehr gehalten – Test beendet'); trainFinish(); return; } }
   if(sg.free){ me.testE+=P*dt; me.testT+=dt; }
   if(race.t-sg.t0>5 && !sg.free){ me.zoneT+=dt; if(Math.abs(P-me.tgt)<=me.tgt*0.05) me.inZone+=dt; } // ±5 % um das Ziel, erste 5 s eines Abschnitts zählen nicht
-  if(!me.trace.length || race.t-me.trace[me.trace.length-1][0]>=1) me.trace.push([race.t,P]);
+  if(!me.trace.length || race.t-me.trace[me.trace.length-1][0]>=1) me.trace.push([race.t,P,hrNow()]); // Puls nur mit Pulsgurt, sonst null
   const idx=race.woSegs.indexOf(sg); if(idx!==race.woIdx){ if(race.woIdx>=0){ beep(1046,.25); flash(sg.free?'Vollgas – 20 Minuten, ERG aus':sg.label); if(anim.space) Object.assign(anim.space.wave,{t0:performance.now()/1000,d0:me.d-4}); } race.woIdx=idx; lastErgW=null; lastSlopeSent=null; }
   const rem=Math.ceil(sg.t0+sg.dur-race.t); if(idx<race.woSegs.length-1 && rem<=3 && rem>=1 && rem!==race.woCd){ race.woCd=rem; beep(660); }
   if(race.t>=race.woT) trainFinish();
