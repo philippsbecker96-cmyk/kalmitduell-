@@ -116,7 +116,8 @@ function burgGelaende(h,src,dist){ const n=TER.nx, N=h.length, res=TER.res, V=R.
 function buildBurgUmland(plainY,x0,z0,x1,z1){ const cx=(x0+x1)/2, cz=(z0+z1)/2, hx=(x1-x0)/2+520, hz=(z1-z0)/2+520, D=5200, st=80, m=Math.round(2*D/st)+1, pos=new Float32Array(m*m*3), col=new Float32Array(m*m*3), idx=[];
   const cF=new THREE.Color('#2f4a2a'), cF2=new THREE.Color('#45613a'), cW=new THREE.Color('#6f8f45'), cH=new THREE.Color('#aebdc2'), c=new THREE.Color();
   for(let j=0;j<m;j++) for(let i=0;i<m;i++){ const x=cx-D+i*st, z=cz-D+j*st, k=j*m+i, out=Math.hypot(Math.max(0,Math.abs(x-cx)-hx),Math.max(0,Math.abs(z-cz)-hz)), mk=bSm((out-60)/600);
-    const nz=.55*vnoise(x/1300+3,z/1300)+.3*vnoise(x/520,z/520+7)+.15*vnoise(x/190,z/190), y=plainY-4+mk*(60+400*Math.pow(nz,1.6));
+    const ts=R.tt&&R.tt.talSicht, fl=ts?(()=>{ const da=Math.atan2(z-ts.y,x-ts.x)-ts.a0, a=Math.abs(Math.atan2(Math.sin(da),Math.cos(da))); return (1-bSm((a-.55)/.35))*TT_TAL.umland; })():0; // Teufelstisch: Kuppen in Blickrichtung vom Jungfernsprung-Wegweiser flach (Fernblick, TT_TAL)
+    const nz=.55*vnoise(x/1300+3,z/1300)+.3*vnoise(x/520,z/520+7)+.15*vnoise(x/190,z/190), y=plainY-4+mk*(60+400*Math.pow(nz,1.6))*(1-fl);
     pos.set([x,y,z],k*3); c.copy(cF).lerp(cF2,vnoise(x/260,z/260)).lerp(cW,1-bSm((y-plainY)/25)).lerp(cH,.15*bSm(Math.hypot(x-cx,z-cz)/D)); col.set([c.r,c.g,c.b],k*3);
     if(i<m-1&&j<m-1) idx.push(k,k+m,k+1, k+1,k+m,k+m+1); }
   const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3)); g.setIndex(idx); g.computeVertexNormals();

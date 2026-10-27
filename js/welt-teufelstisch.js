@@ -16,9 +16,11 @@ function prepTeufelstisch(r){ const O=r.def.orte, kf=r.kf, S=r.S, q=rng(66), at=
   T.tischPos=at(T.tisch,-(rw(T.tisch)+13)); frei.push([...T.tischPos,TT_HUEGEL.r+2]); frei.push([...T.kopf,18]); // Teufelstisch links am Weg · Handschuhkopf
   const a=at(T.gabel+16,0), b=at(T.raus+16,0); T.schild=[(a[0]+b[0])/2,(a[1]+b[1])/2]; frei.push([...T.schild,3]); // Wegweiser im Zwickel zwischen den Abzweigen
   T.hundePl=TT_HUND_PL.map(([dd,uu])=>{ const d=T.an[0]+dd, [x,y]=at(d,rw(d)+uu); frei.push([x,y,1.4]); return {d,u:rw(d)+uu}; }); // Hunde sitzen rechts im Gebüsch, wo man mit Beginn des Anstiegs vorbeikommt (welt-teufelstisch-leben.js)
-  { const d=T.idyll=O.idyll*kf, h=headingAt(r,d), [sx,sy]=at(d,rw(d)), P=[[sx,sy]]; let a=h+TT_IDYLL.winkel; for(let k=1;k<=TT_IDYLL.n;k++){ a-=.035; const [px,py]=P[k-1]; P.push([px+Math.cos(a)*4,py+Math.sin(a)*4]); } T.seitenweg=P; // Idylle vor dem Ducken (welt-teufelstisch-leben.js): Seitenweg nach rechts Richtung Jungfernsprung
+  { const d=T.idyll=O.idyll*kf, h=headingAt(r,d), [sx,sy]=at(d,rw(d)), P=[[sx,sy]]; let a=h+TT_IDYLL.winkel; for(let k=1;k<=TT_IDYLL.n;k++){ a-=TT_IDYLL.kurve; const [px,py]=P[k-1]; P.push([px+Math.cos(a)*4,py+Math.sin(a)*4]); } T.seitenweg=P; // Idylle vor dem Ducken (welt-teufelstisch-leben.js): Seitenweg nach rechts Richtung Jungfernsprung
     for(const [x,y] of P) frei.push([x,y,3.2]); const [wx,wy]=at(d-3,rw(d)+1.4); T.idyllSchild=[wx,wy]; frei.push([wx,wy,1.5]); 
-    const [x0,y0]=P[0], [x1,y1]=P[P.length-1], ab=Math.atan2(y1-y0,x1-x0)+TT_BOGEN.dreh; T.bogenPos=[x0+Math.cos(ab)*TT_BOGEN.weit,y0+Math.sin(ab)*TT_BOGEN.weit]; { const bx=T.bogenPos[0]-wx, by=T.bogenPos[1]-wy, bl=Math.hypot(bx,by); T.bogenSicht=[wx,wy,wx+bx/bl*TT_IDYLL.schneise,wy+by/bl*TT_IDYLL.schneise]; } // Regenbogen weit hinten rechts am Horizont, Schneise dahin vom Wegweiser aus (dort steht die Kamera), wird nach hinten breiter
+    const [x0,y0]=P[0], [x1,y1]=P[P.length-1], ab=Math.atan2(y1-y0,x1-x0)+TT_BOGEN.dreh; T.bogenPos=[x0+Math.cos(ab)*TT_BOGEN.weit,y0+Math.sin(ab)*TT_BOGEN.weit]; { const bx=T.bogenPos[0]-wx, by=T.bogenPos[1]-wy, bl=Math.hypot(bx,by); T.bogenSicht=[wx,wy,wx+bx/bl*TT_IDYLL.schneise,wy+by/bl*TT_IDYLL.schneise]; const Z=TT_TAL, a0=Math.atan2(by,bx), pol=(o,w)=>[wx+Math.cos(a0+w)*o,wy+Math.sin(a0+w)*o]; T.talSicht={x:wx,y:wy,a0}; T.bogenPos=pol(TT_BOGEN.weit,Z.bogen); // Fernblick ins Tal (TT_TAL): See, Dorf, Regenbogen dahinter
+      { const [x,y]=pol(...Z.see.at); T.see={x,y,rx:Z.see.rx,rz:Z.see.rz,ry:a0+Z.see.at[1]+Math.PI/2}; frei.push([x,y,Z.see.rx+15]); }
+      { const [x,y]=pol(...Z.dorf.at), H=[]; for(let i=0;i<Z.dorf.n*8&&H.length<Z.dorf.n;i++){ const a=q()*6.28, o=18+Math.sqrt(q())*(Z.dorf.r-18), hx=x+Math.cos(a)*o, hy=y+Math.sin(a)*o; if(nah(hx,hy,35)||H.some(h=>Math.hypot(h.x-hx,h.y-hy)<15)) continue; H.push({x:hx,y:hy,c:q()}); } T.dorf={x,y,haeuser:H}; frei.push([x,y,Z.dorf.r+12]); } } // Regenbogen weit hinten rechts am Horizont, Schneise dahin vom Wegweiser aus (dort steht die Kamera), wird nach hinten breiter
     const amPfad=(x,y,m)=>P.some((p,i)=>i&&ttSegAbst(x,y,P[i-1],p)<m), a1=Math.atan2(y1-y0,x1-x0); // dichter Wald im Zwickel zwischen Weg zum Teufelstisch und dem Seitenweg (verdeckt auch den Blick auf Dahn)
     for(let i=0;i<TT_IDYLL.wald;i++){ const o=6+Math.sqrt(q())*TT_IDYLL.tief, w=h+.04+q()*(a1-h-.04), x=x0+Math.cos(w)*o, y=y0+Math.sin(w)*o, rad=2+q()*2.5, busch=q()<.4;
       if(nah(x,y,(busch?1.5:rad)+3)||amPfad(x,y,(busch?1.2:rad)+1.2)) continue; if(busch) S.bush.push({x,y,s:.7+q()*.9,c:q()}); else S.tree.push({x,y,s:rad,c:q(),pine:q()<.4,ht:10+q()*7}); } }
@@ -172,8 +174,15 @@ function teufelstischGelaende(h,src,dist){ const T=R.tt, H=TT_HUEGEL, n=TER.nx, 
   // Idylle: rechts der Abzweigung fällt das Gelände zum Hang ab (der Seitenweg zum Jungfernsprung führt hinunter)
   if(T.seitenweg){ const Z=TT_IDYLL.hang, [sx,sz]=posAt(R,T.idyll), hd=headingAt(R,T.idyll), c=Math.cos(hd), sn=Math.sin(hd), y0=roadY(T.idyll)-.45;
     for(let j=0;j<TER.nz;j++) for(let i=0;i<n;i++){ const x=i*res+TER.x0, z=j*res+TER.z0, k=j*n+i; if(dist[k]<6) continue; const a=(x-sx)*c+(z-sz)*sn, b=-(x-sx)*sn+(z-sz)*c; if(b<4) continue;
-      const w=(1-bSm((Math.abs(a-Z.mitte)-Z.lang)/Z.rand))*bSm((b-4)/10)*Math.min(1,(dist[k]-6)/12), tgt=y0-Math.min(Z.tief,(b-4)*Z.steil); if(w>0&&h[k]>tgt) h[k]+=(tgt-h[k])*w; } } }
-
+      const w=(1-bSm((Math.abs(a-Z.mitte)-Z.lang)/Z.rand))*bSm((b-4)/10)*Math.min(1,(dist[k]-6)/12), tgt=y0-Math.min(Z.tief,(b-4)*Z.steil); if(w>0&&h[k]>tgt) h[k]+=(tgt-h[k])*w; }
+    // Fernblick vor dem Wegweiser: der Bergrücken in Blickrichtung fällt zum Talboden ab, See als Mulde, Dorf eben (TT_TAL)
+    const Z2=TT_TAL, [wx,wz]=T.idyllSchild, a0=T.talSicht.a0, fy=T.talY=y0-Z2.tief, Se=T.see, Df=T.dorf, sc=Math.cos(Se.ry), ss=Math.sin(Se.ry);
+    for(let j=0;j<TER.nz;j++) for(let i=0;i<n;i++){ const x=i*res+TER.x0, z=j*res+TER.z0, k=j*n+i; if(dist[k]<6) continue; const r=Math.hypot(x-wx,z-wz), sw=r<120?Math.min(1,(dist[k]-6)/14):bSm((dist[k]-25)/90); // weiter weg sanft zur Strecke hin (Schleife und Weg nach Dahn bleiben auf ihrer Höhe)
+      if(r>=10&&r<=Z2.bis+Z2.rand){ const da=Math.atan2(Math.sin(Math.atan2(z-wz,x-wx)-a0),Math.cos(Math.atan2(z-wz,x-wx)-a0)), w=(1-bSm((-da-Z2.links)/Z2.wRand))*(1-bSm((da-Z2.rechts)/Z2.wRand))*(1-bSm((r-Z2.bis)/Z2.rand))*sw, tgt=y0-Z2.tief*bSm((r-10)/Z2.lang);
+        if(w>0&&h[k]>tgt) h[k]+=(tgt-h[k])*w; }
+      if(dist[k]<20) continue; const ff=Math.min(1,(dist[k]-20)/20), ex=x-Se.x, ez=z-Se.y, e=Math.hypot((ex*sc+ez*ss)/Se.rx,(-ex*ss+ez*sc)/Se.rz);
+      if(e<1.7) h[k]+=(fy-4*(1-bSm((e-.5)/.6))-h[k])*(1-bSm((e-1)/.7))*ff; // See: flache Mulde, Ufer auf dem Talboden
+      const rd=Math.hypot(x-Df.x,z-Df.y); if(rd<Z2.dorf.r+70) h[k]+=(fy+2-h[k])*(1-bSm((rd-Z2.dorf.r)/70))*ff; } } }
 // ---- Bewegung (jeden Frame, aus rennen.js) ----
 function poseTeufelstisch(dt){ const A=anim.tt; if(!A) return; ttLicht(race.state==='run'?race.t:0); poseTeufel(dt); poseTeufelstischLeben(dt);
   const F=A.feuer; if(F&&F.an){ F.fl.visible=F.fl2.visible=true; const t=performance.now()/1000, f=.85+.15*Math.sin(t*11)+.08*Math.sin(t*23); F.fl.scale.set(1,f,1); F.fl2.scale.set(1,1.1-f*.2,1); F.fli.intensity=1.1*f; } } // Lagerfeuer flackert
@@ -182,10 +191,10 @@ function poseTeufelstisch(dt){ const A=anim.tt; if(!A) return; ttLicht(race.stat
 // Stufe k: 0 wie beim Start (Tag, auch Herbst) · 1 goldener Spätnachmittag · 2 Sonnenuntergang; Himmel als eigener Verlauf, fließend vom Tag- zum Abendhimmel
 const TT_LICHT={sun:[0,0xffc078,0xff7a44], sunI:[0,1.3,1.1], sunY:[0,.25,.04], sunZ:[0,.42,.42], hemi:[0,0xd8c8b0,0x9c8cb8], boden:[0,0x4a3a2a,0x3a2a26], hemiI:[0,.7,.6], bg:[0,0xf0c890,0xf09a6a]};
 const TT_HIMMEL=[[0,'#3f7dbf','#22305e'],[.22,'#5f97ce','#5b4a7e'],[.3,'#7fb0dc','#a05e74'],[.36,'#a8c8e3','#c46a6a'],[.45,'#cfe0ea','#f0955e'],[.5,'#e9e6dc','#f6b46e'],[1,'#e9e6dc','#f6b46e']]; // [Höhe, Tag, Abend]
-// Unwetter oben am Berg (vom Nutzer): schlagartig, sobald die Kamera vom Jungfernsprung zurück bei den Fahrern ist (ohne Kamerafahrt so viele m hinter dem Wegweiser) – dunkel, grau, Wolken, Wind und Regen, bleibt bis ins Ausfahren, dann klart es zum Sonnenuntergang auf
+// Unwetter oben am Berg (vom Nutzer): schlagartig, sobald die Kamera vom Jungfernsprung ganz zurück bei den Fahrern ist (ohne Kamerafahrt so viele m hinter dem Wegweiser) – dunkel, grau, Wolken, Wind und Regen, bleibt bis ins Ausfahren, dann klart es zum Sonnenuntergang auf
 const TT_WETTER={nach:45, klar:.3, sun:0x9aa2aa, sunI:.3, hemi:0x8c949e, hemiI:.72, bg:0x5c646e, himmel:0x707882, nebel:[60,750], wind:.5, boe:1.4}; // boe: Wind auf den Lichtungen (schräger Regen, Laub)
 function ttWetterW(rt){ const Z=TT_WETTER, A=anim.tt, T=R.tt, au=(race.woSegs||[]).find(s=>s.label==='Ausfahren'), k=au?1-bSm((rt-au.t0)/(au.dur*Z.klar)):1, C=TT_BOGEN.kam, ik=A&&A.ikT;
-  const an=ik!=null&&ik>0&&rt>=ik+C[1]+C[2]-.8||me.d>=T.idyll+Z.nach; return an?[k,k]:[0,0]; } // [Licht/Regen, Wolken]
+  const an=ik!=null&&ik>0&&rt>=ik+C[1]+C[2]+.2||me.d>=T.idyll+Z.nach; return an?[k,k]:[0,0]; } // [Licht/Regen, Wolken]
 // Wind auf den Lichtungen der Schleife (beide Runden): {w 0 … 1, s Seite, zu der er drückt (+1 = rechts)}
 function ttWind(d){ const T=R&&R.tt; if(!T||!T.lichtung||race.state!=='run') return null; const e=d>=T.kreuz+T.L&&d<T.raus?d-T.L:d; for(const Li of T.lichtung){ const w=bSm((e-Li.d0+12)/14)*bSm((Li.d1+12-e)/14); if(w>0) return {w,s:Li.s}; } return null; }
 function ttLicht(rt){ const A=anim.tt, Z=TT_WETTER; if(race.rain||race.state!=='run'&&race.state!=='count') return; // nach dem Ziel bleibt der Sonnenuntergang
