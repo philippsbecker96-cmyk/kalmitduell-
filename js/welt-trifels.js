@@ -351,7 +351,8 @@ function elwetritscheModell(){ const G=new THREE.Group(), K=new THREE.Group(); G
   G.scale.setScalar(1.2); return {G,K,kopf,beine,fluegel,augen,zunge}; }
 
 // ---- Aufbau (aus buildTrifelsLeute): Friedel auf dem Holzrad mit Sack und Laterne, Dorfleute vor dem Wirtshaus, Elwetritsche ----
-function buildFriedel(T){ const A=anim.tri, M=c=>lam(c), haar=M('#b8452a'), haar2=M('#9c3a22');
+// Friedel als Fahrer (auch für Mission 2): schmächtig, grünes Wams, Holzrad, lange rote Haare unter der Bundhaube, Sack auf dem Rücken, Laterne am Lenker, ohne Namensschild
+function friedelModell(){ const M=c=>lam(c), haar=M('#b8452a'), haar2=M('#9c3a22');
   const r=makeRider('gegner',{...LOOK_DEF.gegner,name:'Friedel',build:.9,jersey:'#5d7a3a',sleeve:'#a8862e'},true); r.g.scale.setScalar(.95); r.tag.visible=false; world.add(r.g); // schmächtig, Wams grün
   for(let i=0;i<16;i++){ const a=Math.PI*(.45+i/15*1.1), l=.2+((i*37)%7)*.03, st=new THREE.Mesh(new THREE.BoxGeometry(.035,l,.05),i%2?haar:haar2); // lange zottelige rote Haare unter der Haube
     st.position.set(.04+Math.cos(a)*.13,.02-l/2+.04,Math.sin(a)*.13); st.rotation.set(Math.sin(a)*.25,0,Math.cos(a)*-.25); r.headG.add(st); }
@@ -362,7 +363,9 @@ function buildFriedel(T){ const A=anim.tri, M=c=>lam(c), haar=M('#b8452a'), haar
   const st=new THREE.Mesh(new THREE.CylinderGeometry(.012,.015,.14,5),M('#e8862a')); st.position.y=.07; aug.add(st); const ap=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),new THREE.MeshBasicMaterial({color:'#fff4d0'})); ap.position.y=.15; aug.add(ap);
   const pu=new THREE.Mesh(new THREE.SphereGeometry(.02,6,4),lam('#151515')); pu.position.set(.03,.15,0); aug.add(pu); schn.visible=aug.visible=false; // Augenstiel
   const la=new THREE.Mesh(new THREE.BoxGeometry(.12,.16,.12),lampGlowMat()); la.position.set(.62,.88,0); r.body.add(la); const lh=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.12,4),M('#2e2c2a')); lh.position.set(.62,.99,0); r.body.add(lh); // Laterne am Lenker
-  A.friedel={r,sack,raus:{G:raus,schn,aug},d:T.wirtD+1,crank:0,mode:'park',blase:triBlase()};
+  return {r,sack,la,raus:{G:raus,schn,aug}}; }
+function buildFriedel(T){ const A=anim.tri, M=c=>lam(c), haar=M('#b8452a'), haar2=M('#9c3a22'), {r,sack,la,raus}=friedelModell();
+  A.friedel={r,sack,raus,d:T.wirtD+1,crank:0,mode:'park',blase:triBlase()};
   // Dorfleute vor dem Wirtshaus „Zack Zack“ (rechts), mit Krügen, blicken zu Friedel
   const H=T.wirt, dw=T.wirtD, rw=roadW(R,dw)/2, uF=(()=>{ if(!H) return rw-.4; const [hx,hz]=posAt(R,H.d), hh=headingAt(R,H.d); return Math.min(rw-.2,(H.x-hx)*-Math.sin(hh)+(H.y-hz)*Math.cos(hh)-H.dep/2-.5); })(), // vor der Fassade auf dem Pflaster (die Fassade steht kaum neben dem Weg)
     fp=wegPos(dw+.9,uF-1.1), krug=m=>{ const k=new THREE.Mesh(new THREE.CylinderGeometry(.05,.045,.13,8),M('#8a6a44')); k.position.y=-.66; m.arme[1].add(k); m.arme[1].rotation.x=-.9; };
@@ -455,12 +458,15 @@ function buildGasthaus(T,A=anim.tri){ const G=T.gast, // A: Szenen-Zustand der M
   // Wirt: Schürze, Laterne in der rechten Hand, steht vor der Tür und winkt dir mit der linken
   const wirt=trMensch({kittel:'#6b4a2e',aermel:'#ece3cf',hose:'#3a3020',haar:'#8a8a86',bart:'#8a8a86'}); box(wirt.G,.36,.7,.04,lam('#e8e0d0'),0,.95,.25); // Schürze
   const lat=new THREE.Mesh(new THREE.BoxGeometry(.16,.22,.16),glow); lat.position.y=-.78; wirt.arme[1].add(lat); wirt.arme[1].rotation.x=-.35; const wl=new THREE.PointLight(0xffc870,1.4,10,2); wl.position.y=-.78; wirt.arme[1].add(wl);
-  const wp=loc(.6,0,5.6), wp0=loc(0,0,4.3); wp.y=bodenY(wp.x,wp.z); wp0.y=bodenY(wp0.x,wp0.z); // auf dem Boden vor der Tür (nicht auf Hausboden-Höhe) wirt.G.position.copy(wp0); wirt.G.rotation.y=H.rotation.y; world.add(wirt.G);
+  const wp=loc(.6,0,5.6), wp0=loc(0,0,4.3); wp.y=bodenY(wp.x,wp.z); wp0.y=bodenY(wp0.x,wp0.z); wirt.G.position.copy(wp0); wirt.G.rotation.y=H.rotation.y; world.add(wirt.G); // auf dem Boden vor der Tür (nicht auf Hausboden-Höhe)
   // Teufelstisch: Sandsteinsäule mit breiter Felsplatte obendrauf, hebt sich als dunkle Silhouette vom Himmel ab (ohne Szenen-Nebel, sonst verschwimmt er hell im Dunst)
-  if(Array.isArray(T.tisch)){ const [tx,tz]=T.tisch, F=new THREE.Group(), fm=lam('#4a2820'), fm2=lam('#3a1f19'); fm.fog=fm2.fog=false; F.position.set(tx,terrainAt(tx,tz)-2,tz); F.rotation.y=.4; world.add(F);
-  [[5.2,6,4.6,0,3,0,.05],[4.4,5.5,4,.3,8.5,.2,-.08],[4.8,5,4.3,-.2,13.6,-.1,.06],[3.8,3.6,3.4,.1,17.6,.1,0]].forEach(([w,h,d,x,y,z,r],i)=>{ const b=box(F,w,h,d,i%2?fm2:fm,x,y,z); b.rotation.y=r*3; b.rotation.z=r; });
-  const pt=box(F,17,2.8,10.5,fm,0,20.6,0); pt.rotation.z=.04; box(F,13,.9,8,fm2,-.4,19,.3); for(const [x,z,s] of [[6,4,2.6],[-5,-4,2],[4,-5,1.6]]){ const b=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),fm2); b.position.set(x,s*.6,z); F.add(b); } } // Platte und Brocken am Fuß (nur Mission 1: Silhouette auf der Kuppe)
+  if(Array.isArray(T.tisch)){ const [tx,tz]=T.tisch, F=tischSilhouette('#4a2820','#3a1f19'); F.position.set(tx,terrainAt(tx,tz)-2,tz); F.rotation.y=.4; world.add(F); }
   A.gast={H,sc,rauch,kp,wirt,wp,wp0,mats:[mf,ms]}; }
+// Teufelstisch als Silhouette (Mission 1 auf der Kuppe hinter dem Gasthaus, Mission 2 als Fernbild vom Tal aus): Säule, Platte, Brocken – ohne Szenen-Nebel
+function tischSilhouette(c1,c2,trans){ const F=new THREE.Group(), fm=new THREE.MeshLambertMaterial({color:c1,transparent:!!trans}), fm2=new THREE.MeshLambertMaterial({color:c2,transparent:!!trans}); fm.fog=fm2.fog=false; F.userData.mats=[fm,fm2];
+  const box=(P,w,h,d,m,x,y,z)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); b.position.set(x,y,z); P.add(b); return b; };
+  [[5.2,6,4.6,0,3,0,.05],[4.4,5.5,4,.3,8.5,.2,-.08],[4.8,5,4.3,-.2,13.6,-.1,.06],[3.8,3.6,3.4,.1,17.6,.1,0]].forEach(([w,h,d,x,y,z,r],i)=>{ const b=box(F,w,h,d,i%2?fm2:fm,x,y,z); b.rotation.y=r*3; b.rotation.z=r; });
+  const pt=box(F,17,2.8,10.5,fm,0,20.6,0); pt.rotation.z=.04; box(F,13,.9,8,fm2,-.4,19,.3); for(const [x,z,s] of [[6,4,2.6],[-5,-4,2],[4,-5,1.6]]){ const b=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),fm2); b.position.set(x,s*.6,z); F.add(b); } return F; } // Platte und Brocken am Fuß
 function poseGasthaus(dt,t){ const A=anim.tri, G=A.gast; if(!G) return; const dk=A.dk||0, nah=R.tri.gast.d-me.d;
   G.sc.material.opacity=.75*dk; for(const m of G.mats) m.emissive.setScalar(.35+.65*dk); // in der Nacht leuchtet alles kräftiger
   G.rauch.forEach((s,i)=>{ const f=((t*.16+i/8)%1); s.position.set(G.kp.x+f*2.2,G.kp.y+f*7,G.kp.z+f*1.2); s.scale.setScalar(1.2+f*3.5); s.material.opacity=.35*Math.sin(f*Math.PI)*(.3+.7*(1-dk*.5)); });

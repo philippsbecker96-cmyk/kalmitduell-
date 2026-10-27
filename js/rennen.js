@@ -24,7 +24,7 @@ function draw(dt){
   if(opp.active&&Math.abs(opp.d-me.d)<2.2&&!R.stadium&&!camOverride){ // nebeneinander: beide fahren die Linie gemeinsam mit 1,2 m Abstand, Reihenfolge wie die Grundspuren
     const up=ownLane(myKey)>=ownLane(oppKey)?1:-1; let a=tm.t, b=to.t; if((a-b)*up<1.2){ const m=(a+b)/2; a=m+.6*up; b=m-.6*up; }
     const H=tm.H, sh=Math.max(0,Math.max(a,b)-H)-Math.max(0,-H-Math.min(a,b)); tm.t=a-sh; to.t=b-sh; }
-  const lanes=(r,gapAhead,leader,t,d)=>{ const tgt=weinSpur(d,radlerSpur(d,triSpur(d,burgSpur(d,(race.draft&&opp.active&&gapAhead>2&&gapAhead<10&&leader.lane!=null)?leader.lane:t)))); // Südpfalz: an anderen Radlern vorbei, dem Traktor Platz machen · Berwartstein: links am Pferdekarren vorbei · Trifels: dem Gefolge von Löwenherz ausweichen
+  const lanes=(r,gapAhead,leader,t,d)=>{ const tgt=ttSpur(d,weinSpur(d,radlerSpur(d,triSpur(d,burgSpur(d,(race.draft&&opp.active&&gapAhead>2&&gapAhead<10&&leader.lane!=null)?leader.lane:t))))); // Südpfalz: an anderen Radlern vorbei, dem Traktor Platz machen · Berwartstein: links am Pferdekarren vorbei · Trifels: dem Gefolge von Löwenherz ausweichen
     if(r.lane==null||camOverride) r.lane=tgt; else r.lane+=(tgt-r.lane)*Math.min(1,dt*1.5); };
   if(mine.lane==null) mine.lane=ownLane(myKey);
   if(theirs.lane==null) theirs.lane=ownLane(oppKey);
@@ -63,7 +63,7 @@ function draw(dt){
   const sk=race.paused?1:simSpeed(), k=Math.min(1,dt*3.5*sk), kl=Math.min(1,dt*5*sk); // Testmodus: Kamera folgt im gleichen Tempo
   camS.x+=(tx-camS.x)*k; camS.y+=(ty-camS.y)*k; camS.z+=(tz-camS.z)*k; camS.lx+=(lx-camS.lx)*kl; camS.ly+=(ly-camS.ly)*kl; camS.lz+=(lz-camS.lz)*kl;
   if(camOverride){ camera.position.set(...camOverride.pos); camera.lookAt(...camOverride.look); }
-  else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); if(anim.burg) burgKamera(dt); if(anim.tri) trifelsKamera(dt); if(anim.space) mondKamera(dt); countKamera(dt,mine,theirs); // Berwartstein: kurzer Schwenk auf die eingestaubten Wegelagerer
+  else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); if(anim.burg) burgKamera(dt); if(anim.tri) trifelsKamera(dt); if(anim.tt) teufelKamera(dt); if(anim.space) mondKamera(dt); countKamera(dt,mine,theirs); // Berwartstein: kurzer Schwenk auf die eingestaubten Wegelagerer
     camS.roll=(camS.roll||0)+(rollT-(camS.roll||0))*Math.min(1,dt*3); if(Math.abs(camS.roll)>1e-4) camera.rotateZ(camS.roll); camShake(dt,vC); }
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
   sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vG); regenFx(race.paused?0:dt); luftFx(race.paused?0:dt,theirs,opp.active&&race.draft&&!me.done?me.draftR||0:0); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);

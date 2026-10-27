@@ -250,8 +250,9 @@ function rideState(r,o,P,ftpW,dt,cadReal,standRemote){ if(!r) return; const S=r.
   if(S.lock&&P<1.2*ftpW) S.lock=false; // nach 20 s erst wieder nach einer Pause aufstehen
   // Anstieg: ab 10 % im Wechsel (etwa 8 s stehen, 25 s sitzen), ab 14 % oder unter 12 km/h fast immer
   const steep=g>=14||v<3.3; S.t-=dt; if(S.t<=0){ S.up=!S.up; S.t=S.up?(steep?30+Math.random()*10:6+Math.random()*4):(steep?4+Math.random()*3:20+Math.random()*10); }
-  S.stand=(!o.aero||R.stadium)&&P>=15&&(standRemote!=null?!!standRemote:S.sp||(g>=10&&S.up));
-  S.st+=((S.stand?1:0)-S.st)*Math.min(1,dt*4); S.ae+=((o.aero&&!S.stand?1:0)-S.ae)*Math.min(1,dt*2.5); S.sw=(S.sw||0)+((S.stand?1:0)-(S.sw||0))*Math.min(1,dt*1.2); r.st=S.st; r.ae=S.ae; r.sw=S.sw; // Pendeln setzt langsam ein und klingt langsam ab
+  const aero=o.aero||(o===me&&ttGeduckt()>.5); // Teufelstisch: Anschleichen geduckt (welt-teufel.js)
+  S.stand=(!aero||R.stadium)&&P>=15&&(standRemote!=null?!!standRemote:S.sp||(g>=10&&S.up));
+  S.st+=((S.stand?1:0)-S.st)*Math.min(1,dt*4); S.ae+=((aero&&!S.stand?1:0)-S.ae)*Math.min(1,dt*2.5); S.sw=(S.sw||0)+((S.stand?1:0)-(S.sw||0))*Math.min(1,dt*1.2); r.st=S.st; r.ae=S.ae; r.sw=S.sw; // Pendeln setzt langsam ein und klingt langsam ab
   // Trittfrequenz: echte vom Sensor, sonst geschätzt; unter 15 W stehen die Kurbeln, die Pedale bleiben waagerecht stehen
   const est=P<15||v<.3?0:S.sp?105:S.stand?66:clampN(88-Math.max(0,g-3)*2.5,70,90);
   S.cad+=((cadReal??est)-S.cad)*Math.min(1,dt*2);

@@ -515,7 +515,7 @@ function trifelsDef(segs, unit, f, kg){
 // gerade zurück, Gabelung, Bogen zurück auf den Weg vor der Kreuzung → zweite Runde bis zur Gabelung → links hinaus bergab Richtung Dahn.
 // Die Schleife liegt nur einmal in der Welt (doppelt: Meter der zweiten Runde, dort kein zweiter Weg und keine Bäume). Ihre Höhe hängt nur von der Stelle in der Schleife ab, nicht von der Zeit –
 // so liegt der Weg in beiden Runden gleich hoch. Schleifenlänge = Weg vom Tisch in Runde 1 bis zum Tisch in Runde 2 (bei den geplanten Watt), Gabelung = Ende von Flucht 1.
-const TEUFEL_T={vorJ:120, R:70, hub:-30, tisch:15}; // vorJ: Kreuzung so viele m vor dem Tisch · R: Radius der beiden Kurven · hub: Höhe der Schleife in der Mitte gegenüber dem Tisch (Tisch oben auf der Kuppe, Flucht bergab, rechter Abzweig wieder hinauf – so liegt die Gabelung auch mit wenig Watt am Ende von Flucht 1) · tisch: s nach Beginn von „Ertappt“ bzw. „Wieder am Tisch“ ist man am Tisch
+const TEUFEL_T={vorJ:120, R:70, hub:-30, tisch:5}; // vorJ: Kreuzung so viele m vor dem Tisch · R: Radius der beiden Kurven · hub: Höhe der Schleife in der Mitte gegenüber dem Tisch (Tisch oben auf der Kuppe, Flucht bergab, rechter Abzweig wieder hinauf – so liegt die Gabelung auch mit wenig Watt am Ende von Flucht 1) · tisch: s nach Beginn von „Ertappt“ bzw. „Wieder am Tisch“ ist man am Tisch (vom Nutzer gewünscht: der Teufel entdeckt dich, das harte Intervall beginnt kurz bevor man auf seiner Höhe ist)
 const imDoppel=(r,d)=>{ const D=r.def.doppelt; return !!D&&d>D[0]*r.kf&&d<D[1]*r.kf; }; // zweite Runde der Schleife: liegt schon in der Welt
 function teufelstischDef(segs, unit, f, kg){
   const Tt=TEUFEL_T, NACH=600, t0=(l,v)=>{ const s=segs.find(s=>s.label===l); return s?s.t0:v; };
