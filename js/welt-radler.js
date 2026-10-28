@@ -100,7 +100,7 @@ function rlSetze(f,E,g,lauf){ const r=f.r, gegen=E.K.typ==='gegen', weg=E.K.typ=
   const u=f.u+w*(weg&&f.i===1?.12:.04), px=x-Math.sin(hd)*u, pz=z+Math.cos(hd)*u, y=weg?terrainAt(px,pz)+.12:roadY(d)+.12; // Überhöhung in deiner Nähe rechnet der Shader selbst drauf (kxSetup)
   r.g.visible=true; r.g.position.set(px,y,pz); r.g.rotation.set(0,-hd+(gegen?Math.PI:0),0);
   r.tilt.rotation.set(weg&&f.i===1?w*.06:0,0,Math.atan((gegen?-1:1)*gradeAt(d)/100));
-  r.crank+=Math.min(95,f.v*(weg&&f.i===1?26:14))/60*Math.PI*2*lauf;
+  r.crank+=Math.min(95,f.v*(weg&&f.i===1?26:14))/60*Math.PI*2*lauf; radRoll(r,gegen?-d:d); // entgegen: Figur gedreht
   if(Math.abs(g)>RL_NAH) return; const gruss=gegen&&f.i===0&&E.art!=='zeit'&&g>2&&g<32, A=r.arms[0], h=A.h; if(gruss) A.h=[.48,1.82,-.34];
   poseRider(r,r.crank); A.h=h; }
 

@@ -13,14 +13,33 @@ const UNIT_Y=new THREE.Vector3(0,1,0);
 function cyl(r,mat,r2){ return new THREE.Mesh(new THREE.CylinderGeometry(r,r2??r,1,8),mat); }
 function place(m,a,b){ const va=new THREE.Vector3(...a), vb=new THREE.Vector3(...b), dir=vb.clone().sub(va), L=dir.length();
   m.position.copy(va).add(vb).multiplyScalar(.5); m.scale.set(m.scale.x,L,m.scale.z); m.quaternion.setFromUnitVectors(UNIT_Y, dir.normalize()); }
+// ---- Drehende Räder: Speichen drehen mit den gefahrenen Metern, ab RAD.b0 km/h blendet eine Wischscheibe ein (radRoll aus putRider, rlSetze, Vorschau) ----
+const RAD={r:.34, b0:12, b1:25, max:.18}; // Radius m · Wischscheibe ab / voll bei km/h · höchstens so viel Drehung je Bild (rad), sonst laufen die Speichen scheinbar rückwärts
+let radTex=null;
+function radTexturen(){ if(radTex) return radTex; const Z=Math.PI*2;
+  const sp=canvasTex(128,128,g=>{ g.strokeStyle='#fff'; g.lineWidth=1.5; for(let i=0;i<16;i++){ const a=i/16*Z, b=a+(i%2?.2:-.2); g.beginPath(); g.moveTo(64+Math.cos(b)*6,64+Math.sin(b)*6); g.lineTo(64+Math.cos(a)*63,64+Math.sin(a)*63); g.stroke(); } }); // 16 Speichen, gekreuzt eingespeicht
+  const wi=canvasTex(128,128,g=>{ for(let r=7;r<63;r++){ g.strokeStyle=`rgba(255,255,255,${(.3+Math.random()*.5)*Math.min(1,(r-7)/8)})`; g.beginPath(); g.arc(64,64,r,0,Z); g.stroke(); } }); // verwischte Ringe, innen frei
+  return radTex={sp,wi}; }
+const radMat=m=>{ const c=m.clone(); c.transparent=true; return c; }; // eigenes Material, das ausblenden darf
+function radDreh(body,x,farbe,mats){ const U=body.userData.rad||(body.userData.rad={W:[],sp:[],wi:[]}); // drehbare Gruppe an der Achse x und Wischscheibe daneben
+  const W=new THREE.Group(); W.position.set(x,.34,0); body.add(W); U.W.push(W); for(const m of mats) if(!U.sp.includes(m)) U.sp.push(m);
+  const ws=new THREE.Mesh(new THREE.CircleGeometry(.31,24),new THREE.MeshLambertMaterial({color:farbe,map:radTexturen().wi,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide}));
+  ws.position.set(x,.34,.004); ws.visible=false; body.add(ws); U.wi.push(ws); return W; }
+function speichen(body,x){ const sm=new THREE.MeshLambertMaterial({color:'#c9ccd1',map:radTexturen().sp,transparent:true,alphaTest:.05,side:THREE.DoubleSide}), vm=new THREE.MeshLambertMaterial({color:'#3a3a3a',transparent:true}); // Rennrad: Speichenscheibe und Ventil
+  const W=radDreh(body,x,'#9a9ea6',[sm,vm]); W.add(new THREE.Mesh(new THREE.CircleGeometry(.285,24),sm)); const v=new THREE.Mesh(new THREE.BoxGeometry(.014,.045,.014),vm); v.position.y=.262; W.add(v); }
+function radRoll(r,d){ const U=r.body&&r.body.userData.rad; if(!U) return; const t=performance.now()/1000, dt=r.radT==null?0:Math.min(.2,t-r.radT); let dd=r.radD==null?0:d-r.radD; r.radT=t; r.radD=d; if(Math.abs(dd)>3) dd=0; // Sprung (Fotofinish, Testmodus): nicht drehen
+  if(dt>0) r.radV=(r.radV||0)+(Math.abs(dd)/dt-(r.radV||0))*Math.min(1,dt*4); const b=clampN(((r.radV||0)*3.6-RAD.b0)/(RAD.b1-RAD.b0),0,1), w=clampN(dd/RAD.r,-RAD.max,RAD.max);
+  for(const W of U.W) W.rotation.z-=w; for(const m of U.sp) m.opacity=1-.9*b; for(const s of U.wi){ s.visible=b>0; s.material.opacity=.6*b; } }
 // Holzrad (Draisine mit Pedalen): Speichenräder mit Eisenreif, Längsbalken, Holzgabeln mit Eisenbeschlägen, T-Lenker, Ledersattel, Holzkurbeln – gleiche Maße wie das Rennrad, damit Haltung und Treten passen
 function holzRad(body,M){ const holz=M('#7a5234'), dunkel=M('#4e3423'), eisen=M('#2e2c2a'), leder=M('#5a2e1c');
-  const balken=(a,b,w=.06,d=.055,m=holz)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,1,d),m); place(o,a,b); body.add(o); return o; };
+  const balken=(a,b,w=.06,d=.055,m=holz,P=body)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,1,d),m); place(o,a,b); P.add(o); return o; };
+  const holzS=radMat(holz), eisenS=radMat(eisen); // Speichen und Beschläge blenden bei Tempo aus (Wischscheibe)
   for(const x of [-.52,.52]){ const fe=new THREE.Mesh(new THREE.TorusGeometry(.315,.03,6,24),dunkel); fe.position.set(x,.34,0); body.add(fe);
     const rf=new THREE.Mesh(new THREE.TorusGeometry(.345,.014,4,24),eisen); rf.position.set(x,.34,0); body.add(rf);
-    for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; balken([x+Math.cos(a)*.04,.34+Math.sin(a)*.04,0],[x+Math.cos(a)*.3,.34+Math.sin(a)*.3,0],.018,.018); }
+    const W=radDreh(body,x,'#6a4a30',[holzS,eisenS]);
+    for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; balken([Math.cos(a)*.04,Math.sin(a)*.04,0],[Math.cos(a)*.3,Math.sin(a)*.3,0],.018,.018,holzS,W); }
     const nb=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.12,8),holz); nb.rotation.x=Math.PI/2; nb.position.set(x,.34,0); body.add(nb);
-    for(const z of [-.06,.06]){ const bs=new THREE.Mesh(new THREE.BoxGeometry(.07,.07,.012),eisen); bs.position.set(x,.34,z); body.add(bs); } }
+    for(const z of [-.06,.06]){ const bs=new THREE.Mesh(new THREE.BoxGeometry(.07,.07,.012),eisenS); bs.position.set(0,0,z); W.add(bs); } }
   balken([-.66,.72,0],[.46,.77,0],.08,.07); // Längsbalken
   for(const z of [-.055,.055]){ balken([-.42,.73,z],[-.52,.34,z],.035,.03); balken([-.64,.72,z],[-.52,.34,z],.035,.03); balken([.36,.76,z],[.52,.34,z],.035,.03); balken([.5,.79,z],[.52,.34,z],.035,.03); } // Gabeln als Dreiecke
   balken([-.04,.74,0],[0,.3,0],.05,.05); balken([0,.3,0],[-.5,.36,0],.03,.03,dunkel); // Tretlager-Stütze, Strebe nach hinten
@@ -44,7 +63,7 @@ function makeRider(key,Lo,ma,raum){ raum=raum&&!ma;
   for(const x of [-.52,.52]){ const w=new THREE.Mesh(new THREE.TorusGeometry(.34,.03,6,24), tire); w.position.set(x,.34,0); body.add(w);
     if(L.tanwall){ const tw=new THREE.Mesh(new THREE.TorusGeometry(.31,.012,4,24), M('#c8a46e')); tw.position.set(x,.34,.012); body.add(tw); }
     const rim=new THREE.Mesh(new THREE.TorusGeometry(.29,.018,4,24), M(L.tanwall?'#3a3d42':'#1d1d1f')); rim.position.set(x,.34,0); body.add(rim);
-    const hub=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.1,6), M('#777')); hub.rotation.x=Math.PI/2; hub.position.set(x,.34,0); body.add(hub); }
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.1,6), M('#777')); hub.rotation.x=Math.PI/2; hub.position.set(x,.34,0); body.add(hub); speichen(body,x); }
   const F={rh:[-.52,.34,0], bb:[0,.3,0], seat:[-.16,.86,0], ht:[.42,.84,0], ht2:[.45,.74,0], fh:[.52,.34,0]};
   const tubes=[['rh','bb',frameC],['bb','seat',L.accentOn==='seat'?accent:frameC],['seat','rh',frameC],['seat','ht',frameC],['ht2','bb',frameC],['ht','fh',L.accentOn==='fork'?accent:frameC]];
   for(const [a,b,c] of tubes){ const t=cyl(.028,M(c)); place(t,F[a],F[b]); body.add(t); }
@@ -140,7 +159,7 @@ function makeDevil(ma,raum){ raum=raum&&!ma;
   let crank; if(ma) crank=holzRad(body,M); else {
   for(const x of [-.52,.52]){ const w=new THREE.Mesh(new THREE.TorusGeometry(.34,.03,6,24), tire); w.position.set(x,.34,0); body.add(w);
     const rim=new THREE.Mesh(new THREE.TorusGeometry(.29,.018,4,24), M('#c81e1e')); rim.position.set(x,.34,0); body.add(rim);
-    const hub=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.1,6), M('#777')); hub.rotation.x=Math.PI/2; hub.position.set(x,.34,0); body.add(hub); }
+    const hub=new THREE.Mesh(new THREE.CylinderGeometry(.03,.03,.1,6), M('#777')); hub.rotation.x=Math.PI/2; hub.position.set(x,.34,0); body.add(hub); speichen(body,x); }
   const F={rh:[-.52,.34,0], bb:[0,.3,0], seat:[-.16,.86,0], ht:[.42,.84,0], ht2:[.45,.74,0], fh:[.52,.34,0]};
   for(const [a,b,c] of [['rh','bb','#1b1b1d'],['bb','seat','#1b1b1d'],['seat','rh','#1b1b1d'],['seat','ht','#1b1b1d'],['ht2','bb','#1b1b1d'],['ht','fh','#c81e1e']]){ const t=cyl(.028,M(c)); place(t,F[a],F[b]); body.add(t); }
   const stem=cyl(.022,black); place(stem,[.42,.84,0],[.47,.92,0]); body.add(stem);
@@ -237,7 +256,7 @@ function putRider(r,d,crank){
   const hd=headingAt(R,d), u=r.lane;
   if(R.stadium){ const p=trackPt(d,u); r.g.position.set(p[0],p[1]+0.03,p[2]); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set(-R.outSign*bankAt(d),0,0); }
   else if(KX.on){ const [x,z]=posAt(R,d), px=x-Math.sin(hd)*u, pz=z+Math.cos(hd)*u; r.g.position.set(px, roadY(d)+visOff(px,pz)+0.12, pz); r.g.rotation.set(0,-hd,0); r.tilt.rotation.set((r.lean||0)+(anim.tri&&r.wank||0),0,Math.atan((visRoadY(d+1.5)-visRoadY(d-1.5))/3)); if(anim.tri&&r.lenk) r.g.rotation.y+=r.lenk; } // wank/lenk: Trifels, Pferde reiten dicht vorbei, Sturz
-  else { const [x,z]=posAt(R,d); r.g.position.set(x-Math.sin(hd)*u, roadY(d)+0.12, z+Math.cos(hd)*u); r.g.rotation.set(0,-hd+(anim.tri&&r.lenk||0),0); r.tilt.rotation.set((r.lean||0)+(anim.tri&&r.wank||0),0,Math.atan((R.island?0:R.space&&d>=0&&d<=R.len?segOf(d).vg:gradeAt(d))/100)); } poseRider(r,crank);
+  else { const [x,z]=posAt(R,d); r.g.position.set(x-Math.sin(hd)*u, roadY(d)+0.12, z+Math.cos(hd)*u); r.g.rotation.set(0,-hd+(anim.tri&&r.lenk||0),0); r.tilt.rotation.set((r.lean||0)+(anim.tri&&r.wank||0),0,Math.atan((R.island?0:R.space&&d>=0&&d<=R.len?segOf(d).vg:gradeAt(d))/100)); } poseRider(r,crank); radRoll(r,d);
 }
 function smoothHeading(d){ let sx=0,sz=0; for(let k=-4;k<=4;k++){ const h=headingAt(R,d+k*3); sx+=Math.cos(h); sz+=Math.sin(h); } return Math.atan2(sz,sx); }
 // Krümmung (rad/m, positiv = Kurve zur Spur +u) · Kurvenlage atan(v²·κ/g), höchstens 40°
@@ -270,15 +289,15 @@ function prevBauen(){ const ma=!!race.kamp; prev.ma=ma; prev.st=ma&&typeof KST!=
   prev.ground.material.color.set(ma?'#5b6338':'#5a5d60'); } // Bodenscheibe: Kampagne Wiese/Erde, sonst Asphaltgrau
 prevBauen();
 function drawPreviews(dt){
-  prev.crank+=dt*5; const t=performance.now()/1000;
+  prev.crank+=dt*5; prev.rd=(prev.rd||0)+dt*4; const t=performance.now()/1000; // Räder rollen mit ≈ 14 km/h
   if(prev.ma!==!!race.kamp||race.kamp&&typeof KST!=='undefined'&&prev.st!==KST.stand) prevBauen(); // Kampagne betreten/verlassen oder Bauer/Bäuerin gewechselt
   document.querySelectorAll('.rcard').forEach(card=>{ const k=card.dataset.k, cv2=card.querySelector('canvas');
     for(const kk in prev.rs) prev.rs[kk].g.visible = kk===k;
-    const r=prev.rs[k]; poseRider(r,prev.crank); r.g.position.set(0,0,0); r.g.rotation.y=-0.65+Math.sin(t*.5)*.35;
+    const r=prev.rs[k]; poseRider(r,prev.crank); radRoll(r,prev.rd); r.g.position.set(0,0,0); r.g.rotation.y=-0.65+Math.sin(t*.5)*.35;
     prev.cam.position.set(1.7,1.35,2.75); prev.cam.lookAt(0,1.0,0); prev.rr.render(prev.sc,prev.cam);
     if(ED.r) ED.r.g.visible=false;
     const g2=cv2.getContext('2d'); g2.clearRect(0,0,cv2.width,cv2.height); g2.drawImage(prev.c,0,0,cv2.width,cv2.height); });
-  if(ED.r){ for(const kk in prev.rs) prev.rs[kk].g.visible=false; const r=ED.r; r.g.visible=true; poseRider(r,prev.crank); r.g.rotation.y=-0.65+Math.sin(t*.5)*.35; // Editor-Vorschau
+  if(ED.r){ for(const kk in prev.rs) prev.rs[kk].g.visible=false; const r=ED.r; r.g.visible=true; poseRider(r,prev.crank); radRoll(r,prev.rd); r.g.rotation.y=-0.65+Math.sin(t*.5)*.35; // Editor-Vorschau
     prev.cam.position.set(1.7,1.35,2.75); prev.cam.lookAt(0,1.0,0); prev.rr.render(prev.sc,prev.cam); const c2=$('edCv'), g3=c2.getContext('2d'); g3.clearRect(0,0,c2.width,c2.height); g3.drawImage(prev.c,0,0,c2.width,c2.height); r.g.visible=false; }
 }
 
