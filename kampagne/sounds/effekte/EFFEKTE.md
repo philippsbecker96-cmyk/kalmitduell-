@@ -66,7 +66,7 @@ Gleiche Helfer wie Mission 1, Lautstärken der neuen Dateien in `TRI_TON_VOL`/`T
 | `hintergrundhappy`, `folkig`, `folkig2` | Wiedergabeliste wie in Mission 1: im Einfahren unter Erzählung und Gedicht (bis 15 s vor den Hunden) · im Ausfahren nach dem Thema |
 | `musik/jagd.mp3` | Straßenhunde, in vier Schüben: beim Aufspringen, vor Klau 5 und 9, und so, dass sie mit der letzten Wurst endet |
 | `musik/waldambient.mp3` | Wald-Teppich ab den Hunden bis „Ertappt“ (leiser im Unwetter) und zwischen Flucht 1 und dem Wiedersehen mit dem Tisch · aus bei Jagd, Idylle, teufelsweg, Flucht |
-| `musik/hintergrundhappy.mp3` | Idylle am Wegweiser zum Jungfernsprung (ab 250 m davor), bricht mit dem Unwetter ab |
+| `musik/hintergrundhappy.mp3` | Idylle am Wegweiser zum Jungfernsprung (ab 250 m davor, unter der langen Kamerafahrt zur Familie und zum Regenbogen), bricht mit dem Unwetter ab |
 | `musik/hintergrundhappy.mp3` (Schleife) | Pause nach Flucht 1: blendet ein, wenn es aufklart, verklingt, wenn es wieder zuzieht (aus nach der Abzweigung „sicher rechts“) |
 | `musik/teufelsweg.mp3` | Anschleichen: startet 86 s vor „Ertappt“, endet genau dort, wird zum Tisch hin lauter – danach kurz Stille |
 | `musik/teufelsjagd.mp3` | **fehlt noch** – Flucht 1 und 2 (Runde 2 lauter), Schleife. Bis die Datei da ist, läuft `omniouswaldnachts` als Platzhalter |

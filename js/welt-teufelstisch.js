@@ -6,7 +6,7 @@
 
 const TT_DAHN={vor:1000, seite:380, breit:40}; // Dahner Felsen mit dem Jungfernsprung: so viele m voraus hinter dem Workout-Ende, so weit links (Seite des Lagerplatzes) – ≈ 1 km entfernt auf dem Horizont (nach Skizze des Nutzers) · breit: halbe Breite der Sichtschneise
 const TT_SICHT={vor:400, breit:9}; // vor dem Tisch: keine Bäume zwischen Weg (die letzten 400 m) und Teufel, halbe Breite der Schneise
-const TT_ABZW={n:14, dreh:.012}; // Abzweigung „sicher rechts“ am Beginn der letzten Kurve vor Runde 2: Waldweg geradeaus (Stücke à 4 m, Drehung je Stück nach links), der Weg zum Tisch biegt rechts ab
+const TT_ABZW={n:28, dreh:.012, w:2.2, frei:[4.5,8], schild:34}; // Abzweigung „sicher rechts“ am Beginn der letzten Kurve vor Runde 2: Waldweg geradeaus (Stücke à 4 m, Drehung je Stück nach links), der Weg zum Tisch biegt rechts ab · halbe Breite · frei von Bäumen: m neben dem Weg, am Eingang (vom Nutzer: größer, sichtbarer) · Wegweiser im Zwickel so viele m nach der Ecke
 const TT_LICHTUNG={bei:[.16,.3,.45,.58,.72,.86], lang:70, wind:.9}; // Lichtungen in der Schleife: Mitte bei so viel der Schleifenlänge (zu nah an Tisch, Gabelung oder Abzweigung: fällt weg), m lang · Wind drückt die Fahrer so weit an den Rand (0 … 1)
 const TT_HUEGEL={r:20, h:4.5}; // Felshügel unter dem Teufelstisch: Radius, Höhe über dem Gelände (Tisch steht 13 m neben der Wegmitte)
 // ---- Vorbereitung (beim Streckenbau): Plätze für Gasthaus, Kirche, Häuser, Felsen; dichter Wald, Bach, Heide ----
@@ -25,7 +25,7 @@ function prepTeufelstisch(r){ const O=r.def.orte, kf=r.kf, S=r.S, q=rng(66), at=
     for(let i=0;i<TT_IDYLL.wald;i++){ const o=6+Math.sqrt(q())*TT_IDYLL.tief, w=h+.04+q()*(a1-h-.04), x=x0+Math.cos(w)*o, y=y0+Math.sin(w)*o, rad=2+q()*2.5, busch=q()<.4;
       if(nah(x,y,(busch?1.5:rad)+3)||amPfad(x,y,(busch?1.2:rad)+1.2)) continue; if(busch) S.bush.push({x,y,s:.7+q()*.9,c:q()}); else S.tree.push({x,y,s:rad,c:q(),pine:q()<.4,ht:10+q()*7}); } }
   { const d=T.ecke, h=headingAt(r,d), [sx,sy]=posAt(r,d), P=[[sx,sy]]; let a=h; for(let k=1;k<=TT_ABZW.n;k++){ a-=TT_ABZW.dreh; const [px,py]=P[k-1]; P.push([px+Math.cos(a)*4,py+Math.sin(a)*4]); } T.abzweig=P; // Abzweigung „sicher rechts“ (vom Nutzer): Waldweg geradeaus, der Weg zum Tisch biegt rechts ab
-    for(const [x,y] of P.slice(2)) frei.push([x,y,3]); }
+    P.slice(2).forEach(([x,y],k)=>frei.push([x,y,k<5?TT_ABZW.frei[1]:TT_ABZW.frei[0]])); const k=Math.round(TT_ABZW.schild/4), [ax,ay]=at(d+TT_ABZW.schild,0); T.abzSchild=[(ax+P[k][0])/2,(ay+P[k][1])/2]; frei.push([...T.abzSchild,1.5]); } // Schneise, am Eingang breiter · Wegweiser zwischen den Wegen
   T.lichtung=[]; { const s0=T.tisch-T.kreuz, sG=T.gabel-T.kreuz, sE=T.ecke-T.kreuz; let k=0; for(const f of TT_LICHTUNG.bei){ const s=f*T.L; if(s<s0+60||s>sG-60&&s<sG+110||Math.abs(s-sE)<60) continue; // Lichtungen in der Schleife (vom Nutzer: dort bläst der Wind die Fahrer an den Rand), nicht am Tisch, an der Gabelung (Steintor) und an der Abzweigung
     const d0=T.kreuz+s-TT_LICHTUNG.lang/2, d1=d0+TT_LICHTUNG.lang; T.lichtung.push({d0,d1,s:k++%2?-1:1}); for(let d=d0-15;d<=d1+15;d+=8) for(const u of [-1,1]) for(const o of [9,24,40]) frei.push([...at(d,u*(rw(d)+o)),o<10?7:13]);
       for(let d=d0;d<d1;d+=1.5){ const sd=q()<.5?-1:1, [x,y]=at(d,sd*(rw(d)+1.2+q()*30)); if(!nah(x,y,2.2)) T.heide.push({x,y,s:.6+q()*.8,c:q(),r:q()*6}); } } } // keine Bäume, viel Heide
@@ -194,7 +194,7 @@ const TT_HIMMEL=[[0,'#3f7dbf','#22305e'],[.22,'#5f97ce','#5b4a7e'],[.3,'#7fb0dc'
 // Unwetter oben am Berg (vom Nutzer): schlagartig, sobald die Kamera vom Jungfernsprung ganz zurück bei den Fahrern ist (ohne Kamerafahrt so viele m hinter dem Wegweiser) – dunkel, grau, Wolken, Wind und Regen, bleibt bis ins Ausfahren, dann klart es zum Sonnenuntergang auf
 const TT_WETTER={nach:45, klar:.3, sun:0x9aa2aa, sunI:.3, hemi:0x8c949e, hemiI:.72, bg:0x5c646e, himmel:0x707882, nebel:[60,750], wind:.5, boe:1.4}; // boe: Wind auf den Lichtungen (schräger Regen, Laub)
 function ttWetterW(rt){ const Z=TT_WETTER, A=anim.tt, T=R.tt, au=(race.woSegs||[]).find(s=>s.label==='Ausfahren'), k=au?1-bSm((rt-au.t0)/(au.dur*Z.klar)):1, C=TT_BOGEN.kam, ik=A&&A.ikT;
-  const an=ik!=null&&ik>0&&rt>=ik+C[1]+C[2]+.2||me.d>=T.idyll+Z.nach, p=ttPauseW(rt); return an?[k*p,k*Math.max(p,TT_PAUSE.wolken)]:[0,0]; } // [Licht/Regen, Wolken]
+  const an=ik!=null&&ik>0?rt>=ik+C[1]+C[2]+.2:me.d>=T.idyll+Z.nach, p=ttPauseW(rt); return an?[k*p,k*Math.max(p,TT_PAUSE.wolken)]:[0,0]; } // [Licht/Regen, Wolken]
 // Pause nach Flucht 1 (vom Nutzer): klart auf (nach klar s recht sonnig, aber nicht ganz wie vorher), verdüstert sich langsam wieder, nach der Abzweigung „sicher rechts“ wieder volles Unwetter
 const TT_PAUSE={klar:150, hell:.12, dunkel:.4, wolken:.3, kipp:[15,90]}; // s bis aufgeklart · Unwetter-Stärke dann · an der Abzweigung · Wolken bleiben mindestens · ab m nach der Abzweigung, über m wieder voll
 function ttPauseW(rt){ const T=R.tt, Z=TT_PAUSE, a=(race.woSegs||[]).find(s=>s.label==='Abgeschüttelt'); if(!a||T.ecke==null||rt<a.t0) return 1; const kipp=bSm((me.d-T.ecke-Z.kipp[0])/Z.kipp[1]); if(kipp>=1) return 1;

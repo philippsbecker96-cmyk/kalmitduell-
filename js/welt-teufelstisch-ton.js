@@ -1,7 +1,7 @@
 /* ===== Mission 2 (Teufelstisch): Musik und Geräusche =====
    Helfer aus Mission 1 (triEins, triLoop, triMusik, triMusikNeu, triFern in welt-trifels-leben.js) · Plan, Dateien und was noch fehlt: kampagne/sounds/effekte/EFFEKTE.md
    ttTon aus rennen.js · fehlende Dateien bleiben still (Verfolgungsstück teufelsjagd: bis es da ist, läuft omniouswaldnachts als Platzhalter) */
-Object.assign(TRI_TON_VOL,{hundemeute:.7, hund_gross:.6, vogel_wald:.5}); // vogel_wald fehlt noch (bleibt still)
+Object.assign(TRI_TON_VOL,{hundemeute:.7, hund_gross:.6, vogel_wald:.5, kinderlachen:.6}); // vogel_wald, kinderlachen fehlen noch (bleiben still)
 Object.assign(TRI_MUSIK,{teufelsweg:['musik/teufelsweg',.5,.6], waldamb:['musik/waldambient',.35], tjagd:['musik/teufelsjagd',.55,2], tjagdP:['musik/omniouswaldnachts',.5,2]}); // tjagdP: Platzhalter fürs Verfolgungsstück
 const TT_TON={hund:35, bell:[2,6], jagdLang:31, thema:36, teufelsweg:86, froh:3}; // Hunde hörbar bis m · Bellen alle s · Jagdmusik spielt s · Thema bis s · teufelsweg endet mit „Ertappt“ · fröhliche Musik so viele s, nachdem der Teufel am Steintor aufschlägt
 let ttTonVor=null, ttJagdDa=null; // ttJagdDa: liegt musik/teufelsjagd.mp3 schon im Ordner?
@@ -20,10 +20,12 @@ function ttTon(dt){ const A=anim.tt; if(!A) return; const run=race.state==='run'
   let jm=0; if(run&&P){ [P.t0, P.klau[4].t-6, P.klau[8].t-6, P.ende-Z.jagdLang].forEach((j,k)=>{ if(rt>=j&&rt<j+Z.jagdLang){ jm=1; if(einmal('jm'+k,true)) triMusikNeu('jagd'); } }); }
   triMusik('jagd',an?jm:0,dt,false);
   // Idylle am Wegweiser zum Jungfernsprung: kurz fröhlich, bricht mit dem Unwetter ab
-  const idy=run&&T.idyll!=null&&me.d>=T.idyll-250&&me.d<T.idyll+45&&sturm<=0; if(einmal('idy',idy)) triMusikNeu('happy');
+  const idy=run&&T.idyll!=null&&me.d>=T.idyll-250&&me.d<T.idyll+250&&sturm<=0; // endet, wenn die Kamera zurück ist (dann kommt das Unwetter) if(einmal('idy',idy)) triMusikNeu('happy');
   // Pause nach Flucht 1: wenn es aufklart, fröhliche Musik und Vögel – verklingt, wenn es wieder zuzieht
   const pw=run&&a1&&rt>=a1.t0&&T.ecke!=null&&me.d<T.ecke+TT_PAUSE.kipp[0]+TT_PAUSE.kipp[1]?ttPauseW(rt):1, froh=D&&D.trip!=null&&rt>=D.trip+TF_STURZ.fall+TT_TON.froh?clampN((.55-pw)/.3,0,1):0; // erst ein paar s, nachdem der Teufel am Steintor auf dem Boden liegt if(einmal('froh',froh>0)) triMusikNeu('happy'); if(triLoops.mhappy) triLoops.mhappy.a.loop=froh>0;
-  triLoop('ttVoegel','vogel_wald',an?froh:0,dt);
+  // Idylle: Vögel zwitschern, Kinder lachen, wenn die Kamera bei der Familie ist und wenn sie zu den Kindern zurückschwenkt
+  const ik=A.ikT, C=TT_BOGEN.kam; if(ik>0){ zu('lachen1',ik+C[1]+.6)&&triEins('kinderlachen',.8); zu('lachen2',ik+C[1]+C[2]-3.5)&&triEins('kinderlachen',1,1.08); }
+  triLoop('ttVoegel','vogel_wald',an?Math.max(froh,idy?.8:0):0,dt);
   // Anschleichen: teufelsweg (86 s) so, dass es mit „Ertappt“ endet, wird zum Tisch hin lauter – danach kurz Stille
   const tw0=e1?e1.t0-Z.teufelsweg:1e9, tw=run&&rt>=tw0&&rt<e1.t0?.7+.3*(rt-tw0)/Z.teufelsweg:0; if(einmal('tw',tw>0)) triMusikNeu('teufelsweg'); triMusik('teufelsweg',an?tw:0,dt,false);
   // Flucht 1 und 2: Verfolgungsstück (Runde 2 lauter), solange es fehlt, der Platzhalter

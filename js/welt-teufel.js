@@ -5,7 +5,7 @@
    mit Beginn von „Ertappt“ entdeckt er dich (kurz bevor du auf seiner Höhe bist), steigt auf den Stuhl, springt auf den Weg
    und verfolgt dich zu Fuß (Gummiband-Abstand hinter dir, beim Dreizack dicht dran und pieksend). Nach Flucht 1 stolpert er über das Steintor hinter der Gabelung (tfSteintor, TF_STURZ),
    flucht dort und stapft quer durch den Wald zurück an den Tisch – kommt an, wenn du aus der letzten Kurve kommst (TF_R2), steigt auf den Stuhl, ext seinen Schoppen (tfExen, tfGlas),
-   reißt die Platte heraus und springt wieder auf den Weg. Im Schlusssprint fällt er zurück und steht außer Atem da, Hände auf den Knien, Rauch aus den Ohren (TF_ABH, TF_PUST).
+   reißt die Platte heraus und springt wieder auf den Weg. Im Schlusssprint fällt er zurück und steht außer Atem da, Hände auf den Knien, Rauch aus den Ohren, Schweißtropfen, plumpst dann auf den Hintern (TF_ABH, TF_PUST, TF_PLUMPS, tfSchweiss); Kamera zoomt heran.
    In Dreizack 1 und 2 sticht er zuerst Friedel in den Hintern (TT_PIEK, ttPiekF). Besteckwürfe in Flucht 1 (Gabel, Messer), Runde 2 wütend (Flügel offen, Augen heller, Rauch,
    haut auf den Tisch), reißt die Tischplatte heraus, trägt sie über dem Kopf und wirft sie im Tischwurf neben den Weg (tfWuerfe, tfWurf, tfPlatte, tfGroll). Ablauf aus dem Workout (teufelSkript), Rückblicke der Kamera: teufelKamera */
 
@@ -21,7 +21,8 @@ const TT_TOR_BAEUME=[[9,1,13],[13,-1,15],[18,1,12],[22,-1,14],[27,1,13]]; // Kie
 const TT_PIEK={stich:5.6, abst:14, zurueck:4.5}; // Friedel wird in Dreizack 1 und 2 gepiekst: s nach Beginn · Abstand des Teufels hinter dir · so viele m fällt Friedel hinter dich zurück
 const TF_PUST={b:[[-.65,1.15,-.8],[-.65,1.15,-.8]], l:.8, k:[-.55,0], a:[[-1,.05,-.25],[-1,.05,-.25]], j:.35}; // außer Atem: vornübergebeugt, Hände auf den Knien, schaut hoch, Maul offen
 const TF_R2={an:1.2, blick:.7, steig:1.4, exD:2.6, weg:.8, rip:.3, bruell:1.6}; // Runde 2 (vom Nutzer): am Felsstuhl so viele s, nachdem du an der Kreuzung bist (man sieht die letzten Schritte) · dann nacheinander (s): sieht dich, steigt auf den Stuhl, ext den Schoppen, wirft das Glas weg, reißt die Platte heraus, bruellt – springt frühestens 1 s, nachdem du am Tisch bist
-const TF_ABH={zurueck:8, brems:2.4, kam:[-1.5,5]}; // Schlusssprint (vom Nutzer): so viele s vor dem Ende fällt er zurück, bremst mit m/s² · Blick zurück [s zum Ende, Dauer]
+const TF_ABH={zurueck:8, brems:2.4, kam:[-2,15], plumps:[3.4,.45], sehen:1.5}; // Schlusssprint (vom Nutzer): so viele s vor dem Ende fällt er zurück, bremst mit m/s² · Blick zurück [s zum Ende, Dauer] (vom Nutzer: länger, näher) · plumpst so viele s nach dem Stehenbleiben auf den Hintern, Dauer · Zoom: so viel × Größe im Bild
+const TF_PLUMPS={b:[[-1.45,.35,-.3],[-1.4,.3,-.35]], l:.3, k:[.35,0], a:[[-.35,.3,-.6],[-.4,-.3,-.6]], j:.45, tief:.8}; // völlig fertig auf dem Hintern: Beine nach vorn, Arme auf den Knien, Kopf hängt · tief: Körper so viel (× Größe) tiefer
 const tfTobe=y=>({...TF_WUT, a:[TF_WUT.a[0].map((v,k)=>k?v:v+.22*Math.sin(y*7)),TF_WUT.a[1].map((v,k)=>k?v:v+.28*Math.sin(y*5.5))], j:.3+.12*Math.sin(y*11)}); // schüttelt Faust und Dreizack, bruellt
 const tfHeimZiel=S=>{ const x=S.x+Math.cos(S.ry)*6, z=S.z-Math.sin(S.ry)*6; return [x,bodenY(x,z),z]; }; // neben dem Felsstuhl
 const TF_MERK={vor:4.5, frier:.35, blick:[.35,.6], teller:1.1, zu:1.25, schreck:1.5, hop:.6, ende:2.9, auf:4.4, hoch:2.6}; // Ertappt (vom Nutzer): Friedel verrät euch so viele s vorher · dann (s nach Beginn von „Ertappt“) erstarrt er mit der Gabel vor dem Maul, Doppelblick (kurz rüber, zurück auf den Teller, ruckartig zu dir), schreckt auf (hüpft so viele m hoch), setzt sich wieder, steigt auf den Stuhl
@@ -176,7 +177,7 @@ function poseTeufel(dt){ const D=anim.tt&&anim.tt.teufel; if(!D) return; const r
     if(u<0){ pos=H.a; ry=D.ry=tfWinkel(D.ry,zuMir(pos[0],pos[2],D.ry),Math.min(1,dt*2)); P=tfMixP(TF_STEH,tfTobe(rt),bSm(Math.sin(rt*.5)*2)); wut=true; } // steht erst noch fluchend am Steintor
     else if(u<1){ const p=tfMix(H.a,H.z,u); p[1]=bodenY(p[0],p[2]); pos=p; ry=D.ry=Math.atan2(H.z[0]-H.a[0],H.z[2]-H.a[2]); D.phi+=Z.geh/(Z.schritt*.6)*2*Math.PI*lauf; P=tfLauf(D.phi,.45,0); P.k=[.15,0]; }
     else { pos=H.z; P=tfMixP(TF_STEH,TF_STEH,0); } }; // angekommen (dann beginnt Runde 2)
-  let pitch=0, pf=null; D.dzL=0; D.pust=0;
+  let pitch=0, pf=null; D.dzL=0; D.pust=0; D.sitz=0;
   if(ph==='jagd'){ if(D.jagd!==i){ D.jagd=i; D.d=rr.dB+4; D.v=7; } if(me.d-D.d>150||D.d>me.d) D.d=me.d-Z.abst; // nach einem Sprung im Testmodus: gleich hinter dir
     pf=ttPiekF(rt,8); const dz=K.dz.find(([a,d])=>rt>a-2&&rt<a+d+2), nw=dz?bSm((rt-dz[0]+1.5)/1.5)*bSm((dz[0]+dz[1]+1.5-rt)/1.5):0, g=Z.abst+3*Math.sin(rt*.35);
     const m=jag(pf?TT_PIEK.abst:g+(Z.nah-g)*nw); let st=0; if(dz&&nw>.5&&!pf){ const c=((rt-dz[0])%2.2)/2.2; st=c<.15?bSm(c/.15):c<.35?1:1-bSm((c-.35)/.5); } // Dreizack-Piekser – in Dreizack 1 und 2 zuerst auf Friedel
@@ -192,9 +193,11 @@ function poseTeufel(dt){ const D=anim.tt&&anim.tt.teufel; if(!D) return; const r
         pos=pL; pos[1]+=.5*Math.abs(Math.sin(z*8))*Math.exp(-z*5); pitch=PL; P={...TF_LIEG,k:[-.6,z>2?.35*Math.sin(z*2.2):0]}; D.dzL=1; } // schlägt auf, federt nach, liegt, schüttelt den Kopf
       else if(y<F.fall+F.liegen+F.auf){ const w=bSm((y-F.fall-F.liegen)/F.auf); pos=tfMix(pL,amWeg(dU),w); pitch=PL*(1-w); P=tfMixP(TF_LIEG,TF_STEH,w); D.dzL=1-w; }
       else { D.d=dU; heim(D.trip+F.fall+F.liegen+F.auf); } } }
-  else if(ph==='abh'){ const y=rt-rr.tE; if(D.jagd!==i||me.d-D.d>400){ D.d=me.d-(y>3?70:Z.abst); D.v=y>3?0:me.v; } D.jagd=i; // Schlusssprint: kommt nicht mehr mit, wird langsamer und bleibt außer Atem stehen
-    D.v=Math.max(0,D.v-TF_ABH.brems*lauf); D.d+=D.v*lauf; D.phi+=D.v/Z.schritt*2*Math.PI*lauf; pos=amWeg(D.d); if(D.v>.3) D.ry=Math.PI/2-headingAt(R,D.d); ry=D.ry; const m=Math.min(1,D.v/4), w=1-bSm((D.v-.5)/3), b=Math.sin(t*5);
-    P=tfMixP(tfLauf(D.phi,m,0),{...TF_PUST, l:TF_PUST.l+.06*b, k:[TF_PUST.k[0]+.08*b,0], j:.3+.12*b},w); pos[1]-=.055*Z.k*w; D.pust=w; } // Hände auf den Knien, schnauft
+  else if(ph==='abh'){ const y=rt-rr.tE; if(D.jagd!==i||me.d-D.d>400){ D.d=me.d-(y>3?70:Z.abst); D.v=y>3?0:me.v; D.abhT=y>3?rt-9:null; } D.jagd=i; // Schlusssprint: kommt nicht mehr mit, wird langsamer und bleibt außer Atem stehen
+    D.v=Math.max(0,D.v-TF_ABH.brems*lauf); D.d+=D.v*lauf; D.phi+=D.v/Z.schritt*2*Math.PI*lauf; pos=amWeg(D.d); if(D.v>.3) D.ry=Math.PI/2-headingAt(R,D.d); const m=Math.min(1,D.v/4), w=1-bSm((D.v-.5)/3), b=Math.sin(t*3);
+    if(w>.95&&D.abhT==null) D.abhT=rt; const z=D.abhT==null?0:rt-D.abhT, [p0,pd]=TF_ABH.plumps, u=bSm((z-p0)/pd), PS=TF_PLUMPS, kipp=Math.max(0,Math.sin(z*.9)); ry=D.ry+.07*Math.sin(t*1.3)*w*(1-u); // schwankt, solange er steht
+    const steh={...TF_PUST, l:TF_PUST.l+.12*b, k:[TF_PUST.k[0]+.12*b,0], a:TF_PUST.a.map(A=>[A[0]+.08*b,A[1],A[2]]), j:.32+.18*b}, sitz={...PS, l:PS.l+.1*b, k:[PS.k[0]-.75*kipp+.06*b,.15*Math.sin(t*.6)], a:PS.a.map(A=>[A[0]+.1*b,A[1],A[2]]), j:PS.j-.1+.2*Math.abs(b)}; // tief und langsam schnaufen, sitzend legt er immer wieder den Kopf in den Nacken und japst
+    P=tfMixP(tfLauf(D.phi,m,0),tfMixP(steh,sitz,u),w); const zb=z-p0-pd; pos[1]-=(.055*w*(1-u)+PS.tief*u)*Z.k-(zb>0?.06*Z.k*Math.exp(-zb*6)*Math.abs(Math.sin(zb*14)):0); D.pust=w; D.sitz=u; } // Hände auf den Knien, dann plumpst er auf den Hintern und federt nach
   const wa=pf?bSm((pf.y-4.4)/.4)*(1-bSm((pf.y-6.6)/.4)):0; if(wa>0) P.a[1]=tfMix(P.a[1],[-.7,-.05,-.2],wa); // Arm zum Stich auf Friedel
   const aus=(t0,rel)=>{ const y=rt-t0; return K&&y>-.1&&y<rel-t0+.5?(y<rel-t0?bSm(y/(rel-t0-.15)):1-bSm((y-(rel-t0))/.5)):0; }, wurfArm=(t0,rel)=>{ const y=rt-t0, r=rel-t0; return y<r-.15?[-3,-.1,-.6]:[-1.3,.1,-.2]; }; // Ausholen und Werfen mit links
   if(K) for(const t0 of K.bw){ const w=aus(t0,t0+1.15); if(w>0) P.a[0]=tfMix(P.a[0],wurfArm(t0,t0+1.15),w); }
@@ -202,7 +205,7 @@ function poseTeufel(dt){ const D=anim.tt&&anim.tt.teufel; if(!D) return; const r
   tfPose(D,P); D.G.position.set(...pos); D.G.rotation.y=ry; D.G.rotation.x=pitch; const sw=D.schreckW; D.schwanz.forEach((s,k)=>{ s.rotation.z=.12*Math.sin(t*1.8+k*.7)*(1-sw)+.06*sw*Math.sin(t*47+k); s.rotation.x=k?.2*(1-sw):-2.3+1*sw; }); // beim Schreck steht der Schwanz kerzengerade
   D.flW=(D.flW||0)+((zorn?1:0)-(D.flW||0))*Math.min(1,dt*2); D.fluegel.forEach((f,k)=>{ const s=k?-1:1, w=D.flW; f.rotation.set(-.15+.3*w,s*(1.25-1.05*w),s*w*(.15+.1*Math.sin(t*3.2))); f.scale.x=.5+.5*w; }); // Flügel spreizen sich, schlagen leicht
   D.augM.color.set(zorn||sw>.3?'#fffbe6':wut?'#fff27a':'#ffc21a'); { const f=zorn?1.35:1+.7*sw; D.augen.forEach(a=>a.scale.set(1.2*f,.7*f,.6*f)); }
-  tfWuerfe(D,K,rt,run,zorn,ph,t); tfGlas(D,K,rt); tfComic(D,rt,t);
+  tfWuerfe(D,K,rt,run,zorn,ph,t); tfGlas(D,K,rt); tfComic(D,rt,t); if(D.schreck==null&&D.pust>.5) tfSchweiss(D,t);
   // Stich auf Friedel: Dreizack zielt auf seinen Hintern, gleitet in der Faust nach vorn bis knapp hinein
   const Fr=anim.tt.friedel, dz=D.dz; dz.position.copy(D.dz0); dz.quaternion.set(0,0,0,1); if(D.dzL>0) dz.rotation.x=1.5*D.dzL; // liegt beim Sturz flach neben ihm
  
@@ -212,7 +215,7 @@ function poseTeufel(dt){ const D=anim.tt&&anim.tt.teufel; if(!D) return; const r
   // Staubwolke beim Sturz
   // Rauch in Runde 2: steigt aus Nüstern und zwischen den Hörnern auf, im Schlusssprint aus den Ohren
   { const kp=D.kopf.getWorldPosition(new THREE.Vector3()), ohr=D.pust>.3, r=D.G.rotation.y; D.rauch.forEach((s,k)=>{ s.visible=zorn; if(!zorn) return; const a=((t*(ohr?1.1:.6)+k/D.rauch.length)%1), sd=k%2?1:-1;
-    if(ohr){ const o=D.kopf.localToWorld(new THREE.Vector3(sd*.11,.12,-.01)); s.position.set(o.x+Math.cos(r)*sd*a*3,o.y+a*5,o.z-Math.sin(r)*sd*a*3); s.scale.setScalar(1+a*4); s.material.opacity=.75*Math.sin(Math.PI*a); return; } // außer Atem: Rauch aus den Ohren
+    if(ohr){ const o=D.kopf.localToWorld(new THREE.Vector3(sd*.11,.12,-.01)), a2=((t*1.4+k/D.rauch.length)%1); s.position.set(o.x+Math.cos(r)*sd*a2*3.5,o.y+a2*7,o.z-Math.sin(r)*sd*a2*3.5); s.scale.setScalar(1.5+a2*6); s.material.opacity=.85*Math.sin(Math.PI*a2); return; } // außer Atem: dicke Rauchwolken aus den Ohren
     s.position.set(kp.x+sd*.6+Math.sin(k*2.1+t)*.8*a, kp.y+1.2+a*7*Z.k/12.5, kp.z+Math.cos(k*1.7)*.6*a); s.scale.setScalar(1.2+a*4); s.material.opacity=.55*Math.sin(Math.PI*a); }); }
   tfPuffTick(D,rt,run);
   { const a=D.staubT!=null&&run?rt-D.staubT:9, A=D.staubP, B=D.staubB||A, n=D.staub.length; D.staub.forEach((s,k)=>{ s.visible=a<3.2; if(!s.visible) return; const f=k/(n-1), sd=k%2?1:-1, r=1.5+a*5*(.6+.4*(k%3)/2), x=A[0]+(B[0]-A[0])*f, z=A[2]+(B[2]-A[2])*f, hd=headingAt(R,R.tt.tor.d); // Staubwalze den ganzen Körper entlang
@@ -224,6 +227,9 @@ function tfComicBau(D){ const sp=(tex,w,h)=>{ const s=new THREE.Sprite(new THREE
   const str=canvasTex(256,256,g=>{ g.strokeStyle='#1a1410'; g.lineCap='round'; for(let i=0;i<12;i++){ const a=i/12*Math.PI*2+(i%2)*.12, r0=i%2?86:80, r1=i%2?108:120; g.lineWidth=i%2?6:9; g.beginPath(); g.moveTo(128+Math.cos(a)*r0,128+Math.sin(a)*r0); g.lineTo(128+Math.cos(a)*r1,128+Math.sin(a)*r1); g.stroke(); } }); // kurze Striche im Kreis, abwechselnd dick und dünn
   const tr=canvasTex(32,48,g=>{ g.beginPath(); g.moveTo(16,3); g.quadraticCurveTo(29,28,26,34); g.arc(16,34,10,0,Math.PI); g.quadraticCurveTo(3,28,16,3); g.fillStyle='#9ad4f4'; g.fill(); g.lineWidth=2.5; g.strokeStyle='#1a3a5a'; g.stroke(); g.fillStyle='#ffffff'; g.fillRect(19,28,3,6); });
   D.comic={aus:sp(aus,1.8,3.6), str:sp(str,7,7), tr:[0,1,2].map(()=>sp(tr,.7,1.05)), wurst:new THREE.Mesh(new THREE.SphereGeometry(.022*TEUFEL.k,10,8),lam('#94562e'))}; D.comic.wurst.scale.set(3,1,1); D.comic.wurst.visible=false; D.comic.wurst.userData.ohneBoden=true; world.add(D.comic.wurst); }
+// Schweißtropfen außer Atem (Schlusssprint): perlen vom Kopf und fallen, Sprites vom Cartoon-Schreck
+function tfSchweiss(D,t){ const C=D.comic; if(!C) return; const kp=D.kopf.getWorldPosition(new THREE.Vector3()), k=TEUFEL.k, r=D.G.rotation.y;
+  C.tr.forEach((sp,i)=>{ const f=(t*.7+i/3)%1, sd=i===1?0:i?1:-1, o=.13*k+.6*f; sp.visible=true; sp.material.opacity=1-f*f; sp.position.set(kp.x+Math.cos(r)*sd*o,kp.y+.1*k-5*f*f,kp.z-Math.sin(r)*sd*o); }); }
 function tfComic(D,rt,t){ const C=D.comic; if(!C) return; const M=TF_MERK, y=D.schreck, V=THREE.Vector3; C.aus.visible=C.str.visible=false; C.tr.forEach(s=>s.visible=false); if(y==null){ C.wurst.visible=false; C.wP=null; return; }
   const kp=D.kopf.getWorldPosition(new V()), k=TEUFEL.k, s=y-M.schreck;
   if(y>=M.zu&&y<M.schreck+1.7){ const a=y-M.zu, pop=a<.18?.4+.9*a/.18:1+.12*Math.exp(-(a-.18)*6)*Math.sin((a-.18)*30); C.aus.visible=true; C.aus.scale.set(1.8*pop,3.6*pop,1); C.aus.position.set(kp.x,kp.y+.36*k+.8*Math.sin(Math.min(1,a/.18)*Math.PI/2),kp.z); } // ploppt über dem Kopf auf
@@ -281,6 +287,7 @@ function ttAusweich(d){ const A=anim.tt; if(!A||race.state!=='run') return 0; le
 
 // ---- Kamera (aus rennen.js): Blick zurück auf den Teufel – beim Sprung auf den Weg, alle 45 s in der Flucht, beim Dreizack ----
 function teufelKamera(dt){ const D=anim.tt&&anim.tt.teufel, ich=riders3d[myKey]; if(!D||!D.sk||race.state!=='run'||!ich) return; const rt=race.t, tr=D.trip!=null&&rt>=D.trip-.2&&rt<D.trip+6.3?[D.trip-.2,6.5]:null, k=tr||D.sk.kam.find(([a,T])=>rt>=a&&rt<a+T); if(!k) return; // Sturz am Steintor: Blick zurück
-  const [a,T]=k, w=bSm((rt-a)/.6)*bSm((a+T-rt)/.7), rp=ich.g.position, bc=tr?D.kopf.getWorldPosition(new THREE.Vector3()).setY(D.G.position.y-.6*TEUFEL.k):D.G.position, hd=headingAt(R,me.d), fx=Math.cos(hd), fz=Math.sin(hd), sx=bc.x-rp.x, sz=bc.z-rp.z, sl=Math.hypot(sx,sz)||1;
-  const pos=new THREE.Vector3(rp.x+fx*5-sx/sl*2.5, rp.y+2.4, rp.z+fz*5-sz/sl*2.5), look=new THREE.Vector3(bc.x, bc.y+.85*TEUFEL.k, bc.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz);
-  camera.position.lerp(pos,w); camera.lookAt(now.lerp(look,w)); } // wie rueckblick (welt-unterwegs.js), Zeit aus dem Workout
+  const [a,T]=k, ab=!tr&&k===D.sk.kam[D.sk.kam.length-1], w=bSm((rt-a)/.6)*bSm((a+T-rt)/.7), rp=ich.g.position, bc=tr?D.kopf.getWorldPosition(new THREE.Vector3()).setY(D.G.position.y-.6*TEUFEL.k):D.G.position, hd=headingAt(R,me.d), fx=Math.cos(hd), fz=Math.sin(hd), sx=bc.x-rp.x, sz=bc.z-rp.z, sl=Math.hypot(sx,sz)||1;
+  const pos=new THREE.Vector3(rp.x+fx*5-sx/sl*2.5, rp.y+(ab?4.2:2.4), rp.z+fz*5-sz/sl*2.5), look=new THREE.Vector3(bc.x, bc.y+(ab?.85-.4*(D.sitz||0):.85)*TEUFEL.k, bc.z), now=new THREE.Vector3(camS.lx,camS.ly,camS.lz);
+  camera.position.lerp(pos,w); camera.lookAt(now.lerp(look,w));
+  if(ab){ const fz2=2*Math.atan(TF_ABH.sehen*TEUFEL.k/2/Math.max(1,camera.position.distanceTo(look)))*180/Math.PI; camera.fov+=(Math.min(camera.fov,Math.max(6,fz2))-camera.fov)*w; camera.updateProjectionMatrix(); } } // abgehängt: Kamera höher (dein Fahrer nicht im Bild), zoomt heran, er bleibt gleich groß im Bild (wie mondKamera) // wie rueckblick (welt-unterwegs.js), Zeit aus dem Workout
