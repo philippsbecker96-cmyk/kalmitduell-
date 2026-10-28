@@ -203,6 +203,7 @@ const fotoHoechst=()=>{ let b=-1e9, bd=R.len/2; for(let d=0;d<R.len;d+=10){ cons
 const fotoSteil=()=>{ const A=[]; for(let d=R.len*.5;d<R.len;d+=5) A.push([d,bankAt(d)]); const b=Math.max(...A.map(x=>x[1])), S=A.filter(x=>x[1]>=b*.98); return (S[0][0]+S[S.length-1][0])/2; }; // Mitte der Steilkurve in der zweiten Rundenhälfte
 function fotoStellen(){ const T=race.mode==='train', L=!T&&R.loop&&race.laps>1?[{d:(race.laps-1)*R.len+R.len*.4,n:'Letzte Runde'}]:[], ziel=n=>({ziel:1,n:T?'Workout geschafft':n});
   if(R.tri) return [{t:20,n:'Aufbruch zum Trifels'}, ...(R.tri.sau!=null?[{d:R.tri.sau+25,n:'Das Wildschwein'}]:[]), ...(R.tri.tritsch!=null?[{d:R.tri.tritsch+15,n:'Elwetritsche!'}]:[]), {d:R.tri.gast.d-30,n:'Gasthaus „Zum Teufelstisch“'}];
+  if(R.tt&&R.tt.tL!=null) return [{t:6,n:'Start am Gasthaus'}, {d:R.len*.4,n:'Unterwegs'}, {d:fotoHoechst(),n:'Höchster Punkt'}, {t:R.tt.tL+26,n:'Am Lagerfeuer'}]; // Mission 2: am Ende blendet das Bild ab
   if(R.kalmit) return [{t:6,n:'Start in Maikammer'}, {d:1500,n:'Durch die Weinberge'}, {d:R.kehren.length?R.kehren[R.kehren.length>>1]:R.len*.6,n:'In der Kehre'}, ziel('Gipfel')];
   if(R.def.burg) return [{t:4,n:'Bauernfest in Erlenbach'}, {d:BETR.d+10,n:'Der Betrunkene'}, {d:BETTLER.d+40,n:'Vor der Zugbrücke'}, ziel('Burg Berwartstein')];
   if(R.stadium) return [{t:4,n:'Start auf dem Betzenberg'}, {d:fotoSteil(),n:'Steilkurve'}, ...L, ziel('Zieleinlauf')];
