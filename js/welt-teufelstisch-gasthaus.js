@@ -1,26 +1,20 @@
 /* ================= Teufelstisch (Kampagne, Mission 2) – Anfangsszene im Gasthaus „Zum Teufelstisch“ =================
    Beim Countdown und in den ersten TT_GAST.halt s steht man (R.def.halte, man tritt schon), die Kamera ist drinnen: eigener Innenraum in eigener Szene TT_INNEN mit eigenem Licht
    (kein Sonnenlicht, kein Nebel), gezeichnet statt der Welt, solange A.innen.an (rennen.js). Holzraum mit Tresen, Regalen, Fässern, Kamin, Treppe, drei Tischen, Wagenrad-Leuchter,
-   Deko: ausgestopfte Elwetritsche (Bezug zu Mission 1), ausgestopfter Fuchs, Geweihe. Du und Friedel sitzt am Tisch, Friedel hat Kopfweh, der Wirt bringt einen Konterschoppen,
-   warnt vor dem Teufel, Friedel winkt ab. Dann Schnitt auf die Tür von außen (der Wirt winkt), ihr fahrt vom Hof, Kamera fliegt zu dir. Sprüche in TT_GAST_TXT (Platzhalter). */
+   Deko: ausgestopfte Elwetritsche (Bezug zu Mission 1), ausgestopfter Fuchs, Geweihe. Du und Friedel sitzt am Tisch, Friedel hat Kopfweh, der Wirt kommt an den Tisch,
+   rät euch, unten durchs Tal zu fahren statt am Teufelstisch vorbei, Friedel winkt ab und raunt dir zu (vom Nutzer: kurz halten). Dann Schnitt auf die Tür von außen (der Wirt winkt), ihr fahrt vom Hof, Kamera fliegt zu dir. Sprüche in TT_GAST_TXT (Platzhalter). */
 
-const TT_GAST={halt:44, raus:6, flug:3}; // s nach dem Start drinnen (gerade Zahl wie das Raster von kampPlan) · s Blick auf die Tür von außen · s Flug zu dir – danach die Story-Tafel (kampagne.js)
+const TT_GAST={halt:26, raus:6, flug:3}; // s nach dem Start drinnen (gerade Zahl wie das Raster von kampPlan) · s Blick auf die Tür von außen · s Flug zu dir – danach die Story-Tafel (kampagne.js)
 const TT_INNEN=new THREE.Scene(); // eigener Innenraum, liegt nicht in der Welt
 // Sprüche [Szenenzeit kt, Dauer, Sprecher, Text] – kt: 0–5 Countdown, danach 5 + Workout-Zeit · PLATZHALTER, Texte schreibt der Nutzer
-const TT_GAST_TXT=[[4.5,5.5,'friedel','[PLATZHALTER] Uuuh … mei Kopp. Do drin hämmert’s wie in de Schmied.'],[10,3,'friedel','[PLATZHALTER] *rülps* … ’tschuldigung.'],
-  [13.5,4.5,'wirt','[PLATZHALTER] Do, Friedel – en Schoppe. Du siehscht aus, als hättscht en nötich.'],[18.5,5,'friedel','[PLATZHALTER] Genau den brauch ich jetzt – gege mein Kater! Vergelt’s Gott, Wirt.'],
-  [24.5,4.5,'wirt','[PLATZHALTER] Unn wo soll’s hiegehe, ihr zwee?'],[29,4,'friedel','[PLATZHALTER] Nuff Richtung Dahn – am Teufelstisch vorbei.'],
-  [33,4.5,'wirt','[PLATZHALTER] Am Teufelstisch?! Basst bloß uff – do owwe isst de Deiwel zu Mittag!'],[37.5,3.5,'wirt','[PLATZHALTER] Wer den beim Esse stört, der kummt net mehr ganz hääm.'],
-  [41,4,'friedel','[PLATZHALTER] Ach was, Ammemärche! Nur die paar Kilometer – do kann jo nix schief geh!']];
+const TT_GAST_TXT=[[11.5,5.5,'wirt','[PLATZHALTER] Wenn ihr Richtung Dahn wollt, dann fahrt unne durchs Tal, Richtung Jungfernsprung.'],
+  [17.3,5,'wirt','[PLATZHALTER] Am Teufelstisch wollt ihr net vorbei – glaabt mer’s.'],[22.5,3.5,'friedel','[PLATZHALTER] Jo jo, mache mer schunn so.'],
+  [26.3,4.2,'friedel','[PLATZHALTER] (leise zu dir) Jo – was der wieder meent …']];
 // Kamera drinnen: [ab kt, Position und Blick am Anfang, Position und Blick am Ende der Einstellung] – harter Schnitt zwischen den Einstellungen, dazwischen langsame Fahrt
 const TT_GAST_KAM=[[0,[2,2.4,3.85],[-1,1.25,-1.6],[1.8,2.3,3.6],[-1,1.25,-1.5]], // Totale von vorn, erhöht: unten du, rechts Friedel, darüber frei der Wirt hinter dem Tresen mit der Elwetritsche, rechts der Kamin
-  [9,[1.15,1.62,2.7],[1.5,1.32,.48],[1.12,1.6,2.55],[1.5,1.34,.48]], // über deine rechte Schulter auf Friedel (du links am Bildrand, er frei in der Mitte)
-  [13,[2.4,1.7,2.9],[-1.2,1.15,-1.2],[2.2,1.65,2.7],[-.8,1.15,-.6]], // der Wirt kommt mit dem Schoppen vom Tresen an euren Tisch (links vom Unterzug, sonst hängt der Balken im Bild)
-  [18.5,[2.5,1.35,2.2],[1.5,1.2,.5],[2.3,1.35,1.9],[1.5,1.25,.5]], // Friedel trinkt
-  [24.5,[2.9,1.6,1.25],[0,1.45,.95],[2.8,1.6,1.22],[0,1.45,.95]], // längs über den Tisch auf den Wirt
-  [33,[2.8,1.6,1.22],[0,1.45,.95],[1.7,1.58,1.12],[0,1.5,.95]], // langsam heran, während er warnt
-  [41,[1.15,1.62,2.7],[1.5,1.32,.48],[1.1,1.58,2.5],[1.5,1.34,.48]], // Friedel winkt ab
-  [45,[-.6,1.9,-.9],[-2.7,2.35,-3.8],[-1.7,2.15,-2.4],[-2.7,2.35,-3.8]]]; // zur ausgestopften Elwetritsche hinter dem Tresen – die Augen zucken
+  [7,[2.4,1.7,2.9],[-1.2,1.15,-1.2],[2.2,1.65,2.7],[-.8,1.15,-.6]], // der Wirt kommt vom Tresen an euren Tisch (links vom Unterzug, sonst hängt der Balken im Bild)
+  [11.5,[2.9,1.6,1.25],[0,1.45,.95],[2.4,1.6,1.2],[0,1.5,.95]], // längs über den Tisch auf den Wirt, langsam heran, während er warnt
+  [22.5,[1.3,1.7,3],[.8,1.3,.5],[1.2,1.65,2.8],[.9,1.3,.5]]]; // hinter dir: Friedel rechts, der Wirt links ganz im Bild – winkt ab, Wirt geht, Friedel raunt dir zu
 const ttInnenAn=()=>!!(anim.tt&&anim.tt.innen&&anim.tt.innen.an);
 const ttAnzeigenAus=()=>{ const N=anim.tt&&anim.tt.innen; return !!N&&(race.state==='count'||race.state==='run')&&N.kt<5+TT_GAST.halt+TT_GAST.raus+TT_GAST.flug; }; // Anzeigen (Watt, Intervall, Karte, Profil) erst nach Gasthaus, Tür und Flug zu dir (vom Nutzer) – blenden mit der Tafel ein
 
@@ -115,29 +109,26 @@ function poseTtGast(dt){ const A=anim.tt, N=A&&A.innen; if(!N) return; const st=
   const sm=(a,b)=>bSm((kt-a)/(b-a)), F=N.friedel, W=N.wirt, f=F.arme[1], fk=F.kopf;
   // du: Bauer oder Bäuerin, schaust zum, der gerade spricht
   for(const k of ['bauer','baeuerin']) N.ich[k].G.visible=k===(KST.stand==='baeuerin'?'baeuerin':'bauer'); const ich=N.ich[KST.stand==='baeuerin'?'baeuerin':'bauer'];
-  const spr=TT_GAST_TXT.find(([a,d])=>kt>=a&&kt<a+d), zuW=spr&&spr[2]==='wirt'&&kt>17; ich.kopf.rotation.y+=((zuW?.72:-.45)-ich.kopf.rotation.y)*Math.min(1,dt*3);
-  // Friedel: Kopfweh (Hand am Kopf), rülpst, greift nach dem Schoppen und trinkt, redet, winkt ab
-  let fx=-.95, fz=.12, kx=.05, ky=0; const tr=kt>=18.8&&kt<23.8;
-  if(kt<10){ fx=-2.7; fz=-.45; kx=.25+.05*Math.sin(t*1.3); ky=.08*Math.sin(t*.9); } else if(kt<11){ kx=-.35*Math.sin(Math.PI*(kt-10)); }
-  if(tr){ const g=kt<19.8?sm(18.8,19.8):kt<22.6?1:1-sm(22.6,23.8), hoch=sm(20,20.9)*(1-sm(22.2,23)); fx=-.95-.35*g-1.05*hoch; kx=-.4*hoch; }
-  if(kt>=29&&kt<33){ fx=-1.3+.2*Math.sin(t*5); } if(kt>=24.5&&kt<41&&!(kt>=29&&kt<33)) ky=-.9; if(kt>=41){ fx=-1.7; fz=-.2+.5*Math.sin(t*9); ky=.3*Math.sin(t*7); }
+  const spr=TT_GAST_TXT.find(([a,d])=>kt>=a&&kt<a+d), zuW=spr&&spr[2]==='wirt'; ich.kopf.rotation.y+=((zuW?.72:-.45)-ich.kopf.rotation.y)*Math.min(1,dt*3);
+  // Friedel: Kopfweh (Hand am Kopf), hört dem Wirt zu, winkt ab, beugt sich zu dir und grinst
+  let fx=-.95, fz=.12, kx=.05, ky=0;
+  if(kt<11.5){ fx=-2.7; fz=-.45; kx=.25+.05*Math.sin(t*1.3); ky=.08*Math.sin(t*.9); } else if(kt<22.5) ky=-.9;
+  else if(kt<26){ fx=-1.7; fz=-.2+.5*Math.sin(t*9); ky=-.9+.3*Math.sin(t*7); } else { fx=-1.3; ky=-.45; kx=.15; }
   f.rotation.x+=(fx-f.rotation.x)*Math.min(1,dt*8); f.rotation.z+=(fz-f.rotation.z)*Math.min(1,dt*8); fk.rotation.x+=(kx-fk.rotation.x)*Math.min(1,dt*8); fk.rotation.y+=(ky-fk.rotation.y)*Math.min(1,dt*5);
-  F.G.position.y=-.3+(kt>=10&&kt<10.4?.05*Math.sin(Math.PI*(kt-10)/.4):0);
-  // Schoppen: beim Wirt in der Hand, ab 18 s auf dem Tisch, beim Trinken in Friedels Hand, danach fast leer auf dem Tisch
-  const inF=tr&&kt>=19.8&&kt<23.2; N.gH.visible=kt<18; N.gT.visible=kt>=18&&!inF; N.gF.visible=inF; N.gT.userData.wein.scale.y=kt>=23.2?.3:1; N.gT.userData.wein.position.y=kt>=23.2?-.05:-.012;
-  // Wirt: poliert hinter dem Tresen einen Krug, kommt mit dem Schoppen an den Tisch, stellt ihn ab, warnt mit erhobenem Finger, Hände in die Hüften
-  const P=[[-2.4,-3.35],[-.3,-3],[0,.95]], L1=Math.hypot(P[1][0]-P[0][0],P[1][1]-P[0][1]), L2=Math.hypot(P[2][0]-P[1][0],P[2][1]-P[1][1]), w=sm(12.5,17.5)*(L1+L2), geht=kt>12.5&&kt<17.5;
-  const [a,b,u]=w<L1?[P[0],P[1],w/L1]:[P[1],P[2],(w-L1)/L2]; W.G.position.set(a[0]+(b[0]-a[0])*u,0,a[1]+(b[1]-a[1])*u); const ry=kt<12.5?0:geht?Math.atan2(b[0]-a[0],b[1]-a[1]):Math.PI/2; W.G.rotation.y+=angDiff(ry,W.G.rotation.y)*Math.min(1,dt*6);
+  F.G.position.y=-.3; F.G.rotation.z+=((kt>=26.3?-.08:0)-F.G.rotation.z)*Math.min(1,dt*4); // zu dir hingeneigt
+  // Schoppen: nur Friedels Glas auf dem Tisch (kein Konterschoppen mehr)
+  N.gH.visible=false; N.gF.visible=false; N.gT.visible=true;
+  // Wirt: poliert hinter dem Tresen einen Krug, kommt an den Tisch, rät zum Talweg, warnt mit erhobenem Finger, Hände in die Hüften, geht kopfschüttelnd zurück
+  const P=[[-2.4,-3.35],[-.3,-3],[0,.95]], L1=Math.hypot(P[1][0]-P[0][0],P[1][1]-P[0][1]), L2=Math.hypot(P[2][0]-P[1][0],P[2][1]-P[1][1]), hin=kt>7&&kt<11.5, zur=kt>25.5&&kt<30, geht=hin||zur, w=sm(7,11.5)*(1-sm(25.5,30))*(L1+L2);
+  const [a,b,u]=w<L1?[P[0],P[1],w/L1]:[P[1],P[2],(w-L1)/L2]; W.G.position.set(a[0]+(b[0]-a[0])*u,0,a[1]+(b[1]-a[1])*u); const ry=kt<7?0:hin?Math.atan2(b[0]-a[0],b[1]-a[1]):zur?Math.atan2(a[0]-b[0],a[1]-b[1]):kt>=30?0:Math.PI/2; W.G.rotation.y+=angDiff(ry,W.G.rotation.y)*Math.min(1,dt*6);
   const ph=t*7; W.beine[0].rotation.x=geht?.45*Math.sin(ph):0; W.beine[1].rotation.x=geht?-.45*Math.sin(ph):0;
   let w0=-1.1+.15*Math.sin(t*4), w1=-1.1+.15*Math.cos(t*4), z0=-.12, z1=.12, wx=0, wk=0;
-  if(kt>=12.5){ w0=geht?-.35*Math.sin(ph):0; w1=kt<17.5?-.6:kt<18.3?-.6-.4*Math.sin(Math.PI*(kt-17.5)/.8):-.1; }
-  if(kt>=24.5&&kt<29){ w1=-1+.25*Math.sin(t*4); } if(kt>=33&&kt<41){ w1=-2.7; z1=-.15+.08*Math.sin(t*6); wx=.12*sm(33,34); wk=.15*Math.sin(t*3); } if(kt>=41){ w0=w1=-.3; z0=-.7; z1=.7; wk=.25*Math.sin(t*2.2); }
+  if(geht){ w0=-.35*Math.sin(ph); w1=.35*Math.sin(ph); } else if(kt>=11.5&&kt<17.3){ w0=0; w1=-1+.25*Math.sin(t*4); } else if(kt>=17.3&&kt<22.5){ w0=0; w1=-2.7; z1=-.15+.08*Math.sin(t*6); wx=.12*sm(17.3,18.3); wk=.15*Math.sin(t*3); } else if(kt>=22.5&&kt<25.5){ w0=w1=-.3; z0=-.7; z1=.7; wk=.25*Math.sin(t*2.2); }
   W.arme[0].rotation.x+=(w0-W.arme[0].rotation.x)*Math.min(1,dt*8); W.arme[1].rotation.x+=(w1-W.arme[1].rotation.x)*Math.min(1,dt*8); W.arme[0].rotation.z+=(z0-W.arme[0].rotation.z)*Math.min(1,dt*6); W.arme[1].rotation.z+=(z1-W.arme[1].rotation.z)*Math.min(1,dt*6);
-  W.G.rotation.x+=(wx-W.G.rotation.x)*Math.min(1,dt*4); W.kopf.rotation.y=kt>17.5?.3+wk:0; W.kopf.rotation.x=kt<12.5?.35:0;
-  // schlafender Gast schnarcht, Feuer und Kerzen flackern, am Ende zucken die Augen der Elwetritsche
+  W.G.rotation.x+=(wx-W.G.rotation.x)*Math.min(1,dt*4); W.kopf.rotation.y=kt>=11.5&&kt<25.5?.3+wk:zur?.35*Math.sin(t*6):0; W.kopf.rotation.x=kt<7||kt>=30?.35:0; // schüttelt beim Gehen den Kopf
+  // schlafender Gast schnarcht, Feuer und Kerzen flackern
   { const z=(t%3)/3; N.zzz.position.set(-1.9+.15*z,1.2+.35*z,1.7); N.zzz.material.opacity=Math.sin(Math.PI*z); }
-  const fk2=.8+.2*Math.sin(t*11)+.1*Math.sin(t*23+1); N.feuer.intensity=2.2*fk2*(kt>45?1.25:1); N.fl.forEach((m,i)=>m.scale.set(1,fk2+.15*Math.sin(t*(13+i*3)+i),1));
-  N.elw.augen.forEach((e,i)=>e.rotation.z=kt>46.3&&kt<47.5?.35*Math.sin(t*30+i*2):0);
+  const fk2=.8+.2*Math.sin(t*11)+.1*Math.sin(t*23+1); N.feuer.intensity=2.2*fk2; N.fl.forEach((m,i)=>m.scale.set(1,fk2+.15*Math.sin(t*(13+i*3)+i),1));
   // Sprechblasen über Friedel und dem Wirt
   for(const [wer,m] of [['friedel',F],['wirt',W]]){ const B=N.blase[wer], s=TT_GAST_TXT.find(([a,d,w2])=>w2===wer&&kt>=a&&kt<a+d), txt=s?kText(s[3]):null; B.visible=!!txt;
     if(txt){ triSag(wer,txt); triBlaseText(B,txt); const p=m.kopf.getWorldPosition(new THREE.Vector3()); p.y+=.4; triBlaseUeber(B,p,null); } } }
