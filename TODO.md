@@ -26,6 +26,7 @@ Größere Punkte später in die passende Datei umziehen (`PLAENE.md`, `KAMPAGNE.
 - [ ] Mission 2 selbst im Spiel testen (Stand 27.10.): Abzweigung „sicher rechts“ (≈ Meter 8874), Teufel kommt zurück an den Tisch, steigt auf den Stuhl, ext den Schoppen, reißt die Platte heraus (≈ 28:30–28:41), Schlusssprint: Teufel fällt zurück und schnauft (≈ 34:32), Schotter auf der Schleife, Wind auf den Lichtungen, Unwetter nach der Jungfernsprung-Kamera, Fernblick am Jungfernsprung mit Tal, See, Dorf und Regenbogen (≈ Meter 4514)
 
 ## Technik & Fehler
+- [ ] Drehende Räder testen (28.10.): Speichen und Ventil am Rennrad, Holzspeichen in der Kampagne, Wischscheibe ab 12 km/h (voll ab 25), keine rückwärts laufenden Speichen, Lobby-Vorschau, andere Radler in der Südpfalz, Friedel; Werte in `RAD` (figuren.js)
 - [ ] Testen: Wiederverbinden von Trainer und Pulsgurt (während der Fahrt kurz aus- und wieder einschalten: Meldung „verbinde neu …“, dazwischen Simulation, danach „wieder verbunden“, Steigung/ERG wieder aktiv) · Steigung auf der Minimap (unten rechts, Farbe nach Steilheit, bergab hellblau; Kampagne weiter mit Schild oben)
 - [ ] 
 
