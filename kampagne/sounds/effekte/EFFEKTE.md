@@ -64,13 +64,16 @@ Gleiche Helfer wie Mission 1, Lautstärken der neuen Dateien in `TRI_TON_VOL`/`T
 |---|---|
 | `musik/thema.mp3` | Countdown und Losfahren · noch einmal 3 s nach dem Schlusssprint (geschafft!) |
 | `hintergrundhappy`, `folkig`, `folkig2` | Wiedergabeliste wie in Mission 1: im Einfahren unter Erzählung und Gedicht (bis 15 s vor den Hunden) · im Ausfahren nach dem Thema |
-| `musik/jagd.mp3` | Straßenhunde, in vier Schüben: beim Aufspringen, vor Klau 5 und 9, und so, dass sie mit der letzten Wurst endet |
+| `musik/hundejagd.mp3` | Straßenhunde (Comedy-Verfolgung, ersetzt `jagd.mp3`), in vier Schüben: beim Aufspringen, vor Klau 5 und 9, und so, dass sie mit der letzten Wurst endet – nur der erste Schub von vorn |
 | `musik/waldambient.mp3` | Wald-Teppich ab den Hunden bis „Ertappt“ (leiser im Unwetter) und zwischen Flucht 1 und dem Wiedersehen mit dem Tisch · aus bei Jagd, Idylle, teufelsweg, Flucht |
 | `musik/hintergrundhappy.mp3` | Idylle am Wegweiser zum Jungfernsprung (ab 250 m davor, unter der langen Kamerafahrt zur Familie und zum Regenbogen), bricht mit dem Unwetter ab |
 | `musik/hintergrundhappy.mp3` (Schleife) | Pause nach Flucht 1: blendet ein, wenn es aufklart, verklingt, wenn es wieder zuzieht (aus nach der Abzweigung „sicher rechts“) |
 | `musik/teufelsweg.mp3` | Anschleichen: startet 86 s vor „Ertappt“, endet genau dort, wird zum Tisch hin lauter – danach kurz Stille |
-| `musik/teufelsjagd.mp3` | **fehlt noch** – Flucht 1 und 2 (Runde 2 lauter), Schleife. Bis die Datei da ist, läuft `omniouswaldnachts` als Platzhalter |
-| `musik/ankunft.mp3` | mit den Ende-Tafeln |
+| `musik/teufelsjagd.mp3` | Flucht 1, Schleife – Kriegstrommeln, 73 s |
+| `musik/teufelsjagd2.mp3` | Runde 2 (Creepy-Cartoon-Jagd): ab der Abzweigung „sicher rechts“ leiser, ab dem Sprung des Teufels voll, bis zum Schlusssprint · Wald-Teppich ist dann aus |
+| `musik/teufelssprint.mp3` | Schlusssprint (20 s): Halloween-Cartoon-Jagd, 21,6 s, einmal von vorn (vom Nutzer) |
+| `musik/ankunft.mp3` | mit den Ende-Tafeln (jetzt vor der Schlussszene) |
+| `musik/lager.mp3` | Schlussszene am Lager: von vorn mit Beginn, blendet mit dem Bild aus · Wiedergabeliste dann aus |
 
 ### Geräusche
 
@@ -87,38 +90,39 @@ Gleiche Helfer wie Mission 1, Lautstärken der neuen Dateien in `TRI_TON_VOL`/`T
 | `fluegel.mp3` (tiefer) | Teufel ist in Runde 2 wieder am Felsstuhl (Flügel offen) |
 | `feuerknistern.mp3` | Teufel glimmt und raucht, wenn er wütend ist (bis 50 m) |
 | `wolfsgehaeul.mp3` | 40 s nach Beginn von „Abgeschüttelt“ |
-| `grillen.mp3` | zweite Hälfte des Ausfahrens (Abendlicht) |
+| `grillen.mp3` | zweite Hälfte des Ausfahrens (Abendlicht), blendet am Ende mit dem Bild aus |
+| `teufel_bruell.mp3` (tiefer) | Ertappen (mit dem Sprung auf den Weg) · nach dem Platte-Rausreißen · tobt nach dem Sturz am Steintor |
+| `glas_bricht.mp3` | Teufel wirft den Schoppen nach dem Exen hinter sich in den Wald – beim Aufschlag |
+| `friedel_schrei.mp3` | Dreizack-Piekser 1 und 2 (beim zweiten etwas höher) |
+| `teufel_schnaufen.mp3` (tiefer) | Schlusssprint: alle 2,4 s, solange er erschöpft schnauft (bis 70 m) |
+| `donner.mp3` | Unwetter: gleich zu Beginn, dann alle 18–40 s, lauter je stärker |
+| `regen.mp3`, `wind.mp3` | Unwetter: Regen mit der Regenstärke, Wind mit dem Sturm, auf den Lichtungen in Böen lauter |
+| `teufel_schritt.mp3` | Schleife, solange der Teufel läuft (Verfolgung, zurück zum Tisch, bis 90 m) |
+| `kaeuzchen.mp3` | Dämmerung (60 % ins Ausfahren) · gegen Ende der Schlussszene am Lager (s 36) |
+| `schotter.mp3` | Knirschen von der Abzweigung zum Jungfernsprung bis zur Gabelung, lauter mit dem Tempo |
+| `feuerstein.mp3`, `feuerknistern.mp3`, `brutzeln.mp3` | Schlussszene am Lager: Funken schlagen (s 8,6 und 11) · Feuer knistert, sobald es brennt · Wurst brutzelt ab s 22,5 · alles blendet mit dem Bild aus |
 
 ### Fehlt noch (Übersicht 28.10.2026, Priorität ★★★ hoch … ★ nett)
 
-Reihenfolge-Vorschlag: `teufelsjagd` (beide Fassungen) → Unwetter → `teufel_bruell` → `vogel_wald` (schon angeschlossen).
+Reihenfolge-Vorschlag: `aufprall`/`steine` → `zischen`.
+
+**Am 28.10. dazugekommen und eingebaut:** teufelsjagd, teufelsjagd2, teufelssprint, hundejagd, lager, vogel_wald, kinderlachen, donner, teufel_bruell, teufel_schnaufen, friedel_schrei, glas_bricht, schotter, feuerstein, brutzeln, regen, wind, teufel_schritt, kaeuzchen (Tabellen oben).
 
 **Musik**
 
 | Prio | Datei (Vorschlag) | Wofür |
 |---|---|---|
-| ★★★ | `musik/teufelsjagd.mp3` | Verfolgung durch den Teufel, Flucht 1 und 2: dramatisch (Trommeln, Orgel/Chor), 1–2 min, Schleife. Anschluss steht, bis dahin Platzhalter `omniouswaldnachts` |
-| ★★★ | `musik/teufelsjagd2.mp3` | vor und in der zweiten Teufelsjagd (ab Abzweigung „sicher rechts“): unheimlicher, gruseliger – Nutzer sucht Titel aus (oder härtere Fassung von teufelsjagd) |
-| ★★ | `musik/hundejagd1.mp3` … `3` | Abwechslung bei der Hundejagd statt viermal `jagd.mp3`: lustig, Comic-Jagd, Polka/Folk im Galopp, je 30–60 s, im Wechsel |
-| ★★ | `musik/lager.mp3` | Schlussszene am Lagerfeuer: ruhig, warm, abendlich (Laute/Flöte) – sobald die Szene steht |
 | ★ | `musik/gasthaus.mp3` | Anfangsszene im Gasthaus; `taverne.mp3` reicht notfalls, ruhige Morgenstimmung passt besser zu Friedels Kater |
-| ★ | `musik/schlusssprint.mp3` | kurzer heroischer Antrieb, wenn Friedel den Sprint einläutet (bisher `thema` erst danach) |
 
 **Geräusche (schon eingeplant)**
 
 | Prio | Datei | Wofür |
 |---|---|---|
-| ★★★ | `donner.mp3`, `regen.mp3`, `wind.mp3` | Unwetter oben am Berg (bisher stumm) |
-| ★★★ | `teufel_bruell.mp3` | Ertappen, Platte rausreißen, Toben an der Gabelung |
-| ★★ | `teufel_schritt.mp3` | ein dumpfer Schritt, je Schritt abgespielt (Verfolgung zu Fuß) |
 | ★★ | `aufprall.mp3`, `steine.mp3` | Sprung, Gabel/Tisch schlagen ein, Platte, Sturz am Steintor (ersetzen `sturz` tiefer) |
 | ★★ | `zischen.mp3` | Gabel/Tisch fliegen (ersetzt `peitsche` tiefer) |
-| ★★ | `vogel_wald.mp3` | **schon eingebaut, Datei fehlt:** Vogelgezwitscher in der aufgeklarten Pause nach Flucht 1 und an der Idylle am Jungfernsprung (Schleife) |
-| ★★ | `kinderlachen.mp3` | **schon eingebaut, Datei fehlt:** Kinder lachen an der Idylle am Jungfernsprung, zweimal in der Kamerafahrt (bei der Familie, beim Zurückschwenken zu den Kindern), 2–3 s |
 | ★ | `schmatzen.mp3` | Teufel isst, nur aus der Nähe beim Anschleichen |
-| ★ | Friedel-Aufschrei | Dreizack-Piekser (gern eigene Aufnahme) |
-| ★ | `schotter.mp3` | Knirschen auf dem Schotter vor dem Tisch |
-| ★ | `kaeuzchen.mp3` | Dämmerung im Ausfahren |
+| ★ | `pusten.mp3` | Schlussszene am Lager: Friedel pustet in die Glut (s 13–15,5) |
+| ★ | `lachen.mp3` | Schlussszene am Lager: du lachst bei „gemütlicher Tag“ (s 31,5–33,5) |
 
 **Neue Vorschläge zu schon gebauten Szenen**
 
@@ -127,7 +131,6 @@ Reihenfolge-Vorschlag: `teufelsjagd` (beide Fassungen) → Unwetter → `teufel_
 | `comic_schreck.mp3` | Cartoon-Schreck beim Ertappen („!“, Schreckstriche): kurzes „Boing“ oder Orchester-Stich |
 | `schlucken.mp3`, `ruelpser.mp3` | Teufel ext den Schoppen · Rülpser auch für Friedels Kater |
 | `holz_kracht.mp3` | Teufel reißt am Steintor die fünf Kiefern um |
-| `teufel_schnaufen.mp3` | Schlusssprint: Hände auf den Knien, Rauch aus den Ohren |
 | `teufel_lachen.mp3` | Runde 2 wieder am Felsstuhl |
 | `knurren.mp3` | Tauziehen: Hund verbeißt sich in die Wurstkette |
 | `katze_fauchen.mp3` | Katze auf dem Holzstapel |
@@ -140,7 +143,7 @@ Reihenfolge-Vorschlag: `teufelsjagd` (beide Fassungen) → Unwetter → `teufel_
 | Szene | Ton |
 |---|---|
 | Gasthaus (Anfang, **gebaut, vorerst stumm**: `welt-teufelstisch-gasthaus.js`, Szenenzeit `kt` = 0–5 s Countdown, danach 5 + Workout-Zeit) | `taverne.mp3` (vorhanden) oder `gasthaus.mp3` leise unter der ganzen Szene (kt 0–31) · `kamin.mp3` Feuerknistern (oder `feuerknistern.mp3`, vorhanden) · `schnarchen.mp3` schlafender Gast am Tisch links · `schritte_holz.mp3` Wirt kommt an den Tisch kt 7–11,5 und geht zurück kt 25,5–30 · draußen `tuer.mp3` (knarrende Tür) beim Schnitt kt 31, Hufe/Holzräder auf dem Hof |
-| Lager (Schluss, **gebaut, vorerst stumm**: `welt-teufelstisch-lager.js`, Szenenzeit = s ab Halt, die letzten 50 s des Workouts) | `musik/lager.mp3` (★★, ruhig, warm, Laute/Flöte) leise ab s 0, blendet mit dem Bild aus (s 42–50) · `grillen.mp3` (vorhanden) läuft weiter · `feuerstein.mp3` (★★, Klacken von Stein auf Stahl) s 3,5–8 im Takt der Schläge · `pusten.mp3` (★, Friedel pustet in die Glut) s 8–10,5 · `feuerknistern.mp3` (vorhanden) ab s 8, wächst mit dem Feuer · `brutzeln.mp3` (★★, Wurst zischt überm Feuer) ab s 17,5 · `lachen.mp3` (★, du lachst bei „so schwer war’s doch net“) s 20,5–22,5 · `kaeuzchen.mp3` (★, schon oben) einmal gegen Ende |
+| Lager (Schluss, **gebaut, Ton eingebaut** außer `pusten`, `lachen`: `welt-teufelstisch-lager.js`, Szenenzeit = s ab Halt, die letzten 50 s des Workouts) | `musik/lager.mp3` (★★, ruhig, warm, Laute/Flöte) leise ab s 0, blendet mit dem Bild aus (s 42–50) · `grillen.mp3` (vorhanden) läuft weiter · `feuerstein.mp3` (★★, Klacken von Stein auf Stahl) s 3,5–8 im Takt der Schläge · `pusten.mp3` (★, Friedel pustet in die Glut) s 8–10,5 · `feuerknistern.mp3` (vorhanden) ab s 8, wächst mit dem Feuer · `brutzeln.mp3` (★★, Wurst zischt überm Feuer) ab s 17,5 · `lachen.mp3` (★, du lachst bei „so schwer war’s doch net“) s 20,5–22,5 · `kaeuzchen.mp3` (★, schon oben) einmal gegen Ende |
 | Friedels Kater | Stöhnen, Gähnen – am besten eigene Aufnahme mit den Dialogen |
 
 Vorhanden, aber ungenutzt: `dogbark.mp3` – könnte als dritte Hundestimme in die Meute.

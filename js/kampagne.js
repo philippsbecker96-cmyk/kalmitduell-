@@ -31,7 +31,7 @@ const KAMP=[
       S_('Schlusssprint',1/3,170),S_('Ausfahren',5,55,45)],
     // Platzhalter-Tafeln (Schritt 1) – endgültige Texte folgen
     start:[{at:TT_GAST.halt+TT_GAST.raus+TT_GAST.flug,titel:'Hinauf zum Teufelstisch',text:'[PLATZHALTER] Der kürzeste Weg nach Dahn führt direkt am Teufelstisch vorbei – genau dort, wovor der Wirt euch gewarnt hat. Aber so dumm werden unsere beiden Helden ja wohl nicht sein … oder?'}], // nach der Gasthaus-Szene
-    ende:[{titel:'Dem Teufel entwischt',text:'Hinter dir verhallt das Fluchen des Teufels zwischen den Felsen. Vor euch liegt der Weg hinab nach Dahn.'}]},
+    endeVor:TT_LAGER.halt, ende:[{titel:'Dem Teufel entwischt',text:'Hinter dir verhallt das Fluchen des Teufels zwischen den Felsen. Vor euch liegt der Weg hinab nach Dahn.'}]},
   {id:'dahn', nr:3, titel:'Dahn – Der Jungfernsprung', ort:'Dahner Felsenland', bald:true},
   {id:'berwartstein', nr:4, titel:'Berwartstein – Drache und Flut', ort:'Erlenbach · Burg Berwartstein', bald:true}];
 // Strecke der Mission: aus dem Workout berechnet (trifelsDef) oder fest; Missionen ohne eigene Welt fahren Berwartstein als Platzhalter
@@ -68,8 +68,9 @@ function kampTafel(tf){ let el=$('kampTafel'); if(!tf){ el.classList.remove('zei
   const k=tf.titel; if(el.dataset.k!==k){ el.dataset.k=k; el.classList.toggle('info',!!tf.info); // info: Infotafel (helles Pergament, roter Rand, Bild)
     el.innerHTML=`${tf.img||tf.bild?`<div class="kbild${tf.img?' mitbild':''}">${tf.img?`<img src="${tf.img}" alt="">`:tf.bild}</div>`:''}<div class="ktxt"><h3>${esc(kText(tf.titel))}</h3><p>${esc(kText(tf.text))}</p></div><div class="kbar"><i></i></div>`; }
   el.classList.add('zeig'); el.querySelector('.kbar i').style.width=Math.min(100,tf.p*100)+'%'; }
+const kampEnde0=m=>(race.woT||0)-(m.endeVor||0)-(m.ende||[]).length*KT_DAUER; // Beginn der Ende-Tafeln: endeVor s vor dem Ende fertig (Mission 2: vor der Schlussszene am Lager)
 function kampTick(){ const m=race.kamp; if(!m||race.state!=='run'||me.done){ kampTafel(null); return; }
-  const t=race.t, E=m.ende||[], e0=(race.woT||0)-E.length*KT_DAUER, j=Math.floor((t-e0)/KT_DAUER), s=kampStartZeiten(m).find(([t0])=>t>=t0&&t<t0+KT_DAUER);
+  const t=race.t, E=m.ende||[], e0=kampEnde0(m), j=Math.floor((t-e0)/KT_DAUER), s=kampStartZeiten(m).find(([t0])=>t>=t0&&t<t0+KT_DAUER);
   const mi=s?null:(m.mitte||[]).map(tf=>[tf.at(),tf]).find(([t0])=>t0!=null&&t>=t0&&t<t0+KT_DAUER);
   if(s) kampTafel({...s[1],p:(t-s[0])/KT_DAUER});
   else if(mi) kampTafel({...mi[1],p:(t-mi[0])/KT_DAUER});
