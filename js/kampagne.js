@@ -30,7 +30,7 @@ const KAMP=[
       S_('Flucht 2',1.5,105),S_('Tischwurf',.5,150),S_('Flucht 2',1.5,108),S_('Dreizack',.5,160),S_('Flucht 2',1,110),
       S_('Schlusssprint',1/3,170),S_('Ausfahren',5,55,45)],
     // Platzhalter-Tafeln (Schritt 1) – endgültige Texte folgen
-    start:[{at:10,titel:'Hinauf zum Teufelstisch',text:'Im Gasthaus erzählt man sich, hoch über dem Kaltenbacher Tal stehe ein Tisch aus Fels, an dem der Teufel selbst gespeist hat. Friedel will ihn unbedingt sehen.'}],
+    start:[{at:TT_GAST.halt+TT_GAST.raus+TT_GAST.flug,titel:'Hinauf zum Teufelstisch',text:'Hoch über dem Kaltenbacher Tal soll ein Tisch aus Fels stehen, an dem der Teufel selbst gespeist hat. Euer Weg nach Dahn führt genau daran vorbei – ein gemütlicher Tag, meint Friedel.'}], // nach der Gasthaus-Szene
     ende:[{titel:'Dem Teufel entwischt',text:'Hinter dir verhallt das Fluchen des Teufels zwischen den Felsen. Vor euch liegt der Weg hinab nach Dahn.'}]},
   {id:'dahn', nr:3, titel:'Dahn – Der Jungfernsprung', ort:'Dahner Felsenland', bald:true},
   {id:'berwartstein', nr:4, titel:'Berwartstein – Drache und Flut', ort:'Erlenbach · Burg Berwartstein', bald:true}];

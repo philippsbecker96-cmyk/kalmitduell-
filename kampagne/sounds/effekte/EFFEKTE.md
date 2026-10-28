@@ -139,7 +139,7 @@ Reihenfolge-Vorschlag: `teufelsjagd` (beide Fassungen) → Unwetter → `teufel_
 
 | Szene | Ton |
 |---|---|
-| Gasthaus (Anfang) | `taverne.mp3` (vorhanden), Krüge, Holzstühle, `tuer.mp3` (knarrende Tür) |
+| Gasthaus (Anfang, **gebaut, vorerst stumm**: `welt-teufelstisch-gasthaus.js`, Szenenzeit `kt` = 0–5 s Countdown, danach 5 + Workout-Zeit) | `taverne.mp3` (vorhanden) oder `gasthaus.mp3` leise unter der ganzen Szene (kt 0–49) · `kamin.mp3` Feuerknistern (oder `feuerknistern.mp3`, vorhanden) · `schnarchen.mp3` schlafender Gast am Tisch links · `ruelpser.mp3` Friedel kt 10 · `schritte_holz.mp3` Wirt kommt an den Tisch kt 12,5–17,5 · `glas_abstellen.mp3` Schoppen auf den Tisch kt 18 · `schlucken.mp3` Friedel trinkt kt 20–22,5 · unheimlicher Ton/Streicher-Stich beim Blick auf die ausgestopfte Elwetritsche kt 45–49 · draußen `tuer.mp3` (knarrende Tür) beim Schnitt kt 49, Hufe/Holzräder auf dem Hof |
 | Lager (Schluss) | `feuerknistern.mp3` und `grillen.mp3` (vorhanden), `brutzeln.mp3` (Wurst überm Feuer) |
 | Friedels Kater | Stöhnen, Gähnen – am besten eigene Aufnahme mit den Dialogen |
 

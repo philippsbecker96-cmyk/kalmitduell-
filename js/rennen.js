@@ -63,12 +63,12 @@ function draw(dt){
   const sk=race.paused?1:simSpeed(), k=Math.min(1,dt*3.5*sk), kl=Math.min(1,dt*5*sk); // Testmodus: Kamera folgt im gleichen Tempo
   camS.x+=(tx-camS.x)*k; camS.y+=(ty-camS.y)*k; camS.z+=(tz-camS.z)*k; camS.lx+=(lx-camS.lx)*kl; camS.ly+=(ly-camS.ly)*kl; camS.lz+=(lz-camS.lz)*kl;
   if(camOverride){ camera.position.set(...camOverride.pos); camera.lookAt(...camOverride.look); }
-  else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); if(anim.burg) burgKamera(dt); if(anim.tri) trifelsKamera(dt); if(anim.tt){ teufelKamera(dt); ttIdyllKamera(dt); } if(anim.space) mondKamera(dt); countKamera(dt,mine,theirs); // Berwartstein: kurzer Schwenk auf die eingestaubten Wegelagerer
+  else { camera.position.set(camS.x,camS.y,camS.z); camera.lookAt(camS.lx,camS.ly,camS.lz); if(anim.burg) burgKamera(dt); if(anim.tri) trifelsKamera(dt); if(anim.tt){ teufelKamera(dt); ttIdyllKamera(dt); ttGastKamera(); } if(anim.space) mondKamera(dt); countKamera(dt,mine,theirs); // Berwartstein: kurzer Schwenk auf die eingestaubten Wegelagerer
     camS.roll=(camS.roll||0)+(rollT-(camS.roll||0))*Math.min(1,dt*3); if(Math.abs(camS.roll)>1e-4) camera.rotateZ(camS.roll); camShake(dt,vC); }
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
   sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vG); regenFx(race.paused?0:dt); luftFx(race.paused?0:dt,theirs,opp.active&&race.draft&&!me.done?me.draftR||0:0); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);
   for(const r of [mine,theirs]){ const dist=camera.position.distanceTo(r.g.position), ds=Math.max(1,dist/14); r.tag.scale.set(1.9*ds,.475*ds,1); r.tag.visible=dist>6&&!R.def.burg&&!R.def.ma; } // Namensschild (nicht auf Berwartstein) bleibt auch aus der Ferne lesbar
-  renderer.render(scene,camera); fotoTick(); // Fotos der Fahrt (auswertung.js): direkt nach dem Zeichnen, sonst ist das Bild leer
+  renderer.render(ttInnenAn()?TT_INNEN:scene,camera); fotoTick(); // Fotos der Fahrt (auswertung.js): direkt nach dem Zeichnen, sonst ist das Bild leer
   ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H); miniMap(); miniProfile();
 }
 function rightCol(){ // Abstand · Minimap · Leistung untereinander am rechten Rand
@@ -208,7 +208,7 @@ function countKamera(dt,mine,theirs){ if(race.state!=='count'||race.kamp||anim.b
   camera.position.copy(pos); camera.lookAt(look); }
 function countdown(){
   prepWert(); race.state='count'; enterRaceView(); wakeOn(); recReset();
-  const still=!!anim.tri, pip=(f,d)=>{ if(!still) beep(f,d); }; // Trifels: Kamerafahrt, Countdown leise und dezent
+  const still=!!anim.tri||!!(anim.tt&&anim.tt.innen), pip=(f,d)=>{ if(!still) beep(f,d); }; // Trifels: Kamerafahrt, Teufelstisch: Gasthaus-Szene – Countdown leise und dezent
   let n=5; const b=$('banner'); b.classList.toggle('dezent',still); b.textContent=n; pip(660);
   const iv=setInterval(()=>{ n--; if(n>0){ b.textContent=n; pip(660); } else { clearInterval(iv); b.textContent='LOS!'; pip(1046,.35);
     race.state='run'; race.t=0; setTimeout(()=>{ b.textContent=''; b.classList.remove('dezent'); },1200); } },1000);
