@@ -160,7 +160,7 @@ function woNext(i){ const key=i+'|'+woK()+'|'+me.done; if(race.woNextKey===key) 
 function woPanel(P,sg){ if(!sg) return; const S=race.woSegs, i=S.indexOf(sg), nx=S[i+1], rem=sg.t0+sg.dur-race.t, tgt=me.tgt||0, pct=toPct(segVal(sg,race.t),race.woUnit)*woK();
   if(sg.free && !me.done){ const av=me.testT?me.testE/me.testT:0; $('wnLab').textContent='20-min-Test · Vollgas · Ø bisher'; $('wnW').textContent=Math.round(av); $('woNow').style.borderColor='#b9475f';
     $('wnMe').textContent=`Du: ${Math.round(P)} W`; $('wnMe').style.color=''; $('wnCd').textContent=fmtDur(Math.max(0,rem)); $('wnNx').textContent=`Hochgerechnete FTP: ${Math.round(av*.95)} W`; $('simPv').textContent=$('simP').value; woNext(i); return; }
-  $('wnLab').textContent=sg.label; $('wnW').textContent=Math.round(tgt); $('woNow').style.borderColor=zoneCol(pct);
+  $('woNow').classList.toggle('still',kampOhneIv()); $('wnLab').textContent=sg.label; $('wnW').textContent=Math.round(tgt); $('woNow').style.borderColor=zoneCol(pct);
   const ok=Math.abs(P-tgt)<=tgt*0.05; $('wnMe').textContent=`Du: ${Math.round(P)} W`; $('wnMe').style.color=me.done?'':ok?'#9cc46b':'#f0b860';
   $('wnCd').textContent=fmtDur(Math.max(0,rem));
   if(sg.step && !me.done){ $('wnNx').textContent=`Gleich: ${nx?nx.a:''} W · beste Minute bisher ${Math.round(best60(me.bins))} W`; }

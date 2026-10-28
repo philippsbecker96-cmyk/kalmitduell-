@@ -30,7 +30,7 @@ const KAMP=[
       S_('Flucht 2',1.5,105),S_('Tischwurf',.5,150),S_('Flucht 2',1.5,108),S_('Dreizack',.5,160),S_('Flucht 2',1,110),
       S_('Schlusssprint',1/3,170),S_('Ausfahren',5,55,45)],
     // Platzhalter-Tafeln (Schritt 1) – endgültige Texte folgen
-    start:[{at:TT_GAST.halt+TT_GAST.raus+TT_GAST.flug,titel:'Hinauf zum Teufelstisch',text:'Hoch über dem Kaltenbacher Tal soll ein Tisch aus Fels stehen, an dem der Teufel selbst gespeist hat. Euer Weg nach Dahn führt genau daran vorbei – ein gemütlicher Tag, meint Friedel.'}], // nach der Gasthaus-Szene
+    start:[{at:TT_GAST.halt+TT_GAST.raus+TT_GAST.flug,titel:'Hinauf zum Teufelstisch',text:'[PLATZHALTER] Der kürzeste Weg nach Dahn führt direkt am Teufelstisch vorbei – genau dort, wovor der Wirt euch gewarnt hat. Aber so dumm werden unsere beiden Helden ja wohl nicht sein … oder?'}], // nach der Gasthaus-Szene
     ende:[{titel:'Dem Teufel entwischt',text:'Hinter dir verhallt das Fluchen des Teufels zwischen den Felsen. Vor euch liegt der Weg hinab nach Dahn.'}]},
   {id:'dahn', nr:3, titel:'Dahn – Der Jungfernsprung', ort:'Dahner Felsenland', bald:true},
   {id:'berwartstein', nr:4, titel:'Berwartstein – Drache und Flut', ort:'Erlenbach · Burg Berwartstein', bald:true}];
@@ -59,9 +59,11 @@ function kampUi(){ const B=$('kampBlock'); if(!B) return;
     return `<button class="route kmis${race.kamp&&race.kamp.id===m.id?' sel':''}" data-id="${m.id}" ${fr||m.zu&&!m.bald?'':'disabled'}>${m.bild?`<div class="kmbild">${kBild(m.bild.src,m.bild.n)}${ok?'<em>✓</em>':fr?'':'<em>🔒</em>'}</div>`:`<div class="ph">${m.bald?'folgt':ok?'✓':fr?m.nr:'🔒'}</div>`}<div><b>Mission ${m.nr}: ${esc(m.titel)}</b><span>${esc(m.ort)}${m.bald?' · kommt später':ok?' · geschafft':''}</span></div></button>`; }).join('');
   $('kampStand').querySelectorAll('button').forEach(b=>b.onclick=()=>{ KST.stand=b.dataset.st; kampSave(); kampUi(); renderRouteList(); if(world&&R&&R.def&&R.def.ma) rebuildRiders(); }); // Bauer/Bäuerin: eigene Figur neu bauen
   $('kampStufe').querySelectorAll('button').forEach(b=>b.onclick=()=>{ KST.stufe=b.dataset.sf; kampSave(); kampUi(); renderWo(); });
+  $('kampIv').checked=!!KST.iv; $('kampIv').onchange=e=>{ KST.iv=e.target.checked; kampSave(); }; // Intervalle und Profil: Standard aus (kein Spoiler)
   $('kampList').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const m=KAMP.find(k=>k.id===b.dataset.id); if(m.zu&&!KST.code&&!kampCode()) return; KST.sel=b.dataset.id; kampSave(); race.kamp=kampMission(); kampUi(); renderWo(); }); }
 
 // ---- Tafeln im Rennen ----
+const kampOhneIv=()=>!!race.kamp&&!KST.iv; // Kampagne ohne Intervallnamen und Workout-Profil (Lobby-Schalter): Intervallanzeige nur mit Soll- und Ist-Watt
 function kampTafel(tf){ let el=$('kampTafel'); if(!tf){ el.classList.remove('zeig'); el.dataset.k=''; return; }
   const k=tf.titel; if(el.dataset.k!==k){ el.dataset.k=k; el.classList.toggle('info',!!tf.info); // info: Infotafel (helles Pergament, roter Rand, Bild)
     el.innerHTML=`${tf.img||tf.bild?`<div class="kbild${tf.img?' mitbild':''}">${tf.img?`<img src="${tf.img}" alt="">`:tf.bild}</div>`:''}<div class="ktxt"><h3>${esc(kText(tf.titel))}</h3><p>${esc(kText(tf.text))}</p></div><div class="kbar"><i></i></div>`; }

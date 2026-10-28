@@ -13,15 +13,16 @@ const TT_GAST_TXT=[[4.5,5.5,'friedel','[PLATZHALTER] Uuuh … mei Kopp. Do drin 
   [33,4.5,'wirt','[PLATZHALTER] Am Teufelstisch?! Basst bloß uff – do owwe isst de Deiwel zu Mittag!'],[37.5,3.5,'wirt','[PLATZHALTER] Wer den beim Esse stört, der kummt net mehr ganz hääm.'],
   [41,4,'friedel','[PLATZHALTER] Ach was, Ammemärche! Nur die paar Kilometer – do kann jo nix schief geh!']];
 // Kamera drinnen: [ab kt, Position und Blick am Anfang, Position und Blick am Ende der Einstellung] – harter Schnitt zwischen den Einstellungen, dazwischen langsame Fahrt
-const TT_GAST_KAM=[[0,[-4.2,2.4,3.6],[1,1,-.6],[-3,2,3.5],[1.2,1,.2]], // Totale: Raum, Tresen, Kamin, euer Tisch
-  [9,[.5,1.55,2.8],[1.55,1.3,.48],[.55,1.5,2.65],[1.55,1.28,.48]], // über deine Schulter auf Friedel
-  [13,[3.9,1.8,2.9],[-.4,1.1,-1.2],[3.6,1.7,2.6],[.4,1.1,.4]], // der Wirt kommt mit dem Schoppen
+const TT_GAST_KAM=[[0,[4.3,2.05,3.6],[-.3,1.15,-1.9],[3.9,1.95,3.25],[-.3,1.15,-1.8]], // Totale von vorn rechts: euer Tisch, dahinter Tresen mit Wirt und Elwetritsche, rechts der Kamin
+  [9,[1.15,1.62,2.7],[1.5,1.32,.48],[1.12,1.6,2.55],[1.5,1.34,.48]], // über deine rechte Schulter auf Friedel (du links am Bildrand, er frei in der Mitte)
+  [13,[2.4,1.7,2.9],[-1.2,1.15,-1.2],[2.2,1.65,2.7],[-.8,1.15,-.6]], // der Wirt kommt mit dem Schoppen vom Tresen an euren Tisch (links vom Unterzug, sonst hängt der Balken im Bild)
   [18.5,[2.5,1.35,2.2],[1.5,1.2,.5],[2.3,1.35,1.9],[1.5,1.25,.5]], // Friedel trinkt
   [24.5,[2.9,1.6,1.25],[0,1.45,.95],[2.8,1.6,1.22],[0,1.45,.95]], // längs über den Tisch auf den Wirt
   [33,[2.8,1.6,1.22],[0,1.45,.95],[1.7,1.58,1.12],[0,1.5,.95]], // langsam heran, während er warnt
-  [41,[.5,1.55,2.8],[1.55,1.3,.48],[.6,1.5,2.6],[1.55,1.3,.48]], // Friedel winkt ab
+  [41,[1.15,1.62,2.7],[1.5,1.32,.48],[1.1,1.58,2.5],[1.5,1.34,.48]], // Friedel winkt ab
   [45,[-.6,1.9,-.9],[-2.7,2.35,-3.8],[-1.7,2.15,-2.4],[-2.7,2.35,-3.8]]]; // zur ausgestopften Elwetritsche hinter dem Tresen – die Augen zucken
 const ttInnenAn=()=>!!(anim.tt&&anim.tt.innen&&anim.tt.innen.an);
+const ttAnzeigenAus=()=>{ const N=anim.tt&&anim.tt.innen; return !!N&&(race.state==='count'||race.state==='run')&&N.kt<5+TT_GAST.halt+TT_GAST.raus+TT_GAST.flug; }; // Anzeigen (Watt, Intervall, Karte, Profil) erst nach Gasthaus, Tür und Flug zu dir (vom Nutzer) – blenden mit der Tafel ein
 
 // ---- Aufbau (aus buildTeufelstisch) ----
 function buildTtGast(A){ const I=TT_INNEN; I.traverse(o=>{ o.geometry&&o.geometry.dispose(); for(const m of [].concat(o.material||[])){ m.map&&m.map.dispose(); m.dispose(); } }); while(I.children.length) I.remove(I.children[0]);
@@ -141,7 +142,7 @@ function poseTtGast(dt){ const A=anim.tt, N=A&&A.innen; if(!N) return; const st=
   for(const [wer,m] of [['friedel',F],['wirt',W]]){ const B=N.blase[wer], s=TT_GAST_TXT.find(([a,d,w2])=>w2===wer&&kt>=a&&kt<a+d), txt=s?kText(s[3]):null; B.visible=!!txt;
     if(txt){ triSag(wer,txt); triBlaseText(B,txt); const p=m.kopf.getWorldPosition(new THREE.Vector3()); p.y+=.4; triBlaseUeber(B,p,null); } } }
 // Wirt vor der Tür (Außenwelt): winkt euch beim Losfahren nach
-function ttGastWirtWinkt(A,kt,ende){ const W=A.gast&&A.gast.wirt; if(!W) return; const an=kt>=ende-1&&kt<ende+TT_GAST.raus+TT_GAST.flug+3, a=W.arme[0];
+function ttGastWirtWinkt(A,kt,ende){ const W=A.gast&&A.gast.wirt; if(!W) return; if(!A.gast.vor){ const p=A.gast.wp0.clone().lerp(A.gast.wp,1.7); p.y=bodenY(p.x,p.z); W.G.position.copy(p); A.gast.vor=1; } /* vor die Tür, nicht in der Laibung (vom Nutzer) */ const an=kt>=ende-1&&kt<ende+TT_GAST.raus+TT_GAST.flug+3, a=W.arme[0];
   a.rotation.x=an?-2.6:0; a.rotation.z=an?-.3+.35*Math.sin(performance.now()/1000*8):-.12; }
 
 // ---- Kamera (aus draw): drinnen die Einstellungen aus TT_GAST_KAM, dann die Tür von außen, dann Flug zu dir ----
@@ -149,7 +150,7 @@ function ttGastKamera(){ const A=anim.tt, N=A&&A.innen; if(!N||!(race.state==='c
   if(N.an){ let i=0; while(i<TT_GAST_KAM.length-1&&kt>=TT_GAST_KAM[i+1][0]) i++; const [a,p0,l0,p1,l1]=TT_GAST_KAM[i], b=i<TT_GAST_KAM.length-1?TT_GAST_KAM[i+1][0]:ende, w=bSm((kt-a)/(b-a));
     camera.position.copy(V(p0).lerp(V(p1),w)); camera.lookAt(V(l0).lerp(V(l1),w)); return; }
   const s=kt-ende, G=R.tt.gast, ich=riders3d[myKey]; if(s<0||s>=TT_GAST.raus+TT_GAST.flug||!G||!A.gast) return;
-  const c=wegPos(G.d-5,-(roadW(R,G.d)/2+3.5)), pos=new THREE.Vector3(c.x,bodenY(c.x,c.z)+1.7,c.z), tuer=A.gast.wp0.clone(); tuer.y+=1.3; // links vom Weg, Blick über den Weg auf die Tür
+  const c=wegPos(G.d-5,-(roadW(R,G.d)/2+3.5)), pos=new THREE.Vector3(c.x,bodenY(c.x,c.z)+1.7,c.z), tuer=A.gast.wirt.G.position.clone(); tuer.y+=1.3; // links vom Weg, Blick über den Weg auf die Tür
   const fahrer=ich?ich.g.position.clone():tuer.clone(); if(ich&&A.friedel) fahrer.lerp(A.friedel.r.g.position,.5); fahrer.y+=1.1;
   const look=tuer.lerp(fahrer,bSm((s-1.5)/2.5)), f=bSm((s-TT_GAST.raus)/TT_GAST.flug); if(f>0){ pos.lerp(camera.position,f).y+=3*Math.sin(Math.PI*f); look.lerp(new THREE.Vector3(camS.lx,camS.ly,camS.lz),f); }
   camera.position.copy(pos); camera.lookAt(look); }

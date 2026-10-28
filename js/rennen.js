@@ -68,6 +68,7 @@ function draw(dt){
   sun.target.position.set(camS.lx,camS.ly,camS.lz); sun.position.copy(sun.target.position).addScaledVector(SUN_DIR,200);
   sky.position.copy(camera.position); spaceSky.position.copy(camera.position); speedFx(dt, race.paused?0:vG); regenFx(race.paused?0:dt); luftFx(race.paused?0:dt,theirs,opp.active&&race.draft&&!me.done?me.draftR||0:0); partsFx(dt,[[mine,me,'m'],...(opp.active?[[theirs,opp,'o']]:[])]);
   for(const r of [mine,theirs]){ const dist=camera.position.distanceTo(r.g.position), ds=Math.max(1,dist/14); r.tag.scale.set(1.9*ds,.475*ds,1); r.tag.visible=dist>6&&!R.def.burg&&!R.def.ma; } // Namensschild (nicht auf Berwartstein) bleibt auch aus der Ferne lesbar
+  document.body.classList.toggle('ohneHud',ttAnzeigenAus());
   renderer.render(ttInnenAn()?TT_INNEN:scene,camera); fotoTick(); // Fotos der Fahrt (auswertung.js): direkt nach dem Zeichnen, sonst ist das Bild leer
   ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H); miniMap(); miniProfile();
 }
@@ -98,7 +99,8 @@ function miniMap(){
 }
 function miniProfile(){
   const pad=16, h=56, w=W-pad*2, y0=H-pad;
-  if(race.mode==='train'){ glassBox(pad-6,y0-h-12,w+12,h+18); drawWo(ctx,pad,y0-h-4,w,h+2,race.woSegs||[],race.woT||1,{cur:race.t,trace:me.trace,k:woK()}); return; }
+  if(race.mode==='train'){ if(kampOhneIv()) return; glassBox(pad-6,y0-h-12,w+12,h+18); // Kampagne ohne Intervalle: kein Profil (verrät sonst die Story)
+    drawWo(ctx,pad,y0-h-4,w,h+2,race.woSegs||[],race.woT||1,{cur:race.t,trace:me.trace,k:woK()}); return; }
   if(R.loop){ // Rennfortschritt mit Runden statt Höhenprofil
     const tot=raceLen(), X=d=>pad+Math.min(1,Math.max(0,d/tot))*w, yb=y0-30;
     glassBox(pad-6,y0-h-12,w+12,h+18);
