@@ -47,16 +47,27 @@ function triSau(){ const T=triTier({c:'#5a4a3c',em:'#2a2016',L:1.2,H:.46,dick:.3
   for(const z of [-.07,.07]){ const au=new THREE.Mesh(new THREE.SphereGeometry(.028,6,4),new THREE.MeshBasicMaterial({color:'#ffc860'})); au.position.set(.1,.05,z); T.kopf.add(au); } // Augen spiegeln das Laternenlicht
   const sw=new THREE.Mesh(new THREE.CylinderGeometry(.015,.01,.25,4),dk); place(sw,[-.6,.5,0],[-.72,.32,0]); T.K.add(sw); T.G.scale.setScalar(1.25); return T; }
 
+// ---- Pferdewagen und Fuhrwerk (auch für Mission 2: welt-teufelstisch-fuhrwerk.js) ----
+function triBretter(){ return hMat('bretter',()=>new THREE.MeshLambertMaterial({map:canvasTex(64,64,g=>{ for(let x=0;x<64;x+=8){ const v=.8+Math.random()*.3; g.fillStyle=`rgb(${118*v|0},${84*v|0},${54*v|0})`; g.fillRect(x,0,8,64); g.fillStyle='rgba(30,18,10,.55)'; g.fillRect(x+7,0,1,64); } })})); }
+// Pferdewagen mit Kutscher (Heuwagen, Fuhrwerk), lokal +z nach vorn; Räder drehbar
+function triWagen(G,fell,o){ const holz=lam('#6b4a32'), holzD=lam('#4e3626'), bretter=triBretter(), box=(P,w,h,d,m,x,y,z)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); b.position.set(x,y,z); P.add(b); return b; };
+  const P=trPferd({fell}); P.G.position.z=2.3; G.add(P.G); box(G,1.5,.1,2.8,bretter,0,1,-.6); for(const x of [-.72,.72]) box(G,.06,.45,2.8,bretter,x,1.25,-.6);
+    const raeder=[[-.85,.3],[.85,.3],[-.85,-1.5],[.85,-1.5]].map(([x,z])=>{ const W=new THREE.Group(); W.position.set(x,.53,z); G.add(W); const r2=new THREE.Mesh(new THREE.TorusGeometry(.48,.05,5,16),holzD); r2.rotation.y=Math.PI/2; W.add(r2); for(let k=0;k<4;k++){ const sp=box(W,.03,.9,.03,holz,0,0,0); sp.rotation.x=k*Math.PI/4; } return W; });
+    for(const x of [-.4,.4]){ const de=cyl(.04,holz); place(de,[x,1,.75],[x*.6,1.3,1.9]); G.add(de); } // Deichsel
+    const m=trMensch(o); m.G.position.set(0,.55,.55); m.beine[0].rotation.x=m.beine[1].rotation.x=-1.4; m.arme[0].rotation.x=m.arme[1].rotation.x=-.9; G.add(m.G); return {pferd:P,raeder,m}; }
+// Fuhrwerk: Fässer, Körbe mit Rüben und Kohl, ein Lederball; Kutscher mit Peitsche (unsichtbar, bis die Szene es braucht)
+function triFuhre(){ const M=c=>lam(c), holz=M('#6b4a32'), holzD=M('#4e3626'), bretter=triBretter(), box=(P,w,h,d,m,x,y,z)=>{ const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); b.position.set(x,y,z); P.add(b); return b; }, K=hofKasten({box,M,holz,holzD,bretter,q:rng(906),D:{tiere:[],katzen:[],dampf:[]}});
+  const G=new THREE.Group(); G.visible=false; world.add(G); const W=triWagen(G,'#3a2a22',{kittel:'#4a5a3a',hose:'#3a3020',haar:'#8a7a68',bart:'#8a7a68'});
+    K.fass(G,-.35,1.05,-1.5,.8); K.fass(G,.35,1.05,-1.6,.8); K.korb(G,.35,1.05,-.4,'#c9733a'); K.korb(G,-.35,1.05,-.5,'#7a9a3a');
+    const ball=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),M('#8a5a32')); ball.position.set(.3,1.17,-.95); G.add(ball); const na=new THREE.Mesh(new THREE.TorusGeometry(.12,.012,4,14),M('#3a2416')); na.position.copy(ball.position); na.rotation.y=.6; G.add(na); // Ledderball mit Naht
+    const pe=new THREE.Mesh(new THREE.CylinderGeometry(.012,.02,1.4,4),holzD); pe.position.set(0,-1.05,.35); pe.rotation.x=.45; W.m.arme[1].add(pe); // Peitsche
+  return {G,...W,blase:triBlase(),ph:0,off:-99,dAlt:null}; }
+
 // ---- Aufbau ----
 function buildTrifelsLeben(T){ const A=anim.tri, q=rng(905), M=c=>lam(c), holz=M('#6b4a32'), holzD=M('#4e3626'), dachM=M('#7a5a3a'), D={tiere:[], katzen:[], dampf:[]};
   const box=(P,w,h,d,m,x,y,z)=>{ const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m); o.position.set(x,y,z); P.add(o); return o; };
-  const bretter=hMat('bretter',()=>new THREE.MeshLambertMaterial({map:canvasTex(64,64,g=>{ for(let x=0;x<64;x+=8){ const v=.8+Math.random()*.3; g.fillStyle=`rgb(${118*v|0},${84*v|0},${54*v|0})`; g.fillRect(x,0,8,64); g.fillStyle='rgba(30,18,10,.55)'; g.fillRect(x+7,0,1,64); } })}));
+  const bretter=triBretter(), wagen=triWagen;
   const K=hofKasten({box,M,holz,holzD,bretter,q,D}), L=A.leben={D, gaense:[], gegen:[], reh:null, sau:null};
-  // Pferdewagen mit Kutscher (Heuwagen, Fuhrwerk), lokal +z nach vorn; Räder drehbar
-  const wagen=(G,fell,o)=>{ const P=trPferd({fell}); P.G.position.z=2.3; G.add(P.G); box(G,1.5,.1,2.8,bretter,0,1,-.6); for(const x of [-.72,.72]) box(G,.06,.45,2.8,bretter,x,1.25,-.6);
-    const raeder=[[-.85,.3],[.85,.3],[-.85,-1.5],[.85,-1.5]].map(([x,z])=>{ const W=new THREE.Group(); W.position.set(x,.53,z); G.add(W); const r2=new THREE.Mesh(new THREE.TorusGeometry(.48,.05,5,16),holzD); r2.rotation.y=Math.PI/2; W.add(r2); for(let k=0;k<4;k++){ const sp=box(W,.03,.9,.03,holz,0,0,0); sp.rotation.x=k*Math.PI/4; } return W; });
-    for(const x of [-.4,.4]){ const de=cyl(.04,holz); place(de,[x,1,.75],[x*.6,1.3,1.9]); G.add(de); } // Deichsel
-    const m=trMensch(o); m.G.position.set(0,.55,.55); m.beine[0].rotation.x=m.beine[1].rotation.x=-1.4; m.arme[0].rotation.x=m.arme[1].rotation.x=-.9; G.add(m.G); return {pferd:P,raeder,m}; };
   // Baulücken: lokal +z zur Gasse, Ursprung in der Mitte des alten Hauses
   for(const l of T.luecken){ let kob=null; const G=new THREE.Group(); G.position.set(l.x,bodenY(l.x,l.y),l.y); G.rotation.y=Math.atan2(l.side*Math.sin(l.h),-l.side*Math.cos(l.h)); world.add(G); const bz=-l.dep/2+1.6;
     if(l.art==='mist'){ const m=new THREE.Group(); m.position.z=-.6; m.userData.ohneBoden=true; G.add(m); K.misthaufen(m); /* Haufen steckt absichtlich halb im Boden */ K.eimer(G,2.2,0,1.6); K.korb(G,-2.4,0,1.8,'#9a5a2a'); }
@@ -86,12 +97,7 @@ function buildTrifelsLeben(T){ const A=anim.tri, q=rng(905), M=c=>lam(c), holz=M
       if(art==='bauer'){ const se=new THREE.Group(); se.position.set(0,-.6,0); m.arme[0].add(se); const st=new THREE.Mesh(new THREE.CylinderGeometry(.02,.02,1.7,4),holz); st.position.y=.6; se.add(st); const bl=box(se,.04,.06,.8,M('#8a8d93'),0,1.42,-.38); bl.rotation.x=.3; m.arme[0].rotation.x=-2.6; } // Sense über der Schulter
       if(art==='moench'){ const st=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,1.8,4),holz); st.position.set(0,-.62,0); m.arme[0].add(st); m.arme[0].rotation.x=-.4; const tk=new THREE.Mesh(new THREE.SphereGeometry(.125,8,6),lam('#e3b48e')); tk.position.y=.16; m.kopf.add(tk); } } // Tonsur
     L.gegen.push(E); });
-  // Fuhrwerk auf der Abfahrt: Fässer, Körbe mit Rüben und Kohl, ein Lederball; Kutscher mit Peitsche
-  { const G=new THREE.Group(); G.visible=false; world.add(G); const W=wagen(G,'#3a2a22',{kittel:'#4a5a3a',hose:'#3a3020',haar:'#8a7a68',bart:'#8a7a68'});
-    K.fass(G,-.35,1.05,-1.5,.8); K.fass(G,.35,1.05,-1.6,.8); K.korb(G,.35,1.05,-.4,'#c9733a'); K.korb(G,-.35,1.05,-.5,'#7a9a3a');
-    const ball=new THREE.Mesh(new THREE.SphereGeometry(.12,10,8),M('#8a5a32')); ball.position.set(.3,1.17,-.95); G.add(ball); const na=new THREE.Mesh(new THREE.TorusGeometry(.12,.012,4,14),M('#3a2416')); na.position.copy(ball.position); na.rotation.y=.6; G.add(na); // Ledderball mit Naht
-    const pe=new THREE.Mesh(new THREE.CylinderGeometry(.012,.02,1.4,4),holzD); pe.position.set(0,-1.05,.35); pe.rotation.x=.45; W.m.arme[1].add(pe); // Peitsche
-    L.fuhre={G,...W,blase:triBlase(),ph:0,off:-99,dAlt:null}; }
+  L.fuhre=triFuhre(); // Fuhrwerk auf der Abfahrt
   // Reh mit zwei Kitzen, Wildschwein
   if(T.reh!=null){ L.reh={tiere:[triReh(false),triReh(true),triReh(true)], s:-1, fertig:false}; L.reh.tiere.forEach(r=>{ r.G.visible=false; world.add(r.G); }); }
   if(T.sau!=null){ const S=triSau(); S.G.visible=false; world.add(S.G); L.sau={S, s:-1, fertig:false, d:0, u:0}; }
