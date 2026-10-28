@@ -13,7 +13,7 @@ const TT_GAST_TXT=[[4.5,5.5,'friedel','[PLATZHALTER] Uuuh … mei Kopp. Do drin 
   [33,4.5,'wirt','[PLATZHALTER] Am Teufelstisch?! Basst bloß uff – do owwe isst de Deiwel zu Mittag!'],[37.5,3.5,'wirt','[PLATZHALTER] Wer den beim Esse stört, der kummt net mehr ganz hääm.'],
   [41,4,'friedel','[PLATZHALTER] Ach was, Ammemärche! Nur die paar Kilometer – do kann jo nix schief geh!']];
 // Kamera drinnen: [ab kt, Position und Blick am Anfang, Position und Blick am Ende der Einstellung] – harter Schnitt zwischen den Einstellungen, dazwischen langsame Fahrt
-const TT_GAST_KAM=[[0,[4.3,2.05,3.6],[-.3,1.15,-1.9],[3.9,1.95,3.25],[-.3,1.15,-1.8]], // Totale von vorn rechts: euer Tisch, dahinter Tresen mit Wirt und Elwetritsche, rechts der Kamin
+const TT_GAST_KAM=[[0,[2,2.4,3.85],[-1,1.25,-1.6],[1.8,2.3,3.6],[-1,1.25,-1.5]], // Totale von vorn, erhöht: unten du, rechts Friedel, darüber frei der Wirt hinter dem Tresen mit der Elwetritsche, rechts der Kamin
   [9,[1.15,1.62,2.7],[1.5,1.32,.48],[1.12,1.6,2.55],[1.5,1.34,.48]], // über deine rechte Schulter auf Friedel (du links am Bildrand, er frei in der Mitte)
   [13,[2.4,1.7,2.9],[-1.2,1.15,-1.2],[2.2,1.65,2.7],[-.8,1.15,-.6]], // der Wirt kommt mit dem Schoppen vom Tresen an euren Tisch (links vom Unterzug, sonst hängt der Balken im Bild)
   [18.5,[2.5,1.35,2.2],[1.5,1.2,.5],[2.3,1.35,1.9],[1.5,1.25,.5]], // Friedel trinkt
