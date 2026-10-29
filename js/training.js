@@ -48,7 +48,7 @@ function drawWo(g,x,y,w,h,S,T,o={}){
   if(o.watt){ const fs=Math.max(11,Math.round(h*.13)); g.font=`700 ${fs}px Barlow, sans-serif`; g.fillStyle='#fff'; g.shadowColor='rgba(0,0,0,.6)'; g.shadowBlur=3; // Lobby: Watt in jedem Block, quer wenn er breit genug ist, sonst hochkant
     S.forEach(sg=>{ if(sg.free) return; const wa=Math.round(toW(sg.a,unit)), wb=sg.b==null?wa:Math.round(toW(sg.b,unit)), tx=wa===wb?String(wa):wa+'→'+wb, x0=X(sg.t0), bw=X(sg.t0+sg.dur)-x0, yt=Y(Math.max(pc(sg.a),pc(sg.b==null?sg.a:sg.b))), tw=g.measureText(tx).width;
       if(bw>=tw+6&&y+h-yt>=fs+4){ g.textAlign='center'; g.fillText(tx,x0+bw/2,yt+fs+2); }
-      else if(bw>=fs*.8&&y+h-yt>=tw+6){ g.save(); g.translate(x0+bw/2+fs*.36,yt+4); g.rotate(-Math.PI/2); g.textAlign='right'; g.fillText(tx,0,0); g.restore(); } });
+      else if(bw>=fs*.6&&y+h-yt>=tw+6){ g.save(); g.translate(x0+bw/2+fs*.36,yt+4); g.rotate(-Math.PI/2); g.textAlign='right'; g.fillText(tx,0,0); g.restore(); } });
     g.shadowBlur=0; }
   if(o.cur!=null){ const xc=X(Math.min(T,o.cur)); g.fillStyle='rgba(10,20,15,.45)'; g.fillRect(x,y,xc-x,h);
     if(o.trace&&o.trace.length>1){ g.strokeStyle='#ffffff'; g.lineWidth=2; g.beginPath(); o.trace.forEach(([t,p],i)=>{ const px=X(t), py=Y(p/ftp()*100); i?g.lineTo(px,py):g.moveTo(px,py); }); g.stroke();
