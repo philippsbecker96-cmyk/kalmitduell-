@@ -183,18 +183,18 @@ function triSag(wer,txt){ if(!txt||triSagt[wer]===txt) return; triSagt[wer]=txt;
   triWarte.push({f:TRI_STIMME+m[0]+(/\[[^\]|]*\|/.test(m[1])?(KST.stand==='baeuerin'?'_baeuerin':'_bauer'):'')+'.m4a', t:performance.now()}); }
 function triStimmeTick(an){ const S=triSprich; if(S&&!S.ended&&!S.weg){ if(!an&&!S.paused) S.pause(); else if(an&&S.paused) S.play().catch(()=>{ S.weg=1; }); return; } // Pause hält die Stimme an
   if(!an) return; const jetzt=performance.now(); while(triWarte.length&&jetzt-triWarte[0].t>4000) triWarte.shift(); const w=triWarte.shift(); if(!w) return;
-  try{ const a=triSprich=new Audio(w.f); a.volume=TRI_STIMME_VOL; a.onerror=()=>{ a.weg=1; }; a.play().catch(()=>{ a.weg=1; }); }catch(e){ triSprich=null; } }
+  try{ const a=triSprich=new Audio(w.f); a.volume=TRI_STIMME_VOL*lautF(); a.onerror=()=>{ a.weg=1; }; a.play().catch(()=>{ a.weg=1; }); }catch(e){ triSprich=null; } }
 function triStimmeAus(){ if(triSprich){ triSprich.pause(); triSprich=null; } triWarte.length=0; triGesagt.clear(); for(const k in triSagt) delete triSagt[k]; } // neues Rennen oder Strecke verlassen
 // ---- Geräusche (kampagne/sounds/effekte/, über <audio>, da file://): Schleifen werden leiser, je weiter die Kamera weg ist; Einzeltöne einmal je Ereignis (A.ton) ----
 const TRI_TON='kampagne/sounds/effekte/', TRI_TON_VOL={wagen:.5,hufe:.7,kettenhemd:.3,wiehern:.7,sturz:.9,glocken:.6,peitsche:.8,wirtshaus:.6,grillen:.35,fluegel:.7,elwetritsch_schrei:.8,gackern:.6,schwein:.8,rascheln_gebuesch:.7,elwetritschegefangen:.9,fanfare:.7,schaafe:.5,hundebellen:.6,entengeraeusche:.4,kuhglocken:.45,muhen:.7,feuerknistern:.5,wolfsgehaeul:.8};
 const TRI_MUSIK={thema:['musik/thema',.45], jagd:['musik/jagd',.5,2], ankunft:['musik/ankunft',.45], taverne:['musik/taverne',.35], unheimlich:['effekte/unheimlich',.4], happy:['musik/hintergrundhappy',.3], folk1:['musik/mittelalterhintergrundfolkig',.2], folk2:['musik/mittelalterhintergrundfolkig2',.2], nacht:['musik/nightambient',.55], wald2:['musik/waldnichtsogruselig',.3], omin:['musik/omniouswaldnachts',.38]}; // nightambient um 25 dB angehoben (Original in musik/roh/) · [Datei ab kampagne/sounds/, Lautstärke, Blende je s (sonst .45 = gut 2 s)]
 const triLoops={}; let triTonVor=null, triDuck=1; // triDuck: Musik leiser, solange jemand spricht
-function triEins(n,v=1,rate=1){ if(v<.02) return; try{ const a=new Audio(TRI_TON+n+'.mp3'); a.volume=clampN(v*TRI_TON_VOL[n],0,1); a.preservesPitch=false; a.playbackRate=rate; a.play().catch(()=>{}); }catch(e){} }
+function triEins(n,v=1,rate=1){ if(v<.02) return; try{ const a=new Audio(TRI_TON+n+'.mp3'); a.volume=clampN(v*TRI_TON_VOL[n]*lautF(),0,1); a.preservesPitch=false; a.playbackRate=rate; a.play().catch(()=>{}); }catch(e){} }
 function triLoop(k,n,ziel,dt){ let L=triLoops[k]; if(!L){ if(ziel<=0) return; const a=new Audio(TRI_TON+n+'.mp3'); a.loop=true; a.volume=0; L=triLoops[k]={a,n,v:0}; }
-  L.v+=(ziel-L.v)*Math.min(1,dt*3); if(ziel<=0&&L.v<.01){ L.v=0; if(!L.a.paused) L.a.pause(); return; } L.a.volume=clampN(L.v*TRI_TON_VOL[n],0,1); if(L.a.paused) L.a.play().catch(()=>{}); }
+  L.v+=(ziel-L.v)*Math.min(1,dt*3); if(ziel<=0&&L.v<.01){ L.v=0; if(!L.a.paused) L.a.pause(); return; } L.a.volume=clampN(L.v*TRI_TON_VOL[n]*lautF(),0,1); if(L.a.paused) L.a.play().catch(()=>{}); }
 // Musik: blendet über 2–3 s ein und aus; ohne Schleife (loop=false) spielt sie einmal bis zum Ende, neu = von vorn (triMusikNeu)
 function triMusik(n,ziel,dt,loop=true){ const M=TRI_MUSIK[n]; let L=triLoops['m'+n]; if(!L){ if(ziel<=0) return; const a=new Audio('kampagne/sounds/'+M[0]+'.mp3'); a.loop=loop; a.volume=0; L=triLoops['m'+n]={a,v:0}; }
-  L.v+=Math.sign(ziel-L.v)*Math.min(Math.abs(ziel-L.v),dt*(M[2]||.45)); if(ziel<=0&&L.v<.01){ L.v=0; if(!L.a.paused) L.a.pause(); return; } if(L.a.ended) return; L.a.volume=clampN(L.v*M[1]*triDuck,0,1); if(L.a.paused) L.a.play().catch(()=>{}); }
+  L.v+=Math.sign(ziel-L.v)*Math.min(Math.abs(ziel-L.v),dt*(M[2]||.45)); if(ziel<=0&&L.v<.01){ L.v=0; if(!L.a.paused) L.a.pause(); return; } if(L.a.ended) return; L.a.volume=clampN(L.v*M[1]*triDuck*lautF(),0,1); if(L.a.paused) L.a.play().catch(()=>{}); }
 function triMusikNeu(n){ const L=triLoops['m'+n]; if(L){ L.a.pause(); L.a.currentTime=0; L.v=0; } }
 function triTonAus(){ for(const k in triLoops){ triLoops[k].v=0; triLoops[k].a.pause(); } triStimmeAus(); }
 const triFern=(p,max)=>p?clampN(1-camera.position.distanceTo(p)/max,0,1)**1.5:0; // 1 an der Kamera, 0 ab max m

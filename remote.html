@@ -36,6 +36,14 @@ input[type=range]{flex:1;accent-color:var(--acc);height:36px}
 #intBox .schnell{display:flex;gap:6px;margin-top:10px}
 #intBox .schnell button{flex:1;font:600 16px Barlow,sans-serif;padding:9px 0;border-radius:12px}
 #intBox .schnell button.sel{background:rgba(255,122,69,.18);border-color:var(--acc)}
+#lautBox{display:none}
+#lautBox .kopf{display:flex;justify-content:space-between;align-items:baseline}
+#lautV{font-size:40px;font-weight:800;line-height:1} #lautV.aus{color:var(--txt2);text-decoration:line-through}
+#lautBox .zeile{display:flex;align-items:center;gap:10px;margin-top:10px}
+#lautBox .zeile button{flex:none;width:52px;height:52px;border-radius:14px;font-size:30px;padding:0}
+#lautBox .schnell{display:flex;gap:6px;margin-top:10px}
+#lautBox .schnell button{flex:1;font:600 16px Barlow,sans-serif;padding:9px 0;border-radius:12px}
+#lautBox .schnell button.sel{background:rgba(255,122,69,.18);border-color:var(--acc)}
 #wl{font-size:13px;color:var(--txt2);text-align:center}
 </style>
 </head>
@@ -49,11 +57,16 @@ input[type=range]{flex:1;accent-color:var(--acc);height:36px}
   <div class="zeile"><button id="intM">−</button><input type="range" id="int" min="70" max="130" step="1" value="100"><button id="intP">+</button></div>
   <div class="schnell"><button data-i="90">90 %</button><button data-i="95">95 %</button><button data-i="100">100 %</button><button data-i="105">105 %</button><button data-i="110">110 %</button></div>
 </div>
+<div class="card" id="lautBox">
+  <div class="kopf"><span class="k">Lautstärke · alles im Spiel</span><b class="num" id="lautV">100 %</b></div>
+  <div class="zeile"><button id="lautM">−</button><input type="range" id="laut" min="0" max="100" step="5" value="100"><button id="lautP">+</button></div>
+  <div class="schnell"><button id="lautAus">🔇 Aus</button><button data-l="25">25 %</button><button data-l="50">50 %</button><button data-l="75">75 %</button><button data-l="100">100 %</button></div>
+</div>
 <div id="wl"></div>
 <script>
 /* Fernbedienung: verbindet sich mit dem Peer des PCs (Code aus dem QR-Code), schickt Befehle und bekommt jede Sekunde den Stand ({t:'st'}) */
 const PREFIX='kalmit-duell-v3-', code=location.hash.slice(1).toUpperCase(), $=id=>document.getElementById(id);
-let conn=null, wakeLock=null, wlOk=false, ziehe=false, intT=0;
+let conn=null, wakeLock=null, wlOk=false, ziehe=false, intT=0, lZiehe=false, lautT=0, stumm=false, stummT=0;
 const st=(t,ok)=>{ $('st').textContent=t; $('st').classList.toggle('ok',!!ok); }, btns=on=>['bStart','bPause','bWeiter'].forEach(id=>$(id).disabled=!on);
 // Display an lassen: beim ersten Tippen anfragen, nach Rückkehr in die Seite neu holen
 async function wakeOn(){ try{ if('wakeLock' in navigator && !wakeLock && document.visibilityState==='visible'){ wakeLock=await navigator.wakeLock.request('screen'); wlOk=true; $('wl').textContent='Display bleibt an ✓'; wakeLock.addEventListener('release',()=>{ wakeLock=null; }); } }catch(e){ if(!wlOk) $('wl').textContent='Display-Sperre konnte nicht verhindert werden.'; } }
@@ -68,15 +81,24 @@ function intSetz(v){ v=Math.max(70,Math.min(130,v)); intUi(v); clearTimeout(intT
 $('int').oninput=()=>{ ziehe=true; intSetz(+$('int').value); }; $('int').onchange=()=>{ ziehe=false; };
 $('intM').onclick=()=>intSetz(+$('int').value-1); $('intP').onclick=()=>intSetz(+$('int').value+1);
 document.querySelectorAll('#intBox .schnell button').forEach(b=>b.onclick=()=>intSetz(+b.dataset.i));
+// Lautstärke: wie die Intensität; Aus/An schaltet den Ton stumm, der Wert bleibt
+function lautUi(v,aus){ $('laut').value=v; $('lautV').textContent=aus?'Aus':v+' %'; $('lautV').className='num'+(aus?' aus':''); $('lautAus').textContent=aus?'🔊 An':'🔇 Aus'; $('lautAus').classList.toggle('sel',aus);
+  document.querySelectorAll('#lautBox .schnell button[data-l]').forEach(b=>b.classList.toggle('sel',!aus&&+b.dataset.l===v)); }
+function lautSetz(v){ v=Math.max(0,Math.min(100,v)); stumm=false; lautUi(v,false); clearTimeout(lautT); lautT=setTimeout(()=>{ lautT=0; cmd('laut',v); },150); }
+$('laut').oninput=()=>{ lZiehe=true; lautSetz(+$('laut').value); }; $('laut').onchange=()=>{ lZiehe=false; };
+$('lautM').onclick=()=>lautSetz(+$('laut').value-5); $('lautP').onclick=()=>lautSetz(+$('laut').value+5);
+document.querySelectorAll('#lautBox .schnell button[data-l]').forEach(b=>b.onclick=()=>lautSetz(+b.dataset.l));
+$('lautAus').onclick=()=>{ stumm=!stumm; lautUi(+$('laut').value,stumm); cmd('stumm',stumm); stummT=Date.now(); };
 function stand(m){ $('bStart').disabled=!m.start; $('bPause').disabled=!m.pause; $('bWeiter').disabled=!m.weiter;
-  $('intBox').style.display=m.wo?'block':'none'; if(!ziehe && !intT) intUi(m.int); }
+  $('intBox').style.display=m.wo?'block':'none'; if(!ziehe && !intT) intUi(m.int);
+  if(m.laut!=null){ $('lautBox').style.display='block'; if(!lZiehe && !lautT && Date.now()-stummT>1500){ stumm=!!m.stumm; lautUi(m.laut,stumm); } } }
 if(!code) st('Kein Code – bitte den QR-Code am PC scannen.');
 else if(!window.Peer) st('Online-Modul nicht geladen – Internetverbindung prüfen.');
 else { const peer=new Peer();
   peer.on('open',()=>{ conn=peer.connect(PREFIX+'r-'+code,{reliable:true});
     conn.on('open',()=>{ st('Verbunden ✓ ('+code+')',true); btns(true); });
     conn.on('data',m=>{ if(m&&m.t==='st') stand(m); });
-    conn.on('close',()=>{ st('Verbindung getrennt – Seite neu laden.'); btns(false); $('intBox').style.display='none'; }); });
+    conn.on('close',()=>{ st('Verbindung getrennt – Seite neu laden.'); btns(false); $('intBox').style.display='none'; $('lautBox').style.display='none'; }); });
   peer.on('error',e=>{ st(e.type==='peer-unavailable'?'PC nicht gefunden – QR-Code neu scannen.':'Fehler: '+e.type+' – Seite neu laden.'); btns(false); }); }
 </script>
 </body>

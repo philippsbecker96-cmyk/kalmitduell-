@@ -256,7 +256,7 @@ const clampN=(v,a,b)=>Math.max(a,Math.min(b,v));
 function crowdSound(dur,vol,f=600){ try{ actx=actx||new AudioContext(); const n=Math.floor(actx.sampleRate*dur), b=actx.createBuffer(1,n,actx.sampleRate), d=b.getChannelData(0); let last=0;
   for(let i=0;i<n;i++){ last=(last+0.06*(Math.random()*2-1))/1.06; d[i]=last*3.5; }
   const s=actx.createBufferSource(); s.buffer=b; const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=f; const g=actx.createGain(), t0=actx.currentTime;
-  g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(vol,t0+dur*.25); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur); s.connect(lp).connect(g).connect(actx.destination); s.start(); }catch(e){} }
+  g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(vol,t0+dur*.25); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur); s.connect(lp).connect(g).connect(lautOut()); s.start(); }catch(e){} }
 
 /* Einfache Personen: Körper, Kopf, Arme und Beine schwingen beim Laufen */
 function makePerson(G,o){
