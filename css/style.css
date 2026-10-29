@@ -124,6 +124,11 @@ select{font:600 15px Barlow,sans-serif;padding:7px 8px;border-radius:8px;border:
 #wnStr .los.l3 .s{font-weight:900;font-size:40px;animation-duration:.25s}
 #wnStr .ruhig{margin-bottom:4px}
 #wnStr .ruhig .s{font:700 18px/1.1 "Barlow Condensed",sans-serif;text-shadow:none;opacity:.85}
+#wnRest{position:absolute;left:0;right:0;bottom:100%;margin-bottom:6px;text-align:center;pointer-events:none;font:800 64px/1 "Barlow Condensed",sans-serif;color:rgba(250,240,216,.6);text-shadow:0 1px 3px rgba(0,0,0,.8),0 0 16px rgba(0,0,0,.4)} /* Kampagne ohne Intervalle: Restzeit des Abschnitts, halbdurchsichtig über der Anzeige */
+#wnAbw{font:800 26px/1.1 "Barlow Condensed",sans-serif;letter-spacing:.5px;margin-top:4px} /* Kampagne: zu lange vom Soll weg (woAbw) */
+#wnAbw:empty{display:none}
+#wnAbw.fester{color:#f0b860;animation:strPuls .5s ease-in-out infinite alternate}
+#wnAbw.langsam{color:#8fc7e8}
 @keyframes strPuls{from{transform:scale(1)}to{transform:scale(1.12)}}
 #woNow .lab{font:600 20px "Barlow Condensed",sans-serif;color:var(--muted)}
 #woNow .big{font:800 64px/1 "Barlow Condensed",sans-serif}

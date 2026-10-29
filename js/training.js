@@ -127,7 +127,7 @@ $('weight').addEventListener('change',()=>{ setTimeout(()=>{ if(race.mode==='tra
 $('woKind').onchange=()=>{ WO.kind=$('woKind').value; renderWo(); sendCfg(); };
 $('wnStop').onclick=()=>{ if(race.mode==='train' && !me.done && race.state==='run') trainFinish(); };
 
-function prepTrain(){ race.woNextKey=null; race.strKey=null; $('wnStr').innerHTML=''; race.woSegs=curSegs(); race.woT=race.woSegs.reduce((a,s)=>a+s.dur,0); race.woUnit=curUnit(); race.woKind=woKind(); race.ftp0=ftp();
+function prepTrain(){ race.woNextKey=null; race.strKey=null; $('wnStr').innerHTML=''; race.abwT=null; race.abwU=race.abwO=0; race.abwM=''; $('wnAbw').className=''; $('wnAbw').textContent=''; $('wnRest').textContent=''; race.woSegs=curSegs(); race.woT=race.woSegs.reduce((a,s)=>a+s.dur,0); race.woUnit=curUnit(); race.woKind=woKind(); race.ftp0=ftp();
   Object.assign(me,{bins:{},lowT:0,testE:0,testT:0,ftpRes:null}); $('wnStop').style.display='none'; }
 // beste 60 s aus 1-Sekunden-Fächern
 function best60(bins){ const ks=Object.keys(bins).map(Number).sort((a,b)=>a-b); let best=0;
@@ -164,7 +164,7 @@ function woNext(i){ const key=i+'|'+woK()+'|'+me.done; if(race.woNextKey===key) 
     +(rest>0?`<div class="more">+ ${rest} weitere</div>`:''):''; }
 // Kampagne ohne Intervalle: Vorwarnung vor harten Abschnitten (ab Schwelle/gelb und mind. 10 % FTP härter): „Mach dich bereit“ STR_BEREIT s vorher, „STRAMPELN“ STR_LOS s vorher (1–3 Zeilen je Zone),
 // bleibt klein stehen, solange es hart ist; kurze Pausen (bis STR_PAUSE s) zwischen harten Abschnitten lassen die Anzeige stehen
-const STR_BEREIT=12, STR_LOS=3, STR_PAUSE=30;
+const STR_BEREIT=12, STR_LOS=1, STR_PAUSE=30;
 function strPct(sg){ if(!sg) return 0; if(sg.free) return 130; const u=race.woUnit; return Math.max(toPct(sg.a,u),sg.b==null?0:toPct(sg.b,u))*woK(); }
 const strStufe=p=>p<90?0:p<105?1:p<119?2:3;
 function woStrampeln(i,rem){ const S=race.woSegs; let m=null, st=0, p=0;
@@ -172,12 +172,18 @@ function woStrampeln(i,rem){ const S=race.woSegs; let m=null, st=0, p=0;
     if(hart&&rem<=STR_LOS){ m='los'; st=sn; p=pn; } else if(pause){ m='ruhig'; st=Math.max(strStufe(pv),sn); p=pn; } else if(hart&&rem<=STR_BEREIT){ m='bereit'; st=sn; p=pn; } else if(sc){ m='ruhig'; st=sc; p=pc; } }
   const c=m?zoneCol(p):'', key=m?m+st+c:''; if(race.strKey===key) return; race.strKey=key;
   $('wnStr').innerHTML=!m?'':m==='bereit'?`<div class="bereit" style="color:${c}">Mach dich bereit – gleich wird's härter</div>`:`<div class="${m} l${st}" style="color:${c}">${'<div class="s">STRAMPELN</div>'.repeat(st)}</div>`; }
+// Kampagne: Meldung, wenn man zu lange vom Soll abweicht (sonst passen Szenen und Strecke nicht mehr zusammen) – mehr als ABW.pct unter dem Soll ABW.unter s → „fester“, darüber ABW.ueber s → „langsamer“; die ersten ABW.ein s eines Abschnitts zählen nicht
+const ABW={pct:.05, unter:3, ueber:10, ein:4};
+function woAbw(sg,P,tgt){ const dt=race.abwT==null?0:Math.min(.5,Math.max(0,race.t-race.abwT)); race.abwT=race.t; let m='';
+  if(race.kamp&&!me.done&&!sg.free&&tgt>0&&race.t-sg.t0>ABW.ein){ race.abwU=P<tgt*(1-ABW.pct)?race.abwU+dt:0; race.abwO=P>tgt*(1+ABW.pct)?race.abwO+dt:0; m=race.abwU>=ABW.unter?'fester':race.abwO>=ABW.ueber?'langsam':''; }
+  else race.abwU=race.abwO=0;
+  if(race.abwM===m) return; race.abwM=m; $('wnAbw').className=m; $('wnAbw').textContent=m==='fester'?'Fester treten!':m==='langsam'?'Etwas langsamer':''; }
 function woPanel(P,sg){ if(!sg) return; const S=race.woSegs, i=S.indexOf(sg), nx=S[i+1], rem=sg.t0+sg.dur-race.t, tgt=me.tgt||0, pct=toPct(segVal(sg,race.t),race.woUnit)*woK();
   if(sg.free && !me.done){ const av=me.testT?me.testE/me.testT:0; $('wnLab').textContent='20-min-Test · Vollgas · Ø bisher'; $('wnW').textContent=Math.round(av); $('woNow').style.borderColor='#b9475f';
     $('wnMe').textContent=`Du: ${Math.round(P)} W`; $('wnMe').style.color=''; $('wnCd').textContent=fmtDur(Math.max(0,rem)); $('wnNx').textContent=`Hochgerechnete FTP: ${Math.round(av*.95)} W`; $('simPv').textContent=$('simP').value; woNext(i); return; }
   $('woNow').classList.toggle('still',kampOhneIv()); woStrampeln(i,rem); $('wnLab').textContent=sg.label; $('wnW').textContent=Math.round(tgt); $('woNow').style.borderColor=zoneCol(pct);
   const ok=Math.abs(P-tgt)<=tgt*0.05; $('wnMe').textContent=`Du: ${Math.round(P)} W`; $('wnMe').style.color=me.done?'':ok?'#9cc46b':'#f0b860';
-  $('wnCd').textContent=fmtDur(Math.max(0,rem));
+  $('wnCd').textContent=fmtDur(Math.max(0,rem)); $('wnRest').textContent=kampOhneIv()&&!me.done?fmtDur(Math.max(0,rem)):''; woAbw(sg,P,tgt);
   if(sg.step && !me.done){ $('wnNx').textContent=`Gleich: ${nx?nx.a:''} W · beste Minute bisher ${Math.round(best60(me.bins))} W`; }
   else $('wnNx').textContent=me.done?(race.woKind==='wo'?'Workout geschafft':'Test beendet'):nx?`noch ${fmtT(race.woT-race.t)} gesamt`:`Letzter Abschnitt · danach geschafft`;
   woNext(i);
