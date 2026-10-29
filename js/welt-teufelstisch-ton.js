@@ -2,7 +2,7 @@
    Helfer aus Mission 1 (triEins, triLoop, triMusik, triMusikNeu, triFern in welt-trifels-leben.js) · Plan, Dateien und was noch fehlt: kampagne/sounds/effekte/EFFEKTE.md
    ttTon aus rennen.js · fehlende Dateien bleiben still (Verfolgungsstück teufelsjagd: fehlt es, läuft omniouswaldnachts als Platzhalter) */
 Object.assign(TRI_TON_VOL,{hundemeute:.7, hund_gross:.6, vogel_wald:.5, kinderlachen:.6, donner:.8, teufel_bruell:1, teufel_schnaufen:.8, friedel_schrei:.8, glas_bricht:.8, schotter:.3, feuerstein:.8, brutzeln:.5, regen:.5, wind:.5, teufel_schritt:.9});
-Object.assign(TRI_MUSIK,{teufelsweg:['musik/teufelsweg',.5,.6], waldamb:['musik/waldambient',.35], tjagd:['musik/teufelsjagd',.55,2], tjagdP:['musik/omniouswaldnachts',.5,2], tsprint:['musik/teufelssprint',.6,3], hjagd:['musik/hundejagd',.45,2], tjagd2:['musik/teufelsjagd2',.55,1], lager:['musik/lager',.35,.5]}); // tjagdP: Platzhalter fürs Verfolgungsstück · tsprint: Halloween-Jagd im Schlusssprint (21,6 s)
+Object.assign(TRI_MUSIK,{teufelsweg:['musik/teufelsweg',.5,.6], waldamb:['musik/waldambient',.35], tjagd:['musik/teufelsjagd',.55,2], tjagdP:['musik/omniouswaldnachts',.5,2], tsprint:['musik/teufelssprint',.6,3], hlustig:['musik/spielleute-lustig',.36,2], hkrieg:['musik/spielleute-krieg',.33,2], hfolk:['musik/mittelalterhintergrundfolkig2',.2,.6], tjagd2:['musik/teufelsjagd2',.55,1], lager:['musik/lager',.35,.5]}); // tjagdP: Platzhalter fürs Verfolgungsstück · tsprint: Halloween-Jagd im Schlusssprint (21,6 s)
 const TT_TON={sprint:22, donner:[18,40], schnauf:2.4, hund:35, bell:[2,6], jagdLang:31, thema:36, teufelsweg:86, froh:3, geschafft:2}; // Hunde hörbar bis m · Bellen alle s · Jagdmusik spielt s · Thema bis s · geschafft: Thema so viele s nach dem Blick zurück auf den erschöpften Teufel (vom Nutzer: erst kurz Fokus auf ihn) · teufelsweg endet mit „Ertappt“ · fröhliche Musik so viele s, nachdem der Teufel am Steintor aufschlägt
 let ttTonVor=null, ttJagdDa=null; // ttJagdDa: liegt musik/teufelsjagd.mp3 schon im Ordner?
 function ttTon(dt){ const A=anim.tt; if(!A) return; const run=race.state==='run', an=(run||race.state==='count')&&!race.paused, rt=run?race.t:0, t=performance.now()/1000, T=R.tt, Z=TT_TON;
@@ -16,9 +16,10 @@ function ttTon(dt){ const A=anim.tt; if(!A) return; const run=race.state==='run'
   // ---- Musik ----
   // Erkennungsmelodie beim Countdown und Losfahren, noch einmal nach dem Schlusssprint (geschafft!)
   const zG=zE+TF_ABH.kam[0]+TF_ABH.kam[1]+Z.geschafft; if(einmal('thema2',run&&rt>=zG&&rt<zG+17)) triMusikNeu('thema'); const th=an&&(race.state==='count'||rt<Z.thema||rt>=zG&&rt<zG+42)?1:0; triMusik('thema',th,dt,false);
-  // Hunde: Cartoon-Jagd (hundejagd) in Schüben – wenn sie aufspringen, zweimal mittendrin, und so, dass sie mit der letzten Wurst endet; nur der erste Schub von vorn, danach geht’s weiter, wo es aufgehört hat
-  let jm=0; if(run&&P){ [P.t0, P.klau[4].t-6, P.klau[8].t-6, P.ende-Z.jagdLang].forEach((j,k)=>{ if(rt>=j&&rt<j+Z.jagdLang){ jm=1; if(einmal('jm'+k,true)&&!k) triMusikNeu('hjagd'); } }); }
-  triMusik('hjagd',an?jm:0,dt);
+  // Hunde (vom Nutzer: fröhliche Mittelaltermusik wie in Mission 1) in Schüben – wenn sie aufspringen, zweimal mittendrin, und so, dass sie mit der letzten Wurst endet: jagd (Mission 1), lustig, krieg, lustig (geht weiter, wo es aufgehört hat) · dazwischen leise folkig, läuft durch
+  const HS=['jagd','hlustig','hkrieg','hlustig']; let jm=0, js=-1, hz=0; if(run&&P){ hz=rt>=P.t0&&rt<P.ende; [P.t0, P.klau[4].t-6, P.klau[8].t-6, P.ende-Z.jagdLang].forEach((j,k)=>{ if(rt>=j&&rt<j+Z.jagdLang){ jm=1; js=k; if(einmal('jm'+k,true)&&k<3) triMusikNeu(HS[k]); } }); }
+  for(const n of ['jagd','hlustig','hkrieg']) triMusik(n,an&&js>=0&&HS[js]===n?1:0,dt,false);
+  if(einmal('hfolk',hz)) triMusikNeu('hfolk'); triMusik('hfolk',an&&hz&&!jm?.8:0,dt);
   // Idylle am Wegweiser zum Jungfernsprung: kurz fröhlich, bricht mit dem Unwetter ab
   const idy=run&&T.idyll!=null&&me.d>=T.idyll-250&&me.d<T.idyll+250&&sturm<=0; // endet, wenn die Kamera zurück ist (dann kommt das Unwetter) if(einmal('idy',idy)) triMusikNeu('happy');
   // Pause nach Flucht 1: wenn es aufklart, fröhliche Musik und Vögel – verklingt, wenn es wieder zuzieht
@@ -41,7 +42,7 @@ function ttTon(dt){ const A=anim.tt; if(!A) return; const run=race.state==='run'
   if(unt>0&&PA&&PA.a.ended){ if(!O.plNeu) O.plNeu=t+4+Math.random()*4; else if(t>O.plNeu){ O.plNeu=0; O.pi=((O.pi|0)+1)%PL.length; triMusikNeu(PL[O.pi]); } }
   for(const n of PL) triMusik(n,an&&(hap?n==='happy':n===PL[O.pi|0])?hp:0,dt,false);
   // Wald-Teppich (waldambient): ab den Hunden bis „Ertappt“ und nach Flucht 1, leiser im Unwetter – aus bei Jagd, Idylle, teufelsweg und Flucht
-  const wald=run&&an1&&(rt>=an1.t0-15&&e1&&rt<e1.t0||a1&&K&&rt>=K.r[0].tE&&rt<K.r[1].tT&&!nachE)?(sturm>0?.5:.7)*(1-jm)*(idy?0:1)*(tw>0?0:1)*(1-froh):0; triMusik('waldamb',an?wald:0,dt);
+  const wald=run&&an1&&(rt>=an1.t0-15&&e1&&rt<e1.t0||a1&&K&&rt>=K.r[0].tE&&rt<K.r[1].tT&&!nachE)?(sturm>0?.5:.7)*(1-jm)*(hz?0:1)*(idy?0:1)*(tw>0?0:1)*(1-froh):0; triMusik('waldamb',an?wald:0,dt);
   // Ankunft: mit den Ende-Tafeln einmal das kurze Stück
   if(einmal('ankunft',ank)) triMusikNeu('ankunft'); triMusik('ankunft',an&&ank?1:0,dt,false);
   // Schlussszene am Lager: ruhige Musik, blendet mit dem Bild aus

@@ -64,8 +64,9 @@ Gleiche Helfer wie Mission 1, Lautstärken der neuen Dateien in `TRI_TON_VOL`/`T
 |---|---|
 | `musik/thema.mp3` | Countdown und Losfahren · noch einmal 3 s nach dem Schlusssprint (geschafft!) |
 | `hintergrundhappy`, `folkig`, `folkig2` | Wiedergabeliste wie in Mission 1: im Einfahren unter Erzählung und Gedicht (bis 15 s vor den Hunden) · im Ausfahren nach dem Thema |
-| `musik/hundejagd.mp3` | Straßenhunde (Comedy-Verfolgung, ersetzt `jagd.mp3`), in vier Schüben: beim Aufspringen, vor Klau 5 und 9, und so, dass sie mit der letzten Wurst endet – nur der erste Schub von vorn |
-| `musik/waldambient.mp3` | Wald-Teppich ab den Hunden bis „Ertappt“ (leiser im Unwetter) und zwischen Flucht 1 und dem Wiedersehen mit dem Tisch · aus bei Jagd, Idylle, teufelsweg, Flucht |
+| `musik/jagd.mp3`, `musik/spielleute-lustig.mp3` (1:52), `musik/spielleute-krieg.mp3` (2:34) | Straßenhunde (fröhliche Mittelaltermusik wie in Mission 1), in vier Schüben à 31 s: beim Aufspringen `jagd`, vor Klau 5 `lustig`, vor Klau 9 `krieg`, mit der letzten Wurst endend `lustig` (geht weiter, wo es aufgehört hat) · `hundejagd.mp3` (Cartoon) nicht mehr benutzt |
+| `musik/mittelalterhintergrundfolkig2.mp3` | Hunde: zwischen den Schüben leise, läuft durch (statt Wald-Teppich) |
+| `musik/waldambient.mp3` | Wald-Teppich nach den Hunden bis „Ertappt“ (leiser im Unwetter) und zwischen Flucht 1 und dem Wiedersehen mit dem Tisch · aus bei Jagd, Idylle, teufelsweg, Flucht |
 | `musik/hintergrundhappy.mp3` | Idylle am Wegweiser zum Jungfernsprung (ab 250 m davor, unter der langen Kamerafahrt zur Familie und zum Regenbogen), bricht mit dem Unwetter ab |
 | `musik/hintergrundhappy.mp3` (Schleife) | Pause nach Flucht 1: blendet ein, wenn es aufklart, verklingt, wenn es wieder zuzieht (aus nach der Abzweigung „sicher rechts“) |
 | `musik/teufelsweg.mp3` | Anschleichen: startet 86 s vor „Ertappt“, endet genau dort, wird zum Tisch hin lauter – danach kurz Stille |
