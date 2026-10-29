@@ -18,6 +18,7 @@ Größere Punkte später in die passende Datei umziehen (`PLAENE.md`, `KAMPAGNE.
 - [x] (später) Südpfalz-Klassiker, Weinstand/Straußwirtschaft am Ortsrand: Leute an Bierzeltgarnituren, stoßen an, prosten dir zu. Aufwand: klein bis mittel
 
 ## Kampagne
+- [ ] Kampagne (29.10.): Position in den Missionen jetzt fest nach Plan (`planD` in `trainStep`, training.js), unabhängig von den echten Watt – selbst testen: absichtlich deutlich unter/über dem Soll fahren, Szenen, Sprechblasen und Tafeln müssen trotzdem an der richtigen Stelle kommen; km/h-Anzeige und Fahrgefühl (Tempo, Aero-Haltung) prüfen
 - [ ] Mission 1, Ziel: Teufelstisch (und die Kuppe darunter) spiegelt/blendet komisch am Ende – nach dem Aufreißen des Nebels (700 m vor dem Gasthaus) im Spiel prüfen; Teufelstisch in `buildGasthaus` (welt-trifels.js), Nebel `TRI_NEBEL`
 - [x] Mission 2 (28.10.: `teufelsjagd2.mp3` eingebaut), Musik vor und in der zweiten Teufelsjagd (ab der Abzweigung „sicher rechts“, wenn es wieder zuzieht): unheimlicher, gruseliger – Nutzer sucht einen Titel heraus, dann in `TRI_MUSIK`/`ttTon` (welt-teufelstisch-ton.js) einbauen
 - [x] Mission 2, Schlusssprint (eingebaut 28.10., Text noch Platzhalter `TT_TXT.sprint`): Friedel läutet ihn mit einem Spruch ein – „der wird müde“ (der Teufel), „jetzt komm, noch einmal durchziehen!“ o. ä.; Platzhalter in `TT_TXT`/`ttSagPlan` (welt-teufelstisch-leben.js) zu Beginn von „Schlusssprint“, Text vom Nutzer
