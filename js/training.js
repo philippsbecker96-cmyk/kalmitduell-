@@ -45,6 +45,11 @@ function drawWo(g,x,y,w,h,S,T,o={}){
     if(pa===pb){ const bw=Math.max(1,x1-x0-.6); g.fillStyle=zoneCol(pa); rrPfad(g,x0,Y(pa),bw,y+h-Y(pa),[ro(bw),ro(bw),0,0]); g.fill(); }
     else { const bw=x1-x0-.6, yt=Y(Math.max(pa,pb)); g.save(); rrPfad(g,x0,yt,bw+.4,y+h-yt,[ro(bw),ro(bw),0,0]); g.clip(); const n=Math.max(1,Math.round((x1-x0)/3)); for(let i=0;i<n;i++){ const p0=pa+(pb-pa)*i/n, p1=pa+(pb-pa)*(i+1)/n, xa=x0+(x1-x0)*i/n, xb=x0+(x1-x0)*(i+1)/n; g.fillStyle=zoneCol((p0+p1)/2); g.beginPath(); g.moveTo(xa,y+h); g.lineTo(xa,Y(p0)); g.lineTo(xb,Y(p1)); g.lineTo(xb+.4,y+h); g.fill(); } g.restore(); } });
   g.strokeStyle='rgba(255,255,255,.25)'; g.lineWidth=1; g.setLineDash([4,4]); g.beginPath(); g.moveTo(x,Y(100)); g.lineTo(x+w,Y(100)); g.stroke(); g.setLineDash([]);
+  if(o.watt){ const fs=Math.max(11,Math.round(h*.13)); g.font=`700 ${fs}px Barlow, sans-serif`; g.fillStyle='#fff'; g.shadowColor='rgba(0,0,0,.6)'; g.shadowBlur=3; // Lobby: Watt in jedem Block, quer wenn er breit genug ist, sonst hochkant
+    S.forEach(sg=>{ if(sg.free) return; const wa=Math.round(toW(sg.a,unit)), wb=sg.b==null?wa:Math.round(toW(sg.b,unit)), tx=wa===wb?String(wa):wa+'→'+wb, x0=X(sg.t0), bw=X(sg.t0+sg.dur)-x0, yt=Y(Math.max(pc(sg.a),pc(sg.b==null?sg.a:sg.b))), tw=g.measureText(tx).width;
+      if(bw>=tw+6&&y+h-yt>=fs+4){ g.textAlign='center'; g.fillText(tx,x0+bw/2,yt+fs+2); }
+      else if(bw>=fs*.8&&y+h-yt>=tw+6){ g.save(); g.translate(x0+bw/2+fs*.36,yt+4); g.rotate(-Math.PI/2); g.textAlign='right'; g.fillText(tx,0,0); g.restore(); } });
+    g.shadowBlur=0; }
   if(o.cur!=null){ const xc=X(Math.min(T,o.cur)); g.fillStyle='rgba(10,20,15,.45)'; g.fillRect(x,y,xc-x,h);
     if(o.trace&&o.trace.length>1){ g.strokeStyle='#ffffff'; g.lineWidth=2; g.beginPath(); o.trace.forEach(([t,p],i)=>{ const px=X(t), py=Y(p/ftp()*100); i?g.lineTo(px,py):g.moveTo(px,py); }); g.stroke();
       if(o.trace.some(q=>q[2])){ const YH=b=>y+h-Math.max(0,Math.min(1,(b-60)/150))*h; // Puls rot, feste Skala 60–210 bpm
@@ -69,7 +74,7 @@ function renderWo(){
   woRefresh();
 }
 function woRefresh(){ const S=curSegs(), T=S.reduce((a,s)=>a+s.dur,0), cv=$('woChart'), g=cv.getContext('2d'), k=woKind(); g.clearRect(0,0,cv.width,cv.height);
-  drawWo(g,8,10,cv.width-16,cv.height-14,S,Math.max(T,1),{unit:curUnit()});
+  drawWo(g,8,10,cv.width-16,cv.height-14,S,Math.max(T,1),{unit:curUnit(),watt:k==='wo'});
   const avg=T?S.reduce((a,s)=>a+s.dur*toW(s.b==null?s.a:(s.a+s.b)/2,curUnit()),0)/T:0;
   const tss=S.reduce((a,s)=>{ const x=toPct(s.a,curUnit())/100, y=s.b==null?x:toPct(s.b,curUnit())/100; return a+s.dur*(x*x+x*y+y*y)/3; },0)/36; // TSS = Σ Dauer·IF² /3600·100, Rampen über IF² gemittelt
   $('woSum').textContent= k==='ramp' ? `Stufen ab ${S[1]?S[1].a:0} W, +20 W pro Minute · Dauer je nach Stärke ca. ${fmtT(300+Math.max(0,(ftp()*1.3-(S[1]?S[1].a:0))/20+1)*60)} · bisherige FTP ${ftp()} W`
