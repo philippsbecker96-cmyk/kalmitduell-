@@ -5,10 +5,10 @@
 
 const TT_FUHR={anteil:.45, vor:7, ab:40, weg:10}; // Sprechbeginn bei diesem Anteil des Ausfahrens · s heranrauschen · Sprechzeit, danach davon · s bis außer Sicht
 // [s ab Sprechbeginn, bis s, Sprecher (b: Bauer, f: Friedel), Text] – PLATZHALTER, Texte schreibt der Nutzer
-const TT_FUHR_TXT=[[0,3,'b','Un wie?'],[3.5,9.5,'b','[PLATZHALTER] Ah, de Schneggefahrer vun gischder! Hoschs doch noch de Buckel nunner gschafft?'],
-  [10,16,'b','[PLATZHALTER] Unn du, Friedel – im Wirtshaus verzähle se, du hättscht e Elwetritsch gfange?'],[16.5,22,'f','[PLATZHALTER] Gfange? Mit bloße Händ! Grad so groß war se!'],
-  [22.5,27.5,'b','[PLATZHALTER] Jo jo … unn ich bin de Kaiser vun China.'],[28,33.5,'b','[PLATZHALTER] Unn du, [Großer|Großi]? Immer noch ke Wort? Wie gischder.'],
-  [34,39.5,'b','[PLATZHALTER] Alla hopp – ich muss weida. Bis zum nächschde Mol, ihr zwee Schnecke!']];
+const TT_FUHR_TXT=[[0,3,'b','Un wie?'],[3.5,9.5,'b','Gugg mo do, de Sunndachsfahrer vunn geschern! Hoschs a noch de Berch runnergschafft?'],
+  [10,16,'b','Unn du, Friedel – in de Wertschaft henn se vazeehlt, du hosch e Elwetritsch gfange?'],[16.5,22,'f','Mit meine eichene Händ! E Riesevieh, ich sach das!'],
+  [22.5,27.5,'b','Jo alla, unn ich bin Kaiser vunn China.'],[28,33.5,'b','Unn du, [Großer|Großi]? Hosch immer nonnet redde gelernt??'],
+  [34,39.5,'b','Alla hopp, ich packs … ma sehn uns!']];
 const ttFuhrT=()=>{ const a=(race.woSegs||[]).find(s=>s.label==='Ausfahren'); return a?a.t0+a.dur*TT_FUHR.anteil:null; }; // Workout-Zeit des Sprechbeginns
 const ttFuhreW=()=>{ const F=anim.tt&&anim.tt.fuhre; return F&&F.G.visible?bSm((F.off+30)/8)*bSm((30-F.off)/8):0; }; // 0 … 1: du an den rechten Rand (ttSpur)
 

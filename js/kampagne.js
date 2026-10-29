@@ -30,7 +30,8 @@ const KAMP=[
       S_('Flucht 2',1.5,105),S_('Tischwurf',.5,150),S_('Flucht 2',1.5,108),S_('Dreizack',.5,160),S_('Flucht 2',1,110),
       S_('Schlusssprint',1/3,170),S_('Ausfahren',5,55,45)],
     // Platzhalter-Tafeln (Schritt 1) – endgültige Texte folgen
-    start:[{at:TT_GAST.halt+TT_GAST.raus+TT_GAST.flug,titel:'Hinauf zum Teufelstisch',text:'[PLATZHALTER] Der kürzeste Weg nach Dahn führt direkt am Teufelstisch vorbei – genau dort, wovor der Wirt euch gewarnt hat. Aber so dumm werden unsere beiden Helden ja wohl nicht sein … oder?'}], // nach der Gasthaus-Szene
+    start:[{at:TT_GAST.halt+TT_GAST.raus+TT_GAST.flug,titel:'Hinauf zum Teufelstisch',text:'Ein entspannter Ausflug nach Dahn steht den beiden Reisenden bevor – es sei denn, sie schlagen wirklich die Warnungen des Wirts in den Wind und fahren am Teufelstisch vorbei …'}], // nach der Gasthaus-Szene
+    mitte:[{info:true, img:'kampagne/bilder/teufelstisch.jpg', at:()=>{ const e=(race.woSegs||[]).find(s=>s.label==='Einfahren'); return e?e.t0+e.dur-TT_GED.bis+1:null; }, titel:'Der Teufelstisch', text:'Der Teufelstisch bei Hinterweidenthal ist ein 14 m hoher Pilzfelsen aus Buntsandstein, entstanden vor rund 250 Millionen Jahren. Wind, Wasser und Frost haben den weicheren Sandstein ringsum abgetragen, nur der harte Kern blieb stehen – ein einbeiniger Tisch mit einer Platte von geschätzt 284 Tonnen. Im Pfälzerwald gibt es über 20 solcher Pilzfelsen, dieser ist der größte.'}], // Infotafel direkt nach dem Gedicht
     endeVor:TT_LAGER.halt, ende:[{titel:'Dem Teufel entwischt',text:'Hinter dir verhallt das Fluchen des Teufels zwischen den Felsen. Vor euch liegt der Weg hinab nach Dahn.'}]},
   {id:'dahn', nr:3, titel:'Dahn – Der Jungfernsprung', ort:'Dahner Felsenland', bald:true},
   {id:'berwartstein', nr:4, titel:'Berwartstein – Drache und Flut', ort:'Erlenbach · Burg Berwartstein', bald:true}];
@@ -66,7 +67,7 @@ function kampUi(){ const B=$('kampBlock'); if(!B) return;
 const kampOhneIv=()=>!!race.kamp&&!KST.iv; // Kampagne ohne Intervallnamen und Workout-Profil (Lobby-Schalter): Intervallanzeige nur mit Soll- und Ist-Watt
 function kampTafel(tf){ let el=$('kampTafel'); if(!tf){ el.classList.remove('zeig'); el.dataset.k=''; return; }
   const k=tf.titel; if(el.dataset.k!==k){ el.dataset.k=k; el.classList.toggle('info',!!tf.info); // info: Infotafel (helles Pergament, roter Rand, Bild)
-    el.innerHTML=`${tf.img||tf.bild?`<div class="kbild${tf.img?' mitbild':''}">${tf.img?`<img src="${tf.img}" alt="">`:tf.bild}</div>`:''}<div class="ktxt"><h3>${esc(kText(tf.titel))}</h3><p>${esc(kText(tf.text))}</p></div><div class="kbar"><i></i></div>`; }
+    el.innerHTML=`${tf.img||tf.bild?`<div class="kbild${tf.img?' mitbild':''}">${tf.img?`<img src="${tf.img}" alt="" onerror="this.parentNode.remove()">`:tf.bild}</div>`:''}<div class="ktxt"><h3>${esc(kText(tf.titel))}</h3><p>${esc(kText(tf.text))}</p></div><div class="kbar"><i></i></div>`; }
   el.classList.add('zeig'); el.querySelector('.kbar i').style.width=Math.min(100,tf.p*100)+'%'; }
 const kampEnde0=m=>(race.woT||0)-(m.endeVor||0)-(m.ende||[]).length*KT_DAUER; // Beginn der Ende-Tafeln: endeVor s vor dem Ende fertig (Mission 2: vor der Schlussszene am Lager)
 function kampTick(){ const m=race.kamp; if(!m||race.state!=='run'||me.done){ kampTafel(null); return; }

@@ -6,7 +6,7 @@
 
 const TT_LAGER={halt:50, ab:8, funken:[3.5,8], zund:8, auf:[10.5,12.5], tasche:13.5, hoch:[14.5,17], spiess:17.5}; // alles vor der Ende-Tafel (letzte 25 s) – keine Blasen darunter (vom Nutzer) // s Halt am Ende (gerade Zahl wie das Raster von kampPlan) · s Abblende · Szenenzeit (s ab Halt): Funken schlagen, Feuer brennt, aufstehen und hinsetzen, Wurst aus der Tasche, hochhalten, am Stecken
 // Sprüche [Szenenzeit, Dauer, Text] – alle von Friedel · PLATZHALTER, Texte schreibt der Nutzer
-const TT_LAGER_TXT=[[13.5,4.5,'[PLATZHALTER] Guck emol, was ich noch in de Hosedasch hab – die letzt Bratworscht! Die hen mer die Hund gelosst.'],[18.5,5.5,'[PLATZHALTER] Jo alla – so schwer war’s am End jo doch net.']]; // nur zwei Sprüche, das Feuer kommentiert er nicht (vom Nutzer)
+const TT_LAGER_TXT=[[13.5,4.5,'Gugg mol, ennie hennse ma gelosst, die Drecksköter.'],[18.5,5.5,'Unn segsch – war doch e gudi Abkerzung vorhin …']]; // nur zwei Sprüche, das Feuer kommentiert er nicht (vom Nutzer)
 const ttLagerZeit=()=>{ const T=R&&R.tt; return T&&T.tL!=null&&race.state==='run'?race.t-T.tL:-1; }; // Szenenzeit, vor der Szene negativ
 
 // ---- Aufbau (aus buildTeufelstisch, nach dem Lagerplatz) ----

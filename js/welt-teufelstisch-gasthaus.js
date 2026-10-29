@@ -7,9 +7,9 @@
 const TT_GAST={halt:26, raus:6, flug:3}; // s nach dem Start drinnen (gerade Zahl wie das Raster von kampPlan) · s Blick auf die Tür von außen · s Flug zu dir – danach die Story-Tafel (kampagne.js)
 const TT_INNEN=new THREE.Scene(); // eigener Innenraum, liegt nicht in der Welt
 // Sprüche [Szenenzeit kt, Dauer, Sprecher, Text] – kt: 0–5 Countdown, danach 5 + Workout-Zeit · PLATZHALTER, Texte schreibt der Nutzer
-const TT_GAST_TXT=[[11.5,5.5,'wirt','[PLATZHALTER] Wenn ihr Richtung Dahn wollt, dann fahrt unne durchs Tal, Richtung Jungfernsprung.'],
-  [17.3,5,'wirt','[PLATZHALTER] Am Teufelstisch wollt ihr net vorbei – glaabt mer’s.'],[22.5,3.5,'friedel','[PLATZHALTER] Jo jo, mache mer schunn so.'],
-  [26.3,4.2,'friedel','[PLATZHALTER] (leise zu dir) Jo – was der wieder meent …']];
+const TT_GAST_TXT=[[11.5,5.5,'wirt','Ihr missen Richtung Dahn, gell? Fahren unne durchs Tal Richtung Jungfernsprung.'],
+  [17.3,5,'wirt','Am Deifelsdisch wollena net vorbei, des kinna ma glawe.'],[22.5,3.5,'friedel','Ajo, mache ma so.'],
+  [26.3,4.2,'friedel','(leise zu dir) Was der widda meent …']];
 // Kamera drinnen: [ab kt, Position und Blick am Anfang, Position und Blick am Ende der Einstellung] – harter Schnitt zwischen den Einstellungen, dazwischen langsame Fahrt
 const TT_GAST_KAM=[[0,[2,2.4,3.85],[-1,1.25,-1.6],[1.8,2.3,3.6],[-1,1.25,-1.5]], // Totale von vorn, erhöht: unten du, rechts Friedel, darüber frei der Wirt hinter dem Tresen mit der Elwetritsche, rechts der Kamin
   [7,[2.4,1.7,2.9],[-1.2,1.15,-1.2],[2.2,1.65,2.7],[-.8,1.15,-.6]], // der Wirt kommt vom Tresen an euren Tisch (links vom Unterzug, sonst hängt der Balken im Bild)

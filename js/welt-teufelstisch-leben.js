@@ -6,19 +6,20 @@
    Erzählt im Einfahren (TT_TXT), danach das Gedicht vom Teufelstisch (TT_GEDICHT, ttGedichtPlan, Element #ttGedicht), duckt sich beim Anschleichen und fährt dann hinter dir am rechten Wegrand. Teufelstisch als Fernbild vom Tal aus: A.fern (TT_FERN) */
 
 // Friedels Sprüche: [s nach dem Start, Dauer, Text] – PLATZHALTER, Texte schreibt der Nutzer
-const TT_TXT={hunde:{sehen:'[PLATZHALTER] Oh weia … guck mol do im Gebüsch. Die gucke awwer hungrich …', start:'[PLATZHALTER] Oh nee – die Kläffer vum Dorf! Die rieche mei Worscht!', klau:['[PLATZHALTER] He! Gebb des her!','[PLATZHALTER] Net de Speck!!','[PLATZHALTER] Mei scheen Fleeschworscht!','[PLATZHALTER] Mei Schinke! Ihr Bagaasch!','[PLATZHALTER] Hört uff! Ich hab doch nix mehr!'],
-    biss:['[PLATZHALTER] Aua! Der beißt mich in die Wad!','[PLATZHALTER] Loss los, du Mistvieh!','[PLATZHALTER] Schon widder in die Wad!'], letzt:'[PLATZHALTER] Mei letscht Worscht!!! … Jetzt is alles fort.',
-    zieh:['[PLATZHALTER] He! Der hängt an mei Worschtkett! Loss los, du Mistvieh!','[PLATZHALTER] Der loss sich ziehe wie de Graf in de Kutsch!','[PLATZHALTER] Do – jetzt is se gerisse. Verschluck dich dra!'], // Tauziehen: Beginn, Mitte, Kette reißt
-    katze:['[PLATZHALTER] Kschtt! Ihr Dreckskäärle! Losst mei Katz in Ruh!','[PLATZHALTER] Merci, Fraa! Haue Se nur feschd druff!']}, // [Bäuerin, Friedel]
-  verrat:'[PLATZHALTER] Mmmh … so en Schoppe unn e Dreierlei, des hätt ich jetzt aach gern …', // kurz vor „Ertappt“ – dadurch merkt der Teufel euch
-  wetter:['[PLATZHALTER] Guck emol, die Sunn kummt raus! Der Deiwel hot des Sauwetter mitgenomme.','[PLATZHALTER] Hm … des gfallt mer gar net, wie des do hinne widder zuzieht.','[PLATZHALTER] Do kummt’s widder runner! Wie aus Kiwwele!'], // Pause nach Flucht 1: klart auf, zieht zu, nach der Abzweigung
-  duck:'[PLATZHALTER] Do vorne geht’s zum Jungfernsprung – awwer des is en Umweg. Der Deiwel entdeckt uns doch eh net. Ich wääß, wie mer des mache: Mir mache uns halt klä!',
-  gabel:'[PLATZHALTER] Hoho – vorbei! Zum Glück kann der net ziele mit seim Schoppe im Kopp!',
-  bauer:['[PLATZHALTER] Ei Friedel! Fütterscht du jetzt die Dorfköter? Do bleibt jo nix mehr fer dich!','[PLATZHALTER] Halt die Gosch, Schorsch, unn hilf mer liewer!','[PLATZHALTER] Hä hä … Worschtfriedel!'], // [Bauer, Friedel, Bauer]
-  ritter:['[PLATZHALTER] Hoho! Ein Bauerntölpel auf einem Holzgestell, gejagt von Kötern! Was für ein Anblick!','[PLATZHALTER] Macht Platz, Gesindel – ein Ritter hat es eilig!','[PLATZHALTER] Der hot gut lache, der hockt jo uff\'m Gaul!'], // [Ritter, Ritter, Friedel]
-  rechts:'[PLATZHALTER] Do misse mer awwer werklich rechts! Do schwör ich druff – bei allem, was mer heilich is!', schwoer:'[PLATZHALTER] …ich hätt’s schwöre könne.', // vor der Abzweigung „sicher rechts“ · wenn der Teufel wieder am Tisch steht
-  tor:'[PLATZHALTER] Hoppla, Deiwel! Guck halt, wo de hiedappsch!', piek:['[PLATZHALTER] Auaaa! Mei Hinnerdeel! Du elendicher Sauhund!','[PLATZHALTER] Net schon widder!!! Ich kann jo bald nimmie hocke!'],
-  erzaehl:[[61,9,'[PLATZHALTER] Ach, [name] – weescht, uff was ich mich am meischte freu? Uff de Saumage heit owend, mit Sauerkraut!'],[71,9,'[PLATZHALTER] Unn guck mol hinne uff mei Rad: Des reicht bis Weihnachte – wenn ich mer’s gut eiteil!']]}; // nach der Gasthaus-Szene und der Tafel
+const TT_TXT={hunde:{sehen:'Oh oh, die sehnen hungrich aus …', start:'Ohhh nä, die riechen mei Worschd!', klau:['He! Gebb des her!','Nid de Speck!!','Die schää Fläschworschd!','Moin Schinke! Drecksköter!','Hern mo uff jetzt!'],
+    biss:['Ahhh, de beisst ma in die Wade!','Loss los, du Sauvieh!','Schun widder in die Wade!'], letzt:'Jetzt is alles fort, heile kinnt ich.',
+    zieh:['Oh nee, jetzt hot er sich in de Worschdkett verbisse!','Jetzt muss ich denn ah noch de Berch hochziehe oder was?','Alleweil is se zerisse – verschluck dich dra, dummer Köter!'], // Tauziehen: Beginn, Mitte, Kette reißt
+    katze:['Fort mit eich! Lossen mei Klenni in Ruh!','Als dewedder, gudi Fraa!']}, // [Bäuerin, Friedel]
+  verrat:'En Schoppe unn e Brotworschd, des wärs jetzt!', // kurz vor „Ertappt“ – dadurch merkt der Teufel euch
+  wetter:['Gugg emol, die Sunn kummt wia raus.','Hmmm, des gfallt mer jo awwer gar net, wie sich’s do zuzieht …','Was e Sauwetter …'], // Pause nach Flucht 1: klart auf, zieht zu, nach der Abzweigung
+  duck:'Wenn ma do jetzt iwwer de Jungfernsprung fahren, brauche ma ewich … Als ob des mim Deifel echt is – loss efach gradaus fahre.',
+  gabel:'Knapp denewe is ach vorbei – zum Glick kann der net ziele mit seim Schoppe im Kopp!',
+  bauer:['Serwus Friedel, fiddersch jetzt die Stroßeköder, weild nimmi wäsch wohi mit deine Gulde?','Jo, halt die Gosch, kinnsch gscheiter mo helfe!'], // [Bauer, Friedel]
+  ritter:['Hoho! Ein Bauerntölpel auf einem Holzgestell, gejagt von Kötern! Was für ein Anblick!','Macht Platz, Gesindel – ein Ritter hat es eilig!','Der hot gut lache, der hockt jo uff\'m Gaul!'], // [Ritter, Ritter, Friedel]
+  rechts:'Ma müssen rechts! Hunnertprozendich, do schwör ich druff!', schwoer:'Scheiße, ich war ma so sicher, dass ma rechts missen …', // vor der Abzweigung „sicher rechts“ · wenn der Teufel wieder am Tisch steht
+  sprint:'Der werd mied, der alde Suffkopp. Hopp auf – jetzt noch ä mol richtich durchziehe!', // läutet den Schlusssprint ein
+  tor:'Guck halt, wod hiedappsch, Großer!', piek:['Auuuua! Spinnschd du???','Net schun widder! Ich kann jo bald nimmi hocke!'],
+  erzaehl:[[61,9,'Ach, [name] – weescht, wu ich mich am meischte druff freu? Uff de Saumache nochher, wemma akumme!'],[71,9,'Guck mo uff moin Gepäckdrächer: Des longt bis Woinachte, des Zeich!']]}; // nach der Gasthaus-Szene und der Tafel
 // Gedicht im Einfahren (vom Nutzer): „Der Teufelstisch“ von Johann Martin Jäger alias Fritz Claus (1853–1923), 1884, gemeinfrei – 11 Strophen, jede Strophe steht ganz (alle Reime auf einmal), wörtliche Rede kursiv
 const TT_GEDICHT=[['Im Kaltenbacher Tale','Ein Tisch von Felsen steht.','Dort saß der Teufel beim Mahle.','Hört, wie die Sage geht:'],
   ['Einst schritt in jenem Walde','Durch nächt’ges Dunkel schnell','Hinauf die Bergeshalde','Ein finsterer Gesell.'],
@@ -81,11 +82,11 @@ function ttHund(c,q){ const H=TT_HUND_ART[c%TT_HUND_ART.length], f=lam(H.fell), 
 function ttSagPlan(){ const L=[...TT_TXT.erzaehl], P=ttHundePlan(), D=anim.tt.teufel, K=D&&D.sk, X=TT_TXT;
   if(P){ L.push([P.t0-12,7,X.hunde.sehen],[P.t0+6,7,X.hunde.start]); [0,2,4,7,9].forEach((k,i)=>L.push([P.klau[k].t+1,5,X.hunde.klau[i]])); P.biss.forEach((b,i)=>L.push([b.t+.2,5,X.hunde.biss[i]])); L.push([P.ende+.2,7,X.hunde.letzt]); }
   if(K) K.dz.slice(0,2).forEach(([a],i)=>L.push([a+TT_PIEK.stich+.1,5,X.piek[i]]));
-  const B=ttBegZeit(P); if(B){ L.push([B.tB-7,5,X.bauer[0],'bauer'],[B.tB-.5,4,X.bauer[1]],[B.tB+4,4,X.bauer[2],'bauer'],[B.tR-3,5,X.ritter[0],'ritter'],[B.tR+3,4,X.ritter[1],'ritter'],[B.tR+8,5,X.ritter[2]]); }
+  const B=ttBegZeit(P); if(B){ L.push([B.tB-7,6.5,X.bauer[0],'bauer'],[B.tB-.5,4,X.bauer[1]],[B.tR-3,5,X.ritter[0],'ritter'],[B.tR+3,4,X.ritter[1],'ritter'],[B.tR+8,5,X.ritter[2]]); }
   if(P&&P.zieh){ const Z=P.zieh; L.push([Z.t+1,5,X.hunde.zieh[0]],[Z.t+Z.dur*.5,5,X.hunde.zieh[1]],[Z.t+Z.dur+.3,5,X.hunde.zieh[2]]); } if(P&&P.katze){ const tk=P.katze.t; L.push([tk-1,5,X.hunde.katze[0],'baeuerin'],[tk+5,5,X.hunde.katze[1]]); }
   const S=race.woSegs||[], e=S.find(s=>s.label==='Ertappt'), ab=S.find(s=>s.label==='Abgeschüttelt'); if(e) L.push([e.t0-TT_DUCK-TT_IDYLL.zeit-15,8,X.duck],[e.t0-TF_MERK.vor,TF_MERK.vor,X.verrat]);
   if(ab&&R.tt.tEcke){ const Z=TT_PAUSE, tE=R.tt.tEcke, kl=Math.max(ab.t0+20,Math.min(ab.t0+Z.klar,tE-30)); L.push([ab.t0+(kl-ab.t0)*.6,6,X.wetter[0]],[kl+(tE-kl)*.55,6,X.wetter[1]]); if(!K||tE+19<K.r[1].tA) L.push([tE+14,5,X.wetter[2]]); } // Wetter in der Pause (geplante Zeiten)
-  if(K&&K.bw[0]!=null) L.push([K.bw[0]+3.6,5,X.gabel]); const T=R.tt; if(T.tEcke) L.push([T.tEcke-8,7,X.rechts]); if(K&&K.r[1].tA) L.push([K.r[1].tA+.8,4,X.schwoer]); return L; } // Friedel vor der Abzweigung zum Jungfernsprung (am Wegweiser bist du e.t0−TT_DUCK−TT_IDYLL.zeit) · nach dem Gabelwurf · vor der Abzweigung „sicher rechts“ (am Beginn der letzten Kurve, geplante Zeit) · wenn der Teufel am Tisch ankommt
+  if(K&&K.bw[0]!=null) L.push([K.bw[0]+3.6,5,X.gabel]); const T=R.tt; if(T.tEcke) L.push([T.tEcke-8,7,X.rechts]); if(K&&K.r[1].tA) L.push([K.r[1].tA+.8,4,X.schwoer]); const sp=S.find(s=>s.label==='Schlusssprint'); if(sp) L.push([sp.t0-3,6,X.sprint]); return L; } // Friedel vor der Abzweigung zum Jungfernsprung (am Wegweiser bist du e.t0−TT_DUCK−TT_IDYLL.zeit) · nach dem Gabelwurf · vor der Abzweigung „sicher rechts“ (am Beginn der letzten Kurve, geplante Zeit) · wenn der Teufel am Tisch ankommt · kurz vor dem Schlusssprint
 // Zeiten der Begegnungen am Anstieg (zwischen den Klau-Szenen der Hunde): tB Dorfbewohner bei dir, tR Ritter neben dir
 function ttBegZeit(P){ if(!P) return null; const Z=TT_BEG, k=(n,s)=>P.klau[Math.min(n,P.klau.length-1)].t+s; return {tB:k(...Z.bauer), tR:k(...Z.ritter)}; } // Fernbild des Teufelstischs: so groß, als stünde er 520 m entfernt (etwas kleiner als am Ende von Mission 1, vom Nutzer gewünscht) · blendet auf den letzten 300 m vor dem Anstieg aus
 
