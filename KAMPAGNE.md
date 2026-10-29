@@ -203,7 +203,7 @@ Geschichtlicher Kern (vor Story-Texten gegenprüfen): Hans von Trotha besaß Ber
   2. Hunde-Jagd (vom Nutzer): bisher viermal `jagd.mp3` aus Mission 1 – austauschen oder mehrere verschiedene lustige, fröhliche Verfolgungsstücke (Comic-Jagd, Polka/Folk im Galopp, ≈ 30–60 s) im Wechsel, sonst wird es auf 10 min langweilig
   3. Unwetter: Donner, Regen, Wind (bisher stumm)
   4. Teufel: Gebrüll, Schritte, Schmatzen beim Essen
-  5. Bessere Ersatzgeräusche: Zischen der Würfe, Aufprall/Steinbrocken (bisher `sturz`/`peitsche` tiefer), Friedels Aufschrei beim Dreizack, Schotter, Käuzchen
+  5. Bessere Ersatzgeräusche: Zischen der Würfe, Aufprall/Steinbrocken (bisher `sturz`/`peitsche` tiefer), Friedels Aufschrei beim Dreizack, Schotter
   6. Sprechblasen-Texte (Platzhalter, siehe oben) · Lagerfeuer-Knistern, sobald die Schlussszene steht
 - **Bauplan (Vorschlag):**
   1. Gerüst: Mission 2 in `KAMP` (kampagne.js) mit Workout Leicht/Hart; Vorausberechnung von Mission 1 so verallgemeinern, dass jede Mission ihre eigene Definition hat (wie `trifelsDef`).

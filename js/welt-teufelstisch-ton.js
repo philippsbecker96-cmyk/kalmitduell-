@@ -1,13 +1,13 @@
 /* ===== Mission 2 (Teufelstisch): Musik und Geräusche =====
    Helfer aus Mission 1 (triEins, triLoop, triMusik, triMusikNeu, triFern in welt-trifels-leben.js) · Plan, Dateien und was noch fehlt: kampagne/sounds/effekte/EFFEKTE.md
    ttTon aus rennen.js · fehlende Dateien bleiben still (Verfolgungsstück teufelsjagd: fehlt es, läuft omniouswaldnachts als Platzhalter) */
-Object.assign(TRI_TON_VOL,{hundemeute:.7, hund_gross:.6, vogel_wald:.5, kinderlachen:.6, donner:.8, teufel_bruell:1, teufel_schnaufen:.8, friedel_schrei:.8, glas_bricht:.8, schotter:.3, feuerstein:.8, brutzeln:.5, regen:.5, wind:.5, teufel_schritt:.9, kaeuzchen:.6});
+Object.assign(TRI_TON_VOL,{hundemeute:.7, hund_gross:.6, vogel_wald:.5, kinderlachen:.6, donner:.8, teufel_bruell:1, teufel_schnaufen:.8, friedel_schrei:.8, glas_bricht:.8, schotter:.3, feuerstein:.8, brutzeln:.5, regen:.5, wind:.5, teufel_schritt:.9});
 Object.assign(TRI_MUSIK,{teufelsweg:['musik/teufelsweg',.5,.6], waldamb:['musik/waldambient',.35], tjagd:['musik/teufelsjagd',.55,2], tjagdP:['musik/omniouswaldnachts',.5,2], tsprint:['musik/teufelssprint',.6,3], hjagd:['musik/hundejagd',.45,2], tjagd2:['musik/teufelsjagd2',.55,1], lager:['musik/lager',.35,.5]}); // tjagdP: Platzhalter fürs Verfolgungsstück · tsprint: Halloween-Jagd im Schlusssprint (21,6 s)
 const TT_TON={sprint:22, donner:[18,40], schnauf:2.4, hund:35, bell:[2,6], jagdLang:31, thema:36, teufelsweg:86, froh:3, geschafft:2}; // Hunde hörbar bis m · Bellen alle s · Jagdmusik spielt s · Thema bis s · geschafft: Thema so viele s nach dem Blick zurück auf den erschöpften Teufel (vom Nutzer: erst kurz Fokus auf ihn) · teufelsweg endet mit „Ertappt“ · fröhliche Musik so viele s, nachdem der Teufel am Steintor aufschlägt
 let ttTonVor=null, ttJagdDa=null; // ttJagdDa: liegt musik/teufelsjagd.mp3 schon im Ordner?
 function ttTon(dt){ const A=anim.tt; if(!A) return; const run=race.state==='run', an=(run||race.state==='count')&&!race.paused, rt=run?race.t:0, t=performance.now()/1000, T=R.tt, Z=TT_TON;
   if(!A.tonAn){ A.tonAn=1; triTonAus(); } triDuck=1; // Töne von Mission 1 aus
-  if(!ttTonVor){ ttTonVor=['hundemeute','hund_gross','hundebellen','rascheln_gebuesch','glocken','sturz','peitsche','fluegel','hufe','kettenhemd','wiehern','wolfsgehaeul','feuerknistern','grillen','donner','teufel_bruell','teufel_schnaufen','friedel_schrei','glas_bricht','feuerstein','kaeuzchen'].map(n=>Object.assign(new Audio(TRI_TON+n+'.mp3'),{preload:'auto'}));
+  if(!ttTonVor){ ttTonVor=['hundemeute','hund_gross','hundebellen','rascheln_gebuesch','glocken','sturz','peitsche','fluegel','hufe','kettenhemd','wiehern','wolfsgehaeul','feuerknistern','grillen','donner','teufel_bruell','teufel_schnaufen','friedel_schrei','glas_bricht','feuerstein'].map(n=>Object.assign(new Audio(TRI_TON+n+'.mp3'),{preload:'auto'}));
     const a=new Audio('kampagne/sounds/'+TRI_MUSIK.tjagd[0]+'.mp3'); a.preload='auto'; a.oncanplaythrough=()=>{ ttJagdDa=true; }; a.onerror=()=>{ ttJagdDa=false; }; ttTonVor.push(a); }
   if(race.state==='count'&&!A.tonNeu){ for(const n in TRI_MUSIK) triMusikNeu(n); } A.tonNeu=race.state==='count'; // neues Rennen: Musik von vorn
   if(race.state==='count'||!A.ton) A.ton={}; const O=A.ton, einmal=(k,b)=>b&&!O[k]&&(O[k]=1), zu=(k,t0)=>run&&einmal(k,t0!=null&&rt>=t0&&rt<t0+3); // Einzelton zur Zeit t0 (nach Sprüngen im Testmodus nicht nachgeholt)
@@ -74,8 +74,6 @@ function ttTon(dt){ const A=anim.tt; if(!A) return; const run=race.state==='run'
   if(run&&sturm>.4){ if(einmal('don0',true)||O.don&&t>O.don){ triEins('donner',.5+.5*sturm,.9+Math.random()*.2); O.don=t+Z.donner[0]+Math.random()*(Z.donner[1]-Z.donner[0]); } if(!O.don) O.don=t+Z.donner[0]; }
   // Unwetter: Regen mit der Regenstärke, Wind mit dem Sturm, auf den Lichtungen in Böen lauter
   triLoop('ttRegen','regen',an&&run?clampN(regen.extra||0,0,1):0,dt); triLoop('ttWind','wind',an&&run?clampN(.7*sturm+.6*(A.boe||0),0,1):0,dt);
-  // Käuzchen in der Dämmerung (zweite Hälfte des Ausfahrens) und gegen Ende der Schlussszene am Lager
-  if(au) zu('kauz1',au.t0+au.dur*.6)&&triEins('kaeuzchen',.7); if(T.tL!=null) zu('kauz2',T.tL+36)&&triEins('kaeuzchen',.6);
   // Schotter knirscht unter den Rädern (Abzweigung zum Jungfernsprung bis zur Gabelung), lauter mit dem Tempo
   { const B=(R.def.belag||[]).find(b=>b[0]==='schotter'), auf=run&&B&&me.d>=B[1]*R.kf&&me.d<B[2]*R.kf; triLoop('ttSchotter','schotter',an&&auf?clampN(me.v/8,0,1):0,dt); }
   // Lagerfeuer: Funken schlagen, Feuer knistert, wenn es brennt, die Wurst brutzelt – alles blendet mit dem Bild aus

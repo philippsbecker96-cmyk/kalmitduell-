@@ -98,7 +98,6 @@ Gleiche Helfer wie Mission 1, Lautstärken der neuen Dateien in `TRI_TON_VOL`/`T
 | `donner.mp3` | Unwetter: gleich zu Beginn, dann alle 18–40 s, lauter je stärker |
 | `regen.mp3`, `wind.mp3` | Unwetter: Regen mit der Regenstärke, Wind mit dem Sturm, auf den Lichtungen in Böen lauter |
 | `teufel_schritt.mp3` | Schleife, solange der Teufel läuft (Verfolgung, zurück zum Tisch, bis 90 m) |
-| `kaeuzchen.mp3` | Dämmerung (60 % ins Ausfahren) · gegen Ende der Schlussszene am Lager (s 36) |
 | `schotter.mp3` | Knirschen von der Abzweigung zum Jungfernsprung bis zur Gabelung, lauter mit dem Tempo |
 | `feuerstein.mp3`, `feuerknistern.mp3`, `brutzeln.mp3` | Schlussszene am Lager: Funken schlagen (s 8,6 und 11) · Feuer knistert, sobald es brennt · Wurst brutzelt ab s 22,5 · alles blendet mit dem Bild aus |
 
@@ -106,7 +105,7 @@ Gleiche Helfer wie Mission 1, Lautstärken der neuen Dateien in `TRI_TON_VOL`/`T
 
 Reihenfolge-Vorschlag: `aufprall`/`steine` → `zischen`.
 
-**Am 28.10. dazugekommen und eingebaut:** teufelsjagd, teufelsjagd2, teufelssprint, hundejagd, lager, vogel_wald, kinderlachen, donner, teufel_bruell, teufel_schnaufen, friedel_schrei, glas_bricht, schotter, feuerstein, brutzeln, regen, wind, teufel_schritt, kaeuzchen (Tabellen oben).
+**Am 28.10. dazugekommen und eingebaut:** teufelsjagd, teufelsjagd2, teufelssprint, hundejagd, lager, vogel_wald, kinderlachen, donner, teufel_bruell, teufel_schnaufen, friedel_schrei, glas_bricht, schotter, feuerstein, brutzeln, regen, wind, teufel_schritt (Tabellen oben).
 
 **Musik**
 
@@ -143,7 +142,7 @@ Reihenfolge-Vorschlag: `aufprall`/`steine` → `zischen`.
 | Szene | Ton |
 |---|---|
 | Gasthaus (Anfang, **gebaut, vorerst stumm**: `welt-teufelstisch-gasthaus.js`, Szenenzeit `kt` = 0–5 s Countdown, danach 5 + Workout-Zeit) | `taverne.mp3` (vorhanden) oder `gasthaus.mp3` leise unter der ganzen Szene (kt 0–31) · `kamin.mp3` Feuerknistern (oder `feuerknistern.mp3`, vorhanden) · `schnarchen.mp3` schlafender Gast am Tisch links · `schritte_holz.mp3` Wirt kommt an den Tisch kt 7–11,5 und geht zurück kt 25,5–30 · draußen `tuer.mp3` (knarrende Tür) beim Schnitt kt 31, Hufe/Holzräder auf dem Hof |
-| Lager (Schluss, **gebaut, Ton eingebaut** außer `pusten`, `lachen`: `welt-teufelstisch-lager.js`, Szenenzeit = s ab Halt, die letzten 50 s des Workouts) | `musik/lager.mp3` (★★, ruhig, warm, Laute/Flöte) leise ab s 0, blendet mit dem Bild aus (s 42–50) · `grillen.mp3` (vorhanden) läuft weiter · `feuerstein.mp3` (★★, Klacken von Stein auf Stahl) s 3,5–8 im Takt der Schläge · `pusten.mp3` (★, Friedel pustet in die Glut) s 8–10,5 · `feuerknistern.mp3` (vorhanden) ab s 8, wächst mit dem Feuer · `brutzeln.mp3` (★★, Wurst zischt überm Feuer) ab s 17,5 · `lachen.mp3` (★, du lachst bei „so schwer war’s doch net“) s 20,5–22,5 · `kaeuzchen.mp3` (★, schon oben) einmal gegen Ende |
+| Lager (Schluss, **gebaut, Ton eingebaut** außer `pusten`, `lachen`: `welt-teufelstisch-lager.js`, Szenenzeit = s ab Halt, die letzten 50 s des Workouts) | `musik/lager.mp3` (★★, ruhig, warm, Laute/Flöte) leise ab s 0, blendet mit dem Bild aus (s 42–50) · `grillen.mp3` (vorhanden) läuft weiter · `feuerstein.mp3` (★★, Klacken von Stein auf Stahl) s 3,5–8 im Takt der Schläge · `pusten.mp3` (★, Friedel pustet in die Glut) s 8–10,5 · `feuerknistern.mp3` (vorhanden) ab s 8, wächst mit dem Feuer · `brutzeln.mp3` (★★, Wurst zischt überm Feuer) ab s 17,5 · `lachen.mp3` (★, du lachst bei „so schwer war’s doch net“) s 20,5–22,5 |
 | Friedels Kater | Stöhnen, Gähnen – am besten eigene Aufnahme mit den Dialogen |
 
 Vorhanden, aber ungenutzt: `dogbark.mp3` – könnte als dritte Hundestimme in die Meute.
@@ -151,4 +150,4 @@ Vorhanden, aber ungenutzt: `dogbark.mp3` – könnte als dritte Hundestimme in d
 ## Mission 1 – noch offen
 
 Fehlt noch: `truhe.mp3` (Wache stellt in der Kamerafahrt eine Truhe ab).
-Noch offen (Ideen): Gänse schnattern, Käuzchen.
+Noch offen (Ideen): Gänse schnattern.
