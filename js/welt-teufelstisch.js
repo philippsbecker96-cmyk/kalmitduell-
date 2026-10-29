@@ -35,11 +35,11 @@ function prepTeufelstisch(r){ const O=r.def.orte, kf=r.kf, S=r.S, q=rng(66), at=
   T.tor={d:T.gabel+TT_TOR.nach}; for(const s of [-1,1]) frei.push([...at(T.tor.d,s*(rw(T.tor.d)+TT_TOR.breit)),4]); for(const [dd,sd] of TT_TOR_BAEUME) frei.push([...at(T.tor.d+dd,sd*(rw(T.tor.d+dd)+2.6)),3.5]); // Steintor auf dem rechten Abzweig, Platz für die Kiefern, die der Teufel umreißt (welt-teufel.js)
   { const zd=14, [px,py]=posAt(r,zd), h=headingAt(r,zd), o=rw(zd)+7; T.gast={d:zd, x:px-Math.sin(h)*o, y:py+Math.cos(h)*o, h, o}; frei.push([T.gast.x,T.gast.y,13]); } // Gasthaus rechts am Start
   // Kaltenbacher Tal: Kirche links hinter dem Bach, ein paar Häuser drumherum
-  { const d=T.an[0]*.45, [x,y]=at(d,-(rw(d)+27)); T.kirche={d,x,y}; frei.push([x,y,16]);
+  { const d=T.an[0]*.45, [x,y]=at(d,-(rw(d)+27)); T.kirche={d,x,y}; frei.push([x,y,16]); ttBachWeit=[[d-70,d+100],[T.an[0]*TT_BAD.bei-40,T.an[0]*TT_BAD.bei+40]]; // Bach am Dorf und an der Badestelle weiter weg (welt-teufelstisch-tal.js)
     for(const [dd,u] of [[-38,-1],[-14,1],[22,1],[46,-1],[64,1]]){ const e=d+dd, [hx,hy]=at(e,u*(rw(e)+(u<0?30:9))); if(!nah(hx,hy,8)){ T.haeuser.push({x:hx,y:hy,d:e,c:q()}); frei.push([hx,hy,9]); } } }
   // Bach links neben dem Weg durch die Wiese, Erlen am Ufer
   for(let d=0; d<T.an[0]*.7; d+=6){ const u=ttBachU(d,rw(d)); T.bach.push(at(d,u)); if(d%30<6&&q()<.7){ const [x,y]=at(d,u+(q()<.5?-3.5:3.5)); if(!nah(x,y,4)) S.tree.push({x,y,s:1.6+q()*1.2,c:q(),pine:false,ht:8+q()*4}); } }
-  ttTalPrep(T,at,rw,frei); // Badestelle im Bach (welt-teufelstisch-tal.js)
+  ttTalPrep(T,at,rw,frei); ttDorfPrep(T,at,rw,frei,S); // Badestelle im Bach (welt-teufelstisch-tal.js) · Landebaum der Elwetritsche, Hühner, Sühnekreuz, Schäfer, Angler (welt-teufelstisch-dorf.js)
   // Felstürme im Wald (Anstieg und Plateau), Überhang mit Bank, Tischfelsen, Steinmännchen
   for(let d=T.an[0]+160; d<T.raus+400; d+=150+q()*120){ if(imDoppel(r,d)) continue; const s=q()<.5?-1:1, u=s*(rw(d)+12+q()*22), [x,y]=at(d,u), rr=2.4+q()*2.2;
     if(nah(x,y,rr+6)||Math.hypot(x-T.kopf[0],y-T.kopf[1])<40||Math.hypot(x-T.tischPos[0],y-T.tischPos[1])<30) continue; T.felsen.push({x,y,r:rr,hg:6+q()*9,sd:q()*1e6|0}); frei.push([x,y,rr+3]); }
@@ -153,7 +153,7 @@ function buildTeufelstisch(){ ttWaldweg(); const T=R.tt, q=rng(612), A=anim.tt={
     const fli=new THREE.PointLight(0xff9a40,1.2,14,2); fli.position.set(0,1,0); F.add(fli); A.feuer={fl,fl2,fli,an:0}; fl.visible=fl2.visible=false; fli.intensity=0; // noch aus: Friedel zündet es in der Schlussszene an (an=1)
     const [px,pz]=posAt(R,T.ziel); Lg.sitz=[]; for(const [a,o] of [[.9,2.6],[-.9,2.6]]){ const ry=Math.atan2(px-Lg.x,pz-Lg.y)+a, sx=Lg.x+Math.sin(ry)*o, sz=Lg.y+Math.cos(ry)*o, S2=grp(sx,bodenY(sx,sz),sz); Lg.sitz.push([sx,sz]); S2.rotation.y=ry+Math.PI/2; cyl(S2,.28,.3,2.2,stamm,0,.28,0,8).rotation.z=Math.PI/2; } // Sitzstämme
     { const bx=Lg.hx+(Lg.x-Lg.hx)*.35+2.8, bz=Lg.hy+(Lg.y-Lg.hy)*.35, B=grp(bx,bodenY(bx,bz),bz); B.rotation.y=Lg.ry; for(let r2=0;r2<3;r2++) for(let c=0;c<4-r2;c++) cyl(B,.12,.12,1.4,stamm,(c-(3-r2)/2)*.26,.12+r2*.22,0,6).rotation.x=Math.PI/2; } } // Brennholz
-  buildTeufel(); buildTeufelstischLeben(); sicher('Gasthaus-Bau',()=>buildTtGast(A)); sicher('Lager-Bau',()=>buildTtLager(A)); sicher('Fuhrwerk-Bau',()=>buildTtFuhre(A)); sicher('Tal-Bau',()=>buildTtTal(A)); // der Teufel am Tisch (welt-teufel.js) · Friedel mit der Wurstladung, Fernbild des Tischs (welt-teufelstisch-leben.js) · Anfangsszene im Gasthaus (welt-teufelstisch-gasthaus.js) · Schlussszene am Lager (welt-teufelstisch-lager.js)
+  buildTeufel(); buildTeufelstischLeben(); sicher('Gasthaus-Bau',()=>buildTtGast(A)); sicher('Lager-Bau',()=>buildTtLager(A)); sicher('Fuhrwerk-Bau',()=>buildTtFuhre(A)); sicher('Tal-Bau',()=>buildTtTal(A)); sicher('Dorf-Bau',()=>buildTtDorf(A)); // der Teufel am Tisch (welt-teufel.js) · Friedel mit der Wurstladung, Fernbild des Tischs (welt-teufelstisch-leben.js) · Anfangsszene im Gasthaus (welt-teufelstisch-gasthaus.js) · Schlussszene am Lager (welt-teufelstisch-lager.js)
   if(T.bach.length>1){ const P=T.bach, n=P.length, pos=new Float32Array(n*6), id=[]; // Bach: Wasserband knapp über dem Boden
     for(let i=0;i<n;i++){ const a=P[Math.max(0,i-1)], b=P[Math.min(n-1,i+1)], dx=b[0]-a[0], dz=b[1]-a[1], l=Math.hypot(dx,dz)||1, nx=-dz/l*1.2, nz=dx/l*1.2, [x,z]=P[i];
       pos.set([x+nx,bodenY(x+nx,z+nz)+.09,z+nz, x-nx,bodenY(x-nx,z-nz)+.09,z-nz],i*6); if(i<n-1) id.push(i*2,i*2+1,i*2+2, i*2+1,i*2+3,i*2+2); }
@@ -188,7 +188,7 @@ function teufelstischGelaende(h,src,dist){ const T=R.tt, H=TT_HUEGEL, n=TER.nx, 
       if(e<1.7) h[k]+=(fy-4*(1-bSm((e-.5)/.6))-h[k])*(1-bSm((e-1)/.7))*ff; // See: flache Mulde, Ufer auf dem Talboden
       const rd=Math.hypot(x-Df.x,z-Df.y); if(rd<Z2.dorf.r+70) h[k]+=(fy+2-h[k])*(1-bSm((rd-Z2.dorf.r)/70))*ff; } } }
 // ---- Bewegung (jeden Frame, aus rennen.js) ----
-function poseTeufelstisch(dt){ const A=anim.tt; if(!A) return; ttLicht(race.state==='run'?race.t:0); poseTeufel(dt); poseTeufelstischLeben(dt); sicher('Gasthaus-Szene',()=>poseTtGast(dt)); sicher('Lager-Szene',()=>poseTtLager(dt)); sicher('Fuhrwerk',()=>poseTtFuhre(dt)); sicher('Tal',()=>poseTtTal(dt));
+function poseTeufelstisch(dt){ const A=anim.tt; if(!A) return; ttLicht(race.state==='run'?race.t:0); poseTeufel(dt); poseTeufelstischLeben(dt); sicher('Gasthaus-Szene',()=>poseTtGast(dt)); sicher('Lager-Szene',()=>poseTtLager(dt)); sicher('Fuhrwerk',()=>poseTtFuhre(dt)); sicher('Tal',()=>poseTtTal(dt)); sicher('Dorf',()=>poseTtDorf(dt));
   const F=A.feuer; if(F){ const g=Math.min(1,F.an||0); F.fl.visible=F.fl2.visible=g>0; F.fli.intensity=0; if(g>0){ const t=performance.now()/1000, f=.85+.15*Math.sin(t*11)+.08*Math.sin(t*23); F.fl.scale.set(g,f*g,g); F.fl2.scale.set(g,(1.1-f*.2)*g,g); F.fli.intensity=1.6*f*g; } } } // Lagerfeuer: wächst nach dem Anzünden (an 0 … 1, Schlussszene), flackert
 
 // ---- Sonnenuntergang im Ausfahren (vom Nutzer gewünscht): bis dahin Mittag, dann golden, am Ende Sonne tief und orange am Horizont ----

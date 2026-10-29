@@ -7,7 +7,8 @@
 const TT_TALREH={t:95, vor:4, spiel:6, mit:20, tiere:[[0,12,6],[0,9,8.5],[1,15,7.5]], quer:5.5}; // Workout-Zeit in s (≈ 1 min nach dem Losfahren) · s vorher tauchen sie auf · s herumspringen · s nebenher · [Kitz, m vor dir, m neben dem rechten Wegrand] · m/s quer über den Weg
 const TT_BAD={bei:.62, r:3.4, sicht:260, wink:45}; // Badestelle bei so viel des Talwegs bis zum Anstieg (der Bach reicht bis .7) · Radius der Gumpe · sichtbar so viele m davor · winken, wenn du so nah bist
 const TT_STEG={vor:20, lang:4.6, geh:1.1, los:60}; // so viele m vor der Kirche · Länge des Stegs · m/s der Magd · sie geht los, wenn du so viele m davor bist
-const ttBachU=(d,rw)=>-(rw+11+3.5*Math.sin(d/55)); // Bach: m neben der Wegmitte (rw: halbe Wegbreite)
+let ttBachWeit=[]; // [d0, d1]: dort bleibt der Bach weit weg vom Weg (Dorf, Badestelle), sonst fließt er nah am Weg (vom Nutzer) – gesetzt in prepTeufelstisch
+const ttBachU=(d,rw)=>{ const w=ttBachWeit.reduce((m,[a,b])=>Math.max(m,bSm((d-a+30)/30)*bSm((b-d+30)/30)),0); return -(rw+4.2+6.8*w+(1.2+2.3*w)*Math.sin(d/55)); }; // Bach: m neben der Wegmitte (rw: halbe Wegbreite)
 
 // ---- Vorbereitung (aus prepTeufelstisch): Platz der Gumpe, keine Erlen dort und dazwischen (freie Sicht vom Weg) ----
 function ttTalPrep(T,at,rw,frei){ const d=T.an[0]*TT_BAD.bei, u=ttBachU(d,rw(d)), [x,y]=at(d,u); T.bad={d,u,x,y}; frei.push([x,y,TT_BAD.r+4]);
