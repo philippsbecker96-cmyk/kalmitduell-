@@ -99,3 +99,8 @@ async function hrSetup(dev){
 }
 // Puls nur, wenn ein Gurt verbunden ist und in den letzten 5 s etwas geschickt hat
 function hrNow(){ return live.hrStrap&&live.hr&&performance.now()-(live.hrAt||0)<5000?live.hr:null; }
+// Pulszonen nach Coggan in % der Schwellenherzfrequenz (LTHR), Farben wie zoneCol bei den Watt; LTHR fehlt → 90 % vom Max-Puls
+const PULS={an:false,max:0,lthr:0};
+function pulsSave(){ PULS.an=$('hrZon').checked; PULS.max=+$('hrMax').value||0; PULS.lthr=+$('hrLthr').value||0; try{ localStorage.setItem('kd-puls',JSON.stringify(PULS)); }catch(e){} }
+function pulsCol(hr){ const L=PULS.lthr||PULS.max*.9; if(!PULS.an||!L||!hr) return ''; const p=hr/L*100;
+  return p<68?'#9aa5ad':p<84?'#4a90d9':p<95?'#4caf6e':p<106?'#e9c43a':p<111?'#ec8a3a':'#de4b3a'; }

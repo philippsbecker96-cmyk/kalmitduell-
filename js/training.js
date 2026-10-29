@@ -128,7 +128,7 @@ $('woKind').onchange=()=>{ WO.kind=$('woKind').value; renderWo(); sendCfg(); };
 $('wnStop').onclick=()=>{ if(race.mode==='train' && !me.done && race.state==='run') trainFinish(); };
 
 function prepTrain(){ race.woNextKey=null; race.strKey=null; $('wnStr').innerHTML=''; race.abwT=null; race.abwU=race.abwO=0; race.abwM=''; $('wnAbw').className=''; $('wnAbw').textContent=''; $('wnRest').textContent=''; race.woSegs=curSegs(); race.woT=race.woSegs.reduce((a,s)=>a+s.dur,0); race.woUnit=curUnit(); race.woKind=woKind(); race.ftp0=ftp();
-  Object.assign(me,{bins:{},lowT:0,testE:0,testT:0,ftpRes:null}); $('wnStop').style.display='none'; }
+  Object.assign(me,{bins:{},lowT:0,testE:0,testT:0,ftpRes:null,hrE:0,hrT:0,lthrRes:null});$('wnStop').style.display='none'; }
 // beste 60 s aus 1-Sekunden-Fächern
 function best60(bins){ const ks=Object.keys(bins).map(Number).sort((a,b)=>a-b); let best=0;
   for(const k0 of ks){ let e=0,t=0; for(let k=k0;k<k0+60;k++){ const b=bins[k]; if(b){ e+=b[0]; t+=b[1]; } } if(t>=55) best=Math.max(best,e/t); } return best; }
@@ -150,7 +150,7 @@ function trainStep(dt,P,wkg){
   if(sg.step){ const k=Math.floor(race.t), b=me.bins[k]||(me.bins[k]=[0,0]); b[0]+=P*dt; b[1]+=dt;
     if(race.t-sg.t0>3 && P<me.tgt*0.8) me.lowT+=dt; else me.lowT=0; $('wnStop').style.display='';
     if(me.lowT>=8){ flash('Stufe nicht mehr gehalten – Test beendet'); trainFinish(); return; } }
-  if(sg.free){ me.testE+=P*dt; me.testT+=dt; }
+  if(sg.free){ me.testE+=P*dt; me.testT+=dt; const h=hrNow(); if(h&&race.t-sg.t0>300){ me.hrE+=h*dt; me.hrT+=dt; } } // Puls im 20-min-Test → Schwellenpuls, ohne die ersten 5 min (Puls steigt erst an)
   if(race.t-sg.t0>5 && !sg.free){ me.zoneT+=dt; if(Math.abs(P-me.tgt)<=me.tgt*0.05) me.inZone+=dt; } // ±5 % um das Ziel, erste 5 s eines Abschnitts zählen nicht
   if(!me.trace.length || race.t-me.trace[me.trace.length-1][0]>=1) me.trace.push([race.t,P,hrNow()]); // Puls nur mit Pulsgurt, sonst null
   const idx=race.woSegs.indexOf(sg); if(idx!==race.woIdx){ if(race.woIdx>=0){ beep(1046,.25); flash(sg.free?'Vollgas – 20 Minuten, ERG aus':sg.label); if(anim.space) Object.assign(anim.space.wave,{t0:performance.now()/1000,d0:me.d-4}); } race.woIdx=idx; lastErgW=null; lastSlopeSent=null; }
@@ -192,7 +192,7 @@ function woPanel(P,sg){ if(!sg) return; const S=race.woSegs, i=S.indexOf(sg), nx
 function trainFinish(){
   const T=race.woKind==='ramp'?Math.max(1,race.t):race.woT; race.woT=T; me.done=true; if(race.kamp) kampFertig(); me.free=!!R.ring; me.time=T; pyroStart(); $('wnStop').style.display='none';
   if(race.woKind==='ramp'){ const b=best60(me.bins); me.ftpRes=b?Math.round(b*.75):null; }
-  if(race.woKind==='t20'){ me.ftpRes=me.testT>=60?Math.round(me.testE/me.testT*.95):null; }
+  if(race.woKind==='t20'){ me.ftpRes=me.testT>=60?Math.round(me.testE/me.testT*.95):null; me.lthrRes=me.hrT>=600?Math.round(me.hrE/me.hrT*.95):null; } // LTHR: 95 % des Pulsschnitts der letzten 15 min, nur mit mind. 10 min Puls
   send({t:'s',d:me.d,v:0,w:0,done:true,ft:T,ftpRes:me.ftpRes,avg:me.wkgSum/Math.max(1,T),avgW:me.wSum/Math.max(1,T),zone:me.zoneT?me.inZone/me.zoneT:0,dist:me.dist});
   beep(523,.15); setTimeout(()=>beep(659,.15),160); setTimeout(()=>beep(784,.4),320);
   $('banner').textContent=race.woKind==='wo'?'GESCHAFFT!':'TEST ENDE'; setTimeout(()=>$('banner').textContent='',2500); setSlope(0); setTimeout(showTrainResult,R.stadium?6000:R.space?4500:1500);
@@ -204,7 +204,7 @@ function showTrainResult(){
   if(opp.active) rows.push(opp.done?[opp.name, Math.round(opp.avgW||0)+' W', de(opp.avg||0,2)+' W/kg', test?fr(opp):Math.round((opp.zone||0)*100)+' %', de((opp.dist||0)/1000,1)+' km']:[opp.name,'noch unterwegs','','','']);
   const nf=me.ftpRes, head=test?(nf?`🎯 Neue FTP: ${nf} W`:'Test beendet'):'💪 Workout geschafft!';
   const ftpBox=test?(nf?`<div style="font-size:18px;margin:4px 0 6px">${race.woKind==='ramp'?`Beste Minute ${Math.round(nf/.75)} W × 75 %`:`20-min-Schnitt ${Math.round(nf/.95)} W × 95 %`} · bisher ${race.ftp0} W (${nf>=race.ftp0?'+':'−'}${Math.abs(nf-race.ftp0)} W) · ${de(nf/weight(),2)} W/kg
-      <div class="rowb" style="margin-top:10px"><button id="ftpTake" onclick="$('ftp').value=${nf}; saveWo(); renderWo(); this.textContent='✓ Als FTP übernommen'; this.disabled=true">Als meine FTP übernehmen</button></div></div>`
+      <div class="rowb" style="margin-top:10px"><button id="ftpTake" onclick="$('ftp').value=${nf}; saveWo(); renderWo(); this.textContent='✓ Als FTP übernommen'; this.disabled=true">Als meine FTP übernehmen</button>${me.lthrRes?`<button class="go" onclick="$('ftp').value=${nf}; saveWo(); renderWo(); $('hrLthr').value=${me.lthrRes}; pulsSave(); this.parentNode.querySelectorAll('button').forEach(b=>b.disabled=true); this.textContent='✓ FTP und Schwellenpuls übernommen'">Beides übernehmen</button><button onclick="$('hrLthr').value=${me.lthrRes}; pulsSave(); this.textContent='✓ Als Schwellenpuls übernommen'; this.disabled=true">Schwellenpuls ${me.lthrRes} übernehmen</button>`:''}</div>${me.lthrRes?`<div class="small" style="margin-top:6px">Puls-Schnitt der letzten 15 min ${Math.round(me.lthrRes/.95)} × 95 % = Schwellenpuls (LTHR) ${me.lthrRes} · bisher ${PULS.lthr||'–'}</div>`:''}</div>`
       :`<div class="small">Zu kurz gefahren für ein Ergebnis.</div>`):'';
   $('resultCard').innerHTML=`<h1 style="font-size:46px">${head}</h1><div class="sub">${esc(R.name)} · ${fmtT(T)} · ${test?(race.woKind==='ramp'?'Rampentest':'20-Minuten-Test'):race.woSegs.length+' Abschnitte'+(race.intens!==1?` · Intensität ${Math.round(race.intens*100)} %`:'')}</div>${ftpBox}
     <table><tr class="small"><td></td><td class="r">Ø Watt</td><td class="r">Ø W/kg</td><td class="r">${test?'FTP':'im Ziel ±5 %'}</td><td class="r">Strecke</td></tr>${rows.map(r=>`<tr><td>${esc(r[0])}</td>${r.slice(1).map(c=>`<td class="r num" style="font-size:20px">${c}</td>`).join('')}</tr>`).join('')}</table>

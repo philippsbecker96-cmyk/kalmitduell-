@@ -167,7 +167,7 @@ function hud(P,wkg){
   else $('hRestk').textContent=R.kalmit?'bis Gipfel':'bis Ziel';
   if(race.mode!=='train') $('hRest').textContent=de(Math.max(0,raceLen()-me.d)/1000,2)+' km';
   const dr=me.draftR||0, chip=$('draftChip'); chip.style.display=race.draft&&dr>0.02&&!me.done?'flex':'none'; $('draftBar').style.width=Math.round(dr/0.35*100)+'%'; $('draftPct').textContent='−'+Math.round(dr*100)+' %'; $('hT').textContent=fmtT(me.time);
-  const hr=hrNow(); $('sHr').style.display=hr?'':'none'; if(hr) $('hHr').textContent=hr; $('hCad').textContent=live.src!=='sim'&&live.cadence!=null?Math.round(live.cadence):'–';
+  const hr=hrNow(); $('sHr').style.display=hr?'':'none'; if(hr){ $('hHr').textContent=hr; const c=pulsCol(hr), s=$('sHr').style; s.borderColor=c; s.boxShadow=c?`inset 0 0 0 2px ${c}`:''; }$('hCad').textContent=live.src!=='sim'&&live.cadence!=null?Math.round(live.cadence):'–';
   if(opp.active){ const gap=me.d-opp.d; $('gapName').textContent=`Abstand zu ${opp.name}`;
     $('gapV').textContent=Math.abs(gap)<0.5?'±0 m':(gap>=0?'+':'−')+Math.round(Math.abs(gap))+' m'; $('gapV').style.color=gap>=0?'#9cc46b':'#f0b860';
     const v=Math.max(1,gap>=0?opp.v:me.v); $('gapSub').textContent= R.loop&&Math.abs(gap)>=R.len&&!opp.done?`${Math.floor(Math.abs(gap)/R.len)} Runde${Math.abs(gap)>=2*R.len?'n':''} ${gap>=0?'Vorsprung':'Rückstand'}`: opp.done?`${opp.name} im Ziel: ${fmtT(opp.time)}`:`≈ ${Math.round(Math.abs(gap)/v)} s ${gap>=0?'Vorsprung':'Rückstand'}`; }

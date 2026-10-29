@@ -41,13 +41,13 @@ Browser-Radrennspiel (Duell zweier Fahrer, online per PeerJS, Smart-Trainer per 
 - `js/lobby.js` – Lobby, Fahrer-Editor, Lobby-Hintergrund
 - `js/online.js` – PeerJS-Raumcode, Sync mit dem Gegner
 - `js/fernbedienung.js` – Handy als Fernbedienung: QR-Code (qrcodejs), eigener PeerJS-Peer `kalmit-duell-v3-r-CODE`, Befehle start/pause/resume/int (Intensität)/laut/stumm (Gesamtlautstärke `LAUT` in main.js: Web Audio über `lautOut()` statt `actx.destination`, `<audio>` mal `lautF()`), PC schickt jede Sekunde den Stand `rStand` (Knöpfe, Intensitäts-Regler nur bei eigenem Workout); Handy-Seite im Lobby-Stil ist `remote.html` (läuft über GitHub Pages, da `file://` vom Handy nicht erreichbar)
-- `js/bluetooth.js` – FTMS/FE-C-Trainer, Pulsgurt
+- `js/bluetooth.js` – FTMS/FE-C-Trainer, Pulsgurt, Pulszonen (`PULS`, `pulsCol`: Coggan in % der Schwellenherzfrequenz, sonst 90 % vom Max-Puls; Farben wie `zoneCol`; Schwellenpuls-Vorschlag aus dem 20-min-Test über `me.lthrRes` in training.js)
 - `js/main.js` – Sound (Freilauf-Klicken `freewheel` vorerst stumm, Aufruf in rennen.js mit `if(0)` aus), Tasten, Event-Bindings, Start (`setRoute`, `requestAnimationFrame(loop)`), Test-Helfer `window.__scene`
 
 ## Regeln
 - Klassische `<script>`-Tags, keine ES-Module: alle Dateien teilen sich globale Variablen. Reihenfolge in `index.html` ist wichtig – Code, der beim Laden läuft, darf nur Funktionen aus derselben oder früheren Dateien aufrufen.
 - Code und Kommentare auf Deutsch, kompakter Stil (viele Anweisungen pro Zeile) beibehalten.
-- localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`, `kd-shake`, `kd-kampagne`, `kd-wo-eigen` (hochgeladene .zwo-Workouts), `kd-regenbogen` (Space-Bahn bunt), `kd-laut` (Gesamtlautstärke).
+- localStorage-Schlüssel: `kd-riders`, `kd-wo`, `kd-ftp`, `kd-shake`, `kd-kampagne`, `kd-wo-eigen` (hochgeladene .zwo-Workouts), `kd-regenbogen` (Space-Bahn bunt), `kd-laut` (Gesamtlautstärke), `kd-puls` (Pulszonen: Schalter, Max-Puls, Schwellenpuls).
 - Figuren und Gegenstände mit `bodenY(x,z)` aufstellen (`welt-kalmit.js`: sichtbarer Boden mit Fahrbahn, Bankett, Gehweg, Schulter und gezeichnetem Gelände), nicht mit `terrainAt` oder `roadY` – sonst stecken sie im Belag oder schweben am Hang. Große Gruppen am Hang Teil für Teil auf den Boden setzen. Absichtlich Eingegrabenes mit `userData.ohneBoden=true` markieren.
 
 ## Arbeitsweise
