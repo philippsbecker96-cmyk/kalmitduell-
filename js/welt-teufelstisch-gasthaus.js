@@ -110,9 +110,9 @@ function poseTtGast(dt){ const A=anim.tt, N=A&&A.innen; if(!N) return; const st=
   // du: Bauer oder Bäuerin, schaust zum, der gerade spricht
   for(const k of ['bauer','baeuerin']) N.ich[k].G.visible=k===(KST.stand==='baeuerin'?'baeuerin':'bauer'); const ich=N.ich[KST.stand==='baeuerin'?'baeuerin':'bauer'];
   const spr=TT_GAST_TXT.find(([a,d])=>kt>=a&&kt<a+d), zuW=spr&&spr[2]==='wirt'; ich.kopf.rotation.y+=((zuW?.72:-.45)-ich.kopf.rotation.y)*Math.min(1,dt*3);
-  // Friedel: Kopfweh (Hand am Kopf), hört dem Wirt zu, winkt ab, beugt sich zu dir und grinst
+  // Friedel: Kopfweh (Arme auf dem Tisch, Kopf hängt – der gerade Arm reicht nicht an den Kopf, vom Nutzer), hört dem Wirt zu, winkt ab, beugt sich zu dir und grinst
   let fx=-.95, fz=.12, kx=.05, ky=0;
-  if(kt<11.5){ fx=-2.7; fz=-.45; kx=.25+.05*Math.sin(t*1.3); ky=.08*Math.sin(t*.9); } else if(kt<22.5) ky=-.9;
+  if(kt<11.5){ kx=.4+.05*Math.sin(t*1.3); ky=.12*Math.sin(t*.9); } else if(kt<22.5) ky=-.9;
   else if(kt<26){ fx=-1.7; fz=-.2+.5*Math.sin(t*9); ky=-.9+.3*Math.sin(t*7); } else { fx=-1.3; ky=-.45; kx=.15; }
   f.rotation.x+=(fx-f.rotation.x)*Math.min(1,dt*8); f.rotation.z+=(fz-f.rotation.z)*Math.min(1,dt*8); fk.rotation.x+=(kx-fk.rotation.x)*Math.min(1,dt*8); fk.rotation.y+=(ky-fk.rotation.y)*Math.min(1,dt*5);
   F.G.position.y=-.3; F.G.rotation.z+=((kt>=26.3?-.08:0)-F.G.rotation.z)*Math.min(1,dt*4); // zu dir hingeneigt
