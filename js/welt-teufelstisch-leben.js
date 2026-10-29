@@ -31,7 +31,7 @@ const TT_GEDICHT=[['Im Kaltenbacher Tale','Ein Tisch von Felsen steht.','Dort sa
   ['Man warnt ihn in der Runde,','Er lacht und geht. Vom Turm','Tönt laut die zwölfte Stunde –','Da! – Welch ein Wind! Ein Sturm?'],
   ['Und jetzt? – Was ist geschehen?','Welch grässlicher Todesschrei!','Entsetzt die Lauscher stehen:','<i>„Mit dem dort ist’s vorbei!“</i>'],
   ['Der Keckste nimmer weilte','Vorm Dorfe länger draus;','Er schlug ein Kreuz und eilte','Leis schaudernd fort nach Haus.']];
-const TT_GED={nach:3, titel:6, pause:1.5, aus:.9, bis:22}; // beginnt so viele s nach Friedels Erzählung, Titel s, Pause zwischen den Strophen, Ausblenden vor jedem Wechsel (s) – endet so viele s vor dem Ende des Einfahrens (dann sieht man die Hunde im Gebüsch)
+const TT_GED={nach:3, titel:6, pause:1.5, aus:.9, bis:39}; // beginnt so viele s nach Friedels Erzählung, Titel s, Pause zwischen den Strophen, Ausblenden vor jedem Wechsel (s) – endet so viele s vor dem Ende des Einfahrens: danach die Infotafel (25 s, kampagne.js), fertig 1 s bevor Friedel die Hunde im Gebüsch sieht (12 s vor dem Anstieg, ttSagPlan)
 // Zeitplan des Gedichts [Beginn, Ende, HTML] aus dem Workout: zwischen Friedels Erzählung und dem Ende des Einfahrens
 function ttGedichtPlan(){ const S=race.woSegs||[], e=S.find(s=>s.label==='Einfahren'); if(!e) return []; const Z=TT_GED, E=TT_TXT.erzaehl[TT_TXT.erzaehl.length-1], a=E[0]+E[1]+Z.nach, b=e.t0+e.dur-Z.bis, n=TT_GEDICHT.length;
   const p=(b-a-Z.titel-n*Z.pause)/n, L=[[a,a+Z.titel,'Der Teufelstisch<small>Fritz Claus, 1884</small>']]; let t=a+Z.titel;
