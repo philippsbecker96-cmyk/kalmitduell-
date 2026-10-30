@@ -1,10 +1,10 @@
 /* ================= Teufelstisch (Kampagne, Mission 2) – Schlussszene am Lagerplatz =================
    Die letzten TT_LAGER.halt s des Workouts steht man am Lager (R.def.halte, man tritt weiter): Friedel kniet an der Feuerstelle, schlägt Funken, pustet, das Feuer brennt (anim.tt.feuer.an),
    setzt sich auf den Stamm, zieht die letzte Bratwurst aus der Hosentasche (die einzige, die Hunde und Teufel überlebt hat) und brät sie am Stecken überm Feuer. Du sitzt auf dem anderen Stamm.
-   Blick übers Feuer auf den Jungfernsprung im Sonnenuntergang, „Gemütlicher Tag, hab ich doch gsagt“, Ausblick auf Mission 3; die letzten TT_LAGER.ab s blendet das Bild ab (bleibt schwarz bis zum Ergebnis).
+   Blick übers Feuer auf den Jungfernsprung im Sonnenuntergang, „Gemütlicher Tag, hab ich doch gsagt“, Ausblick auf Mission 3: der Dämonenjunge lugt hinter der Höhlenecke vor und flitzt auf die Kiefer (dmLager in welt-teufelstisch-daemon.js), es dämmert (TT_LAGER.dunkel); die letzten TT_LAGER.ab s blendet das Bild ab (bleibt schwarz bis zum Ergebnis).
    Fahrerfiguren und Friedel auf dem Rad sind solange ausgeblendet, die Holzräder lehnen an der Höhle. Sprüche in TT_LAGER_TXT (Platzhalter). Kamera: ttLagerKamera aus rennen.js */
 
-const TT_LAGER={halt:50, ab:8, funken:[3.5,8], zund:8, auf:[10.5,12.5], tasche:13.5, hoch:[14.5,17], spiess:17.5}; // alles vor der Ende-Tafel (letzte 25 s) – keine Blasen darunter (vom Nutzer) // s Halt am Ende (gerade Zahl wie das Raster von kampPlan) · s Abblende · Szenenzeit (s ab Halt): Funken schlagen, Feuer brennt, aufstehen und hinsetzen, Wurst aus der Tasche, hochhalten, am Stecken
+const TT_LAGER={halt:50, ab:2.5, dunkel:[25,45,.4], funken:[3.5,8], zund:8, auf:[10.5,12.5], tasche:13.5, hoch:[14.5,17], spiess:17.5}; // alles vor der Ende-Tafel (letzte 25 s) – keine Blasen darunter (vom Nutzer) // s Halt am Ende (gerade Zahl wie das Raster von kampPlan) · s Abblende · Dämmerung [von, bis s, so viel dunkler] · Szenenzeit (s ab Halt): Funken schlagen, Feuer brennt, aufstehen und hinsetzen, Wurst aus der Tasche, hochhalten, am Stecken
 // Sprüche [Szenenzeit, Dauer, Text] – alle von Friedel · PLATZHALTER, Texte schreibt der Nutzer
 const TT_LAGER_TXT=[[13.5,4.5,'Gugg mol, ennie hennse ma gelosst, die Drecksköter.'],[18.5,5.5,'Unn segsch – war doch e gudi Abkerzung vorhin …']]; // nur zwei Sprüche, das Feuer kommentiert er nicht (vom Nutzer)
 const ttLagerZeit=()=>{ const T=R&&R.tt; return T&&T.tL!=null&&race.state==='run'?race.t-T.tL:-1; }; // Szenenzeit, vor der Szene negativ
@@ -32,6 +32,7 @@ function buildTtLager(A){ const T=R.tt, Lg=T.lager; if(!Lg||!Lg.sitz||Lg.sitz.le
 function poseTtLager(dt){ const A=anim.tt, S=A&&A.lager; if(!S) return; const lt=ttLagerZeit(), an=lt>=0, Z=TT_LAGER, t=performance.now()/1000, F=S.friedel, ich=riders3d[myKey];
   if(A.feuer) A.feuer.an=an?bSm((lt-Z.zund)/3):0; // Feuer wächst nach dem Anzünden, bleibt bis zum Ende
   const cv=renderer.domElement, ab=an?clampN((lt-(Z.halt-Z.ab))/Z.ab,0,1):0, fl=ab>0?`brightness(${(1-ab).toFixed(3)})`:''; if(cv.style.filter!==fl) cv.style.filter=fl; // letzte s: Bild blendet ab, bleibt schwarz bis zum Ergebnis
+  if(an&&!race.rain){ const [d0,d1,dm]=Z.dunkel, d=dm*bSm((lt-d0)/(d1-d0)); sun.intensity*=1-d; hemi.intensity*=1-.8*d; scene.background.multiplyScalar(1-d); scene.fog.color.copy(scene.background); sky.material.color.multiplyScalar(1-.8*d); if(A.feuer) A.feuer.fli.distance=14+20*d; } // es dämmert (ttLicht setzt das Licht jeden Frame neu), das Feuer leuchtet weiter
   if(an!==S.an){ S.an=an; if(ich) ich.g.visible=!an; if(A.friedel) A.friedel.r.g.visible=!an; F.G.visible=an; S.raeder.forEach(g=>g.visible=an); } // in der Szene sitzt ihr am Feuer, die Räder lehnen an der Höhle
   const meinK=KST.stand==='baeuerin'?'baeuerin':'bauer'; for(const k of ['bauer','baeuerin']) S.ich[k].G.visible=an&&k===meinK;
   if(!an){ S.blase.visible=false; S.wurst.visible=S.stecken.visible=false; S.funken.forEach(s=>s.visible=false); return; }
@@ -63,14 +64,20 @@ function poseTtLager(dt){ const A=anim.tt, S=A&&A.lager; if(!S) return; const lt
   S.blase.visible=!!txt&&im&&ab<.5; if(S.blase.visible){ triBlaseText(S.blase,txt); triBlaseUeber(S.blase,hp,null); }
   if(el&&txt&&!im&&ab<.5){ el.textContent='Friedel: '+txt; el.classList.add('zeig'); } }
 
-// ---- Kamera (aus draw): Totale vom Weg, nah ans Feuer, über deine Schulter auf Friedel, übers Feuer auf den Jungfernsprung, langsam zurück und hinauf ----
-function ttLagerKamera(){ const A=anim.tt, S=A&&A.lager, lt=ttLagerZeit(); if(!S||lt<0) return; const {fp,W,D,sA,sB,kn}=S, up=new THREE.Vector3(0,1,0);
+// ---- Kamera (aus draw): Totale vom Weg, nah ans Feuer, über deine Schulter auf Friedel, übers Feuer auf den Jungfernsprung, ihr vor der Höhle, Zoom auf den Dämonenjungen an der Ecke, hinterher auf die Kiefer ----
+function ttLagerKamera(){ const k=ttLagerKam(ttLagerZeit()); if(k){ camera.position.copy(k[0]); camera.lookAt(k[1]); } }
+function ttLagerKam(lt){ // [Kameraort, Blickpunkt] zur Szenenzeit – auch für dmLager (läuft vor dem Setzen der Kamera)
+  const A=anim.tt, S=A&&A.lager; if(!S||lt<0) return null; const {fp,W,D,sA,sB,kn}=S, up=new THREE.Vector3(0,1,0);
   const Q=(b,w,d,h)=>b.clone().addScaledVector(W,w).addScaledVector(D,d).addScaledVector(up,h), weg=(a,b,m,h)=>a.clone().add(a.clone().sub(b).setY(0).normalize().multiplyScalar(m)).addScaledVector(up,h);
+  const DL=A.daemon&&A.daemon.lager, dk=DL&&DL.kopf, u=dk&&Q(fp,0,-4.5,1.1).sub(dk).setY(0).normalize(), vor=(m,h)=>dk.clone().addScaledVector(u,m).addScaledVector(up,h), bl=()=>DL.blick.clone(); // Dämonenjunge: Kopfhöhe an der Höhlenecke, Blick wie übers Feuer · bl: sein Kopf jetzt (dmLager)
   const sch=a=>{ const v=a.clone().sub(sB).setY(0).normalize().multiplyScalar(.7); return v.add(sA.clone().sub(fp).setY(0).normalize().multiplyScalar(.5)).add(sA).addScaledVector(up,1.55); }; // über deine Schulter
   const K=[[0,Q(fp,9,-5,3.4),Q(fp,0,0,.8),Q(fp,7.5,-4,2.8),Q(fp,0,0,.8)], // Totale vom Weg: Lager, Höhle, ihr zwei
     [3,weg(fp,kn,2.2,1),kn.clone().lerp(fp,.4).addScaledVector(up,.5),weg(fp,kn,1.8,.9),kn.clone().lerp(fp,.5).addScaledVector(up,.45)], // nah am Feuer: Friedel schlägt Funken, pustet
     [12,sch(sA),sB.clone().addScaledVector(up,1),sch(sA).lerp(sB,.12),sB.clone().addScaledVector(up,1)], // über deine Schulter auf Friedel mit der Wurst
     [25,Q(fp,0,-4.5,1.1),Q(fp,0,60,5),Q(fp,0,-3.8,1),Q(fp,0,60,5)], // übers Feuer auf den Jungfernsprung im Sonnenuntergang
-    [42,Q(fp,6,-3,2.2),Q(fp,0,0,.6),Q(fp,14,-8,8),Q(fp,0,10,2)]]; // langsam zurück und hinauf, Bild blendet ab
+    ...(dk?[[33,Q(fp,9,-1.5,1.4),fp.clone().lerp(dk,.45),Q(fp,8.5,.5,1.7),fp.clone().lerp(dk,.5)], // ihr am Feuer vor der Höhle, an der Ecke lugt der Dämonenjunge vor (dmLager)
+      [42,Q(fp,8.5,.5,1.7),fp.clone().lerp(dk,.5),vor(1.2,.1),bl()], // Zoom auf sein Gesicht hinter der Ecke
+      [DM_LAGER.flitz,vor(1.2,.1),bl(),DL.kam.clone(),bl()]] // er flitzt auf die Kiefer, Kamera zur Seite und hinauf hinterher, Bild aus
+    :[[42,Q(fp,6,-3,2.2),Q(fp,0,0,.6),Q(fp,14,-8,8),Q(fp,0,10,2)]])]; // ohne Dämon: langsam zurück und hinauf
   let i=0; while(i<K.length-1&&lt>=K[i+1][0]) i++; const [a,p0,l0,p1,l1]=K[i], b=i<K.length-1?K[i+1][0]:TT_LAGER.halt, w=bSm(Math.min(1,(lt-a)/(b-a)));
-  camera.position.copy(p0.lerp(p1,w)); camera.lookAt(l0.lerp(l1,w)); }
+  return [p0.lerp(p1,w),l0.lerp(l1,w)]; }

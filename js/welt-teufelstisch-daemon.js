@@ -14,6 +14,7 @@ const DM_J2=[[0,[['zick',0],['tele',.22],['spinne',.45],['neben',.72]]],[1,[['ho
 const DM={j1:[6,6], j2:[4,3], husch:[5,10], max:{x:30, hochrad:60, lasso:50, halt:35}}; // Flucht 1/2: so viele s nach dem Sprung des Teufels los, so viele s vor dem Ende (Flucht 2: vor dem Schlusssprint) Schluss · Huscher alle so viele s (zufällig) · ein Auftritt höchstens so viele s
 const DM_RAD={r:.38, kurbel:.07, dauer:40, neben:[13,26]}; // Hochrad: Radius Vorderrad, Kurbellänge · fährt so viele s mit · zieht ab diesen s kurz neben dich, dann neben Friedel
 const DM_LASSO={vor:7, seil:4}; // Rollschuh-Lasso: kommt so viele s vor dem „Dreizack“ · Seillänge (m)
+const DM_LAGER={ab:25, guck:[[25.5,29],[31.5,35.5],[37,40.5]], raus:42, flitz:46.3, baum:46.8, oben:47.8, ecke:[-4.5,2.6], kiefer:[-6.6,-.2], kam:[-9,6,3.5]}; // Schlussszene (vom Nutzer): lugt in diesen Abschnitten (Szenenzeit) seitlich hinter der linken Höhlenecke vor, ab „raus“ bis zum Zoom, flitzt dann zur Kiefer und klettert bis „oben“ in die Krone · Ecke (Seitenwand ist schräg), Kiefer (aus dem Blick auf den Jungfernsprung) und Kamera am Schluss lokal zur Höhle (x, z[, Höhe]; +z zum Weg)
 // Haltungen: y Hüfthöhe · l Rumpf vor · lz Rumpf seitlich · k Kopf [nicken, drehen, neigen] · a Arme [vor, seitlich] · b Beine [Hüfte, Knie] · sp Beine gespreizt
 const DM_STEH={y:.52, l:0, k:[0,0], a:[[0,-.08],[0,.08]], b:[[0,0],[0,0]]};
 const DM_SITZ={y:.5, l:-.05, k:[.1,0], a:[[-.55,-.1],[-.55,.1]], b:[[-1.5,1.5],[-1.5,1.5]]};
@@ -57,7 +58,13 @@ function buildDaemon(A){ const M=c=>lam(c), G=new THREE.Group(), H=new THREE.Gro
   const sp=(tex,s)=>{ const o=new V.Sprite(new V.SpriteMaterial({map:tex,transparent:true,depthWrite:false})); o.scale.set(s,s,1); o.visible=false; o.userData.ohneBoden=true; world.add(o); return o; };
   const sTex=canvasTex(64,64,g=>{ g.fillStyle='#ffe14a'; g.strokeStyle='#8a6a00'; g.lineWidth=3; g.beginPath(); for(let i=0;i<10;i++){ const r=i%2?12:29, a=i*Math.PI/5-Math.PI/2; g.lineTo(32+r*Math.cos(a),32+r*Math.sin(a)); } g.closePath(); g.fill(); g.stroke(); });
   const dTex=canvasTex(64,64,g=>{ const r=g.createRadialGradient(32,32,2,32,32,30); r.addColorStop(0,'rgba(150,125,95,.85)'); r.addColorStop(1,'rgba(150,125,95,0)'); g.fillStyle=r; g.fillRect(0,0,64,64); });
-  A.daemon={G,H,T,K,arme,beine,pup,brau,mund,zahn,irisM,baeume,fels,rollen,seil,schlinge,stein,rad:dmRadBau(V,M), sterne:[0,1,2].map(()=>sp(sTex,.16)), staub:[...Array(8)].map(()=>sp(dTex,1)), puff:[], phi:0, wut:0, grins:0, akt:null}; }
+  A.daemon={G,H,T,K,arme,beine,pup,brau,mund,zahn,irisM,baeume,fels,rollen,seil,schlinge,stein,rad:dmRadBau(V,M), sterne:[0,1,2].map(()=>sp(sTex,.16)), staub:[...Array(8)].map(()=>sp(dTex,1)), puff:[], phi:0, wut:0, grins:0, akt:null};
+  const Lg=R.tt&&R.tt.lager; if(Lg&&Lg.hx!=null) A.daemon.lager=dmLagerBau(Lg); }
+// Schlussszene: hohe Kiefer neben der Höhle (Höhle in welt-teufelstisch.js: Lage hx/hy, Drehung ry, lokal +z zum Weg) · Ecke, Wandmitte und Kopfhöhe für dmLager und ttLagerKamera
+function dmLagerBau(Lg){ const Z=DM_LAGER, c=Math.cos(Lg.ry), s=Math.sin(Lg.ry), L=(x,z,y=0)=>{ const wx=Lg.hx+x*c+z*s, wz=Lg.hy-x*s+z*c; return new THREE.Vector3(wx,bodenY(wx,wz)+y,wz); };
+  const B=new THREE.Group(), k=L(...Z.kiefer), st=lam('#5e4130'); B.position.copy(k).y-=.2; world.add(B); const m=new THREE.Mesh(new THREE.CylinderGeometry(.3,.42,11,8),st); m.position.y=5.5; B.add(m);
+  for(let j=0;j<3;j++){ const n=new THREE.Mesh(new THREE.ConeGeometry(2.3-.55*j,3.2,8),lam(j%2?'#3a5530':'#2f4a2a')); n.position.y=7.6+j*1.7; B.add(n); }
+  const e=L(...Z.ecke), w=L(Z.ecke[0]+1.3,0); return {ecke:e, mx:w.x-e.x, mz:w.z-e.z, ax:new THREE.Vector3(c,0,-s), o:L(0,0), kiefer:k, kam:L(...Z.kam), kopf:e.clone().setY(e.y+1.1), blick:e.clone().setY(e.y+1.1), p0:null}; }
 
 // ---- Hilfen ----
 function dmPose(D,P){ D.H.position.y=P.y; D.T.rotation.set(P.l,0,P.lz||0); D.K.rotation.set(P.k[0],P.k[1],P.k[2]||0); D.arme.forEach((a,i)=>a.rotation.set(P.a[i][0],0,P.a[i][1]));
@@ -213,6 +220,7 @@ const dmFrei=(K,rt,s)=>!K.kam.some(([a,T])=>rt+s>a-.5&&rt<a+T+.5); // kein Rück
 // ---- Bewegung (aus poseTeufelstisch) ----
 function poseDaemon(dt){ const A=anim.tt, D=A&&A.daemon; if(!D) return; const run=race.state==='run', rt=race.t, K=A.teufel&&A.teufel.sk;
   D.G.visible=false; D.baeume.forEach(B=>B.visible=false); D.fels.visible=false; D.T.scale.z=1; D.H.position.z=0; D.rollen.forEach(o=>o.visible=false); D.seil.visible=D.schlinge.visible=D.stein.visible=D.rad.G.visible=false; D.grinsZ=0; D.wutZ=0; D.sternZ=false; D.dPhi=0;
+  const lt=ttLagerZeit(); if(D.lager&&lt>=DM_LAGER.ab){ D.akt=null; dmLager(D,lt); dmFx(D,dt); return; } // Schlussszene am Lager
   if(!run||!K){ D.akt=null; D.plan=null; dmFx(D,dt); return; }
   if(D.planK!==K){ D.planK=K; D.plan=dmPlan(K); D.akt=null; } const P=D.plan;
   if(D.akt&&(D.akt.ende||rt<D.akt.rt0-.5||rt>D.akt.rt0+(DM.max[D.akt.art]||DM.max.x)||Math.abs(me.d-D.akt.dA)>400)){ D.akt=null; P.husch=Math.max(P.husch,rt+3); } // Sprung im Testmodus: Auftritt abbrechen
@@ -221,6 +229,19 @@ function poseDaemon(dt){ const A=anim.tt, D=A&&A.daemon; if(!D) return; const ru
   else if(!D.akt&&rt>=P.a1&&rt<P.e1&&rt>=P.husch&&dmFrei(K,rt,3)&&!P.fest.some(j=>!j.da&&j.t<rt+5&&rt<j.t+30)){ D.akt={art:'husch', rt0:rt, dA:me.d}; P.husch=rt+DM.husch[0]+Math.random()*(DM.husch[1]-DM.husch[0]); } // kurze Huscher dazwischen
   if(D.akt) DM_AKT[D.akt.art](D,D.akt,rt-D.akt.rt0,rt,race.paused?0:dt); if(D.akt&&D.akt.ende) D.G.visible=false;
   if(!race.paused) D.phi+=D.dPhi*dt*simSpeed()*2*Math.PI/1.6; dmFx(D,dt); }
+// Schlussszene (Foreshadowing auf Mission 3): steht hinter der linken Höhlenecke (von der Kamera aus verdeckt) und lugt ein paarmal seitlich mit Kopf und Hand vor, ab „raus“ für den Zoom;
+// flitzt dann auf allen vieren zur Kiefer und klettert blitzschnell bis in die Krone (Kamera: ttLagerKamera, folgt S.blick). Augen blau, kein Ton
+function dmLager(D,lt){ const S=D.lager, Z=DM_LAGER, G=D.G, t=performance.now()/1000, C=S.ecke, kp=ttLagerKam(lt), cp=kp?kp[0]:camera.position; G.visible=true; // Kamera der Szene (wird erst nach den Figuren gesetzt) G.rotation.order='YXZ';
+  if(lt<Z.flitz){ let vx=C.x-cp.x, vz=C.z-cp.z; const vl=Math.hypot(vx,vz)||1; vx/=vl; vz/=vl; let px=-vz, pz=vx; if(px*S.mx+pz*S.mz>0){ px=-px; pz=-pz; } // Blick Kamera → Ecke · zur Seite weg von der Wand
+    const g=Z.guck.find(([a,b])=>lt>=a-.5&&lt<b+.5), e=lt>=Z.raus?bSm((lt-Z.raus)/.6):g?bSm((lt-g[0])/.5)*bSm((g[1]-lt)/.5):0; // wie weit er vorlugt
+    let x=C.x+vx*.8-px*.35+px*.4*e, z=C.z+vz*.8-pz*.35+pz*.4*e; const lx=(x-S.o.x)*S.ax.x+(z-S.o.z)*S.ax.z, zu=Z.ecke[0]-.25; if(lx>zu){ x-=S.ax.x*(lx-zu); z-=S.ax.z*(lx-zu); } // nicht in der Seitenwand
+    G.position.set(x,bodenY(x,z),z); G.rotation.set(0,Math.atan2(-vx,-vz),0); S.p0=G.position.clone(); const sx=-Math.sign(px*Math.cos(G.rotation.y)-pz*Math.sin(G.rotation.y)); // Seite des Vorlugens in Körperkoordinaten
+    dmPose(D,{...DM_STEH, lz:sx*.35*e, k:[.05,0,sx*.25*e], a:[[-.4*e,-.1],[-.4*e,.1]]}); }
+  else { const K=S.kiefer, p0=S.p0||C, dx=cp.x-K.x, dz=cp.z-K.z, dl=Math.hypot(dx,dz)||1, f=K.clone().add(new THREE.Vector3(dx/dl*.45,0,dz/dl*.45)), zuB=Math.atan2(K.x-f.x,K.z-f.z); // am Stamm auf der Kameraseite
+    if(lt<Z.baum){ const u=(lt-Z.flitz)/(Z.baum-Z.flitz), p=p0.clone().lerp(f,u); G.position.set(p.x,bodenY(p.x,p.z),p.z); G.rotation.set(0,Math.atan2(f.x-p0.x,f.z-p0.z),0); }
+    else { const u=clampN((lt-Z.baum)/(Z.oben-Z.baum),0,1); G.visible=u<1; G.position.set(f.x,f.y+u*u*8.5,f.z); G.rotation.set(-Math.PI/2,zuB,0); } // Bauch zum Stamm, Kopf nach oben
+    dmPose(D,dmKrabbel(t*16,1)); }
+  D.G.updateMatrixWorld(true); D.K.getWorldPosition(S.blick); }
 // Augen (blau → rot mit Schlitzpupille), Grinsen, Sternchen, Staubwolken
 function dmFx(D,dt){ const k=Math.min(1,dt*6); D.wut+=(D.wutZ-D.wut)*k; D.grins+=(D.grinsZ-D.grins)*k; const w=D.wut, t=performance.now()/1000;
   D.irisM.color.setRGB(.18+.7*w,.48-.43*w,1-.9*w); D.pup.forEach(p=>p.scale.set(1-.65*w,1+.9*w,1)); D.brau.forEach((b,i)=>b.rotation.z=(i?-1:1)*.45*w);
