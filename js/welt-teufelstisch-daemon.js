@@ -6,14 +6,17 @@
    neben dir gegen den Baum · Hochrad (DM_RAD, 40 s hinter euch, zieht neben dich und Friedel, Sturz über den Lenker), Stein mit Rückwärtssalto, Friedels Wurstladung ·
    im „Dreizack“ Rollschuh-Lasso (DM_LASSO: Schlinge um deinen Sattel, du gehst dafür aus dem Sattel: dmStehen → rideState, er hängt wie ein Wasserskifahrer hinter dir, schwingt weiter aus und duckt sich,
    je mehr du über dem Soll trittst) · hinterher mit Bauchklatscher, „Halt!“ mitten auf dem Weg (ihr weicht rechts und links aus: dmHaltW → ttSpur und Friedels Spur, er wirbelt wie ein Kreisel).
+   Ausfahren (DM_WOLF): hockt zwischen zwei Wölfen am Waldrand, heult stumm mit ihnen, galoppiert mit dem Rudel neben euch her, springt über die Wölfe an die Spitze, bleibt stehen, schaut dir mit roten Augen nach, verschwindet mit ihnen im Wald.
    Dazwischen kurze Huscher am Rand (DM.husch). Auftritte starten nicht während der Rückblicke des Teufels (teufelSkript → kam), das Lasso schon. Eigene Bäume und Felsen (dmBaum, dmFels) nur während eines Auftritts sichtbar.
    buildDaemon aus buildTeufelstisch · poseDaemon aus poseTeufelstisch (über sicher) */
 
 const DM_J1=[['guck',.15],['quer',.48],['fels',.8]]; // Flucht 1: Auftritt, Anteil der Flucht
 const DM_J2=[[0,[['zick',0],['tele',.22],['spinne',.45],['neben',.72]]],[1,[['hochrad',.12],['stein',.7],['friedel',.84]]],[2,[['hinter',.08],['halt',.45]]]]; // Flucht 2 (vom Nutzer: fest): [Stück „Flucht 2“ (0 … 2), [Auftritt, Anteil des Stücks]] – dazu das Lasso im „Dreizack“
-const DM={j1:[6,6], j2:[4,3], husch:[5,10], max:{x:30, hochrad:60, lasso:50, halt:35}}; // Flucht 1/2: so viele s nach dem Sprung des Teufels los, so viele s vor dem Ende (Flucht 2: vor dem Schlusssprint) Schluss · Huscher alle so viele s (zufällig) · ein Auftritt höchstens so viele s
+const DM={j1:[6,6], j2:[4,3], husch:[5,10], max:{x:30, hochrad:60, lasso:50, halt:35, woelfe:45}}; // Flucht 1/2: so viele s nach dem Sprung des Teufels los, so viele s vor dem Ende (Flucht 2: vor dem Schlusssprint) Schluss · Huscher alle so viele s (zufällig) · ein Auftritt höchstens so viele s
 const DM_RAD={r:.38, kurbel:.07, dauer:40, neben:[13,26]}; // Hochrad: Radius Vorderrad, Kurbellänge · fährt so viele s mit · zieht ab diesen s kurz neben dich, dann neben Friedel
 const DM_LASSO={vor:7, seil:4}; // Rollschuh-Lasso: kommt so viele s vor dem „Dreizack“ · Seillänge (m)
+const DM_WOLF={nach:55, vor:95, heul:42, lauf:3.5, sprung:8.5, ab:15, steh:3.5, platz:[[-3.5,4.5],[3,5.5],[0,6.2]], ziel:[[6,3.2],[9.5,4.6],[2,2.2]], spitze:[14,3.9]}; // Ausfahren: so viele s nach Beginn · Waldrand so viele m vor dir · Heulen ab dieser Entfernung, so viele s · Sprung, Abbiegen ab s nach dem Heulen · steht so viele s · Plätze [m vor/zurück, m vom Wegrand]: Wolf, Wolf, Junge · beim Laufen [m vor dir, m vom Wegrand] · Junge nach dem Sprung
+const DM_WOLF_ART={fell:'#7a746c', ab:'#ddd6c8', ohr:'steh', sw:'busch', latz:1};
 const DM_LAGER={ab:25, guck:[[25.5,29],[31.5,35.5],[37,40.5]], raus:42, flitz:46.3, baum:46.8, oben:47.8, ecke:[-4.5,2.6], kiefer:[-6.6,-.2], kam:[-9,6,3.5]}; // Schlussszene (vom Nutzer): lugt in diesen Abschnitten (Szenenzeit) seitlich hinter der linken Höhlenecke vor, ab „raus“ bis zum Zoom, flitzt dann zur Kiefer und klettert bis „oben“ in die Krone · Ecke (Seitenwand ist schräg), Kiefer (aus dem Blick auf den Jungfernsprung) und Kamera am Schluss lokal zur Höhle (x, z[, Höhe]; +z zum Weg)
 // Haltungen: y Hüfthöhe · l Rumpf vor · lz Rumpf seitlich · k Kopf [nicken, drehen, neigen] · a Arme [vor, seitlich] · b Beine [Hüfte, Knie] · sp Beine gespreizt
 const DM_STEH={y:.52, l:0, k:[0,0], a:[[0,-.08],[0,.08]], b:[[0,0],[0,0]]};
@@ -23,6 +26,7 @@ const DM_HECHT={y:.15, l:1.5, k:[-1.25,0], a:[[-3,-.25],[-3,.25]], b:[[1.35,.15]
 const DM_PLATT={y:.52, l:-.1, k:[-.1,0], a:[[-2.7,-.7],[-2.7,.7]], b:[[0,0],[0,0]], sp:.25}; // klebt am Baumstamm
 const DM_DUSEL={y:.13, l:-.25, k:[.2,0], a:[[.15,-.5],[.15,.5]], b:[[-1.5,.1],[-1.5,.1]], sp:.3}; // sitzt benommen auf dem Boden
 const DM_HANG={y:.22, l:0, k:[0,0], a:[[-3.1,-.15],[-3.1,.15]], b:[[-1.2,2.4],[-1.2,2.4]]}; // kopfüber am Ast (Figur um 180° gedreht), Kniekehlen über dem Ast
+const DM_HOCK={y:.16, l:.5, k:[-.45,0], a:[[-.9,-.15],[-.9,.15]], b:[[-2.3,2.45],[-2.3,2.45]], sp:.25}; // hockt, Hände auf den Knien
 const DM_RADP={y:.9, l:.3, k:[-.25,0], a:[[-.8,-.18],[-.8,.18]], b:[[-1,1],[-1,1]]}; // auf dem Hochrad (Beine: dmBeinIK zu den Pedalen)
 const DM_SKI={y:.55, l:-.35, k:[.3,0], a:[[-1.25,-.1],[-1.25,.1]], b:[[-.35,.6],[-.1,.35]]}, DM_SKI_TIEF={y:.41, l:-.15, k:[.15,0], a:[[-1.45,-.1],[-1.45,.1]], b:[[-1.1,1.6],[-.95,1.45]]}; // am Seil wie ein Wasserskifahrer, aufrecht / tief geduckt
 const dmKrabbel=(phi,m)=>{ const s=Math.sin(phi)*m, c=Math.max(0,Math.cos(phi))*m; return {y:.3+.03*Math.abs(s), l:1.25, k:[-1.15,0], a:[[-1.3+.55*s,-.3],[-1.3-.55*s,.3]], b:[[-1.7-.6*s,2.2-.4*c],[-1.7+.6*s,2.2-.4*Math.max(0,-Math.cos(phi))*m]], sp:.45}; }; // insektenhaft gespreizt
@@ -59,6 +63,7 @@ function buildDaemon(A){ const M=c=>lam(c), G=new THREE.Group(), H=new THREE.Gro
   const sTex=canvasTex(64,64,g=>{ g.fillStyle='#ffe14a'; g.strokeStyle='#8a6a00'; g.lineWidth=3; g.beginPath(); for(let i=0;i<10;i++){ const r=i%2?12:29, a=i*Math.PI/5-Math.PI/2; g.lineTo(32+r*Math.cos(a),32+r*Math.sin(a)); } g.closePath(); g.fill(); g.stroke(); });
   const dTex=canvasTex(64,64,g=>{ const r=g.createRadialGradient(32,32,2,32,32,30); r.addColorStop(0,'rgba(150,125,95,.85)'); r.addColorStop(1,'rgba(150,125,95,0)'); g.fillStyle=r; g.fillRect(0,0,64,64); });
   A.daemon={G,H,T,K,arme,beine,pup,brau,mund,zahn,irisM,baeume,fels,rollen,seil,schlinge,stein,rad:dmRadBau(V,M), sterne:[0,1,2].map(()=>sp(sTex,.16)), staub:[...Array(8)].map(()=>sp(dTex,1)), puff:[], phi:0, wut:0, grins:0, akt:null};
+  { const q=rng(5150); A.daemon.woelfe=[0,1].map(()=>{ const h=ttHund(DM_WOLF_ART,q); h.G.scale.setScalar(1.25+.1*q()); h.G.visible=false; return h; }); } // Wölfe fürs Ausfahren
   const Lg=R.tt&&R.tt.lager; if(Lg&&Lg.hx!=null) A.daemon.lager=dmLagerBau(Lg); }
 // Schlussszene: hohe Kiefer neben der Höhle (Höhle in welt-teufelstisch.js: Lage hx/hy, Drehung ry, lokal +z zum Weg) · Ecke, Wandmitte und Kopfhöhe für dmLager und ttLagerKamera
 function dmLagerBau(Lg){ const Z=DM_LAGER, c=Math.cos(Lg.ry), s=Math.sin(Lg.ry), L=(x,z,y=0)=>{ const wx=Lg.hx+x*c+z*s, wz=Lg.hy-x*s+z*c; return new THREE.Vector3(wx,bodenY(wx,wz)+y,wz); };
@@ -72,6 +77,7 @@ function dmPose(D,P){ D.H.position.y=P.y; D.T.rotation.set(P.l,0,P.lz||0); D.K.r
 const dmMix=(a,b,w)=>{ const m=(x,y)=>(x||0)+((y||0)-(x||0))*w; return {y:m(a.y,b.y), l:m(a.l,b.l), lz:m(a.lz,b.lz), sp:m(a.sp,b.sp), k:[0,1,2].map(i=>m(a.k[i],b.k[i])), a:tfMix(a.a,b.a,w), b:tfMix(a.b,b.b,w)}; };
 const dmGrund=(d,u)=>{ const p=wegPos(d,u); return [p.x,bodenY(p.x,p.z),p.z]; };
 const dmVor=d=>Math.PI/2-headingAt(R,d); // Blick in Fahrtrichtung
+const dmDreh=(a,b,w)=>a+Math.atan2(Math.sin(b-a),Math.cos(b-a))*w; // Winkel a → b auf kürzestem Weg
 const dmRechts=d=>{ const h=headingAt(R,d); return [-Math.sin(h),Math.cos(h)]; }; // Einheitsvektor nach rechts (x, z)
 const dmRw=d=>roadW(R,d)/2;
 function dmMeinU(){ const ich=riders3d[myKey]; if(!ich) return 0; const p=ich.g.position, c=wegPos(me.d,0); return (p.x-c.x)*-Math.sin(c.h)+(p.z-c.z)*Math.cos(c.h); } // deine Spur (m rechts der Mitte)
@@ -200,6 +206,26 @@ const DM_AKT={
       o.position.copy(sat); o.rotation.set(Math.PI/2,0,0); o.scale.setScalar(.45); o.visible=true; dmSeil(D.seil,h,sat); return; } // Schlinge um den Sattel, Seil straff
     if(a.vR==null){ a.vR=me.v; a.dR=a.d; a.uR=a.u; } a.vR=Math.max(0,a.vR-1.6*dt); a.dR+=a.vR*dt; a.uR+=1.3*dt; const rw=dmRw(a.dR); stell(a.dR,a.uR,dmVor(a.dR)+.5,.2*Math.sin(rt*6)); // rollt ungebremst schräg ins Gebüsch, rudert mit den Armen
     dmPose(D,{...DM_SKI,a:[[-rt*14,-.3],[-rt*14+Math.PI,.3]],k:[.3,0,.2*Math.sin(rt*5)]}); D.grinsZ=0; if(a.uR>=rw+2.6){ dmPuff(D,...dmGrund(a.dR,a.uR)); a.ende=1; } if(rt>t2+6) a.ende=1; },
+  // Ausfahren: hockt zwischen zwei Wölfen am Waldrand und macht sie nach, sie setzen sich und heulen stumm, er auch – dann laufen sie neben euch her, er galoppiert auf allen vieren mit,
+  // springt über das Rudel an die Spitze und dreht den Kopf nach dir, bleibt am Waldrand stehen, schaut dir mit roten Augen nach und verschwindet mit den Wölfen im Wald
+  woelfe(D,a,y,rt,dt){ const Z=DM_WOLF, W=D.woelfe, G=D.G, t=performance.now()/1000, lauf=race.paused?0:dt*simSpeed(); if(!W){ a.ende=1; return; }
+    if(a.d0==null){ a.d0=me.d+Z.vor; a.s=Math.random()<.5?1:-1; } const s=a.s, dd=a.d0-me.d, rw=dmRw(a.d0), [rx,rz]=dmRechts(a.d0), zuWeg=Math.atan2(-s*rx,-s*rz), P=Z.platz;
+    if(a.t0==null&&dd<=Z.heul) a.t0=rt; if(a.t0==null&&dd<0){ a.ende=1; return; } const z=a.t0==null?-1:rt-a.t0;
+    const stell=(o,d,r,ry)=>{ const g=dmGrund(d,s*(dmRw(d)+r)); o.visible=true; o.position.set(...g); o.rotation.set(0,ry,0); };
+    if(z<Z.lauf){ const w=z<0?0:bSm(z/.6)*bSm((Z.lauf-.4-z)/.5); // am Waldrand: schnuppern · sitzen und heulen (stumm), er hockt dazwischen und reckt den Kopf mit
+      W.forEach((h,j)=>{ stell(h.G,a.d0+P[j][0],P[j][1],zuWeg+(j?-.35:.35)); if(z<0) tfHundHaltung(h,'steh',t,j); else { tfHundHaltung(h,'sitz',t,j); h.ko.rotation.set(-1.1*w,0,0); h.maul.rotation.x=.12+.28*w; h.zu.visible=false; } });
+      stell(G,a.d0+P[2][0],P[2][1],zuWeg); dmPose(D,z<0?{...DM_LAUER,k:[-1.05,0,.4*Math.sin(t*.8)]}:dmMix(DM_LAUER,{...DM_HOCK,k:[-1.5,0,0]},w)); D.grinsZ=w; return; }
+    if(!a.dW){ a.dW=P.map(([o])=>a.d0+o); a.r=P.map(p=>p[1]); a.ziel=Z.ziel.map(p=>[...p]); } const zl=z-Z.lauf, dr=bSm(zl/1.2), ab=z>=Z.ab?z-Z.ab:-1;
+    W.forEach((h,j)=>{ const zi=a.ziel[j], v=ab<0?dr*Math.max(0,me.v+clampN((me.d+zi[0]-a.dW[j])*.6,-3,4)):me.v*.85, d=(a.dW[j]+=v*lauf), r=ab<0?a.r[j]+(zi[1]-a.r[j])*bSm(zl/2.5):zi[1]+18*bSm(ab/2.5); // laufen mit, biegen dann in den Wald ab
+      if(r>zi[1]+15) return; stell(h.G,d,r,ab<0?dmDreh(zuWeg+(j?-.35:.35),dmVor(d),dr):dmDreh(dmVor(d),zuWeg+Math.PI,.45*bSm(ab/.8))); h.vs=v; h.phi+=v/(v<4?1.3:2.4)*2*Math.PI*lauf; tfHundLauf(h,Math.min(1,v/3),t,j); });
+    if(ab<0){ if(zl>=Z.sprung-Z.lauf&&a.tJ==null){ a.tJ=rt; a.dS=a.dW[2]; a.rS=a.r[2]+(a.ziel[2][1]-a.r[2])*bSm(zl/2.5); a.dL=a.dW[1]+3+me.v*.8; }
+      if(a.tJ!=null&&rt-a.tJ<.8){ const w=(rt-a.tJ)/.8, d=a.dS+(a.dL-a.dS)*w; stell(G,d,a.rS+(Z.spitze[1]-a.rS)*w,dmVor(d)); G.position.y+=1.5*Math.sin(Math.PI*w); dmPose(D,dmMix(DM_LAUER,DM_HECHT,Math.sin(Math.PI*w))); a.dW[2]=d; D.grinsZ=1; return; } // Sprung über das Rudel
+      if(a.tJ!=null&&a.ziel[2][0]!==Z.spitze[0]){ a.ziel[2]=[...Z.spitze]; a.r[2]=Z.spitze[1]; a.dW[2]=a.dL; }
+      const zi=a.ziel[2], v=dr*Math.max(0,me.v+clampN((me.d+zi[0]-a.dW[2])*.6,-3,4)), d=(a.dW[2]+=v*lauf), r=a.tJ!=null?zi[1]:a.r[2]+(zi[1]-a.r[2])*bSm(zl/2.5);
+      stell(G,d,r,dmDreh(zuWeg,dmVor(d),dr)); dmPose(D,dmKrabbel(D.phi,1)); D.dPhi=v/.9+3; D.grinsZ=1; if(a.tJ!=null){ D.K.rotation.y=dmKopfZu(D,2.6); D.wutZ=.5; } return; } // galoppiert mit, nach dem Sprung vorneweg mit Blick zurück
+    if(a.dB==null){ a.dB=a.dW[2]; a.rB=a.ziel[2][1]; } const [bx,bz]=dmRechts(a.dB), weg=Math.atan2(-s*bx,-s*bz); // bleibt stehen, richtet sich auf, schaut dir nach
+    if(ab<Z.steh){ const w=bSm((ab-.2)/.8); stell(G,a.dB,a.rB+1.2*bSm(ab/.8),dmDreh(dmVor(a.dB),weg,w)); dmPose(D,dmMix(dmKrabbel(D.phi,1-w),DM_STEH,w)); D.dPhi=(1-w)*8; D.K.rotation.y=dmKopfZu(D,2.4)*w; D.wutZ=bSm((ab-1)/.5); D.grinsZ=1; return; }
+    const q=ab-Z.steh, r=a.rB+1.2+16*bSm(q/1.3); if(q>1.4||me.d-a.dB>90){ a.ende=1; return; } stell(G,a.dB+2*q,r,dmDreh(weg,weg+Math.PI,bSm(q/.25))); dmPose(D,dmKrabbel(D.phi,1)); D.dPhi=13; D.grinsZ=1; G.visible=r<a.rB+15; }, // auf allen vieren hinterher in den Wald
   // kurze Huscher am Rand zwischen den Auftritten in Flucht 2: flitzt zwischen den Bäumen, Kopf ploppt hinter einem Stein hoch, krabbelt einen Stamm hoch
   husch(D,a,y,rt){ const G=D.G; if(a.typ==null){ a.typ=['wald','stein','stamm'][Math.random()*3|0]; a.s=Math.random()<.5?1:-1; a.d0=me.d+(a.typ==='wald'?22:40); a.t0=rt; } const z=rt-a.t0, rw=dmRw(a.d0); D.grinsZ=.6; D.wutZ=.5;
     if(a.typ==='wald'){ const T=1.6; if(z>=T){ a.ende=1; return; } const d=a.d0+16*z/T, g=dmGrund(d,a.s*(rw+6)); G.visible=true; G.position.set(...g); G.rotation.set(0,dmVor(d),0); dmPose(D,dmKrabbel(D.phi,1)); D.dPhi=13; return; }
@@ -214,12 +240,12 @@ function dmStehen(){ const D=R&&R.tt&&anim.tt&&anim.tt.daemon, P=D&&D.plan; retu
 // ---- Ablauf (aus teufelSkript) ----
 function dmPlan(K){ const S=race.woSegs||[], z=S.find(s=>s.label==='Schlusssprint'), r0=K.r[0], r1=K.r[1], a0=r0.tS+DM.j1[0], e0=r0.tE-DM.j1[1], a1=r1.tS+DM.j2[0], f2=S.filter(s=>s.label==='Flucht 2'), dz2=K.dz[1]||null;
   const fest=DM_J1.map(([art,f])=>({art,t:a0+(e0-a0)*f})); for(const [i,L] of DM_J2){ const s=f2[i]; if(!s) continue; const p=Math.max(s.t0,a1), q=s.t0+s.dur-3; for(const [art,f] of L) fest.push({art,t:p+(q-p)*f}); }
-  if(dz2) fest.push({art:'lasso',t:dz2[0]-DM_LASSO.vor,vor:true}); fest.sort((x,y)=>x.t-y.t); return {fest, dz2, a1, e1:(z?z.t0:r1.tE)-DM.j2[1], husch:0}; }
+  if(dz2) fest.push({art:'lasso',t:dz2[0]-DM_LASSO.vor,vor:true}); const au=S.find(s=>s.label==='Ausfahren'); if(au) fest.push({art:'woelfe',t:au.t0+DM_WOLF.nach}); fest.sort((x,y)=>x.t-y.t); return {fest, dz2, a1, e1:(z?z.t0:r1.tE)-DM.j2[1], husch:0}; }
 const dmFrei=(K,rt,s)=>!K.kam.some(([a,T])=>rt+s>a-.5&&rt<a+T+.5); // kein Rückblick in den nächsten s Sekunden
 
 // ---- Bewegung (aus poseTeufelstisch) ----
 function poseDaemon(dt){ const A=anim.tt, D=A&&A.daemon; if(!D) return; const run=race.state==='run', rt=race.t, K=A.teufel&&A.teufel.sk;
-  D.G.visible=false; D.baeume.forEach(B=>B.visible=false); D.fels.visible=false; D.T.scale.z=1; D.H.position.z=0; D.rollen.forEach(o=>o.visible=false); D.seil.visible=D.schlinge.visible=D.stein.visible=D.rad.G.visible=false; D.grinsZ=0; D.wutZ=0; D.sternZ=false; D.dPhi=0;
+  D.G.visible=false; D.baeume.forEach(B=>B.visible=false); D.fels.visible=false; D.T.scale.z=1; D.H.position.z=0; D.rollen.forEach(o=>o.visible=false); D.seil.visible=D.schlinge.visible=D.stein.visible=D.rad.G.visible=false; if(D.woelfe) D.woelfe.forEach(h=>h.G.visible=false); D.grinsZ=0; D.wutZ=0; D.sternZ=false; D.dPhi=0;
   const lt=ttLagerZeit(); if(D.lager&&lt>=DM_LAGER.ab){ D.akt=null; dmLager(D,lt); dmFx(D,dt); return; } // Schlussszene am Lager
   if(!run||!K){ D.akt=null; D.plan=null; dmFx(D,dt); return; }
   if(D.planK!==K){ D.planK=K; D.plan=dmPlan(K); D.akt=null; } const P=D.plan;
