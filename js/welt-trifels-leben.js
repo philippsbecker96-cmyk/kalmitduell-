@@ -178,9 +178,10 @@ function triStimmenListe(){ const X=TRI_TXT, L=[['vorreiter_01',TRI_BEISEITE],['
     n=(p,a)=>a.forEach((s,i)=>L.push([p+(i+1),s]));
   TRI_AUD_TXT.forEach((a,i)=>a[1]&&L.push(['burgherr_0'+(i+2),a[1]])); TRI_FUHR_TXT.forEach((a,i)=>L.push(['fuhrmann_0'+(i+1),a[2]]));
   n('dorfweib_0',X.dorfweib); n('friedel_ank',X.ank); n('friedel_zurueck',X.zurueck); n('friedel_weg',X.weg); n('friedel_fang',X.fang); n('friedel_schafe',X.schafe); n('friedel_sau',X.sau); n('friedel_ende',X.ende); return L; }
-function triSag(wer,txt){ if(!txt||triSagt[wer]===txt) return; triSagt[wer]=txt; if(!triStimmen) triStimmen=triStimmenListe(); // neuer Text in der Blase von wer
+function triSag(wer,txt){ if(!txt||triSagt[wer]===txt) return; triSagt[wer]=txt; const m2=!!anim.tt; // neuer Text in der Blase von wer · Mission 2: Liste ttStimmenListe (welt-teufelstisch-ton.js)
+  if(!triStimmen||triStimmen.m2!==m2){ triStimmen=m2?ttStimmenListe():triStimmenListe(); triStimmen.m2=m2; }
   const M=triStimmen.filter(x=>kText(x[1])===txt), m=M.find(x=>!triGesagt.has(x[0]))||M[0]; if(!m) return; triGesagt.add(m[0]);
-  triWarte.push({f:TRI_STIMME+m[0]+(/\[[^\]|]*\|/.test(m[1])?(KST.stand==='baeuerin'?'_baeuerin':'_bauer'):'')+'.m4a', t:performance.now()}); }
+  triWarte.push({f:(m2?TT_STIMME:TRI_STIMME)+m[0]+(/\[[^\]|]*\|/.test(m[1])?(KST.stand==='baeuerin'?'_baeuerin':'_bauer'):'')+'.m4a', t:performance.now()}); }
 function triStimmeTick(an){ const S=triSprich; if(S&&!S.ended&&!S.weg){ if(!an&&!S.paused) S.pause(); else if(an&&S.paused) S.play().catch(()=>{ S.weg=1; }); return; } // Pause hält die Stimme an
   if(!an) return; const jetzt=performance.now(); while(triWarte.length&&jetzt-triWarte[0].t>4000) triWarte.shift(); const w=triWarte.shift(); if(!w) return;
   try{ const a=triSprich=new Audio(w.f); a.volume=TRI_STIMME_VOL*lautF(); a.onerror=()=>{ a.weg=1; }; a.play().catch(()=>{ a.weg=1; }); }catch(e){ triSprich=null; } }

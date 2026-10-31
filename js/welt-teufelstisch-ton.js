@@ -4,12 +4,22 @@
 Object.assign(TRI_TON_VOL,{hundemeute:.7, hund_gross:.6, vogel_wald:.5, kinderlachen:.6, donner:.8, teufel_bruell:1, teufel_schnaufen:.8, friedel_schrei:.8, glas_bricht:.8, schotter:.3, feuerstein:.8, brutzeln:.5, regen:.5, wind:.5, teufel_schritt:.9});
 Object.assign(TRI_MUSIK,{teufelsweg:['musik/teufelsweg',.5,.6], waldamb:['musik/waldambient',.35], tjagd:['musik/teufelsjagd',.55,2], tjagdP:['musik/omniouswaldnachts',.5,2], tsprint:['musik/teufelssprint',.6,3], hlustig:['musik/spielleute-lustig',.36,2], hkrieg:['musik/spielleute-krieg',.33,2], hfolk:['musik/mittelalterhintergrundfolkig2',.2,.6], tjagd2:['musik/teufelsjagd2',.55,1], lager:['musik/lager',.35,.5]}); // tjagdP: Platzhalter fürs Verfolgungsstück · tsprint: Halloween-Jagd im Schlusssprint (21,6 s)
 const TT_TON={sprint:22, donner:[18,40], schnauf:2.4, hund:35, bell:[2,6], jagdLang:31, thema:36, teufelsweg:86, froh:3, geschafft:2}; // Hunde hörbar bis m · Bellen alle s · Jagdmusik spielt s · Thema bis s · geschafft: Thema so viele s nach dem Blick zurück auf den erschöpften Teufel (vom Nutzer: erst kurz Fokus auf ihn) · teufelsweg endet mit „Ertappt“ · fröhliche Musik so viele s, nachdem der Teufel am Steintor aufschlägt
+// ---- Stimmen (kampagne/sounds/dialoge/mission2/<person>/, Liste in DIALOGE.md): Datei ↔ Blasentext für triSag (welt-trifels-leben.js) ----
+const TT_STIMME='kampagne/sounds/dialoge/mission2/';
+function ttStimmenListe(){ const X=TT_TXT, H=X.hunde, L=[], f=(d,s)=>L.push(['friedel/friedel_'+d,s]), n=(d,a)=>a.forEach((s,i)=>f(d+(i+1),s)); let fu=0;
+  f('gast1',TT_GAST_TXT[2][3]); f('gast2',TT_GAST_TXT[3][3]); L.push(['wirt/wirt_01',TT_GAST_TXT[0][3]],['wirt/wirt_02',TT_GAST_TXT[1][3]]);
+  f('erz1',X.erzaehl[0][2]); f('erz2',X.erzaehl[1][2]); f('sehen',H.sehen); f('start',H.start); n('klau',H.klau); n('biss',H.biss); n('zieh',H.zieh); n('piek',X.piek); n('wetter',X.wetter);
+  f('letzt',H.letzt); f('katze',H.katze[1]); f('dorf',X.bauer[1]); f('ritter',X.ritter[2]); f('duck',X.duck); f('verrat',X.verrat); f('gabel',X.gabel); f('tor',X.tor);
+  f('rechts',X.rechts); f('schwoer',X.schwoer); f('sprint',X.sprint); f('lager1',TT_LAGER_TXT[0][2]); f('lager2',TT_LAGER_TXT[1][2]);
+  L.push(['dorfmann/dorfmann_01',X.bauer[0]],['baeuerin/baeuerin_01',H.katze[0]],['ritter/ritter_01',X.ritter[0]],['ritter/ritter_02',X.ritter[1]]);
+  TT_FUHR_TXT.forEach(z=>z[2]==='f'?f('fuhr',z[3]):L.push(['fuhrmann/fuhrmann_0'+(++fu),z[3]])); return L; } // fuhrmann_05: _bauer/_baeuerin hängt triSag an
 let ttTonVor=null, ttJagdDa=null; // ttJagdDa: liegt musik/teufelsjagd.mp3 schon im Ordner?
 function ttTon(dt){ const A=anim.tt; if(!A) return; const run=race.state==='run', an=(run||race.state==='count')&&!race.paused, rt=run?race.t:0, t=performance.now()/1000, T=R.tt, Z=TT_TON;
-  if(!A.tonAn){ A.tonAn=1; triTonAus(); } triDuck=1; // Töne von Mission 1 aus
+  if(!A.tonAn){ A.tonAn=1; triTonAus(); } // Töne von Mission 1 aus
+  triStimmeTick(an); { const S=triSprich, sp=!!S&&!S.ended&&!S.weg&&!S.paused; triDuck+=((sp?.35:1)-triDuck)*Math.min(1,dt*(sp?6:1.5)); } // Stimmen wie in Mission 1, Musik leiser, solange jemand spricht
   if(!ttTonVor){ ttTonVor=['hundemeute','hund_gross','hundebellen','rascheln_gebuesch','glocken','sturz','peitsche','fluegel','hufe','kettenhemd','wiehern','wolfsgehaeul','feuerknistern','grillen','donner','teufel_bruell','teufel_schnaufen','friedel_schrei','glas_bricht','feuerstein'].map(n=>Object.assign(new Audio(TRI_TON+n+'.mp3'),{preload:'auto'}));
     const a=new Audio('kampagne/sounds/'+TRI_MUSIK.tjagd[0]+'.mp3'); a.preload='auto'; a.oncanplaythrough=()=>{ ttJagdDa=true; }; a.onerror=()=>{ ttJagdDa=false; }; ttTonVor.push(a); }
-  if(race.state==='count'&&!A.tonNeu){ for(const n in TRI_MUSIK) triMusikNeu(n); } A.tonNeu=race.state==='count'; // neues Rennen: Musik von vorn
+  if(race.state==='count'&&!A.tonNeu){ for(const n in TRI_MUSIK) triMusikNeu(n); triStimmeAus(); } A.tonNeu=race.state==='count'; // neues Rennen: Musik von vorn
   if(race.state==='count'||!A.ton) A.ton={}; const O=A.ton, einmal=(k,b)=>b&&!O[k]&&(O[k]=1), zu=(k,t0)=>run&&einmal(k,t0!=null&&rt>=t0&&rt<t0+3); // Einzelton zur Zeit t0 (nach Sprüngen im Testmodus nicht nachgeholt)
   const S=race.woSegs||[], f=l=>S.find(s=>s.label===l), an1=f('Anstieg'), e1=f('Ertappt'), a1=f('Abgeschüttelt'), z=f('Schlusssprint'), au=f('Ausfahren'), zE=z?z.t0+z.dur:1e9;
   const P=A.hp, D=A.teufel, K=D&&D.sk, [sturm]=run?ttWetterW(rt):[0], km=race.kamp, e0=km?kampEnde0(km):1e9, ank=run&&rt>=e0&&rt<e0+16, lt=ttLagerZeit(), lAb=lt>=0?1-clampN((lt-(TT_LAGER.halt-TT_LAGER.ab))/TT_LAGER.ab,0,1):1; // e0: Ende-Tafeln

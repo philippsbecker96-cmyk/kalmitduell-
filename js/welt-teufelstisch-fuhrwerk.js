@@ -24,6 +24,6 @@ function poseTtFuhre(dt){ const A=anim.tt, F=A&&A.fuhre; if(!F) return; const ru
   const m=F.m, z=TT_FUHR_TXT.find(([a,b])=>s>=a&&s<b), k=Math.min(1,dt*6), zuF=z&&/Friedel/.test(z[3])||z&&z[2]==='f'; m.kopf.rotation.y+=((s>-1&&s<Z.ab+1.5?(zuF?-.7:-1):0)-m.kopf.rotation.y)*Math.min(1,dt*4); // schaut zu dir (rechts) oder zu Friedel (näher)
   m.arme[0].rotation.x+=((z&&z[2]==='b'?-1.3+.35*Math.sin(t*5):s>=Z.ab-.5&&s<Z.ab+1.2?-1.6+.8*Math.sin(t*9):-.9)-m.arme[0].rotation.x)*k; // erzählt mit der Hand, winkt ab
   m.arme[1].rotation.x+=((s>=Z.ab+.8?-2.7+.6*Math.sin(t*14):-.9)-m.arme[1].rotation.x)*k; // Peitsche
-  if(!z) return; const txt=kText(z[3]), ich=riders3d[myKey]&&riders3d[myKey].g;
+  if(!z) return; const txt=kText(z[3]), ich=riders3d[myKey]&&riders3d[myKey].g; triSag(z[2]==='b'?'fuhrmann':'friedel',txt);
   if(z[2]==='b'){ F.blase.visible=true; triBlaseText(F.blase,txt); const kp=m.kopf.getWorldPosition(new THREE.Vector3()); kp.y+=.9; triBlaseUeber(F.blase,kp,ich); }
   else if(A.friedel){ const Fr=A.friedel, kp=Fr.r.g.position.clone(); kp.y+=2.9; Fr.blase.visible=true; triBlaseText(Fr.blase,txt); triBlaseUeber(Fr.blase,kp,ich); } }

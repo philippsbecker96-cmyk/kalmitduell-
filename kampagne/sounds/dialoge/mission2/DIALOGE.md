@@ -5,6 +5,7 @@ Pro Person ein Ordner. Jede Person in **einer zusammenhängenden Aufnahme** eins
 Sätze mit `_bauer` / `_baeuerin` gibt es doppelt: einmal für den Bauern, einmal für die Bäuerin.
 Friedel spricht dich in der Blase mit deinem Fahrernamen an – in der Aufnahme den Namen einfach weglassen.
 Fehlt eine Datei, bleibt es still und die Sprechblase kommt wie bisher – man kann also nach und nach aufnehmen.
+Eingebunden über `ttStimmenListe` in `js/welt-teufelstisch-ton.js` (Datei ↔ Text aus den Konstanten – Textänderungen gehen automatisch mit, neue Sätze dort eintragen).
 
 Texte stehen im Code in `js/welt-teufelstisch-leben.js` (`TT_TXT`), `js/welt-teufelstisch-gasthaus.js` (`TT_GAST_TXT`), `js/welt-teufelstisch-fuhrwerk.js` (`TT_FUHR_TXT`) und `js/welt-teufelstisch-lager.js` (`TT_LAGER_TXT`) – ändert sich ein Text dort, bitte hier mit ändern.
 
