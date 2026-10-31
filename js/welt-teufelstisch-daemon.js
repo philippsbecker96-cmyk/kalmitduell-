@@ -1,7 +1,8 @@
 /* ================= Teufelstisch (Kampagne, Mission 2) – der Dämonenjunge in den Teufelsjagden =================
    Vom Nutzer: ein uralter Dämon im Körper eines Jungen aus alter Zeit – grauschwarze Jacke mit Goldknöpfen, breiter weißer Kragen, kurze Hosen, Kniestrümpfe, Schnallenschuhe;
    blaue Augen, bei Wut rot mit Schlitzpupillen (dmAugen). Huscht auf allen vieren, klettert wie eine Spinne. Ob er zum Teufel gehört, bleibt offen. Kein Ton, kein Text.
-   Flucht 1 (unheimlich, feste Auftritte DM_J1): guckt hinter einem Baum vor, flitzt vor euch über den Weg, sitzt reglos auf einem Felsen und dreht nur den Kopf mit.
+   Zum ersten Mal am Anstieg: lugt seitlich hinter dem Felsüberhang hervor (DM_LUNS).
+   Flucht 1 (unheimlich, feste Auftritte DM_J1): guckt hinter einem Baum vor, flitzt vor euch über den Weg und zurück, sitzt reglos auf einem Felsen und dreht nur den Kopf mit.
    Flucht 2 (Slapstick, feste Reihenfolge DM_J2 nach den drei Stücken „Flucht 2“): Zickzack, Baum-Teleport, Baumspinne (stürzt sich vom Ast auf dich, steckt kopfüber im Boden, zappelt, kippt um),
    neben dir gegen den Baum · Hochrad (DM_RAD, 40 s hinter euch, zieht neben dich und Friedel, Sturz über den Lenker), Stein mit Rückwärtssalto, Friedels Wurstladung ·
    im „Dreizack“ Rollschuh-Lasso (DM_LASSO: Schlinge um deinen Sattel, du gehst dafür aus dem Sattel: dmStehen → rideState, er hängt wie ein Wasserskifahrer hinter dir, schwingt weiter aus und duckt sich,
@@ -12,7 +13,8 @@
 
 const DM_J1=[['guck',.15],['quer',.48],['fels',.8]]; // Flucht 1: Auftritt, Anteil der Flucht
 const DM_J2=[[0,[['zick',0],['tele',.22],['spinne',.45],['neben',.72]]],[1,[['hochrad',.12],['stein',.7],['friedel',.84]]],[2,[['hinter',.08],['halt',.45]]]]; // Flucht 2 (vom Nutzer: fest): [Stück „Flucht 2“ (0 … 2), [Auftritt, Anteil des Stücks]] – dazu das Lasso im „Dreizack“
-const DM={j1:[6,6], j2:[4,3], husch:[5,10], max:{x:30, hochrad:60, lasso:50, halt:35, woelfe:45}}; // Flucht 1/2: so viele s nach dem Sprung des Teufels los, so viele s vor dem Ende (Flucht 2: vor dem Schlusssprint) Schluss · Huscher alle so viele s (zufällig) · ein Auftritt höchstens so viele s
+const DM_LUNS={d:12, u:3.6, vor:80}; // Felsüberhang: Ecke so viele m hinter seiner Mitte, so viele m neben dem Wegrand · Auftritt ab so viele m vor der Ecke
+const DM={j1:[6,6], j2:[4,3], husch:[5,10], max:{x:30, luns:120, hochrad:60, lasso:50, halt:35, woelfe:45}}; // Flucht 1/2: so viele s nach dem Sprung des Teufels los, so viele s vor dem Ende (Flucht 2: vor dem Schlusssprint) Schluss · Huscher alle so viele s (zufällig) · ein Auftritt höchstens so viele s
 const DM_RAD={r:.38, kurbel:.07, dauer:40, neben:[13,26]}; // Hochrad: Radius Vorderrad, Kurbellänge · fährt so viele s mit · zieht ab diesen s kurz neben dich, dann neben Friedel
 const DM_LASSO={vor:7, seil:4}; // Rollschuh-Lasso: kommt so viele s vor dem „Dreizack“ · Seillänge (m)
 const DM_WOLF={nach:55, vor:95, heul:42, lauf:3.5, sprung:8.5, ab:15, steh:3.5, platz:[[-3.5,4.5],[3,5.5],[0,6.2]], ziel:[[6,3.2],[9.5,4.6],[2,2.2]], spitze:[14,3.9]}; // Ausfahren: so viele s nach Beginn · Waldrand so viele m vor dir · Heulen ab dieser Entfernung, so viele s · Sprung, Abbiegen ab s nach dem Heulen · steht so viele s · Plätze [m vor/zurück, m vom Wegrand]: Wolf, Wolf, Junge · beim Laufen [m vor dir, m vom Wegrand] · Junge nach dem Sprung
@@ -45,6 +47,7 @@ function buildDaemon(A){ const M=c=>lam(c), G=new THREE.Group(), H=new THREE.Gro
   const hals=new V.Mesh(new V.CylinderGeometry(.045,.05,.07,8),haut); hals.position.y=.44; T.add(hals);
   K.position.y=.47; T.add(K); const kopf=kug(K,.115,haut,0,.11,0); kopf.scale.y=1.08;
   const hr=new V.Mesh(new V.SphereGeometry(.123,12,8,0,Math.PI*2,0,Math.PI*.5),haar); hr.position.set(0,.13,-.012); K.add(hr); const st=box(K,.17,.035,.045,haar,.02,.185,.085); st.rotation.z=.15; // Scheitel, Pony
+  { const m=lam('#2b1d14'); m.side=V.DoubleSide; const hl=new V.Mesh(new V.CylinderGeometry(.124,.142,.11,16,1,true,.8,Math.PI*2-1.6),m); hl.position.set(0,.075,-.012); K.add(hl); } // längere Haare: Kranz an Hinterkopf und Seiten bis aufs Kinn, unten leicht abstehend, vorn offen (Bild vom Nutzer)
   const irisM=new V.MeshBasicMaterial({color:'#2e7bff'}), schwarz=new V.MeshBasicMaterial({color:'#050505'}), pup=[], brau=[];
   for(const x of [-.042,.042]){ const w=kug(K,.024,weiss,x,.115,.106); w.scale.z=.5; const ir=new V.Mesh(new V.CircleGeometry(.016,12),irisM); ir.position.set(x,.115,.119); K.add(ir);
     const p=new V.Mesh(new V.CircleGeometry(.008,10),schwarz); p.position.set(x,.115,.1205); K.add(p); pup.push(p); const b=box(K,.045,.01,.01,haar,x,.15,.112); brau.push(b); }
@@ -112,9 +115,15 @@ const DM_AKT={
   // Flucht 1: guckt hinter einem Baum vor, zieht den Kopf zurück, ist weg
   guck(D,a){ if(!a.B){ a.d0=me.d+80; a.s=Math.random()<.5?1:-1; a.B={...dmBaum(D,0,a.d0,a.s*(dmRw(a.d0)+4),0),d:a.d0}; } dmBaum(D,0,a.d0,a.s*(dmRw(a.d0)+4),0);
     const dd=a.d0-me.d, w=bSm((48-dd)/4)*bSm((dd-17)/1.2); D.G.visible=dd<50&&dd>16; if(D.G.visible) dmHinter(D,a.B,w,.45); if(dd<-15) a.ende=1; },
-  // Flucht 1: flitzt 40 m vor euch auf allen vieren über den Weg
+  // Flucht 1: flitzt 40 m vor euch auf allen vieren über den Weg, hockt kurz am anderen Rand und dreht sich zu euch, flitzt zurück (≈ 3 s)
   quer(D,a,y,rt){ if(a.d0==null){ a.d0=me.d+65; a.s=Math.random()<.5?1:-1; } const dd=a.d0-me.d, b=dmRw(a.d0)+5; if(a.t0==null&&dd<=42) a.t0=rt; if(a.t0==null){ if(dd<0) a.ende=1; return; }
-    const p=(rt-a.t0)*11/(2*b); if(p>=1){ a.ende=1; return; } const g=dmGrund(a.d0,a.s*(-b+2*b*p)), [rx,rz]=dmRechts(a.d0); D.G.visible=true; D.G.position.set(...g); D.G.rotation.set(0,Math.atan2(a.s*rx,a.s*rz),0); dmPose(D,dmKrabbel(D.phi,1)); D.dPhi=11; },
+    const z=rt-a.t0, tc=2*b/11, H=.55, [rx,rz]=dmRechts(a.d0), r0=Math.atan2(a.s*rx,a.s*rz); D.G.visible=true;
+    if(z<tc||z>tc+H){ const zu=z>tc+H, p=zu?(z-tc-H)/tc:z/tc; if(p>=1){ a.ende=1; return; } const s=zu?-a.s:a.s, g=dmGrund(a.d0,s*(-b+2*b*p)); if(zu&&!a.puff){ a.puff=1; dmPuff(D,...g); }
+      D.G.position.set(...g); D.G.rotation.set(0,zu?r0+Math.PI:r0,0); dmPose(D,dmKrabbel(D.phi,1)); D.dPhi=11; return; }
+    const w=(z-tc)/H, r1=dmVor(a.d0)+Math.PI; D.G.position.set(...dmGrund(a.d0,a.s*b)); D.G.rotation.set(0,w<.5?dmDreh(r0,r1,bSm(w*3)):dmDreh(r1,r0+Math.PI,bSm((w-.5)*3)),0); dmPose(D,DM_LAUER); }, // Halt: geduckt, Blick zu euch
+  // vor Flucht 1 (zum ersten Mal zu sehen): lugt am Anstieg seitlich hinter dem hinteren Ende des Felsüberhangs hervor (R.tt.ueber, rechts), zieht sich zurück
+  luns(D,a){ const U=R.tt.ueber, d0=U.d+DM_LUNS.d, [rx,rz]=dmRechts(d0); if(!a.B){ const p=wegPos(d0,U.s*(dmRw(d0)+DM_LUNS.u)); a.B={x:p.x,z:p.z,dx:-U.s*rx,dz:-U.s*rz,d:d0}; }
+    const dd=d0-me.d, w=bSm((45-dd)/5)*bSm((dd-21)/1.5); D.G.visible=dd<50&&dd>19; if(D.G.visible) dmHinter(D,a.B,w,.5); if(dd<-15) a.ende=1; },
   // Flucht 1: sitzt reglos auf einem Felsen, nur der Kopf dreht sich mit (weiter, als ein Mensch kann) – im Vorbeifahren werden die Augen kurz rot
   fels(D,a){ if(a.d0==null){ a.d0=me.d+90; a.s=Math.random()<.5?1:-1; } const u=a.s*(dmRw(a.d0)+2), h=dmFels(D,a.d0,u), g=dmGrund(a.d0,u), [rx,rz]=dmRechts(a.d0), dd=a.d0-me.d;
     D.G.visible=true; D.G.position.set(...g); D.G.rotation.set(0,Math.atan2(-a.s*rx,-a.s*rz),0); dmPose(D,{...DM_SITZ,y:h-g[1]+.05}); a.kw=(a.kw||0)+(dmKopfZu(D,2.4)-(a.kw||0))*.08; D.K.rotation.y=a.kw; D.wutZ=bSm((5-Math.abs(dd))/2);
@@ -253,6 +262,7 @@ function poseDaemon(dt){ const A=anim.tt, D=A&&A.daemon; if(!D) return; const ru
   for(const j of P.fest) if(rt<j.t) j.da=false; const j=P.fest.find(j=>!j.da&&rt>=j.t&&rt<j.t+30&&(j.vor||!D.akt&&dmFrei(K,rt,8))); // feste Auftritte der Reihe nach, das Lasso drängt sich vor
   if(j){ j.da=true; D.akt={art:j.art, rt0:rt, dA:me.d}; }
   else if(!D.akt&&rt>=P.a1&&rt<P.e1&&rt>=P.husch&&dmFrei(K,rt,3)&&!P.fest.some(j=>!j.da&&j.t<rt+5&&rt<j.t+30)){ D.akt={art:'husch', rt0:rt, dA:me.d}; P.husch=rt+DM.husch[0]+Math.random()*(DM.husch[1]-DM.husch[0]); } // kurze Huscher dazwischen
+  const U=R.tt&&R.tt.ueber; if(U){ const dd=U.d+DM_LUNS.d-me.d; if(dd>DM_LUNS.vor) P.luns=0; else if(!D.akt&&!P.luns&&dd>30){ P.luns=1; D.akt={art:'luns', rt0:rt, dA:me.d}; } } // am Felsüberhang (Meter, einmal)
   if(D.akt) DM_AKT[D.akt.art](D,D.akt,rt-D.akt.rt0,rt,race.paused?0:dt); if(D.akt&&D.akt.ende) D.G.visible=false;
   if(!race.paused) D.phi+=D.dPhi*dt*simSpeed()*2*Math.PI/1.6; dmFx(D,dt); }
 // Schlussszene (Foreshadowing auf Mission 3): steht hinter der linken Höhlenecke (von der Kamera aus verdeckt) und lugt ein paarmal seitlich mit Kopf und Hand vor, ab „raus“ für den Zoom;

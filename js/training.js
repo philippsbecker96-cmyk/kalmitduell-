@@ -153,7 +153,7 @@ function trainStep(dt,P,wkg){
   if(sg.free){ me.testE+=P*dt; me.testT+=dt; const h=hrNow(); if(h&&race.t-sg.t0>300){ me.hrE+=h*dt; me.hrT+=dt; } } // Puls im 20-min-Test → Schwellenpuls, ohne die ersten 5 min (Puls steigt erst an)
   if(race.t-sg.t0>5 && !sg.free){ me.zoneT+=dt; if(Math.abs(P-me.tgt)<=me.tgt*0.05) me.inZone+=dt; } // ±5 % um das Ziel, erste 5 s eines Abschnitts zählen nicht
   if(!me.trace.length || race.t-me.trace[me.trace.length-1][0]>=1) me.trace.push([race.t,P,hrNow()]); // Puls nur mit Pulsgurt, sonst null
-  const idx=race.woSegs.indexOf(sg); if(idx!==race.woIdx){ if(race.woIdx>=0){ beep(1046,.25); if(!race.kamp) flash(sg.free?'Vollgas – 20 Minuten, ERG aus':sg.label); // Kampagne: kein Abschnittsname (verrät sonst die Story) if(anim.space) Object.assign(anim.space.wave,{t0:performance.now()/1000,d0:me.d-4}); } race.woIdx=idx; lastErgW=null; lastSlopeSent=null; }
+  const idx=race.woSegs.indexOf(sg); if(idx!==race.woIdx){ if(race.woIdx>=0){ beep(1046,.25); if(!race.kamp) flash(sg.free?'Vollgas – 20 Minuten, ERG aus':sg.label); if(anim.space) Object.assign(anim.space.wave,{t0:performance.now()/1000,d0:me.d-4}); } race.woIdx=idx; lastErgW=null; lastSlopeSent=null; } // Kampagne: kein Abschnittsname (verrät sonst die Story)
   const rem=Math.ceil(sg.t0+sg.dur-race.t); if(idx<race.woSegs.length-1 && rem<=3 && rem>=1 && rem!==race.woCd){ race.woCd=rem; beep(660); }
   if(race.t>=race.woT) trainFinish();
 }
