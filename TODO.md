@@ -53,6 +53,11 @@ Größere Punkte später in die passende Datei umziehen (`PLAENE.md`, `KAMPAGNE.
 - Windschatten, Wind, Tageszeit, Jahreszeit, Wetter, soll an einer Stelle zusammen sein, nicht verstruet über die Anzeige 
 - Menü übersichtlicher gestalten 
 - bei Kampagne und Berwartstein Lautstärkeregler hinzufügen (note: hat Berwartstein Sounds?)
+- [ ] **Lobby ordentlicher/kompakter** (31.10.): oft große Freiflächen (z. B. Kampagne: links nur die Strecken-Karte, rechts alles gestapelt, Panel scrollt). Ideen:
+  1. Zuerst nur CSS: Abschnitte in einen gemeinsamen Container mit `columns: 2` + `break-inside: avoid` → Browser verteilt sie gleichmäßig auf beide Spalten (ggf. feste Spalten-Container in `index.html` zusammenlegen). Haken: Reihenfolge spaltenweise, Abschnitte können beim Moduswechsel die Spalte wechseln, große Blöcke bleiben ungeteilt
+  2. Falls das Springen stört: kleiner JS-Ausgleich (Höhen messen, jeder Abschnitt in die kürzere Spalte, „Strecke“ fest oben links)
+  3. Kompakt-Regeln: Beschriftungen über statt neben den Elementen („Workout“), Knappe/Ritter-Bilder etwa halb so hoch, gesperrte Missionen („folgt“) als schmale Zeilen, lange Hinweistexte kleiner oder hinter ⓘ, knappere Abstände
+  4. Selten Genutztes (Trainer, Mitfahrer) einklappbar mit Statuszeile; bei niedrigem Fenster engere Variante (`@media (max-height: …)`)
 
 ## Handy-Anzeige
 - bisschen schöner machen
