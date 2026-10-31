@@ -1,5 +1,6 @@
 /* ================= Teufelstisch (Kampagne, Mission 2) – Dorf und Wiesen im Kaltenbacher Tal (vom Nutzer: Weg vom Wirtshaus bis zur Hundejagd interessanter, niemand sagt etwas) =================
-   Elwetritsche sitzt oben auf dem Kirchturm, fliegt im Bogen über dich und Friedel hinweg und landet in einer Baumkrone rechts am Weg; die Kamera fliegt mit (TT_ELW, ttElwKamera aus rennen.js).
+   Elwetritsche sitzt oben auf dem Kirchturm, der Dämonenjunge flitzt den Turm hinauf und scheucht sie auf (DM_AKT.kirche in welt-teufelstisch-daemon.js), sie fliegt im Bogen über die Dächer und über dich und Friedel hinweg
+   und landet in einer Baumkrone rechts am Weg; die Kamera fliegt mit (TT_ELW, ttElwBahn, ttElwKamera aus rennen.js).
    Hühner picken vor dem letzten Haus auf dem Weg und flattern zur Seite, wenn du kommst; Misthaufen und Handkarren daneben (TT_HUHN, hofKasten aus welt-dorf.js).
    Sühnekreuz rechts am Ortsausgang (TT_KREUZ) · Schäfer mit kleiner Herde, Hütehund und Schäferkarren links hinter dem Bach · Angler am Bach zieht einen Fisch heraus, wenn du vorbeikommst (TT_WIESE).
    Plätze ttDorfPrep (aus prepTeufelstisch) → R.tt.dorfL · buildTtDorf aus buildTeufelstisch · poseTtDorf aus poseTeufelstisch */
@@ -81,15 +82,19 @@ function poseTtDorf(dt){ const A=anim.tt, B=A&&A.dorfL; if(!B) return; const t=p
 // Elwetritsche: schaut sich oben auf dem Turm um, fliegt los, wenn du TT_ELW.vor m vor der Kirche bist, Bogen über euch (Mitte über deinem Kopf) bis in die Krone, dort schüttelt sie sich und schaut zum Weg
 function ttElw(B,t){ const El=B.elw, Z=TT_ELW, K=R.tt.kirche; if(!El) return; const E=El.E; const g=me.d-(K.d-Z.vor), rt=race.t;
   E.G.visible=Math.abs(me.d-K.d)<500;
-  if(race.state!=='run'||g<-30) El.t0=null; else if(El.t0==null&&g>=0){ El.t0=g<15?rt:-1e9; const v=Math.max(4,me.v||0), p=wegPos(me.d+v*Z.flug/2,-.6), M=new THREE.Vector3(p.x,bodenY(p.x,p.z)+1.8+Z.ueber,p.z); El.c=M.multiplyScalar(2).addScaledVector(El.st,-.5).addScaledVector(El.ziel,-.5); } // Kontrollpunkt: Bogenmitte genau über euch (nach Sprüngen im Testmodus gleich in der Krone)
+  if(race.state!=='run'||g<-30) El.t0=null; else if(El.t0==null&&g>=0){ El.t0=g<15?rt:-1e9; const v=Math.max(4,me.v||0), p=wegPos(me.d+v*Z.flug/2,-.6), M=new THREE.Vector3(p.x,bodenY(p.x,p.z)+1.8+Z.ueber,p.z); El.c=M.multiplyScalar(2).addScaledVector(El.st,-.5).addScaledVector(El.ziel,-.5);
+    El.hub=null; const bx=R.tt.haeuser.map(h=>h.box).filter(Boolean), hub=[]; for(let i=0;i<=48;i++){ const u=i/48, P=ttElwBahn(El,u); let n=0; for(const b of bx) if(P.x>b.min.x-1.5&&P.x<b.max.x+1.5&&P.z>b.min.z-1.5&&P.z<b.max.z+1.5) n=Math.max(n,b.max.y+1.4-P.y); if(n>0) hub.push([u,n]); } El.hub=hub; } // wo die Bahn ein Haus streift: so viel höher // Kontrollpunkt: Bogenmitte genau über euch (nach Sprüngen im Testmodus gleich in der Krone)
   const y=El.t0==null?-1:rt-El.t0;
   if(y<0){ E.G.position.copy(El.st); E.G.rotation.set(0,El.ry+.5*Math.sin(t*.6),0); E.K.rotation.x=0; E.kopf.rotation.y=.6*Math.sin(t*1.3); E.fluegel.forEach((w,j)=>w.rotation.z=(j?-1:1)*.05); E.beine.forEach(b=>b.rotation.x=0); return; }
-  if(y<Z.flug){ const u=y/Z.flug, a=(1-u)*(1-u), b=2*u*(1-u), c=u*u, P=new THREE.Vector3().addScaledVector(El.st,a).addScaledVector(El.c,b).addScaledVector(El.ziel,c);
-    const dx=2*(1-u)*(El.c.x-El.st.x)+2*u*(El.ziel.x-El.c.x), dy=2*(1-u)*(El.c.y-El.st.y)+2*u*(El.ziel.y-El.c.y), dz=2*(1-u)*(El.c.z-El.st.z)+2*u*(El.ziel.z-El.c.z);
+  if(y<Z.flug){ const u=y/Z.flug, P=ttElwBahn(El,u), Q=ttElwBahn(El,u+.01), dx=Q.x-P.x, dy=Q.y-P.y, dz=Q.z-P.z;
     E.G.position.copy(P); E.G.rotation.set(0,Math.atan2(dx,dz),0); E.K.rotation.x=clampN(Math.atan2(-dy,Math.hypot(dx,dz))*.7,-.6,.6); E.kopf.rotation.y=0;
     E.fluegel.forEach((w,j)=>w.rotation.z=(j?-1:1)*(.6+.7*Math.sin(t*30))); E.beine.forEach(b=>b.rotation.x=.9); return; } // Flügel schlagen wild, Beine angezogen
   const s=y-Z.flug; E.G.position.copy(El.ziel); E.G.position.y+=.25*Math.max(0,Math.sin(s*9))*Math.exp(-s*3); E.G.rotation.set(0,Math.atan2(El.n.x,El.n.z)+.3*Math.sin(t*.5),0); E.K.rotation.x=0; E.beine.forEach(b=>b.rotation.x=0);
   E.fluegel.forEach((w,j)=>w.rotation.z=(j?-1:1)*(s<.8?.4*Math.sin(t*25)*(1-s/.8):.05)); E.kopf.rotation.y=s>.6&&s<1.6?.5*Math.sin(s*12):.4*Math.sin(t*.9); } // landet, schüttelt sich, schaut sich um
+
+// Flugbahn: Bogen vom Turm über euch in die Krone, über Häusern weich angehoben (El.hub: [Anteil, m])
+function ttElwBahn(El,u){ const a=(1-u)*(1-u), b=2*u*(1-u), c=u*u, P=new THREE.Vector3().addScaledVector(El.st,a).addScaledVector(El.c,b).addScaledVector(El.ziel,c); let h=0;
+  for(const [ui,hi] of El.hub||[]) h=Math.max(h,hi*bSm(1-Math.abs(u-ui)/.25)); P.y+=h*bSm((1-u)/.06); return P; } // zum Schluss steil in die Krone
 
 // Kamera (aus rennen.js): erst tief hinter euch, Blick auf die Elwetritsche, die über eure Köpfe fliegt, dann über eure Köpfe hinweg zur Baumkrone, ein paar Sekunden auf die Landung
 function ttElwKamera(){ const A=anim.tt, B=A&&A.dorfL, El=B&&B.elw, ich=riders3d[myKey]; if(!El||El.t0==null||race.state!=='run'||!ich) return; const Z=TT_ELW, y=race.t-El.t0, T2=Z.flug+Z.sitz; if(y<0||y>T2) return;

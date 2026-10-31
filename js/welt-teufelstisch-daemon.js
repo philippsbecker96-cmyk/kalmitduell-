@@ -1,7 +1,7 @@
 /* ================= Teufelstisch (Kampagne, Mission 2) – der Dämonenjunge in den Teufelsjagden =================
    Vom Nutzer: ein uralter Dämon im Körper eines Jungen aus alter Zeit – grauschwarze Jacke mit Goldknöpfen, breiter weißer Kragen, kurze Hosen, Kniestrümpfe, Schnallenschuhe;
    blaue Augen, bei Wut rot mit Schlitzpupillen (dmAugen). Huscht auf allen vieren, klettert wie eine Spinne. Ob er zum Teufel gehört, bleibt offen. Kein Ton, kein Text.
-   Zum ersten Mal am Anstieg: lugt seitlich hinter dem Felsüberhang hervor (DM_LUNS).
+   Zum ersten Mal kurz im Dorf (Einfahren): flitzt den Kirchturm hinauf und scheucht die Elwetritsche auf (DM_KIRCHE). Am Anstieg: lugt seitlich hinter dem Felsüberhang hervor (DM_LUNS).
    Flucht 1 (unheimlich, feste Auftritte DM_J1): guckt hinter einem Baum vor, flitzt vor euch über den Weg und zurück, sitzt reglos auf einem Felsen und dreht nur den Kopf mit.
    Flucht 2 (Slapstick, feste Reihenfolge DM_J2 nach den drei Stücken „Flucht 2“): Zickzack, Baum-Teleport, Baumspinne (stürzt sich vom Ast auf dich, steckt kopfüber im Boden, zappelt, kippt um),
    neben dir gegen den Baum · Hochrad (DM_RAD, 40 s hinter euch, zieht neben dich und Friedel, Sturz über den Lenker), Stein mit Rückwärtssalto, Friedels Wurstladung ·
@@ -13,6 +13,7 @@
 
 const DM_J1=[['guck',.15],['quer',.48],['fels',.8]]; // Flucht 1: Auftritt, Anteil der Flucht
 const DM_J2=[[0,[['zick',0],['tele',.22],['spinne',.45],['neben',.72]]],[1,[['hochrad',.12],['stein',.7],['friedel',.84]]],[2,[['hinter',.08],['halt',.45]]]]; // Flucht 2 (vom Nutzer: fest): [Stück „Flucht 2“ (0 … 2), [Auftritt, Anteil des Stücks]] – dazu das Lasso im „Dreizack“
+const DM_KIRCHE={lauf:.9, kletter:1.5, oben:1.3, top:19.2}; // Kirchturm im Dorf: s flitzen, s klettern (dann fliegt die Elwetritsche), s oben, bis er verpufft · m hoch auf dem Helm
 const DM_LUNS={d:12, u:3.6, vor:80}; // Felsüberhang: Ecke so viele m hinter seiner Mitte, so viele m neben dem Wegrand · Auftritt ab so viele m vor der Ecke
 const DM={j1:[6,6], j2:[4,3], husch:[5,10], max:{x:30, luns:120, hochrad:60, lasso:50, halt:35, woelfe:45}}; // Flucht 1/2: so viele s nach dem Sprung des Teufels los, so viele s vor dem Ende (Flucht 2: vor dem Schlusssprint) Schluss · Huscher alle so viele s (zufällig) · ein Auftritt höchstens so viele s
 const DM_RAD={r:.38, kurbel:.07, dauer:40, neben:[13,26]}; // Hochrad: Radius Vorderrad, Kurbellänge · fährt so viele s mit · zieht ab diesen s kurz neben dich, dann neben Friedel
@@ -121,7 +122,15 @@ const DM_AKT={
     if(z<tc||z>tc+H){ const zu=z>tc+H, p=zu?(z-tc-H)/tc:z/tc; if(p>=1){ a.ende=1; return; } const s=zu?-a.s:a.s, g=dmGrund(a.d0,s*(-b+2*b*p)); if(zu&&!a.puff){ a.puff=1; dmPuff(D,...g); }
       D.G.position.set(...g); D.G.rotation.set(0,zu?r0+Math.PI:r0,0); dmPose(D,dmKrabbel(D.phi,1)); D.dPhi=11; return; }
     const w=(z-tc)/H, r1=dmVor(a.d0)+Math.PI; D.G.position.set(...dmGrund(a.d0,a.s*b)); D.G.rotation.set(0,w<.5?dmDreh(r0,r1,bSm(w*3)):dmDreh(r1,r0+Math.PI,bSm((w-.5)*3)),0); dmPose(D,DM_LAUER); }, // Halt: geduckt, Blick zu euch
-  // vor Flucht 1 (zum ersten Mal zu sehen): lugt am Anstieg seitlich hinter dem hinteren Ende des Felsüberhangs hervor (R.tt.ueber, rechts), zieht sich zurück
+  // Einfahren, im Dorf (zum ersten Mal zu sehen, nur kurz): flitzt hinter dem Kirchenschiff hervor, die Turmwand hinauf auf den Helm, scheucht die Elwetritsche auf (ttElw), grinst, verpufft
+  kirche(D,a,y){ const Kc=R.tt.kirche, Z=DM_KIRCHE, G=D.G, s0=Z.lauf+Z.kletter; if(a.ry==null){ const [px,pz]=posAt(R,Kc.d), r=wegPos(Kc.d-40,0); a.ry=Math.atan2(px-Kc.x,pz-Kc.y); a.y0=bodenY(Kc.x,Kc.y); a.s=Math.sign((r.x-Kc.x)*Math.cos(a.ry)-(r.z-Kc.y)*Math.sin(a.ry))||1; } // Turmseite zu euch
+    const c=Math.cos(a.ry), sn=Math.sin(a.ry), s=a.s, L=(x,z)=>[Kc.x+x*c+z*sn,Kc.y-x*sn+z*c], zuW=Math.atan2(-s*c,s*sn); G.visible=true; D.grinsZ=1; // Kirche lokal (Turm z 4.3, 4.4 breit, bis 14.25, Helm bis 21.75) · Blick zur Wand
+    if(y<Z.lauf){ const W=[L(s*4.6,-9),L(s*4.6,3.4),L(s*2.2,5)], l1=Math.hypot(W[1][0]-W[0][0],W[1][1]-W[0][1]), l2=Math.hypot(W[2][0]-W[1][0],W[2][1]-W[1][1]), f=y/Z.lauf*(l1+l2), k=f<l1?0:1, w=k?(f-l1)/l2:f/l1;
+      const p=W[k], q=W[k+1], x=p[0]+(q[0]-p[0])*w, z=p[1]+(q[1]-p[1])*w; G.position.set(x,bodenY(x,z),z); G.rotation.set(0,Math.atan2(q[0]-p[0],q[1]-p[1]),0); dmPose(D,dmKrabbel(D.phi,1)); D.dPhi=13; return; } // auf allen vieren am Schiff entlang zum Turm
+    if(y<s0+Z.oben){ const h=Z.top*Math.min(1,(y-Z.lauf)/Z.kletter), f=Math.max(0,(h-14.25)/7.5), [x,z]=L(s*(h<14.25?2.2:2.4*(1-f)),4.3+.7*(1-f)); // Wand, dann die Helmschräge
+      G.position.set(x,a.y0+h,z); G.rotation.set(-Math.PI/2+(h<14.25?0:.31),zuW,y<s0?0:.15*Math.sin(y*9)); dmPose(D,dmKrabbel(D.phi,1)); D.dPhi=y<s0?10:0; D.wutZ=bSm((y-s0)/.3); return; } // wie eine Spinne, oben: rote Augen, zappelt vor Freude
+    if(!a.puff){ a.puff=1; dmPuff(D,G.position.x,G.position.y,G.position.z); } G.visible=false; a.ende=1; },
+  // vor Flucht 1 (nach dem Kirchturm zum zweiten Mal zu sehen): lugt am Anstieg seitlich hinter dem hinteren Ende des Felsüberhangs hervor (R.tt.ueber, rechts), zieht sich zurück
   luns(D,a){ const U=R.tt.ueber, d0=U.d+DM_LUNS.d, [rx,rz]=dmRechts(d0); if(!a.B){ const p=wegPos(d0,U.s*(dmRw(d0)+DM_LUNS.u)); a.B={x:p.x,z:p.z,dx:-U.s*rx,dz:-U.s*rz,d:d0}; }
     const dd=d0-me.d, w=bSm((45-dd)/5)*bSm((dd-21)/1.5); D.G.visible=dd<50&&dd>19; if(D.G.visible) dmHinter(D,a.B,w,.5); if(dd<-15) a.ende=1; },
   // Flucht 1: sitzt reglos auf einem Felsen, nur der Kopf dreht sich mit (weiter, als ein Mensch kann) – im Vorbeifahren werden die Augen kurz rot
@@ -262,6 +271,7 @@ function poseDaemon(dt){ const A=anim.tt, D=A&&A.daemon; if(!D) return; const ru
   for(const j of P.fest) if(rt<j.t) j.da=false; const j=P.fest.find(j=>!j.da&&rt>=j.t&&rt<j.t+30&&(j.vor||!D.akt&&dmFrei(K,rt,8))); // feste Auftritte der Reihe nach, das Lasso drängt sich vor
   if(j){ j.da=true; D.akt={art:j.art, rt0:rt, dA:me.d}; }
   else if(!D.akt&&rt>=P.a1&&rt<P.e1&&rt>=P.husch&&dmFrei(K,rt,3)&&!P.fest.some(j=>!j.da&&j.t<rt+5&&rt<j.t+30)){ D.akt={art:'husch', rt0:rt, dA:me.d}; P.husch=rt+DM.husch[0]+Math.random()*(DM.husch[1]-DM.husch[0]); } // kurze Huscher dazwischen
+  const Kc=R.tt&&R.tt.kirche; if(Kc&&!(D.akt&&D.akt.art==='kirche')){ const dd=Kc.d-TT_ELW.vor-me.d, dv=Math.max(4,me.v||0)*(DM_KIRCHE.lauf+DM_KIRCHE.kletter); if(dd>dv+30||dd<-60) P.kirche=0; else if(!D.akt&&!P.kirche&&dd>0&&dd<=dv){ P.kirche=1; D.akt={art:'kirche', rt0:rt, dA:me.d}; } } // Kirchturm im Dorf (Meter, einmal): oben, wenn die Elwetritsche abfliegt
   const U=R.tt&&R.tt.ueber; if(U){ const dd=U.d+DM_LUNS.d-me.d; if(dd>DM_LUNS.vor) P.luns=0; else if(!D.akt&&!P.luns&&dd>30){ P.luns=1; D.akt={art:'luns', rt0:rt, dA:me.d}; } } // am Felsüberhang (Meter, einmal)
   if(D.akt) DM_AKT[D.akt.art](D,D.akt,rt-D.akt.rt0,rt,race.paused?0:dt); if(D.akt&&D.akt.ende) D.G.visible=false;
   if(!race.paused) D.phi+=D.dPhi*dt*simSpeed()*2*Math.PI/1.6; dmFx(D,dt); }
