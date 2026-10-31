@@ -14,8 +14,17 @@ Teil der Kampagne – Übersicht, Rahmengeschichte, Regeln für alle Missionen u
   5. Landung: Einfedern, Kamerawackeln, weiterfahren. Wo sie aufkommt, entspringt die Quelle, sie winkt dir nach. Die Ritter bleiben oben an der Kante stehen.
   - Flug als kurze Verschnaufpause, danach Ausfahren. Technik: für ein paar Sekunden feste Bewegung statt Physik, Zeitlupe und Kamerafahrt (an `startKamera` und Kamerawackeln in `effekte.js` anlehnen). Neu: Mitfahrerin in Sitzhaltung auf dem Gepäckträger, Rock, der sich aufbläht und gleitet. Die Dahn-Welt braucht dafür eine Geländekante (Felsen oben, tiefere Stufe, Straße unten weiter).
 
+## Story-Idee (Nutzer, neu, 31.10.2026 – Workout plant der Nutzer noch; ersetzt den Ablauf oben teilweise: Friedel und Mädchen beide auf dem Gepäckträger)
+- **Anfang:** Friedel und du schlafen noch am Lager, der Dämonenjunge klaut Friedels Fahrrad · Überblendung · ihr wacht auf, wollt los – Rad weg, Reifenspuren · Friedel springt bei dir hinten auf den Gepäckträger
+- **Einfahren (~5 min):** der Spur hinterher, von Weitem der Dämonenjunge auf Friedels Rad – fährt sehr schlecht, fällt ab und zu hin
+- **1–2 Sprints zum Aufwärmen:** ihr holt ihn ein, er flitzt in ein Waldstück und ist erst mal weg
+- **Das Mädchen:** zwei, drei Ritter (Männer von Hans von Trotha) drangsalieren ein junges Mädchen, ihr helft ihr, sie springt auch auf den Gepäckträger
+- **Flucht vor den Rittern:** 2–3 Intervalle
+- **Schlusssprint hinauf zum Jungfernsprung (Highlight):** die Ritter kommen immer näher, im letzten Moment springt der Dämonenjunge von einem Baum und tritt beide Ritter vom Pferd · du springst mit Friedel und dem Mädchen hinten drauf über die Kante · in der Luft fällt das Mädchen vom Gepäckträger, ihr Rock bläht sich wie ein Fallschirm auf, sie gleitet sanft hinab Richtung Dahn · Friedel und du fliegt noch ein ordentliches Stück weiter und landet weiter weg vom Dorf
+- **Ausfahren:** wo das Mädchen landet, sprudelt eine Quelle hervor (Jungfernbrünnel, wie in der echten Sage) · sonst noch offen
+
 ## Drehbuch (noch auszufüllen, Vorlage `kampagne/DREHBUCH-VORLAGE.md`)
 - **Workout:** Vorschlag des Nutzers folgt (Entwurf oben), Labels festlegen, Leicht/Hart.
 - **Anschluss an Mission 2:** Mission 2 endet am Lagerfeuer mit Blick auf den Jungfernsprung, Weg hinab nach Dahn; Friedel fährt mit (in Mission 3 eifersüchtig auf die Magd, siehe „Der Knappe“ in `KAMPAGNE.md`).
-- **Running Gags:** Bauer mit Fuhrwerk, Dämonenjunge? (offen)
+- **Running Gags:** Dämonenjunge (klaut Friedels Rad, rettet euch am Ende, siehe Story-Idee), Bauer mit Fuhrwerk? (offen)
 - **Neu zu bauen:** Dahner Felsenland, Geländekante für den Sprung, Magd auf dem Gepäckträger, Rock als Fallschirm, Verfolger-Schergen (Ritter zu Pferd: `trPferd`/`trReiter` aus Mission 1).
